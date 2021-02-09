@@ -388,7 +388,7 @@ export const getters = {
 
     // If we have explore variables, we do not show the target & training ones
     const explore = getters.getExploreVariables;
-    if (explore) {
+    if (!_.isEmpty(explore)) {
       filterParams.variables = explore;
     }
     // Otherwise, we list the target & training non-null variables

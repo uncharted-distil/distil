@@ -266,7 +266,7 @@ export default Vue.extend({
         else if (action.paneId === "available") {
           variables[action.paneId] = this.variables;
         } else if (action.paneId === "target") {
-          variables[action.paneId] = [this.target];
+          variables[action.paneId] = this.target ? [this.target] : [];
         } else if (action.paneId === "training") {
           variables[action.paneId] = this.variables.filter((variable) =>
             this.training.includes(variable.key)
