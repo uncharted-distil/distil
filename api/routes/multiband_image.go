@@ -106,7 +106,7 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, config env.Config) func
 		 	}
 		 	// multiple passes for increasing scale dramatically
 		 	for i := 0; i < options.Scale; i++ {
-		 		img = c_util.UpscaleImage(img, c_util.ModelType(config.ModelType))
+		 		img = c_util.UpscaleImage(img, c_util.GetModelType(config.ModelType))
 		 	}
 		 }
 		imageBytes, err := util.ImageToJPEG(img)

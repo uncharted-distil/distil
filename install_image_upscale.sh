@@ -1,9 +1,7 @@
 tensorflow_dir="/usr/local"
 mac_tensorflow_tar="libtensorflow-cpu-darwin-x86_64-2.4.0.tar.gz"
-linux_tensorflow_cpu_tar="libtensorflow-cpu-linux-x86_64-2.4.0.tar.gz"
 linux_tensorflow_gpu_tar="libtensorflow-gpu-linux-x86_64-2.4.0.tar.gz"
 tensorflow_url_mac="https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-cpu-darwin-x86_64-2.4.0.tar.gz"
-tensorflow_url_linux_cpu="https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-cpu-linux-x86_64-2.4.0.tar.gz"
 tensorflow_url_linux_gpu="https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-gpu-linux-x86_64-2.4.0.tar.gz"
 image_upscale_lib="/usr/local/image-upscale.so"
 image_upscale_url="https://github.com/uncharted-distil/distil-image-upscale/archive/master.zip"
@@ -39,7 +37,6 @@ get_tensorflow(){
     mkdir -p /usr/local/lib
     #copy them over
     cp -a $tensorflow_dir/lib/. /usr/local/lib
-
     if [ "$uname" = Linux ]; then
         ldconfig
     fi
