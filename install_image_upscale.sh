@@ -1,9 +1,7 @@
 tensorflow_dir="/usr/local"
 mac_tensorflow_tar="libtensorflow-cpu-darwin-x86_64-2.4.0.tar.gz"
-linux_tensorflow_cpu_tar="libtensorflow-cpu-linux-x86_64-2.4.0.tar.gz"
 linux_tensorflow_gpu_tar="libtensorflow-gpu-linux-x86_64-2.4.0.tar.gz"
 tensorflow_url_mac="https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-cpu-darwin-x86_64-2.4.0.tar.gz"
-tensorflow_url_linux_cpu="https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-cpu-linux-x86_64-2.4.0.tar.gz"
 tensorflow_url_linux_gpu="https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-gpu-linux-x86_64-2.4.0.tar.gz"
 image_upscale_lib="/usr/local/image-upscale.so"
 image_upscale_url="https://github.com/uncharted-distil/distil-image-upscale/archive/master.zip"
@@ -37,10 +35,8 @@ get_tensorflow(){
     tar -C $tensorflow_dir -xzf $tensorflow_dir/$1
     # make the dirs if they dont exist
     mkdir -p /usr/local/lib
-    mkdir -p /usr/local/include
     #copy them over
     cp -a $tensorflow_dir/lib/. /usr/local/lib
-    cp -a $tensorflow_dir/include/. /usr/local/include 
     if [ "$uname" = Linux ]; then
         ldconfig
     fi
@@ -50,15 +46,9 @@ get_tensorflow(){
 if [ ! -d "/usr/local/tensorflow" ]; then
     echo "unable to locate tensorflow lib"
     if [ "$uname" = Linux ]; then
-        # if it fails cuda is not installed so get the tensorflow cpu
-        if ! [ -x "$(command -v nvcc)" ]; then
-            echo "cuda not found fetching tensorflow cpu"
-            get_tensorflow "$linux_tensorflow_cpu_tar" "$tensorflow_url_linux_cpu"
-        else
-            # cuda exists get tensorflow for gpu
+            # default to gpu
             echo "cuda found fetching tensorflow gpu"
             get_tensorflow $linux_tensorflow_gpu_tar $tensorflow_url_linux_gpu
-        fi 
     fi
     if [ "$uname" = 'Darwin' ]; then
         echo "fetching mac tensorflow binaries"
@@ -66,24 +56,22 @@ if [ ! -d "/usr/local/tensorflow" ]; then
         get_tensorflow $mac_tensorflow_tar $tensorflow_url_mac
     fi
 fi
-rm -rf "$source_dir" || true
-echo "fetching image-scale source"
-wget $image_upscale_url -P $local_dir
-# extract
-unzip $local_dir/$image_upscale_src_zip -d $local_dir
-mkdir -p $source_dir
-# copy source over
-cp -a $local_dir/$image_src_dir/. $source_dir
+
 # check if models are in static folder
 if [ ! -d "$models_dir" ]; then
+    rm -rf "$source_dir" || true
+    echo "fetching image-scale source"
+    wget $image_upscale_url -P $local_dir
+    # extract
+    unzip $local_dir/$image_upscale_src_zip -d $local_dir
     echo "unable to locate model weights"
     echo "fetching model weights"
     mkdir -p "$static_resources/models"
     # should fetch model weights from somewhere
     cp -a $local_dir/$image_model_dir/. "$static_resources/models"
+    echo "cleaning up files"
+    # cleanup
+    rm -rf $local_dir/$src_folder || true
+    rm -rf $local_dir/$image_upscale_src_zip || true
 fi
 
-echo "cleaning up files"
-# cleanup
-rm -rf $local_dir/$src_folder || true
-rm -rf $local_dir/$image_upscale_src_zip || true

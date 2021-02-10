@@ -26,6 +26,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
+	c_util "github.com/uncharted-distil/distil-image-upscale/c_util"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util"
@@ -105,7 +106,7 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, config env.Config) func
 			}
 			// multiple passes for increasing scale dramatically
 			for i := 0; i < options.Scale; i++ {
-				img = util.UpscaleImage(img)
+				img = c_util.UpscaleImage(img, c_util.GetModelType(config.ModelType))
 			}
 		}
 		imageBytes, err := util.ImageToJPEG(img)

@@ -31,6 +31,7 @@ import (
 
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
+	c_util "github.com/uncharted-distil/distil-image-upscale/c_util"
 	api "github.com/uncharted-distil/distil/api/compute"
 	"github.com/uncharted-distil/distil/api/elastic"
 	"github.com/uncharted-distil/distil/api/env"
@@ -228,7 +229,11 @@ func main() {
 		}
 	}
 	// Loads image enhancement library
-	util.LoadImageUpscaleLibrary()
+	err=c_util.LoadImageUpscaleLibrary()
+	if err != nil{
+		log.Error(err)
+		os.Exit(1)
+	}
 	// register routes
 	mux := goji.NewMux()
 	mux.Use(middleware.Log)

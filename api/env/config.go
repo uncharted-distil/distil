@@ -97,6 +97,7 @@ type Config struct {
 	UserProblemPath                    string  `env:"USER_PROBLEM_PATH" envDefault:"outputs/problems"`
 	VerboseError                       bool    `env:"VERBOSE_ERROR" envDefault:"false"`
 	ShouldScaleImages                  bool    `env:"SHOULD_SCALE_IMAGES" envDefault:"false"` // enables and disables image scaling
+	ModelType                          int     `env:"MODEL_TYPE" envDefault:"1"`              // 0 is NOISE_CANCEL x2, 1 is GAN x4
 }
 
 // LoadConfig loads the config from the environment if necessary and returns a copy.
