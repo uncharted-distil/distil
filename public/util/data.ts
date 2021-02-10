@@ -720,6 +720,22 @@ export function sortVariablesByImportance(variables: Variable[]): Variable[] {
   return variables;
 }
 
+// Removes variables that are part of a grouped variable (ex. timeseries)
+// that are marked as hidden.
+export function filterHiddenVariables(
+  variables: Variable[],
+  toFilter: Variable[]
+): Variable[] {
+  // remove variables marked as hidden
+  const hidden = new Set(
+    variables
+      .filter((v) => v.grouping)
+      .map((v) => v.grouping.hidden)
+      .flat()
+  );
+  return toFilter.filter((v) => !hidden.has(v.key));
+}
+
 export function getVariableSummariesByState(
   pageIndex: number,
   pageSize: number,
@@ -740,16 +756,20 @@ export function getVariableSummariesByState(
     return sv.key.indexOf(CLUSTER_PREFIX) < 0;
   });
 
+  // filter out variables that are part of a grouped variable and have been marked
+  // as hidden
+  const filteredVariables = filterHiddenVariables(variables, sortedVariables);
+
   if (ranked) {
     // prioritize FI over MI
-    sortedVariables = sortVariablesByImportance(sortedVariables);
+    sortedVariables = sortVariablesByImportance(filteredVariables);
   }
 
   // select only the current variables on the page
-  sortedVariables = filterArrayByPage(pageIndex, pageSize, sortedVariables);
+  sortedVariables = filterArrayByPage(pageIndex, pageSize, filteredVariables);
 
   // map them back to the variable summary dictionary for the current route key
-  const currentSummaries = sortedVariables.reduce((cs, vn) => {
+  const currentSummaries = filteredVariables.reduce((cs, vn) => {
     if (!summaryDictionary[vn.key]) {
       const placeholder = createPendingSummary(
         vn.key,

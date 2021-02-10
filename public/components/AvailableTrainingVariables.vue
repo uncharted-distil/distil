@@ -12,10 +12,10 @@
       enable-highlighting
       enable-search
       enable-type-change
-      :facetCount="availableVariables && availableVariables.length"
+      :facet-count="availableVariables && availableVariables.length"
       :html="html"
-      :isAvailableFeatures="true"
-      :isFeaturesToModel="false"
+      :is-available-features="true"
+      :is-features-to-model="false"
       :instance-name="instanceName"
       :pagination="
         availableVariables && availableVariables.length > numRowsPerPage
@@ -49,6 +49,7 @@ import {
 } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import {
+  filterHiddenVariables,
   getComposedVariableKey,
   getVariableSummariesByState,
   NUM_PER_PAGE,
@@ -61,7 +62,7 @@ import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 
 export default Vue.extend({
-  name: "available-training-variables",
+  name: "AvailableTrainingVariables",
 
   components: {
     VariableFacets,
@@ -100,10 +101,11 @@ export default Vue.extend({
     },
 
     availableVariables(): Variable[] {
-      return searchVariables(
+      const searchVars = searchVariables(
         routeGetters.getAvailableVariables(this.$store),
         this.availableTrainingVarsSearch
       );
+      return filterHiddenVariables(this.variables, searchVars);
     },
 
     variables(): Variable[] {

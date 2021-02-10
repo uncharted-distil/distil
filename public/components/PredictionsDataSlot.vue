@@ -77,7 +77,10 @@ import LayerSelection from "./LayerSelection.vue";
 import { Filter, INCLUDE_FILTER } from "../util/filters";
 import { actions as viewActions } from "../store/view/module";
 import { isGeoLocatedType } from "../util/types";
-import { getVariableSummariesByState } from "../util/data";
+import {
+  filterHiddenVariables,
+  getVariableSummariesByState,
+} from "../util/data";
 const TABLE_VIEW = "table";
 const IMAGE_VIEW = "image";
 const GRAPH_VIEW = "graph";
@@ -126,7 +129,10 @@ export default Vue.extend({
       });
     },
     trainingVariables(): Variable[] {
-      return requestGetters.getActivePredictionTrainingVariables(this.$store);
+      const trainingVars = requestGetters.getActivePredictionTrainingVariables(
+        this.$store
+      );
+      return filterHiddenVariables(this.variables, trainingVars);
     },
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);

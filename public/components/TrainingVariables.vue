@@ -1,7 +1,7 @@
 <template>
   <div
     class="training-variables"
-    v-bind:class="{ included: includedActive, excluded: !includedActive }"
+    :class="{ included: includedActive, excluded: !includedActive }"
   >
     <p class="nav-link font-weight-bold">
       Features to Model
@@ -12,10 +12,10 @@
       enable-highlighting
       enable-search
       enable-type-change
-      :facetCount="trainingVariables.length"
+      :facet-count="trainingVariables.length"
       :html="html"
-      :isAvailableFeatures="false"
-      :isFeaturesToModel="true"
+      :is-available-features="false"
+      :is-features-to-model="true"
       :log-activity="logActivity"
       :instance-name="instanceName"
       :pagination="trainingVariables.length > numRowsPerPage"
@@ -57,6 +57,7 @@ import {
   NUM_PER_PAGE,
   getVariableSummariesByState,
   searchVariables,
+  filterHiddenVariables,
 } from "../util/data";
 import { overlayRouteEntry } from "../util/routes";
 import { removeFiltersByName } from "../util/filters";
@@ -64,7 +65,7 @@ import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 
 export default Vue.extend({
-  name: "training-variables",
+  name: "TrainingVariables",
 
   components: {
     VariableFacets,
@@ -96,10 +97,11 @@ export default Vue.extend({
       return routeGetters.getRouteTrainingVarsSearch(this.$store);
     },
     trainingVariables(): Variable[] {
-      return searchVariables(
+      const searchVars = searchVariables(
         routeGetters.getTrainingVariables(this.$store),
         this.trainingVarsSearch
       );
+      return filterHiddenVariables(this.variables, searchVars);
     },
     trainingVariableSummaries(): VariableSummary[] {
       const pageIndex = routeGetters.getRouteTrainingVarsPage(this.$store);

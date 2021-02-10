@@ -62,7 +62,11 @@ import { getters as requestsGetters } from "../store/requests/module";
 import { Dictionary } from "../util/dict";
 import { updateTableRowSelection } from "../util/row";
 import { spinnerHTML } from "../util/spinner";
-import { getVariableSummariesByState, searchVariables } from "../util/data";
+import {
+  filterHiddenVariables,
+  getVariableSummariesByState,
+  searchVariables,
+} from "../util/data";
 import { isGeoLocatedType } from "../util/types";
 import { Filter, INCLUDE_FILTER } from "../util/filters";
 
@@ -257,10 +261,11 @@ export default Vue.extend({
       return routeGetters.getRouteResultTrainingVarsSearch(this.$store);
     },
     trainingVariables(): Variable[] {
-      return searchVariables(
+      const searchVars = searchVariables(
         requestsGetters.getActiveSolutionTrainingVariables(this.$store),
         this.resultTrainingVarsSearch
       );
+      return filterHiddenVariables(this.variables, searchVars);
     },
     trainingSummaries(): VariableSummary[] {
       const summaryDictionary = resultsGetters.getTrainingSummariesDictionary(
