@@ -229,7 +229,11 @@ func main() {
 		}
 	}
 	// Loads image enhancement library
-	c_util.LoadImageUpscaleLibrary()
+	err=c_util.LoadImageUpscaleLibrary()
+	if err != nil{
+		log.Error(err)
+		os.Exit(1)
+	}
 	// register routes
 	mux := goji.NewMux()
 	mux.Use(middleware.Log)
