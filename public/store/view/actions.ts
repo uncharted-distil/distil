@@ -399,6 +399,12 @@ export const actions = {
     ]);
   },
 
+  clearAllData(context: ViewContext) {
+    datasetMutations.clearVariableSummaries(store);
+    datasetMutations.setIncludedTableData(store, createEmptyTableData());
+    datasetMutations.setExcludedTableData(store, createEmptyTableData());
+  },
+
   clearDatasetTableData(context: ViewContext) {
     datasetMutations.setIncludedTableData(store, createEmptyTableData());
     datasetMutations.setExcludedTableData(store, createEmptyTableData());

@@ -364,6 +364,7 @@ export default Vue.extend({
 
   beforeMount() {
     this.fetch();
+    viewActions.clearAllData(this.$store);
   },
 
   methods: {

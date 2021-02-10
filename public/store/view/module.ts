@@ -26,6 +26,7 @@ export const mutations = {
 };
 
 export const actions = {
+  clearAllData: dispatch(moduleActions.clearAllData),
   clearDatasetTableData: dispatch(moduleActions.clearDatasetTableData),
   fetchHomeData: dispatch(moduleActions.fetchHomeData),
   fetchSearchData: dispatch(moduleActions.fetchSearchData),

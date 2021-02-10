@@ -21,8 +21,16 @@ import { isNil } from "lodash";
 
 import VariableFacets from "../../components/facets/VariableFacets.vue";
 
-import { Variable, VariableSummary } from "../../store/dataset/index";
-import { getters as datasetGetters } from "../../store/dataset/module";
+import {
+  SummaryMode,
+  Variable,
+  VariableSummary,
+} from "../../store/dataset/index";
+import { actions as appActions } from "../../store/app/module";
+import {
+  getters as datasetGetters,
+  actions as datasetActions,
+} from "../../store/dataset/module";
 import { DATA_EXPLORER_VAR_INSTANCE } from "../../store/route/index";
 import { getters as routeGetters } from "../../store/route/module";
 import { actions as viewActions } from "../../store/view/module";
@@ -33,8 +41,12 @@ import {
   searchVariables,
 } from "../../util/data";
 import { Group } from "../../util/facets";
-import { overlayRouteEntry, RouteArgs } from "../../util/routes";
-import { Activity } from "../../util/userEvents";
+import {
+  overlayRouteEntry,
+  RouteArgs,
+  varModesToString,
+} from "../../util/routes";
+import { Feature, Activity, SubActivity } from "../../util/userEvents";
 import { isUnsupportedTargetVar } from "../../util/types";
 
 export default Vue.extend({
@@ -60,14 +72,6 @@ export default Vue.extend({
   },
 
   computed: {
-    varsPage(): number {
-      return routeGetters.getRouteDataExplorerVarsPage(this.$store);
-    },
-
-    varsSearch(): string {
-      return routeGetters.getRouteDataExplorerVarsSearch(this.$store);
-    },
-
     buttons(): (group: Group) => HTMLElement {
       return (group: Group) => {
         const variable = group.key;
@@ -93,6 +97,10 @@ export default Vue.extend({
         container.append(exploreButton, modelButtons);
         return container;
       };
+    },
+
+    explore(): string[] {
+      return routeGetters.getExploreVariables(this.$store);
     },
 
     groupedFeatures(): string[] {
@@ -133,10 +141,6 @@ export default Vue.extend({
       return currentSummaries;
     },
 
-    explore(): string[] {
-      return routeGetters.getExploreVariables(this.$store);
-    },
-
     target(): string {
       return routeGetters.getRouteTargetVariable(this.$store);
     },
@@ -151,6 +155,14 @@ export default Vue.extend({
           .filter((v) => isUnsupportedTargetVar(v.key, v.colType))
           .map((v) => v.key)
       );
+    },
+
+    varsPage(): number {
+      return routeGetters.getRouteDataExplorerVarsPage(this.$store);
+    },
+
+    varsSearch(): string {
+      return routeGetters.getRouteDataExplorerVarsSearch(this.$store);
     },
   },
 
@@ -196,6 +208,7 @@ export default Vue.extend({
     },
 
     targetButton(variable: string): HTMLElement {
+      // Check if the variable is an unsupported to be a target.
       const isUnsupported = this.unsupportedTargets.has(variable);
       if (isUnsupported) return;
 
@@ -232,17 +245,75 @@ export default Vue.extend({
       return this.explore.includes(variable);
     },
 
-    updateTarget(variable: string): void {
+    async updateTarget(variable: string): Promise<void> {
       const args = {} as RouteArgs;
+
       // Is the variable the current target?
       if (this.isTarget(variable)) {
         // Remove the variable as target
-        args.target = "";
+        args.target = null;
+        args.task = null;
       } else {
-        // Or select it as target, but remove it from training
+        // Or select it as target
         args.target = variable;
-        args.training = this.training.filter((v) => v !== variable).join(",");
+
+        // Filter it out of the training
+        const training = this.training.filter((v) => v !== variable);
+
+        // Get Variables Grouping and check if our target is one of them
+        const groupings = datasetGetters.getGroupings(this.$store);
+        const targetGrouping = groupings?.find((g) => g.key === variable)
+          ?.grouping;
+        if (!!targetGrouping) {
+          if (targetGrouping.subIds.length > 0) {
+            targetGrouping.subIds.forEach((subId) => {
+              if (!training.find((t) => t === subId)) {
+                training.push(subId);
+              }
+            });
+          } else {
+            if (!training.find((t) => t === targetGrouping.idCol)) {
+              training.push(targetGrouping.idCol);
+            }
+          }
+        }
+
+        // Get the var modes
+        const varModesMap = routeGetters.getDecodedVarModes(this.$store);
+        args.varModes = varModesToString(varModesMap);
+
+        // Fetch the task
+        try {
+          const response = await datasetActions.fetchTask(this.$store, {
+            dataset: routeGetters.getRouteDataset(this.$store),
+            targetName: args.target,
+            variableNames: [],
+          });
+          args.task = response.data.task.join(",") ?? "";
+
+          // Update the training variable
+          if (args.task.includes("timeseries")) {
+            training.forEach((variable) => {
+              if (variable !== args.target) {
+                varModesMap.set(variable, SummaryMode.Timeseries);
+              }
+            });
+          }
+        } catch (error) {
+          console.log(error);
+        }
+
+        // Make the list of training variables' name a string.
+        args.training = training.join(",");
+
+        appActions.logUserEvent(this.$store, {
+          feature: Feature.SELECT_TARGET,
+          activity: Activity.PROBLEM_DEFINITION,
+          subActivity: SubActivity.PROBLEM_SPECIFICATION,
+          details: { target: variable },
+        });
       }
+
       this.updateRoute(args);
     },
 
