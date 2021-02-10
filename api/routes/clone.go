@@ -114,6 +114,13 @@ func CloningHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCt
 	}
 }
 
+type cloningParams struct {
+	sourceDataset     string
+	predictionDataset string
+	targetName        string
+	features          []string
+}
+
 // CloningResultsHandler generates a route handler that enables cloning
 // of a result + dataset in the data storage and metadata storage, creating
 // a new dataset based on results.
@@ -139,6 +146,10 @@ func CloningResultsHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataSt
 			return
 		}
 		newDatasetName := params["datasetName"].(string)
+		includeDatasetFeatures := false
+		if params["includeDatasetFeatures"] != nil {
+			includeDatasetFeatures = params["includeDatasetFeatures"].(bool)
+		}
 
 		metaStorage, err := metaCtor()
 		if err != nil {
@@ -157,24 +168,10 @@ func CloningResultsHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataSt
 		}
 
 		// get the features from the request
-		prediction, err := solutionStorage.FetchPrediction(predictionRequestID)
+		parsedParams, err := getCloningParams(predictionRequestID, metaStorage, solutionStorage, includeDatasetFeatures)
 		if err != nil {
 			handleError(w, err)
 			return
-		}
-		request, err := solutionStorage.FetchRequestByFittedSolutionID(prediction.FittedSolutionID)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-		targetName := ""
-		features := []string{model.D3MIndexFieldName}
-		for _, f := range request.Features {
-			if f.FeatureType != model.FeatureTypeTarget {
-				features = append(features, f.FeatureName)
-			} else {
-				targetName = f.FeatureName
-			}
 		}
 
 		// get needed request info
@@ -184,14 +181,8 @@ func CloningResultsHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataSt
 			return
 		}
 
-		// read the source metadata for typing information
-		req, err := solutionStorage.FetchRequestByFittedSolutionID(prediction.FittedSolutionID)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-
-		newDatasetID, err := task.CreateDatasetFromResult(newDatasetName, prediction.Dataset, req.Dataset, features, targetName, pred.ResultURI, metaStorage, dataStorage, config)
+		newDatasetID, err := task.CreateDatasetFromResult(newDatasetName, parsedParams.predictionDataset,
+			parsedParams.sourceDataset, parsedParams.features, parsedParams.targetName, pred.ResultURI, metaStorage, dataStorage, config)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -204,4 +195,56 @@ func CloningResultsHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataSt
 			return
 		}
 	}
+}
+
+func getCloningParams(predictionRequestID string, metaStorage api.MetadataStorage, solutionStorage api.SolutionStorage, includeDatasetFeatures bool) (*cloningParams, error) {
+	// get the features from the request
+	prediction, err := solutionStorage.FetchPrediction(predictionRequestID)
+	if err != nil {
+		return nil, err
+	}
+	request, err := solutionStorage.FetchRequestByFittedSolutionID(prediction.FittedSolutionID)
+	if err != nil {
+		return nil, err
+	}
+	targetName := ""
+	features := []string{model.D3MIndexFieldName}
+	for _, f := range request.Features {
+		if !includeDatasetFeatures && f.FeatureType != model.FeatureTypeTarget {
+			features = append(features, f.FeatureName)
+		} else {
+			targetName = f.FeatureName
+		}
+	}
+
+	// read the source metadata for typing information
+	req, err := solutionStorage.FetchRequestByFittedSolutionID(prediction.FittedSolutionID)
+	if err != nil {
+		return nil, err
+	}
+
+	if includeDatasetFeatures {
+		// just select every feature in the source dataset
+		ds, err := metaStorage.FetchDataset(req.Dataset, true, false, false)
+		if err != nil {
+			return nil, err
+		}
+
+		features = make([]string, len(ds.Variables)-1)
+		for i, v := range ds.Variables {
+			// the target is not a feature!
+			if v.Key != targetName {
+				features[i] = v.Key
+			}
+		}
+	}
+
+	parsedParams := &cloningParams{
+		predictionDataset: prediction.Dataset,
+		sourceDataset:     req.Dataset,
+		targetName:        targetName,
+		features:          features,
+	}
+
+	return parsedParams, nil
 }
