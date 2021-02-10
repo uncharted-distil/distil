@@ -1,5 +1,5 @@
 <template>
-  <div class="create-solutions-form mt-2">
+  <div class="create-solutions-form d-flex justify-content-center mt-2">
     <error-modal
       title="Model Failed"
       :show="showCreateFailure"
@@ -7,7 +7,14 @@
       @close="showCreateFailure = !showCreateFailure"
     />
     <settings-modal :time-range="dateTimeExtrema" />
-    <div class="row justify-content-center">
+    <b-overlay
+      :show="isPending"
+      rounded
+      opacity="0.6"
+      spinner-small
+      spinner-variant="success"
+      class="d-inline-block"
+    >
       <b-button-group>
         <b-button
           :variant="createVariant"
@@ -24,16 +31,7 @@
           <i class="fa fa-cog" aria-hidden="true" />
         </b-button>
       </b-button-group>
-    </div>
-    <div class="solution-progress">
-      <b-progress
-        v-if="isPending"
-        :value="percentComplete"
-        variant="outline-secondary"
-        striped
-        :animated="true"
-      />
-    </div>
+    </b-overlay>
   </div>
 </template>
 
@@ -123,7 +121,7 @@ export default Vue.extend({
       return this.isPending || !this.targetSelected || !this.trainingSelected;
     },
     createVariant(): string {
-      return !this.disableCreate ? "success" : "outline-secondary";
+      return !this.disableCreate ? "success" : "outline-success";
     },
     percentComplete(): number {
       return 100;

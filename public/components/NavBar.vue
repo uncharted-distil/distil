@@ -64,11 +64,6 @@
             <i class="fa fa-check-circle nav-icon" /> Check Models
           </b-nav-item>
         </template>
-
-        <!-- in the case of the data explorer, we can create the model from here -->
-        <template v-else-if="isCreateModelPossible">
-          <b-nav-text><create-solutions-form /></b-nav-text>
-        </template>
       </b-navbar-nav>
     </b-collapse>
 
@@ -117,15 +112,9 @@ import {
 } from "../store/route/index";
 import { restoreView } from "../util/view";
 import Vue from "vue";
-import { isNil } from "lodash";
-import CreateSolutionsForm from "../components/CreateSolutionsForm.vue";
 
 export default Vue.extend({
   name: "NavBar",
-
-  components: {
-    CreateSolutionsForm,
-  },
 
   data() {
     return {
@@ -195,15 +184,6 @@ export default Vue.extend({
 
     isPrototype(): boolean {
       return appGetters.isPrototype(this.$store);
-    },
-
-    isCreateModelPossible(): boolean {
-      // check that we are on the Data Explorer view, with some target and training variables.
-      return (
-        this.isActive(DATA_EXPLORER_ROUTE) &&
-        !isNil(this.target) &&
-        !isNil(routeGetters.getRouteTrainingVariables(this.$store))
-      );
     },
   },
 

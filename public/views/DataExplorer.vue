@@ -43,18 +43,22 @@
         <component :is="viewComponent" :instance-name="instanceName" />
       </section>
 
-      <p class="selection-data-size mt-2 mb-0">
-        <data-size
-          :current-size="numRows"
-          :total="totalNumRows"
-          @submit="onDataSizeSubmit"
-        />
-        <strong class="matching-color">matching</strong> samples of
-        {{ totalNumRows }} to model<template v-if="selectionNumRows > 0">
-          , {{ selectionNumRows }}
-          <strong class="selected-color">selected</strong>
-        </template>
-      </p>
+      <footer class="d-flex justify-content-between">
+        <p class="selection-data-size mt-2 mb-0">
+          <data-size
+            :current-size="numRows"
+            :total="totalNumRows"
+            @submit="onDataSizeSubmit"
+          />
+          <strong class="matching-color">matching</strong> samples of
+          {{ totalNumRows }} to model<template v-if="selectionNumRows > 0">
+            , {{ selectionNumRows }}
+            <strong class="selected-color">selected</strong>
+          </template>
+        </p>
+
+        <create-solutions-form v-if="isCreateModelPossible" />
+      </footer>
     </main>
 
     <status-sidebar />
@@ -64,11 +68,12 @@
 
 <script lang="ts">
 import Vue from "vue";
-import { capitalize, isEmpty } from "lodash";
+import { capitalize, isEmpty, isNil } from "lodash";
 
 // Components
 import ActionColumn, { Action } from "../components/layout/ActionColumn.vue";
 import AddVariablePane from "../components/panel/AddVariablePane.vue";
+import CreateSolutionsForm from "../components/CreateSolutionsForm.vue";
 import DataSize from "../components/buttons/DataSize.vue";
 import FacetListPane from "../components/panel/FacetListPane.vue";
 import LeftSidePanel from "../components/layout/LeftSidePanel.vue";
@@ -128,6 +133,7 @@ export default Vue.extend({
   components: {
     ActionColumn,
     AddVariablePane,
+    CreateSolutionsForm,
     DataSize,
     FacetListPane,
     LeftSidePanel,
@@ -207,6 +213,11 @@ export default Vue.extend({
 
     highlight(): Highlight {
       return routeGetters.getDecodedHighlight(this.$store);
+    },
+
+    isCreateModelPossible(): boolean {
+      // check that we have some target and training variables.
+      return !isNil(this.target) && !isEmpty(this.training);
     },
 
     routeHighlight(): string {
