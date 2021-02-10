@@ -221,8 +221,15 @@ func main() {
 			log.Errorf("%+v", err)
 			os.Exit(1)
 		}
-		_, err = task.IngestDataset(metadata.Contrib, pgDataStorageCtor, esMetadataStorageCtor,
-			"initial", nil, model.DatasetTypeModelling, ingestConfig, &task.IngestSteps{ClassificationOverwrite: true})
+		ingestParams := &task.IngestParams{
+			Source:   metadata.Contrib,
+			DataCtor: pgDataStorageCtor,
+			MetaCtor: esMetadataStorageCtor,
+			ID:       "initial",
+			Origins:  nil,
+			Type:     model.DatasetTypeModelling,
+		}
+		_, err = task.IngestDataset(ingestParams, ingestConfig, &task.IngestSteps{ClassificationOverwrite: true})
 		if err != nil {
 			log.Errorf("%+v", err)
 			os.Exit(1)
