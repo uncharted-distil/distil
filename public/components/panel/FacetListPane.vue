@@ -245,76 +245,77 @@ export default Vue.extend({
       return this.explore.includes(variable);
     },
 
-    async updateTarget(variable: string): Promise<void> {
-      const args = {} as RouteArgs;
-
+    async updateTarget(target: string): Promise<void> {
       // Is the variable the current target?
-      if (this.isTarget(variable)) {
+      if (this.isTarget(target)) {
         // Remove the variable as target
-        args.target = null;
-        args.task = null;
-      } else {
-        // Or select it as target
-        args.target = variable;
-
-        // Filter it out of the training
-        const training = this.training.filter((v) => v !== variable);
-
-        // Get Variables Grouping and check if our target is one of them
-        const groupings = datasetGetters.getGroupings(this.$store);
-        const targetGrouping = groupings?.find((g) => g.key === variable)
-          ?.grouping;
-        if (!!targetGrouping) {
-          if (targetGrouping.subIds.length > 0) {
-            targetGrouping.subIds.forEach((subId) => {
-              if (!training.find((t) => t === subId)) {
-                training.push(subId);
-              }
-            });
-          } else {
-            if (!training.find((t) => t === targetGrouping.idCol)) {
-              training.push(targetGrouping.idCol);
-            }
-          }
-        }
-
-        // Get the var modes
-        const varModesMap = routeGetters.getDecodedVarModes(this.$store);
-        args.varModes = varModesToString(varModesMap);
-
-        // Fetch the task
-        try {
-          const response = await datasetActions.fetchTask(this.$store, {
-            dataset: routeGetters.getRouteDataset(this.$store),
-            targetName: args.target,
-            variableNames: [],
-          });
-          args.task = response.data.task.join(",") ?? "";
-
-          // Update the training variable
-          if (args.task.includes("timeseries")) {
-            training.forEach((variable) => {
-              if (variable !== args.target) {
-                varModesMap.set(variable, SummaryMode.Timeseries);
-              }
-            });
-          }
-        } catch (error) {
-          console.log(error);
-        }
-
-        // Make the list of training variables' name a string.
-        args.training = training.join(",");
-
-        appActions.logUserEvent(this.$store, {
-          feature: Feature.SELECT_TARGET,
-          activity: Activity.PROBLEM_DEFINITION,
-          subActivity: SubActivity.PROBLEM_SPECIFICATION,
-          details: { target: variable },
-        });
+        this.updateRoute({ target: null, task: null });
+        return;
       }
 
+      const args = {} as RouteArgs;
+      args.target = target;
+
+      // Filter it out of the training
+      const training = this.training.filter((v) => v !== target);
+
+      // Get Variables Grouping and check if our target is one of them
+      const groupings = datasetGetters.getGroupings(this.$store);
+      const targetGrouping = groupings?.find((g) => g.key === target)?.grouping;
+      if (!!targetGrouping) {
+        if (targetGrouping.subIds.length > 0) {
+          targetGrouping.subIds.forEach((subId) => {
+            if (!training.find((t) => t === subId)) {
+              training.push(subId);
+            }
+          });
+        } else {
+          if (!training.find((t) => t === targetGrouping.idCol)) {
+            training.push(targetGrouping.idCol);
+          }
+        }
+      }
+
+      // Get the var modes
+      const varModesMap = routeGetters.getDecodedVarModes(this.$store);
+      args.varModes = varModesToString(varModesMap);
+
+      const dataset = routeGetters.getRouteDataset(this.$store);
+
+      // Fetch the task
+      try {
+        const response = await datasetActions.fetchTask(this.$store, {
+          dataset,
+          targetName: target,
+          variableNames: [],
+        });
+        args.task = response.data.task.join(",") ?? "";
+
+        // Update the training variable
+        if (args.task.includes("timeseries")) {
+          training.forEach((variable) => {
+            if (variable !== target) {
+              varModesMap.set(variable, SummaryMode.Timeseries);
+            }
+          });
+        }
+      } catch (error) {
+        console.log(error);
+      }
+
+      // Make the list of training variables' name a string.
+      args.training = training.join(",");
+
+      appActions.logUserEvent(this.$store, {
+        feature: Feature.SELECT_TARGET,
+        activity: Activity.PROBLEM_DEFINITION,
+        subActivity: SubActivity.PROBLEM_SPECIFICATION,
+        details: { target },
+      });
+
       this.updateRoute(args);
+
+      datasetActions.fetchVariableRankings(this.$store, { dataset, target });
     },
 
     updateTraining(variable: string): void {

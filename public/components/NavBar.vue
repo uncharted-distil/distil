@@ -67,7 +67,7 @@
 
         <!-- in the case of the data explorer, we can create the model from here -->
         <template v-else-if="isCreateModelPossible">
-          <b-nav-item><create-solutions-form /></b-nav-item>
+          <b-nav-text><create-solutions-form /></b-nav-text>
         </template>
       </b-navbar-nav>
     </b-collapse>
