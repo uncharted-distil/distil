@@ -268,6 +268,7 @@ export default Vue.extend({
       this.disableUpscale = false;
     },
     rotateSelection(direction: number) {
+      this.scale = 0; // reset scale when fetching new images
       this.carouselPosition = Math.min(
         Math.max(0, this.carouselPosition + direction),
         this.imageUrls.length - 1

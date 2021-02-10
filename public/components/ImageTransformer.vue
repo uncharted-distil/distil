@@ -100,24 +100,33 @@ export default Vue.extend({
       });
     },
     draw() {
+      // clears canvas
       this.ctx.save();
       this.ctx.setTransform(1, 0, 0, 1, 0, 0);
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.ctx.restore();
+      // draws any images
       this.imgs.forEach((img) => {
         this.ctx.drawImage(img, 0, 0, this.width, this.height);
       });
     },
     onScroll(event: WheelEvent) {
+      // on scroll transform mouse coordinates to canvas coordinates
       const p = this.getTransformedPoint(event.offsetX, event.offsetY);
+      // scale for the view matrix
       const scale = event.deltaY > 0 ? 0.9 : 1.1;
+      // translate to mouse canvas coordinates
       this.ctx.translate(p.x, p.y);
+      // scale view matrix
       this.ctx.scale(scale, scale);
+      // translate back
       this.ctx.translate(-p.x, -p.y);
       this.draw();
       return;
     },
+    // converts screen coordinates (browser coordinates) to canvas coordinates
     getTransformedPoint(x: number, y: number) {
+      // invert view matrix (opengl type stuff)
       const inverseTransform = this.ctx.getTransform().invertSelf();
       const transformedX =
         inverseTransform.a * x + inverseTransform.c * y + inverseTransform.e;
@@ -125,10 +134,6 @@ export default Vue.extend({
         inverseTransform.b * x + inverseTransform.d * y + inverseTransform.f;
 
       return { x: transformedX, y: transformedY };
-    },
-    onPan(event) {
-      console.log(event);
-      return;
     },
     onMouseMove(event: MouseEvent) {
       if (this.mouseDown) {
