@@ -229,8 +229,8 @@ func main() {
 		}
 	}
 	// Loads image enhancement library
-	err=c_util.LoadImageUpscaleLibrary()
-	if err != nil{
+	err = c_util.LoadImageUpscaleLibrary()
+	if err != nil {
 		log.Error(err)
 		os.Exit(1)
 	}
