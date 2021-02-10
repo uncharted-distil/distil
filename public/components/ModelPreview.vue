@@ -11,7 +11,7 @@
       </a>
       <a class="nav-link"><b>Dateset Name:</b> {{ model.datasetName }}</a>
       <a class="nav-link"><b>Features:</b> {{ model.variables.length }}</a>
-      <a class="nav-link"><b>Target:</b> {{ model.target }}</a>
+      <a class="nav-link"><b>Target:</b> {{ model.target.displayName }}</a>
     </div>
     <div class="card-body">
       <div class="row">
@@ -44,9 +44,13 @@
         <div v-if="expanded" class="col-12">
           <span><b>All Variables:</b></span>
           <p>
-            <span v-for="(variable, i) in sortedVariables" :key="variable.name">
+            <span
+              v-for="(variable, i) in sortedVariables"
+              :key="variable.displayName"
+            >
               {{
-                variable.name + (i !== model.variables.length - 1 ? ", " : ".")
+                variable.displayName +
+                (i !== model.variables.length - 1 ? ", " : ".")
               }}
             </span>
           </p>
@@ -89,7 +93,9 @@ export default Vue.extend({
       return this.model.variableDetails.slice().sort((a, b) => b.rank - a.rank);
     },
     topVariables(): string[] {
-      return this.sortedVariables.slice(0, NUM_TOP_FEATURES).map((a) => a.name);
+      return this.sortedVariables
+        .slice(0, NUM_TOP_FEATURES)
+        .map((a) => a.displayName);
     },
   },
 
@@ -97,7 +103,7 @@ export default Vue.extend({
     onResult() {
       openModelSolution(this.$router, {
         datasetId: this.model.datasetId,
-        targetFeature: this.model.target,
+        targetFeature: this.model.target.displayName,
         fittedSolutionId: this.model.fittedSolutionId,
         variableFeatures: this.model.variables,
       });
