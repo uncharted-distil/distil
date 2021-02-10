@@ -62,6 +62,7 @@ type Config struct {
 	MaxTestRows                        int     `env:"MAX_TEST_ROWS" envDefault:"100000"`
 	MinTrainingRows                    int     `env:"MIN_TRAINING_ROWS" envDefault:"100"`
 	MinTestRows                        int     `env:"MIN_TEST_ROWS" envDefault:"100"`
+	ModelType                          int     `env:"MODEL_TYPE" envDefault:"1"` // 0 is NOISE_CANCEL x2, 1 is GAN x4
 	PipelineCacheEnabled               bool    `env:"PIPELINE_CACHE_ENABLED" envDefault:"true"`
 	PipelineCacheFilename              string  `env:"PIPELINE_CACHE_FILENAME" envDefault:"cache.bin"`
 	PipelineQueueSize                  int     `env:"PIPELINE_QUEUE_SIZE" envDefault:"10"`
@@ -80,6 +81,7 @@ type Config struct {
 	RemoteSensingGPUBatchSize          int     `env:"REMOTE_SENSING_GPU_BATCH_SIZE" envDefault:"32"`
 	RemoteSensingNumJobs               int     `env:"REMOTE_SENSING_NUM_JOBS" envDefault:"-1"` // -1 sets num jobs = num cpus
 	SchemaPath                         string  `env:"SCHEMA_PATH" envDefault:"datasetDoc.json"`
+	ShouldScaleImages                  bool    `env:"SHOULD_SCALE_IMAGES" envDefault:"false"` // enables and disables image scaling
 	SkipIngest                         bool    `env:"SKIP_INGEST" envDefault:"false"`
 	SkipPreprocessing                  bool    `env:"SKIP_PREPROCESSING" envDefault:"false"`
 	SolutionComputeEndpoint            string  `env:"SOLUTION_COMPUTE_ENDPOINT" envDefault:"localhost:50051"`
@@ -96,8 +98,6 @@ type Config struct {
 	TrainTestSplitTimeSeries           float64 `env:"TRAIN_TEST_SPLIT_TIMESERIES" envDefault:"0.9"`
 	UserProblemPath                    string  `env:"USER_PROBLEM_PATH" envDefault:"outputs/problems"`
 	VerboseError                       bool    `env:"VERBOSE_ERROR" envDefault:"false"`
-	ShouldScaleImages                  bool    `env:"SHOULD_SCALE_IMAGES" envDefault:"false"` // enables and disables image scaling
-	ModelType                          int     `env:"MODEL_TYPE" envDefault:"1"`              // 0 is NOISE_CANCEL x2, 1 is GAN x4
 }
 
 // LoadConfig loads the config from the environment if necessary and returns a copy.
