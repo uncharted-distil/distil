@@ -7,7 +7,7 @@ export interface Model {
   fittedSolutionId: string;
   datasetId: string;
   datasetName: string;
-  target: string;
+  target: VariableDetail;
   variables: string[];
   variableDetails: VariableDetail[];
 }
@@ -20,7 +20,9 @@ export interface ModelState {
 }
 
 export interface VariableDetail {
-  name: string;
+  key: string;
+  headerName: string;
+  displayName: string;
   rank: number;
   varType: string;
 }

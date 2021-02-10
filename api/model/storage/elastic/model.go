@@ -29,9 +29,17 @@ const (
 )
 
 func (s *Storage) parseRawSolutionVariable(rsv map[string]interface{}) (*api.SolutionVariable, error) {
-	name, ok := json.String(rsv, "name")
+	key, ok := json.String(rsv, "key")
 	if !ok {
-		return nil, errors.New("unable to parse name from variable data")
+		return nil, errors.New("unable to parse key from variable data")
+	}
+	displayName, ok := json.String(rsv, "displayName")
+	if !ok {
+		return nil, errors.New("unable to parse display name from variable data")
+	}
+	headerName, ok := json.String(rsv, "headerName")
+	if !ok {
+		return nil, errors.New("unable to parse header name from variable data")
 	}
 
 	rank, ok := json.Float(rsv, "rank")
@@ -45,9 +53,11 @@ func (s *Storage) parseRawSolutionVariable(rsv map[string]interface{}) (*api.Sol
 	}
 
 	return &api.SolutionVariable{
-		Name: name,
-		Rank: rank,
-		Type: typ,
+		Key:         key,
+		DisplayName: displayName,
+		HeaderName:  headerName,
+		Rank:        rank,
+		Type:        typ,
 	}, nil
 }
 
@@ -103,10 +113,15 @@ func (s *Storage) parseModels(res *elastic.SearchResult) ([]*api.ExportedModel, 
 			return nil, errors.New("failed to parse the dataset id")
 		}
 		// extract the target
-		target, ok := json.String(src, "target")
+		targetInfo, ok := json.Get(src, "target")
 		if !ok {
 			return nil, errors.New("failed to parse the target")
 		}
+		target, err := s.parseRawSolutionVariable(targetInfo)
+		if err != nil {
+			return nil, err
+		}
+
 		// extract the name
 		name, ok := json.String(src, "datasetName")
 		if !ok {

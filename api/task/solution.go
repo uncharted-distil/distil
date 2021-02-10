@@ -60,26 +60,22 @@ func SaveFittedSolution(fittedSolutionID string, modelName string, modelDescript
 		}
 	}
 
-	types := make(map[string]string)
-
+	varMap := make(map[string]*model.Variable)
 	for _, vt := range dataset.Variables {
-		types[vt.Key] = vt.Type
+		varMap[vt.Key] = vt
 	}
 
 	vars := make([]string, len(request.Features)-1)
 	varDetails := make([]*api.SolutionVariable, len(request.Features)-1)
-	target := ""
+	target := &api.SolutionVariable{}
 	c := 0
 	for _, v := range request.Features {
 		if v.FeatureType == model.FeatureTypeTarget {
-			target = v.FeatureName
+			target = api.SolutionVariableFromModelVariable(varMap[v.FeatureName], float64(-1))
 		} else {
 			vars[c] = v.FeatureName
-			varDetails[c] = &api.SolutionVariable{
-				Name: v.FeatureName,
-				Rank: ranks[v.FeatureName],
-				Type: types[v.FeatureName],
-			}
+			variable := varMap[v.FeatureName]
+			varDetails[c] = api.SolutionVariableFromModelVariable(variable, ranks[v.FeatureName])
 			c = c + 1
 		}
 	}

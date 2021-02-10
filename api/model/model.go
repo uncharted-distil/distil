@@ -42,7 +42,7 @@ type ExportedModel struct {
 	FittedSolutionID string              `json:"fittedSolutionId"`
 	DatasetID        string              `json:"datasetId"`
 	DatasetName      string              `json:"datasetName"`
-	Target           string              `json:"target"`
+	Target           *SolutionVariable   `json:"target"`
 	Variables        []string            `json:"variables"`
 	VariableDetails  []*SolutionVariable `json:"variableDetails"`
 }
@@ -170,9 +170,22 @@ type SolutionScore struct {
 
 // SolutionVariable represents the basic variable data for a solution
 type SolutionVariable struct {
-	Name string  `json:"name"`
-	Rank float64 `json:"rank"`
-	Type string  `json:"varType"`
+	Key         string  `json:"key"`
+	DisplayName string  `json:"displayName"`
+	HeaderName  string  `json:"headerName"`
+	Rank        float64 `json:"rank"`
+	Type        string  `json:"varType"`
+}
+
+// SolutionVariableFromModelVariable creates a solution variable from a model variable.
+func SolutionVariableFromModelVariable(variable *model.Variable, rank float64) *SolutionVariable {
+	return &SolutionVariable{
+		Key:         variable.Key,
+		DisplayName: variable.DisplayName,
+		HeaderName:  variable.HeaderName,
+		Rank:        rank,
+		Type:        variable.Type,
+	}
 }
 
 // PredictionResult represents the output from a model prediction.
