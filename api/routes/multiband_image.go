@@ -99,16 +99,16 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, config env.Config) func
 			handleError(w, err)
 			return
 		}
-		 if options.Scale > 0 && config.ShouldScaleImages {
-		 	if options.Scale > 3 {
-		 		// dont allow upscaling past factor of 6
-		 		options.Scale = 3
-		 	}
-		 	// multiple passes for increasing scale dramatically
-		 	for i := 0; i < options.Scale; i++ {
-		 		img = c_util.UpscaleImage(img, c_util.GetModelType(config.ModelType))
-		 	}
-		 }
+		if options.Scale > 0 && config.ShouldScaleImages {
+			if options.Scale > 3 {
+				// dont allow upscaling past factor of 6
+				options.Scale = 3
+			}
+			// multiple passes for increasing scale dramatically
+			for i := 0; i < options.Scale; i++ {
+				img = c_util.UpscaleImage(img, c_util.GetModelType(config.ModelType))
+			}
+		}
 		imageBytes, err := util.ImageToJPEG(img)
 		if err != nil {
 			handleError(w, err)
