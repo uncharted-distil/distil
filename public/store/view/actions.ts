@@ -424,9 +424,9 @@ export const actions = {
   async fetchDataExplorerData(context: ViewContext, variables: Variable[]) {
     // fetch new state
     const dataset = context.getters.getRouteDataset;
+    await fetchVariableSummaries(context, { dataset, variables });
     fetchClusters(context, { dataset });
     fetchOutliers(context, { dataset });
-    return fetchVariableSummaries(context, { dataset, variables });
   },
 
   updateDataExplorerData(context: ViewContext) {

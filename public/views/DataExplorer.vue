@@ -28,7 +28,7 @@
       />
 
       <!-- Tabs to switch views -->
-      <b-tabs v-model="activeView" pills class="mb-3">
+      <b-tabs v-model="activeView" class="tab-container">
         <b-tab
           v-for="(view, index) in activeViews"
           :key="index"
@@ -417,14 +417,54 @@ export default Vue.extend({
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-  padding: 1rem;
+  padding-bottom: 1rem;
+  padding-top: 1rem;
+}
+
+/* Add padding to all elements but the tabs and data */
+.content > *:not(.data-container),
+.content > *:not(.tab-container) {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.tab-container,
+.data-container {
+  border-bottom: 1px solid var(--border-color);
 }
 
 .data-container {
+  background-color: var(--white);
   display: flex;
   flex-flow: wrap;
   height: 100%;
+  padding: 1rem;
   position: relative;
   width: 100%;
+}
+</style>
+<style>
+.view-container .tab-container ul.nav-tabs {
+  border: none;
+  margin-bottom: -1px;
+}
+
+.view-container .tab-container a.nav-link {
+  border: 1px solid transparent;
+  border-bottom-color: var(--border-color);
+  border-top-width: 3px;
+  color: var(--color-text-second);
+  margin-bottom: 0;
+}
+
+.view-container .tab-container a.nav-link.active {
+  background-color: var(--white);
+  border-color: var(--border-color);
+  border-top-color: var(--primary);
+  border-bottom-width: 0;
+  border-top-left-radius: 0.25rem;
+  border-top-right-radius: 0.25rem;
+  color: var(--primary);
+  margin-bottom: -1px;
 }
 </style>
