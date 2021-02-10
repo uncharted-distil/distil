@@ -34,9 +34,7 @@ export default Vue.extend({
   data() {
     return {
       mouseDown: false,
-      translation: { x: 0, y: 0 },
       start: { x: 0, y: 0 },
-      scale: 1,
       imgs: [],
     };
   },
@@ -62,8 +60,6 @@ export default Vue.extend({
   methods: {
     resetIdentity() {
       this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-      this.translation = { x: 0, y: 0 };
-      this.scale = 1;
       this.draw();
     },
     setMouseDown(val: boolean) {
@@ -108,26 +104,27 @@ export default Vue.extend({
       this.ctx.setTransform(1, 0, 0, 1, 0, 0);
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.ctx.restore();
-      this.ctx.save();
-      this.ctx.translate(
-        this.translation.x / this.scale,
-        this.translation.y / this.scale
-      );
       this.imgs.forEach((img) => {
         this.ctx.drawImage(img, 0, 0, this.width, this.height);
       });
-      this.ctx.restore();
     },
     onScroll(event: WheelEvent) {
-      const x = this.width / 2;
-      const y = this.height / 2;
-      const scale = event.deltaY > 0 ? 1.1 : 0.9;
-      this.scale *= scale;
-      this.ctx.translate(x, y);
+      const p = this.getTransformedPoint(event.offsetX, event.offsetY);
+      const scale = event.deltaY > 0 ? 0.9 : 1.1;
+      this.ctx.translate(p.x, p.y);
       this.ctx.scale(scale, scale);
-      this.ctx.translate(-x, -y);
+      this.ctx.translate(-p.x, -p.y);
       this.draw();
       return;
+    },
+    getTransformedPoint(x: number, y: number) {
+      const inverseTransform = this.ctx.getTransform().invertSelf();
+      const transformedX =
+        inverseTransform.a * x + inverseTransform.c * y + inverseTransform.e;
+      const transformedY =
+        inverseTransform.b * x + inverseTransform.d * y + inverseTransform.f;
+
+      return { x: transformedX, y: transformedY };
     },
     onPan(event) {
       console.log(event);
@@ -135,15 +132,14 @@ export default Vue.extend({
     },
     onMouseMove(event: MouseEvent) {
       if (this.mouseDown) {
-        this.translation.x = event.clientX - this.start.x;
-        this.translation.y = event.clientY - this.start.y;
+        const curPos = this.getTransformedPoint(event.offsetX, event.offsetY);
+        this.ctx.translate(curPos.x - this.start.x, curPos.y - this.start.y);
         this.draw();
       }
     },
     onMouseDown(event: MouseEvent) {
       this.setMouseDown(true);
-      this.start.x = event.clientX - this.translation.x;
-      this.start.y = event.clientY - this.translation.y;
+      this.start = this.getTransformedPoint(event.offsetX, event.offsetY);
     },
   },
 });
