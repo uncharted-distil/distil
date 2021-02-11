@@ -13,6 +13,7 @@ import {
   GEOCOORDINATE_TYPE,
   GEOBOUNDS_TYPE,
   MULTIBAND_IMAGE_TYPE,
+  NUMERIC_TYPE,
 } from "./types";
 import {
   decodeFilters,
@@ -265,9 +266,9 @@ export function lexQueryToFiltersAndHighlight(
         highlight.value.minY = parseFloat(lq.minY.key);
         highlight.value.maxY = parseFloat(lq.maxY.key);
       } else if (type === DATETIME_FILTER) {
-        highlight.value.min = dateToNum(lq.min);
-        highlight.value.max = dateToNum(lq.max);
-        highlight.type = DATETIME_FILTER;
+        highlight.value.from = dateToNum(lq.min);
+        highlight.value.to = dateToNum(lq.max);
+        highlight.value.type = DATETIME_FILTER;
       } else if (isNumericType(type)) {
         highlight.value.from = parseFloat(lq.min.key);
         highlight.value.to = parseFloat(lq.max.key);
@@ -313,7 +314,7 @@ function variablesToLexSuggestions(variables: Variable[]): ValueStateValue[] {
     };
     a.push(new ValueStateValue(name, options, config));
 
-    if (v.distilRole === "grouping") {
+    if (v.grouping !== null) {
       switch (v.colType) {
         case TIMESERIES_TYPE:
           const grouping = v.grouping as TimeseriesGrouping;
@@ -380,15 +381,21 @@ function colTypeToOptionType(colType: string): string {
 function buildVariableDictionary(variables: Variable[]) {
   return variables.reduce((a, v) => {
     a[v.key] = v;
-    if (v.distilRole === "grouping") {
+    if (v.grouping !== null) {
       switch (v.colType) {
         case TIMESERIES_TYPE:
           const grouping = v.grouping as TimeseriesGrouping;
           const xCol = grouping.xCol;
+          const xColType = variables.reduce((a, xv) => {
+            if (xv.key === xCol) {
+              a = xv.colType.toLowerCase();
+            }
+            return a;
+          }, null as string);
           a[xCol] = {
             key: xCol,
             colDisplayName: xCol,
-            colType: DATE_TIME_LOWER_TYPE,
+            colType: xColType ? xColType : NUMERIC_TYPE,
           } as Variable;
           break;
         case GEOCOORDINATE_TYPE:
