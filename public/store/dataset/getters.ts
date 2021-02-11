@@ -14,7 +14,7 @@ import {
 } from "./index";
 import { Dictionary } from "../../util/dict";
 import { getTableDataItems, getTableDataFields } from "../../util/data";
-import { concat, isInteger, values } from "lodash";
+import { isInteger, values } from "lodash";
 
 export const getters = {
   getDatasets(state: DatasetState): Dataset[] {
