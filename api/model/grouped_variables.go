@@ -16,22 +16,7 @@ func FetchSummaryVariables(dataset string, metaStore MetadataStorage) ([]*model.
 		return nil, err
 	}
 
-	// get the hidden list from any grouped variables
-	hidden := []string{}
-	for _, variable := range variables {
-		if variable.IsGrouping() && variable.Grouping.GetHidden() != nil {
-			hidden = append(hidden, variable.Grouping.GetHidden()...)
-		}
-	}
-
-	// loop through the var list and drop any that should be hidden
-	visibleVars := []*model.Variable{}
-	for _, variable := range variables {
-		if !isHidden(variable.Key, hidden) {
-			visibleVars = append(visibleVars, variable)
-		}
-	}
-	return visibleVars, nil
+	return variables, nil
 }
 
 // FetchDatasetVariables fetches the variable list for a dataset, and removes any variables that don't have
@@ -138,15 +123,6 @@ func ExpandFilterParams(dataset string, filterParams *FilterParams, includeHidde
 	}
 
 	return updatedFilterParams, nil
-}
-
-func isHidden(variableName string, hidden []string) bool {
-	for _, hiddenVarName := range hidden {
-		if variableName == hiddenVarName {
-			return true
-		}
-	}
-	return false
 }
 
 // HasClusterData checks to see if a grouped variable has associated cluster data available.  If the cluster
