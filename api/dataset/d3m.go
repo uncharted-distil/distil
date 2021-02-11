@@ -18,6 +18,8 @@ package dataset
 import (
 	"path"
 
+	log "github.com/unchartedsoftware/plog"
+
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil/api/env"
@@ -42,6 +44,7 @@ func NewD3MDataset(datasetName string, datasetPath string) (*D3M, error) {
 
 // CreateDataset processes the D3M dataset and updates it as needed to meet distil needs.
 func (d *D3M) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*api.RawDataset, error) {
+	log.Infof("creating dataset from d3m dataset source")
 	if datasetName == "" {
 		datasetName = d.DatasetName
 	}
@@ -78,6 +81,7 @@ func (d *D3M) isFullySpecified(ds *api.RawDataset) bool {
 
 	mainDR := ds.Metadata.GetMainDataResource()
 	if len(ds.Data[0]) != len(mainDR.Variables) {
+		log.Infof("not every variable is specified in the metadata")
 		return false
 	}
 
@@ -86,22 +90,37 @@ func (d *D3M) isFullySpecified(ds *api.RawDataset) bool {
 	varMapIndex := map[int]*model.Variable{}
 	for _, v := range mainDR.Variables {
 		if v.Type == model.UnknownSchemaType {
-			return true
-		} else if !foundComplexType && !model.IsText(v.Type) && !model.IsIndexRole(v.SelectedRole) {
+			log.Infof("at least one variable is unknown type")
+			return false
+		} else if !foundComplexType && d.variableIsTyped(v) {
 			foundComplexType = true
 		}
 		varMapIndex[v.Index] = v
 	}
 	if !foundComplexType {
+		log.Infof("all variables are either an index or a string")
 		return false
 	}
 
 	// check the variable list against the header in the data
 	for i, h := range ds.Data[0] {
 		if varMapIndex[i] == nil || varMapIndex[i].HeaderName != h {
+			log.Infof("header in data file does not match metadata variable list")
 			return false
 		}
 	}
 
+	log.Infof("metadata is fully specified")
 	return true
+}
+
+func (d *D3M) variableIsTyped(variable *model.Variable) bool {
+	// a variable is typed if:
+	// 						it isnt a string and not an index
+	//						it is a string but references another resource
+	if !model.IsText(variable.Type) && !model.IsIndexRole(variable.SelectedRole) {
+		return true
+	}
+
+	return variable.RefersTo != nil
 }
