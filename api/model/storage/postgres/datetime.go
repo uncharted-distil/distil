@@ -535,7 +535,7 @@ func (f *DateTimeField) getFromClause(alias bool) string {
 
 func (f *DateTimeField) fetchExtremaStorage() (*api.Extrema, error) {
 	// add min / max aggregation
-	aggQuery := f.Storage.getMinMaxAggsQuery(f.Key, f.Type)
+	aggQuery := f.getMinMaxAggsQuery()
 
 	// create a query that does min and max aggregations for each variable
 	queryString := fmt.Sprintf("SELECT %s FROM %s;", aggQuery, f.GetDatasetStorageName())

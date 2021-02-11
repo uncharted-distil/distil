@@ -680,7 +680,7 @@ func (f *NumericalField) getNaNFilter() string {
 }
 
 func (f *NumericalField) fetchExtremaStorage() (*api.Extrema, error) {
-	aggQuery := f.Storage.getMinMaxAggsQuery(f.Key, f.Type)
+	aggQuery := f.getMinMaxAggsQuery(f.Key)
 
 	// numerical columns need to filter NaN out
 	filter := fmt.Sprintf("WHERE \"%s\" != 'NaN'", f.Key)
