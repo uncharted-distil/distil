@@ -387,10 +387,37 @@ func (s *Storage) InitializeModelStorage(overwrite bool) error {
 				},
 				"variableDetails": {
 					"properties": {
-						"name": {
+						"displayName": {
 							"type": "text",
 							"analyzer": "search_analyzer",
 							"term_vector": "yes"
+						},
+						"headerName": {
+							"type": "text"
+						},
+						"key": {
+							"type": "text"
+						},
+						"rank": {
+							"type": "integer"
+						},
+						"varType": {
+							"type": "text"
+						}
+					}
+				},
+				"target": {
+					"properties": {
+						"displayName": {
+							"type": "text",
+							"analyzer": "search_analyzer",
+							"term_vector": "yes"
+						},
+						"headerName": {
+							"type": "text"
+						},
+						"key": {
+							"type": "text"
 						},
 						"rank": {
 							"type": "integer"

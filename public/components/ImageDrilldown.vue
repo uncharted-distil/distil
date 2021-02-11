@@ -34,7 +34,7 @@
         class="filter-elem"
       />
       <ul class="information">
-        <li v-if="bandName"><label>Band:</label> {{ bandName }}</li>
+        <li v-if="bandName"><label>Image Layer:</label> {{ bandName }}</li>
         <li v-if="latLongValue"><label>Lat/Long:</label> {{ latLongValue }}</li>
         <li v-if="isResultScreen" class="d-flex justify-content-between">
           <label> {{ toggleStateString }} image explanation: </label>
@@ -64,6 +64,10 @@
             <i class="fa fa-adjust fa-rotate-180" aria-hidden="true" />
             {{ brightnessValue }}
           </label>
+          <b-button @click="upscaleFetch" :disabled="disableUpscale">
+            <b-spinner v-if="fetchingUpscale" small />
+            Upscale Image
+          </b-button>
         </li>
       </ul>
     </main>
@@ -128,6 +132,9 @@ export default Vue.extend({
       brightnessMax: 100,
       isFilteredToggled: true,
       hidden: false,
+      disableUpscale: false,
+      fetchingUpscale: false,
+      scale: 0,
     };
   },
 
@@ -228,10 +235,16 @@ export default Vue.extend({
   watch: {
     visible() {
       if (this.visible) {
+        this.disableUpscale = false;
         this.hidden = false;
         this.isFilteredToggled = this.hasImageAttention;
         this.carouselPosition = this.initialPosition;
-        this.requestImage({ gainL: 1.0, gamma: 2.2, gain: 2.5, scale: 1 });
+        this.requestImage({
+          gainL: 1.0,
+          gamma: 2.2,
+          gain: 2.5,
+          scale: this.scale,
+        });
         if (this.hasImageAttention) {
           this.requestFilter();
         }
@@ -240,7 +253,22 @@ export default Vue.extend({
   },
 
   methods: {
+    async upscaleFetch() {
+      const MAX_GAINL = 2.0;
+      this.disableUpscale = true;
+      this.fetchingUpscale = true;
+      this.scale += 1;
+      await this.requestImage({
+        gainL: this.currentBrightness * MAX_GAINL,
+        gamma: 2.2,
+        gain: 2.5,
+        scale: this.scale,
+      });
+      this.fetchingUpscale = false;
+      this.disableUpscale = false;
+    },
     rotateSelection(direction: number) {
+      this.scale = 0; // reset scale when fetching new images
       this.carouselPosition = Math.min(
         Math.max(0, this.carouselPosition + direction),
         this.imageUrls.length - 1
@@ -260,7 +288,7 @@ export default Vue.extend({
       const val = Number(e) / this.brightnessMax;
       const gainL = val * MAX_GAINL;
       this.currentBrightness = val;
-      this.requestImage({ gainL, gamma: 2.2, gain: 2.5, scale: 1 }); // gamma, gain, are default. They are here if we need to edit them later down the road
+      this.requestImage({ gainL, gamma: 2.2, gain: 2.5, scale: this.scale }); // gamma, gain, are default. They are here if we need to edit them later down the road
     },
 
     cleanUp() {
