@@ -352,10 +352,10 @@ func (f *BoundsField) parseHistogram(rows pgx.Rows, xExtrema *api.Extrema, yExtr
 
 	// initialize empty histogram structure
 	i := 0
-	for xVal := xRounded.Min; xVal < xRounded.Max; xVal += xInterval {
+	for xVal := xRounded.Min; i < int(xBucketCount); xVal += xInterval {
 		yBuckets := make([]*api.Bucket, yBucketCount)
 		j := 0
-		for yVal := yRounded.Min; yVal < yRounded.Max; yVal += yInterval {
+		for yVal := yRounded.Min; j < int(yBucketCount); yVal += yInterval {
 			yBuckets[j] = &api.Bucket{
 				Key:     fmt.Sprintf("%f", yVal),
 				Count:   0,
