@@ -303,7 +303,6 @@ function modeToRelation(mode: string): ValueStateValue {
 */
 function variablesToLexSuggestions(variables: Variable[]): ValueStateValue[] {
   if (!variables) return;
-
   return variables.reduce((a, v) => {
     const name = v.key;
     const options = {
@@ -313,30 +312,6 @@ function variablesToLexSuggestions(variables: Variable[]): ValueStateValue[] {
       displayKey: v.colDisplayName,
     };
     a.push(new ValueStateValue(name, options, config));
-
-    if (v.grouping !== null) {
-      switch (v.colType) {
-        case TIMESERIES_TYPE:
-          const grouping = v.grouping as TimeseriesGrouping;
-          a.push(
-            new ValueStateValue(
-              grouping.xCol,
-              { type: DATETIME_FILTER },
-              { displayKey: grouping.xCol }
-            )
-          );
-          break;
-        case MULTIBAND_IMAGE_TYPE:
-        case GEOBOUNDS_TYPE:
-        case GEOCOORDINATE_TYPE:
-          /* not currently ungrouping any information from these types
-          for lex suggestions, but not unknown either, so no logging */
-          break;
-        default:
-          console.log("unknown grouped type");
-      }
-    }
-
     return a;
   }, []);
 }
@@ -375,53 +350,11 @@ function colTypeToOptionType(colType: string): string {
 
 /*
   Convert Distil Variable Array To a Dictionary For O(1) look up. Used when 
-  converting a filter/highlight from the distil format to a lex query. Unpacks
-  grouped types as filters/highlights can be based on the underlying variable.
+  converting a filter/highlight from the distil format to a lex query. 
 */
 function buildVariableDictionary(variables: Variable[]) {
   return variables.reduce((a, v) => {
     a[v.key] = v;
-    if (v.grouping !== null) {
-      switch (v.colType) {
-        case TIMESERIES_TYPE:
-          const grouping = v.grouping as TimeseriesGrouping;
-          const xCol = grouping.xCol;
-          const xColType = variables.reduce((a, xv) => {
-            if (xv.key === xCol) {
-              a = xv.colType.toLowerCase();
-            }
-            return a;
-          }, null as string);
-          a[xCol] = {
-            key: xCol,
-            colDisplayName: xCol,
-            colType: xColType ? xColType : NUMERIC_TYPE,
-          } as Variable;
-          break;
-        case GEOCOORDINATE_TYPE:
-          const geoGrouping = v.grouping as GeoCoordinateGrouping;
-          const lat = geoGrouping.xCol;
-          const lon = geoGrouping.yCol;
-          a[lat] = {
-            key: lat,
-            colDisplayName: lat,
-            colType: NUMERICAL_FILTER,
-          } as Variable;
-          a[lon] = {
-            key: lon,
-            colDisplayName: lon,
-            colType: NUMERICAL_FILTER,
-          } as Variable;
-          break;
-        case MULTIBAND_IMAGE_TYPE:
-        case GEOBOUNDS_TYPE:
-          /* to do */
-          break;
-        default:
-          console.warn("unknown grouped type");
-      }
-    }
-
     return a;
   }, {});
 }
