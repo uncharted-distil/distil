@@ -233,7 +233,7 @@ export function lexQueryToFiltersAndHighlight(
       };
 
       if (type === GEOBOUNDS_FILTER || type === GEOCOORDINATE_FILTER) {
-        filter.key = filter.key + "_group";
+        filter.key = filter.key;
         filter.minX = parseFloat(lq.minX.key);
         filter.maxX = parseFloat(lq.maxX.key);
         filter.minY = parseFloat(lq.minY.key);
@@ -260,7 +260,7 @@ export function lexQueryToFiltersAndHighlight(
       } as Highlight;
 
       if (type === GEOBOUNDS_FILTER || type === GEOCOORDINATE_FILTER) {
-        highlight.key = highlight.key + "_group";
+        highlight.key = highlight.key;
         highlight.value.minX = parseFloat(lq.minX.key);
         highlight.value.maxX = parseFloat(lq.maxX.key);
         highlight.value.minY = parseFloat(lq.minY.key);
@@ -335,9 +335,9 @@ function perCategoricalVariableLexSuggestions(
 }
 
 function colTypeToOptionType(colType: string): string {
-  if (colType.toLowerCase() === GEOBOUNDS_TYPE) {
+  if (colType === GEOBOUNDS_TYPE || colType === GEOCOORDINATE_TYPE) {
     return GEOBOUNDS_FILTER;
-  } else if (colType.toLowerCase() === DATE_TIME_LOWER_TYPE) {
+  } else if (colType === DATE_TIME_LOWER_TYPE) {
     return DATETIME_FILTER;
   } else if (isNumericType(colType)) {
     return NUMERICAL_FILTER;
