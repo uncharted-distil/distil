@@ -221,14 +221,6 @@ type datasetCreationResult struct {
 }
 
 func createDataset(datasetPath string, datasetName string, config *env.Config) (*datasetCreationResult, error) {
-	// check if already a dataset
-	if util.IsDatasetDir(datasetPath) {
-		return &datasetCreationResult{
-			name: datasetName,
-			path: datasetPath,
-		}, nil
-	}
-
 	// create the raw dataset
 	log.Infof("Creating raw dataset '%s' from '%s'", datasetName, datasetPath)
 	ds, groups, indexFields, err := createRawDataset(datasetPath, datasetName)

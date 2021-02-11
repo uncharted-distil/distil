@@ -18,12 +18,11 @@ package dataset
 import (
 	"path"
 
-	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
-	"github.com/uncharted-distil/distil/api/util"
+	"github.com/uncharted-distil/distil/api/serialization"
 )
 
 // D3M captures the needed information for a D3M dataset.
@@ -47,28 +46,62 @@ func (d *D3M) CreateDataset(rootDataPath string, datasetName string, config *env
 		datasetName = d.DatasetName
 	}
 
-	// read the metadata
-	meta, err := metadata.LoadMetadataFromOriginalSchema(path.Join(d.DatasetPath, compute.D3MDataSchema), false)
+	// read the dataset
+	ds, err := serialization.ReadDataset(path.Join(d.DatasetPath, compute.D3MDataSchema))
 	if err != nil {
 		return nil, err
 	}
 
 	// update the id & name & storage name
 	datasetID := model.NormalizeDatasetID(datasetName)
-	meta.Name = datasetName
-	meta.ID = datasetName
-	meta.StorageName = datasetID
+	ds.Metadata.Name = datasetName
+	ds.Metadata.ID = datasetName
+	ds.Metadata.StorageName = datasetID
 
-	// read the data
-	csvData, err := util.ReadCSVFile(path.Join(d.DatasetPath, meta.GetMainDataResource().ResPath), false)
-	if err != nil {
-		return nil, err
+	// update the non main data resources to be absolute paths
+	mainDR := ds.Metadata.GetMainDataResource()
+	for _, dr := range ds.Metadata.DataResources {
+		if dr != mainDR {
+			dr.ResPath = model.GetResourcePathFromFolder(d.DatasetPath, dr)
+		}
 	}
 
-	return &api.RawDataset{
-		ID:       datasetID,
-		Name:     datasetName,
-		Data:     csvData,
-		Metadata: meta,
-	}, nil
+	ds.DefinitiveTypes = d.isFullySpecified(ds)
+
+	return ds, nil
+}
+
+func (d *D3M) isFullySpecified(ds *api.RawDataset) bool {
+	// fully specified means all variables are in the metadata, there are no
+	// unknown types and there is at least one non string, non index type
+	// (to avoid to case where everything was initialized to text)
+
+	mainDR := ds.Metadata.GetMainDataResource()
+	if len(ds.Data[0]) != len(mainDR.Variables) {
+		return false
+	}
+
+	// find one non string and non index, and make sure no unknowns exist
+	foundComplexType := false
+	varMapIndex := map[int]*model.Variable{}
+	for _, v := range mainDR.Variables {
+		if v.Type == model.UnknownSchemaType {
+			return true
+		} else if !foundComplexType && !model.IsText(v.Type) && !model.IsIndexRole(v.SelectedRole) {
+			foundComplexType = true
+		}
+		varMapIndex[v.Index] = v
+	}
+	if !foundComplexType {
+		return false
+	}
+
+	// check the variable list against the header in the data
+	for i, h := range ds.Data[0] {
+		if varMapIndex[i] == nil || varMapIndex[i].HeaderName != h {
+			return false
+		}
+	}
+
+	return true
 }
