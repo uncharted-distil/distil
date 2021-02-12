@@ -30,7 +30,20 @@ export const getters = {
     return isInteger(count) ? count : 0;
   },
 
+  //filters the hidden variables used in groupings
   getVariables(state: DatasetState, getters: any): Variable[] {
+    const groupings = state.variables.reduce((a, v) => {
+      const hiddenVars = v.grouping?.hidden as string[];
+      if (hiddenVars) {
+        a = a.concat(hiddenVars);
+      }
+      return a;
+    }, []);
+    return state.variables.filter((v) => groupings.indexOf(v.key) < 0);
+  },
+
+  //includes the hidden variables, only used for lex
+  getAllVariables(state: DatasetState, getters: any): Variable[] {
     return state.variables;
   },
 
