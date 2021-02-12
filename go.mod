@@ -36,6 +36,8 @@ require (
 	github.com/unchartedsoftware/witch v0.0.0-20200617171400-4f405404126f // indirect
 	github.com/urfave/cli v1.22.5 // indirect
 	github.com/unchartedsoftware/plog v0.0.0-20200807135627-83d59e50ced5
+	github.com/unchartedsoftware/witch v0.0.0-20200617171400-4f405404126f // indirect
+	github.com/urfave/cli v1.22.5 // indirect
 	github.com/vova616/xxhash v0.0.0-20130313230233-f0a9a8b74d48
 	github.com/xitongsys/parquet-go v1.5.3
 	github.com/xitongsys/parquet-go-source v0.0.0-20190524061010-2b72cbee77d5

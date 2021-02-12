@@ -267,7 +267,25 @@ export default Vue.extend({
     },
 
     variables(): Variable[] {
-      return datasetGetters.getVariables(this.$store);
+      const variables = Array.from(datasetGetters.getVariables(this.$store));
+      variables.sort((a, b) => {
+        // If their ranking are identical or do not exist
+        // sort by importance
+        if (a?.ranking === b?.ranking) {
+          return b.importance - a.importance;
+
+          // otherwise by ranking
+        } else {
+          return b.ranking - a.ranking;
+        }
+      });
+      console.debug(
+        variables.map((v) => {
+          const { ranking, importance } = v;
+          return { ranking, importance };
+        })
+      );
+      return variables;
     },
 
     variablesPerActions() {
