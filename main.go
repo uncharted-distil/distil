@@ -229,10 +229,12 @@ func main() {
 		}
 	}
 	// Loads image enhancement library
-	err = c_util.LoadImageUpscaleLibrary()
-	if err != nil {
-		log.Error(err)
-		os.Exit(1)
+	if config.ShouldScaleImages {
+		err = c_util.LoadImageUpscaleLibrary()
+		if err != nil {
+			log.Error(err)
+			os.Exit(1)
+		}
 	}
 	// register routes
 	mux := goji.NewMux()
