@@ -37,6 +37,7 @@ type Field interface {
 	GetLabel() string
 	GetType() string
 	fetchExtremaStorage() (*api.Extrema, error)
+	fetchExtremaByURI(resultURI string) (*api.Extrema, error)
 }
 
 // TimelineField defines the behaviour of a field which can be used as a timeline.
@@ -88,6 +89,10 @@ func (b *BasicField) GetType() string {
 }
 
 func (b *BasicField) fetchExtremaStorage() (*api.Extrema, error) {
+	return &api.Extrema{}, nil
+}
+
+func (b *BasicField) fetchExtremaByURI(resultURI string) (*api.Extrema, error) {
 	return &api.Extrema{}, nil
 }
 
