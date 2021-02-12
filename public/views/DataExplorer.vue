@@ -394,9 +394,8 @@ export default Vue.extend({
       // if explore is already filled let's skip
       if (!isEmpty(this.explore)) return;
 
-      // get the top 5 variables sorted by importance
+      // get the top 5 variables
       const top5Variables = [...this.variables]
-        .sort((a, b) => b.importance - a.importance)
         .slice(0, number)
         .map((variable) => variable.key)
         .join(",");
