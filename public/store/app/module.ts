@@ -31,6 +31,7 @@ export const getters = {
   isPrototype: read(moduleGetters.isPrototype),
   getTrainTestSplit: read(moduleGetters.getTrainTestSplit),
   getTrainTestSplitTimeSeries: read(moduleGetters.getTrainTestSplitTimeSeries),
+  getShouldScaleImages: read(moduleGetters.getShouldScaleImages),
 };
 
 // typed actions
@@ -64,4 +65,5 @@ export const mutations = {
   setTrainTestSplitTimeSeries: commit(
     moduleMutations.setTrainTestSplitTimeSeries
   ),
+  setShouldScaleImages: commit(moduleMutations.setShouldScaleImages),
 };

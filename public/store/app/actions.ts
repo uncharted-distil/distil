@@ -99,6 +99,7 @@ export const actions = {
         context,
         response.data.trainTestSplitTimeSeries
       );
+      mutations.setShouldScaleImages(context, response.data.shouldScaleImages);
     } catch (err) {
       console.warn(err);
     }
