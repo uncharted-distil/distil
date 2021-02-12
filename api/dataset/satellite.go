@@ -150,7 +150,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 	}
 	labelHeader := "label"
 	expectedHeaders := []string{model.D3MIndexFieldName, "image_file", "group_id", "band", "timestamp", "coordinates", labelHeader, "geo_coordinates"}
-	headerNames := expectedHeaders
+	headerNames := append([]string(nil),expectedHeaders...)
 	if len(imageFolders) == 0 {
 		// search just in case the above order is changed at some point
 		labelIdx := sort.Search(len(headerNames), func(i int) bool {
@@ -178,6 +178,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 	// the folder name represents the label to apply for all containing images
 	errorCount := 0
 	timestampType := model.DateTimeType
+	indicesToKeep := getIndicesToKeep(expectedHeaders, headerNames)
 	for _, imageFolder := range imageFolders {
 		log.Infof("processing satellite image folder '%s'", imageFolder)
 		label := path.Base(imageFolder)
@@ -236,7 +237,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 					d3mIDs[groupID] = d3mID
 				}
 				// remove values that are not needed based on the headerNames (expects values, expectedHeaders and headerNames to be IN ORDER)
-				csvLine := removeMissingValues(expectedHeaders, headerNames, []string{fmt.Sprintf("%d", d3mID), path.Base(targetImageFilename), groupID, band, timestamp, coordinates.String(), label, coordinates.ToGeometryString()})
+				csvLine := removeMissingValues(indicesToKeep, []string{fmt.Sprintf("%d", d3mID), path.Base(targetImageFilename), groupID, band, timestamp, coordinates.String(), label, coordinates.ToGeometryString()})
 
 				csvData = append(csvData, csvLine)
 			}
@@ -311,16 +312,26 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 }
 
 // removeValues removes values not needed based on supplied headernames
-func removeMissingValues(expectedHeaders []string, headerNames []string, values []string) []string {
-	headerMap := map[string]string{}
-	// build map of the expected header for remote sensing ds
-	for i, header := range expectedHeaders {
-		headerMap[header] = values[i]
-	}
+func removeMissingValues(indices []int, values []string) []string {
 	result := []string{}
 	// build the value string based on the actual headers that exist
-	for _, header := range headerNames {
-		result = append(result, headerMap[header])
+	for _, idx := range indices {
+		result = append(result, values[idx])
+	}
+	return result
+}
+func getIndicesToKeep(expectedHeaders []string, headers []string) []int{
+	result := []int{}
+	headerMap := map[string]int{}
+	// build map
+	for i, header := range headers {
+		headerMap[header] = i
+	}
+	// check what is missing and append indices
+	for i, header := range expectedHeaders {
+		if _, ok := headerMap[header]; ok{
+			result = append(result, i)
+		}
 	}
 	return result
 }
