@@ -64,7 +64,11 @@
             <i class="fa fa-adjust fa-rotate-180" aria-hidden="true" />
             {{ brightnessValue }}
           </label>
-          <b-button @click="upscaleFetch" :disabled="disableUpscale">
+          <b-button
+            v-if="shouldImagesScale"
+            @click="upscaleFetch"
+            :disabled="disableUpscale"
+          >
             <b-spinner v-if="fetchingUpscale" small />
             Upscale Image
           </b-button>
@@ -82,6 +86,7 @@ import {
   actions as datasetActions,
   mutations as datasetMutations,
 } from "../store/dataset/module";
+import { getters as appGetters } from "../store/app/module";
 import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
 import { IMAGE_TYPE, MULTIBAND_IMAGE_TYPE } from "../util/types";
@@ -139,6 +144,9 @@ export default Vue.extend({
   },
 
   computed: {
+    shouldImagesScale(): boolean {
+      return appGetters.getShouldScaleImages(this.$store);
+    },
     bandName(): string {
       return datasetGetters
         .getMultiBandCombinations(this.$store)
