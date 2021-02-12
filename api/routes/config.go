@@ -42,7 +42,7 @@ func ConfigHandler(config env.Config, version string, timestamp string, problemP
 			"ta2version":               ta2Version,
 			"trainTestSplit":           config.TrainTestSplit,
 			"trainTestSplitTimeSeries": config.TrainTestSplitTimeSeries,
-			"shouldScaleImages":		config.ShouldScaleImages,
+			"shouldScaleImages":        config.ShouldScaleImages,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal version into JSON and write response"))
