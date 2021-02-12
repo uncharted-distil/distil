@@ -279,12 +279,6 @@ export default Vue.extend({
           return b.ranking - a.ranking;
         }
       });
-      console.debug(
-        variables.map((v) => {
-          const { ranking, importance } = v;
-          return { ranking, importance };
-        })
-      );
       return variables;
     },
 
