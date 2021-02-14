@@ -3,7 +3,6 @@
     <b-modal
       v-model="showJoinSuccess"
       modal-class="join-preview-modal"
-      @shown="onSuccessModalShwon"
       cancel-disabled
       hide-header
       hide-footer
@@ -193,7 +192,8 @@ export default Vue.extend({
           datasetA: a,
           datasetB: b,
           joinAccuracy: this.joinAccuracy,
-          joinSuggestionIndex: 0,
+          datasetAColumn: this.datasetAColumn.key,
+          datasetBColumn: this.datasetBColumn.key,
         })
         .then((tableData) => {
           this.pending = false;
