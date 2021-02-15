@@ -447,7 +447,7 @@ export default Vue.extend({
         .joinDatasetsPreview(this.$store, datasetJoinInfo)
         .then((tableData) => {
           // sealing the return to prevent slow, unnecessary deep reactivity.
-          this.previewTableData = Object.seal(tableData);
+          this.previewTableData = Object.seal(tableData.data);
 
           // display join preview modal
           this.isAttemptingJoin = false;

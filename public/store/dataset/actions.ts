@@ -662,7 +662,7 @@ export const actions = {
       datasetAColumn?: string;
       datasetBColumn?: string;
     }
-  ): Promise<void> {
+  ): Promise<any> {
     if (!validateArgs(args, ["datasetA", "datasetB", "joinAccuracy"])) {
       return null;
     }
