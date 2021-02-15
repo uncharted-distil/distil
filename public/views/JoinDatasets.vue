@@ -72,8 +72,8 @@
           <div class="col-12">
             <join-datasets-form
               class="select-create-solutions"
-              :dataset-a="topDataset"
-              :dataset-b="bottomDataset"
+              :dataset-id-a="topDataset"
+              :dataset-id-b="bottomDataset"
               :dataset-a-column="topColumn"
               :dataset-b-column="bottomColumn"
               :join-accuracy="joinAccuracy"

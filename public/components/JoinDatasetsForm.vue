@@ -93,8 +93,8 @@ export default Vue.extend({
   },
 
   props: {
-    datasetA: String as () => string,
-    datasetB: String as () => string,
+    datasetIdA: String as () => string,
+    datasetIdB: String as () => string,
     datasetAColumn: Object as () => TableColumn,
     datasetBColumn: Object as () => TableColumn,
     joinAccuracy: Number as () => number,
@@ -109,6 +109,8 @@ export default Vue.extend({
       joinErrorMessage: null,
       previewTableData: null,
       joinedPath: "",
+      datasetA: null,
+      datasetB: null,
     };
   },
 
@@ -181,12 +183,14 @@ export default Vue.extend({
       this.pending = true;
 
       const a = _.find(this.datasets, (d) => {
-        return d.id === this.datasetA;
+        return d.id === this.datasetIdA;
       });
 
       const b = _.find(this.datasets, (d) => {
-        return d.id === this.datasetB;
+        return d.id === this.datasetIdB;
       });
+      this.datasetA = a;
+      this.datasetB = b;
 
       // dispatch action that triggers request send to server
       datasetActions
