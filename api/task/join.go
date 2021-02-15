@@ -50,50 +50,52 @@ type JoinSpec struct {
 }
 
 // JoinDatamart will make all your dreams come true.
-func JoinDatamart(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable, varsRight []*model.Variable, rightOrigin *model.DatasetOrigin) (*apiModel.FilteredData, error) {
+func JoinDatamart(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable,
+	varsRight []*model.Variable, rightOrigin *model.DatasetOrigin) (string, *apiModel.FilteredData, error) {
 	cfg, err := env.LoadConfig()
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 	pipelineDesc, err := description.CreateDatamartAugmentPipeline("Join Preview",
 		"Join to be reviewed by user", rightOrigin.SearchResult, rightOrigin.Provenance)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
+	datasetLeftURI := env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetFolder)
 
-	return join(joinLeft, joinRight, varsLeft, varsRight, pipelineDesc, defaultSubmitter{}, &cfg)
+	return join(joinLeft, joinRight, varsLeft, varsRight, pipelineDesc, []string{datasetLeftURI}, defaultSubmitter{}, &cfg)
 }
 
 // JoinDistil will bring misery.
-func JoinDistil(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable, varsRight []*model.Variable, leftCol string, rightCol string) (*apiModel.FilteredData, error) {
+func JoinDistil(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable,
+	varsRight []*model.Variable, leftCol string, rightCol string) (string, *apiModel.FilteredData, error) {
 	cfg, err := env.LoadConfig()
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 	varsLeftMap := apiCompute.MapVariables(varsLeft, func(variable *model.Variable) string { return variable.Key })
 	varsRightMap := apiCompute.MapVariables(varsRight, func(variable *model.Variable) string { return variable.Key })
 	pipelineDesc, err := description.CreateJoinPipeline("Joiner", "Join existing data", varsLeftMap[leftCol], varsRightMap[rightCol], 0.8)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
+	datasetLeftURI := env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetFolder)
+	datasetRightURI := env.ResolvePath(joinRight.DatasetSource, joinRight.DatasetFolder)
 
-	return join(joinLeft, joinRight, varsLeft, varsRight, pipelineDesc, defaultSubmitter{}, &cfg)
+	return join(joinLeft, joinRight, varsLeft, varsRight, pipelineDesc, []string{datasetLeftURI, datasetRightURI}, defaultSubmitter{}, &cfg)
 }
 
 func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable,
 	varsRight []*model.Variable, pipelineDesc *description.FullySpecifiedPipeline,
-	submitter primitiveSubmitter, config *env.Config) (*apiModel.FilteredData, error) {
+	datasetURIs []string, submitter primitiveSubmitter, config *env.Config) (string, *apiModel.FilteredData, error) {
 	// put the vars into a map for quick lookup
 	leftVarsMap := createVarMap(varsLeft, true, true)
 	rightVarsMap := createVarMap(varsRight, true, true)
 
-	// submit the solution request
-	datasetLeftURI := env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetFolder)
-
 	// returns a URI pointing to the merged CSV file
-	resultURI, err := submitter.submit([]string{datasetLeftURI}, pipelineDesc)
+	resultURI, err := submitter.submit(datasetURIs, pipelineDesc)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to run join pipeline")
+		return "", nil, errors.Wrap(err, "unable to run join pipeline")
 	}
 
 	// create a new dataset from the merged CSV file
@@ -104,16 +106,16 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable,
 	storageName := model.NormalizeDatasetID(datasetName)
 	mergedVariables, err := createDatasetFromCSV(config, csvFilename, datasetName, storageName, leftVarsMap, rightVarsMap)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to create dataset from result CSV")
+		return "", nil, errors.Wrap(err, "unable to create dataset from result CSV")
 	}
 
 	// return some of the data for the client to preview
 	data, err := createFilteredData(csvFilename, mergedVariables, lineCount)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
-	return data, nil
+	return env.ResolvePath(ingestMetadata.Augmented, datasetName), data, nil
 }
 
 type defaultSubmitter struct{}

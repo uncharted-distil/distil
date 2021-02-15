@@ -83,6 +83,7 @@ export default Vue.extend({
     joinedColumn: String as () => string,
     previewTableData: Object as () => TableData,
     searchResultIndex: Number as () => number,
+    path: String as () => string,
   },
 
   data() {
@@ -149,7 +150,7 @@ export default Vue.extend({
         originalDataset: this.datasetA,
         joinedDataset: this.datasetB,
         searchResultIndex: this.searchResultIndex,
-        path: "",
+        path: this.path,
       };
       datasetActions
         .importDataset(this.$store, importDatasetArgs)

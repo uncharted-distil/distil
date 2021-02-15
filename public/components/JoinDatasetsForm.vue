@@ -12,6 +12,7 @@
         :dataset-a="datasetA"
         :dataset-b="datasetB"
         :joined-column="joinedColumn"
+        :path="joinedPath"
         @success="onJoinCommitSuccess"
         @failure="onJoinCommitFailure"
         @close="showJoinSuccess = !showJoinSuccess"
@@ -107,6 +108,7 @@ export default Vue.extend({
       showJoinFailure: false,
       joinErrorMessage: null,
       previewTableData: null,
+      joinedPath: "",
     };
   },
 
@@ -198,14 +200,16 @@ export default Vue.extend({
         .then((tableData) => {
           this.pending = false;
           this.showJoinSuccess = true;
+          this.joinedPath = tableData.path;
           // sealing the return to prevent slow, unnecessary deep reactivity.
-          this.previewTableData = Object.seal(tableData);
+          this.previewTableData = Object.seal(tableData.data);
         })
         .catch((err) => {
           // display error modal
           this.pending = false;
           this.showJoinFailure = true;
           this.previewTableData = null;
+          this.joinedPath = "";
         });
     },
     onJoinCommitSuccess(datasetID: string) {

@@ -107,7 +107,8 @@ func TestJoin(t *testing.T) {
 	pipelineDesc, err := description.CreateDatamartAugmentPipeline("Join Preview",
 		"Join to be reviewed by user", rightOrigin.SearchResult, rightOrigin.Provenance)
 	assert.NoError(t, err)
-	result, err := join(leftJoin, rightJoin, varsLeft, varsRight, pipelineDesc, testSubmitter{}, &cfg)
+	datasetLeftURI := env.ResolvePath(leftJoin.DatasetSource, leftJoin.DatasetFolder)
+	_, result, err := join(leftJoin, rightJoin, varsLeft, varsRight, pipelineDesc, []string{datasetLeftURI}, testSubmitter{}, &cfg)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)

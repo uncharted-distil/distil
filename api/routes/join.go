@@ -97,14 +97,14 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 		leftVariables = append(leftVariables, d3mIndexVar)
 
 		// run joining pipeline
-		data, err := join(leftJoin, rightJoin, leftVariables, rightVariables, datasetRight, params)
+		path, data, err := join(leftJoin, rightJoin, leftVariables, rightVariables, datasetRight, params)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
 		// marshal output into JSON
-		bytes, err := json.Marshal(data)
+		bytes, err := json.Marshal(map[string]interface{}{"path": path, "data": data})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal filtered data result into JSON"))
 			return
@@ -149,7 +149,7 @@ func parseVariables(variablesRaw []interface{}) ([]*model.Variable, error) {
 }
 
 func join(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, varsLeft []*model.Variable,
-	varsRight []*model.Variable, datasetRight map[string]interface{}, params map[string]interface{}) (*api.FilteredData, error) {
+	varsRight []*model.Variable, datasetRight map[string]interface{}, params map[string]interface{}) (string, *api.FilteredData, error) {
 	// determine if distil or datamart
 	if params["searchResultIndex"] == nil {
 		return joinDistil(joinLeft, joinRight, varsLeft, varsRight, datasetRight, params)
@@ -159,59 +159,59 @@ func join(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, varsLeft []*model.V
 }
 
 func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, varsLeft []*model.Variable,
-	varsRight []*model.Variable, datasetRight map[string]interface{}, params map[string]interface{}) (*api.FilteredData, error) {
+	varsRight []*model.Variable, datasetRight map[string]interface{}, params map[string]interface{}) (string, *api.FilteredData, error) {
 	if params["datasetAColumn"] == nil {
-		return nil, errors.Errorf("missing parameter 'datasetAColumn'")
+		return "", nil, errors.Errorf("missing parameter 'datasetAColumn'")
 	}
 	leftCol := params["datasetAColumn"].(string)
 	if params["datasetBColumn"] == nil {
-		return nil, errors.Errorf("missing parameter 'datasetBColumn'")
+		return "", nil, errors.Errorf("missing parameter 'datasetBColumn'")
 	}
 	rightCol := params["datasetBColumn"].(string)
 
-	data, err := task.JoinDistil(joinLeft, joinRight, varsLeft, varsRight, leftCol, rightCol)
+	path, data, err := task.JoinDistil(joinLeft, joinRight, varsLeft, varsRight, leftCol, rightCol)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
-	return data, nil
+	return path, data, nil
 }
 
 func joinDatamart(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, varsLeft []*model.Variable,
-	varsRight []*model.Variable, datasetRight map[string]interface{}, params map[string]interface{}) (*api.FilteredData, error) {
+	varsRight []*model.Variable, datasetRight map[string]interface{}, params map[string]interface{}) (string, *api.FilteredData, error) {
 	if params["searchResultIndex"] == nil {
-		return nil, errors.Errorf("missing parameter 'searchResultIndex'")
+		return "", nil, errors.Errorf("missing parameter 'searchResultIndex'")
 	}
 	searchResultIndex := int(params["searchResultIndex"].(float64))
 
 	// need to find the right join suggestion since a single dataset
 	// can have multiple join suggestions
 	if datasetRight["joinSuggestion"] == nil {
-		return nil, errors.Errorf("Join Suggestion undefined")
+		return "", nil, errors.Errorf("Join Suggestion undefined")
 	}
 
 	joinSuggestions := datasetRight["joinSuggestion"].([]interface{})
 	targetJoin := joinSuggestions[searchResultIndex].(map[string]interface{})
 	if targetJoin == nil {
-		return nil, errors.Errorf("Unable to find join suggestion at search result index")
+		return "", nil, errors.Errorf("Unable to find join suggestion at search result index")
 	}
 
 	targetJoinOrigin := targetJoin["datasetOrigin"].(map[string]interface{})
 	if targetJoinOrigin == nil {
-		return nil, errors.Errorf("Unable to find join origin")
+		return "", nil, errors.Errorf("Unable to find join origin")
 	}
 
 	targetOriginModel := model.DatasetOrigin{}
 	err := json.MapToStruct(&targetOriginModel, targetJoinOrigin)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to parse join origin from JSON")
+		return "", nil, errors.Wrap(err, "Unable to parse join origin from JSON")
 	}
 
 	// run joining pipeline
-	data, err := task.JoinDatamart(joinLeft, joinRight, varsLeft, varsRight, &targetOriginModel)
+	path, data, err := task.JoinDatamart(joinLeft, joinRight, varsLeft, varsRight, &targetOriginModel)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
-	return data, nil
+	return path, data, nil
 }
