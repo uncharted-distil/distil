@@ -67,7 +67,7 @@ async function getVariables(dataset: string): Promise<Variable[]> {
 
 // Return the best variable name of a dataset for outlier detection
 function getOutlierVariableName(variables: Variable[]) {
-  /* 
+  /*
     Find a grouping variable, specially a remote-sensing one.
     This is needed in case the remote-sensing images have not
     been prefiturized.
@@ -658,9 +658,11 @@ export const actions = {
       datasetA: Dataset;
       datasetB: Dataset;
       joinAccuracy: number;
-      joinSuggestionIndex: number;
+      joinSuggestionIndex?: number;
+      datasetAColumn?: string;
+      datasetBColumn?: string;
     }
-  ): Promise<void> {
+  ): Promise<any> {
     if (!validateArgs(args, ["datasetA", "datasetB", "joinAccuracy"])) {
       return null;
     }
@@ -677,6 +679,8 @@ export const actions = {
       accuracy: args.joinAccuracy,
       datasetLeft: args.datasetA,
       datasetRight: datasetBrevised,
+      datasetAColumn: args.datasetAColumn,
+      datasetBColumn: args.datasetBColumn,
       searchResultIndex: args.joinSuggestionIndex,
     });
     return response.data;
@@ -1342,7 +1346,7 @@ export const actions = {
       highlight: Highlight;
     }
   ) {
-    if (!validateArgs(args, ["dataset", "filterParams"])) {
+    if (!validateArgs(args, ["datasets", "filterParams"])) {
       return null;
     }
     return Promise.all(

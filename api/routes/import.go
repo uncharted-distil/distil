@@ -73,11 +73,6 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 					return
 				}
 
-				if params["joinedDataset"] == nil {
-					missingParamErr(w, "joinedDataset")
-					return
-				}
-
 				// set the origin information
 				originalDataset, okOriginal := params["originalDataset"].(map[string]interface{})
 				joinedDataset, okJoined := params["joinedDataset"].(map[string]interface{})
