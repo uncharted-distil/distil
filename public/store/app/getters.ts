@@ -51,4 +51,7 @@ export const getters = {
   getTrainTestSplitTimeSeries(state: AppState): number {
     return state.trainTestSplitTimeSeries;
   },
+  getShouldScaleImages(state: AppState): boolean {
+    return state.shouldScaleImages;
+  },
 };

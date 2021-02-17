@@ -221,18 +221,27 @@ func main() {
 			log.Errorf("%+v", err)
 			os.Exit(1)
 		}
-		_, err = task.IngestDataset(metadata.Contrib, pgDataStorageCtor, esMetadataStorageCtor,
-			"initial", nil, model.DatasetTypeModelling, ingestConfig, &task.IngestSteps{ClassificationOverwrite: true})
+		ingestParams := &task.IngestParams{
+			Source:   metadata.Contrib,
+			DataCtor: pgDataStorageCtor,
+			MetaCtor: esMetadataStorageCtor,
+			ID:       "initial",
+			Origins:  nil,
+			Type:     model.DatasetTypeModelling,
+		}
+		_, err = task.IngestDataset(ingestParams, ingestConfig, &task.IngestSteps{ClassificationOverwrite: true})
 		if err != nil {
 			log.Errorf("%+v", err)
 			os.Exit(1)
 		}
 	}
 	// Loads image enhancement library
-	err = c_util.LoadImageUpscaleLibrary()
-	if err != nil {
-		log.Error(err)
-		os.Exit(1)
+	if config.ShouldScaleImages {
+		err = c_util.LoadImageUpscaleLibrary()
+		if err != nil {
+			log.Error(err)
+			os.Exit(1)
+		}
 	}
 	// register routes
 	mux := goji.NewMux()

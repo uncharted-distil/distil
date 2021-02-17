@@ -361,7 +361,7 @@ export default Vue.extend({
       }
     },
     search(newTerm, oldTerm) {
-      if (!newTerm || newTerm === oldTerm) return;
+      if (newTerm === undefined || newTerm === oldTerm) return;
 
       const entry = overlayRouteEntry(this.$route, {
         [this.routeSearchKey()]: this.search,

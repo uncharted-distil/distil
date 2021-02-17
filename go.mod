@@ -28,7 +28,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/russross/blackfriday v2.0.0+incompatible
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
-	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/stretchr/testify v1.6.1
 	github.com/uncharted-distil/distil-compute v0.0.0-20210208222927-a7ae5d433614
 	github.com/uncharted-distil/distil-image-upscale v0.0.0-20210210122944-38e126ef1a20

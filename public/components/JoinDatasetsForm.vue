@@ -3,7 +3,6 @@
     <b-modal
       v-model="showJoinSuccess"
       modal-class="join-preview-modal"
-      @shown="onSuccessModalShwon"
       cancel-disabled
       hide-header
       hide-footer
@@ -13,6 +12,7 @@
         :dataset-a="datasetA"
         :dataset-b="datasetB"
         :joined-column="joinedColumn"
+        :path="joinedPath"
         @success="onJoinCommitSuccess"
         @failure="onJoinCommitFailure"
         @close="showJoinSuccess = !showJoinSuccess"
@@ -93,8 +93,8 @@ export default Vue.extend({
   },
 
   props: {
-    datasetA: String as () => string,
-    datasetB: String as () => string,
+    datasetIdA: String as () => string,
+    datasetIdB: String as () => string,
     datasetAColumn: Object as () => TableColumn,
     datasetBColumn: Object as () => TableColumn,
     joinAccuracy: Number as () => number,
@@ -108,6 +108,9 @@ export default Vue.extend({
       showJoinFailure: false,
       joinErrorMessage: null,
       previewTableData: null,
+      joinedPath: "",
+      datasetA: null,
+      datasetB: null,
     };
   },
 
@@ -180,12 +183,14 @@ export default Vue.extend({
       this.pending = true;
 
       const a = _.find(this.datasets, (d) => {
-        return d.id === this.datasetA;
+        return d.id === this.datasetIdA;
       });
 
       const b = _.find(this.datasets, (d) => {
-        return d.id === this.datasetB;
+        return d.id === this.datasetIdB;
       });
+      this.datasetA = a;
+      this.datasetB = b;
 
       // dispatch action that triggers request send to server
       datasetActions
@@ -193,19 +198,22 @@ export default Vue.extend({
           datasetA: a,
           datasetB: b,
           joinAccuracy: this.joinAccuracy,
-          joinSuggestionIndex: 0,
+          datasetAColumn: this.datasetAColumn.key,
+          datasetBColumn: this.datasetBColumn.key,
         })
         .then((tableData) => {
           this.pending = false;
           this.showJoinSuccess = true;
+          this.joinedPath = tableData.path;
           // sealing the return to prevent slow, unnecessary deep reactivity.
-          this.previewTableData = Object.seal(tableData);
+          this.previewTableData = Object.seal(tableData.data);
         })
         .catch((err) => {
           // display error modal
           this.pending = false;
           this.showJoinFailure = true;
           this.previewTableData = null;
+          this.joinedPath = "";
         });
     },
     onJoinCommitSuccess(datasetID: string) {

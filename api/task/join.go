@@ -26,6 +26,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
+	apiCompute "github.com/uncharted-distil/distil/api/compute"
 	"github.com/uncharted-distil/distil/api/env"
 	apiModel "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/serialization"
@@ -48,41 +49,53 @@ type JoinSpec struct {
 	DatasetSource ingestMetadata.DatasetSource
 }
 
-// Join will make all your dreams come true.
-func Join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable, varsRight []*model.Variable, rightOrigin *model.DatasetOrigin) (*apiModel.FilteredData, error) {
+// JoinDatamart will make all your dreams come true.
+func JoinDatamart(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable,
+	varsRight []*model.Variable, rightOrigin *model.DatasetOrigin) (string, *apiModel.FilteredData, error) {
 	cfg, err := env.LoadConfig()
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
-	return join(joinLeft, joinRight, varsLeft, varsRight, rightOrigin, defaultSubmitter{}, &cfg)
+	pipelineDesc, err := description.CreateDatamartAugmentPipeline("Join Preview",
+		"Join to be reviewed by user", rightOrigin.SearchResult, rightOrigin.Provenance)
+	if err != nil {
+		return "", nil, err
+	}
+	datasetLeftURI := env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetFolder)
+
+	return join(joinLeft, joinRight, varsLeft, varsRight, pipelineDesc, []string{datasetLeftURI}, defaultSubmitter{}, &cfg)
+}
+
+// JoinDistil will bring misery.
+func JoinDistil(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable,
+	varsRight []*model.Variable, leftCol string, rightCol string) (string, *apiModel.FilteredData, error) {
+	cfg, err := env.LoadConfig()
+	if err != nil {
+		return "", nil, err
+	}
+	varsLeftMap := apiCompute.MapVariables(varsLeft, func(variable *model.Variable) string { return variable.Key })
+	varsRightMap := apiCompute.MapVariables(varsRight, func(variable *model.Variable) string { return variable.Key })
+	pipelineDesc, err := description.CreateJoinPipeline("Joiner", "Join existing data", varsLeftMap[leftCol], varsRightMap[rightCol], 0.8)
+	if err != nil {
+		return "", nil, err
+	}
+	datasetLeftURI := env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetFolder)
+	datasetRightURI := env.ResolvePath(joinRight.DatasetSource, joinRight.DatasetFolder)
+
+	return join(joinLeft, joinRight, varsLeft, varsRight, pipelineDesc, []string{datasetLeftURI, datasetRightURI}, defaultSubmitter{}, &cfg)
 }
 
 func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable,
-	varsRight []*model.Variable, rightOrigin *model.DatasetOrigin, submitter primitiveSubmitter,
-	config *env.Config) (*apiModel.FilteredData, error) {
+	varsRight []*model.Variable, pipelineDesc *description.FullySpecifiedPipeline,
+	datasetURIs []string, submitter primitiveSubmitter, config *env.Config) (string, *apiModel.FilteredData, error) {
 	// put the vars into a map for quick lookup
 	leftVarsMap := createVarMap(varsLeft, true, true)
 	rightVarsMap := createVarMap(varsRight, true, true)
-	searchResult := ""
-	provenance := ""
-	if rightOrigin != nil {
-		provenance = rightOrigin.Provenance
-		searchResult = rightOrigin.SearchResult
-	}
-
-	// create & submit the solution request
-	pipelineDesc, err := description.CreateDatamartAugmentPipeline("Join Preview",
-		"Join to be reviewed by user", searchResult, provenance)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to create join pipeline")
-	}
-
-	datasetLeftURI := env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetFolder)
 
 	// returns a URI pointing to the merged CSV file
-	resultURI, err := submitter.submit([]string{datasetLeftURI}, pipelineDesc)
+	resultURI, err := submitter.submit(datasetURIs, pipelineDesc)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to run join pipeline")
+		return "", nil, errors.Wrap(err, "unable to run join pipeline")
 	}
 
 	// create a new dataset from the merged CSV file
@@ -93,16 +106,16 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable,
 	storageName := model.NormalizeDatasetID(datasetName)
 	mergedVariables, err := createDatasetFromCSV(config, csvFilename, datasetName, storageName, leftVarsMap, rightVarsMap)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to create dataset from result CSV")
+		return "", nil, errors.Wrap(err, "unable to create dataset from result CSV")
 	}
 
 	// return some of the data for the client to preview
 	data, err := createFilteredData(csvFilename, mergedVariables, lineCount)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
-	return data, nil
+	return env.ResolvePath(ingestMetadata.Augmented, datasetName), data, nil
 }
 
 type defaultSubmitter struct{}
@@ -196,7 +209,7 @@ func createDatasetFromCSV(config *env.Config, csvFile string, datasetName string
 
 	// write out the metadata
 	metadataDestPath := path.Join(outputPath, compute.D3MDataSchema)
-	dataResource.ResPath = path.Dir(csvDestPath)
+	dataResource.ResPath = csvDestPath
 	err = datasetStorage.WriteMetadata(metadataDestPath, metadata, true, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to write schema")

@@ -254,7 +254,7 @@ func (f *NumericalField) fetchHistogramByResult(resultURI string, filterParams *
 func (f *NumericalField) fetchExtrema() (*api.Extrema, error) {
 	fromClause := f.getFromClause(true)
 	// add min / max aggregation
-	aggQuery := f.getMinMaxAggsQuery(f.Key)
+	aggQuery := f.getMinMaxAggsQuery()
 
 	// create a query that does min and max aggregations for each variable
 	// need to ignore the NaN values
@@ -386,14 +386,14 @@ func (f *NumericalField) parseExtrema(rows pgx.Rows) (*api.Extrema, error) {
 	}, nil
 }
 
-func (f *NumericalField) getMinMaxAggsQuery(key string) string {
+func (f *NumericalField) getMinMaxAggsQuery() string {
 	// get min / max agg names
-	minAggName := api.MinAggPrefix + key
-	maxAggName := api.MaxAggPrefix + key
+	minAggName := api.MinAggPrefix + f.Key
+	maxAggName := api.MaxAggPrefix + f.Key
 
 	// create aggregations
 	queryPart := fmt.Sprintf("MIN(\"%s\") AS \"%s\", MAX(\"%s\") AS \"%s\"",
-		key, minAggName, key, maxAggName)
+		f.Key, minAggName, f.Key, maxAggName)
 	// add aggregations
 	return queryPart
 }
@@ -402,7 +402,7 @@ func (f *NumericalField) fetchExtremaByURI(resultURI string) (*api.Extrema, erro
 	fromClause := f.getFromClause(false)
 
 	// add min / max aggregation
-	aggQuery := f.getMinMaxAggsQuery(f.Key)
+	aggQuery := f.getMinMaxAggsQuery()
 
 	// create a query that does min and max aggregations for each variable
 	queryString := fmt.Sprintf("SELECT %s FROM %s INNER JOIN %s result ON %s.\"%s\" = result.index WHERE result.result_id = $1 AND %s;",
@@ -680,7 +680,7 @@ func (f *NumericalField) getNaNFilter() string {
 }
 
 func (f *NumericalField) fetchExtremaStorage() (*api.Extrema, error) {
-	aggQuery := f.Storage.getMinMaxAggsQuery(f.Key, f.Type)
+	aggQuery := f.getMinMaxAggsQuery()
 
 	// numerical columns need to filter NaN out
 	filter := fmt.Sprintf("WHERE \"%s\" != 'NaN'", f.Key)

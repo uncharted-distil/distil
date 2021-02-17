@@ -21,7 +21,7 @@
       <search-input class="mb-3" />
       <search-bar
         class="mb-3"
-        :variables="variables"
+        :variables="allVariables"
         :filters="filters"
         :highlight="routeHighlight"
         @lex-query="updateFilterFromLexQuery"
@@ -174,6 +174,11 @@ export default Vue.extend({
 
     activeViews(): string[] {
       return filterViews(this.variables);
+    },
+
+    /* All variables, only used for lex as we need to parse the hidden variables from groupings */
+    allVariables(): Variable[] {
+      return datasetGetters.getAllVariables(this.$store);
     },
 
     /* Actions available based on the variables meta types */

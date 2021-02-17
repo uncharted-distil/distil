@@ -35,7 +35,7 @@
     <search-bar
       v-show="isPrototype"
       class="mb-3"
-      :variables="variables"
+      :variables="allVariables"
       :filters="routeFilters"
       :highlight="routeHighlight"
       @lex-query="updateFilterAndHighlightFromLexQuery"
@@ -196,7 +196,9 @@ export default Vue.extend({
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
     },
-
+    allVariables(): Variable[] {
+      return datasetGetters.getAllVariables(this.$store);
+    },
     availableVariables(): Variable[] {
       return routeGetters.getAvailableVariables(this.$store);
     },

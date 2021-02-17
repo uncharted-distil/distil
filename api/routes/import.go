@@ -48,6 +48,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 
 		var origins []*model.DatasetOrigin
 		ingestSteps := &task.IngestSteps{ClassificationOverwrite: false}
+		datasetPath := ""
 		if (source == metadata.Augmented || source == metadata.Public) && provenance == "local" {
 			// parse POST params
 			params, err := getPostParameters(r)
@@ -72,11 +73,6 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 					return
 				}
 
-				if params["joinedDataset"] == nil {
-					missingParamErr(w, "joinedDataset")
-					return
-				}
-
 				// set the origin information
 				originalDataset, okOriginal := params["originalDataset"].(map[string]interface{})
 				joinedDataset, okJoined := params["joinedDataset"].(map[string]interface{})
@@ -94,14 +90,15 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 					return
 				}
 
-				datasetPath := params["path"].(string)
-				log.Infof("Creating dataset '%s' from '%s'", datasetID, datasetPath)
-				creationResult, err := createDataset(datasetPath, datasetID, config)
+				datasetPathRaw := params["path"].(string)
+				log.Infof("Creating dataset '%s' from '%s'", datasetID, datasetPathRaw)
+				creationResult, err := createDataset(datasetPathRaw, datasetID, config)
 				if err != nil {
 					handleError(w, errors.Wrap(err, "unable to create raw dataset"))
 					return
 				}
 				datasetID = creationResult.name
+				datasetPath = creationResult.path
 				ingestSteps = &task.IngestSteps{
 					RawGroupings:            creationResult.groups,
 					IndexFields:             creationResult.indexFields,
@@ -124,7 +121,10 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		}
 
 		// import the dataset to the local filesystem.
-		uri := env.ResolvePath(source, datasetID)
+		uri := datasetPath
+		if uri == "" {
+			uri = env.ResolvePath(source, datasetID)
+		}
 		log.Infof("Importing dataset '%s' from '%s'", datasetID, uri)
 		_, err = meta.ImportDataset(datasetID, uri)
 		if err != nil {
@@ -139,9 +139,18 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		if !isSampling {
 			ingestConfig.SampleRowLimit = math.MaxInt32 // Maximum int value.
 		}
+		ingestParams := &task.IngestParams{
+			Source:   source,
+			DataCtor: dataCtor,
+			MetaCtor: esMetaCtor,
+			ID:       datasetID,
+			Origins:  origins,
+			Type:     api.DatasetTypeModelling,
+			Path:     uri,
+		}
 
 		log.Infof("Ingesting dataset '%s'", uri)
-		ingestResult, err := task.IngestDataset(source, dataCtor, esMetaCtor, datasetID, origins, api.DatasetTypeModelling, ingestConfig, ingestSteps)
+		ingestResult, err := task.IngestDataset(ingestParams, ingestConfig, ingestSteps)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -207,14 +216,6 @@ type datasetCreationResult struct {
 }
 
 func createDataset(datasetPath string, datasetName string, config *env.Config) (*datasetCreationResult, error) {
-	// check if already a dataset
-	if util.IsDatasetDir(datasetPath) {
-		return &datasetCreationResult{
-			name: datasetName,
-			path: datasetPath,
-		}, nil
-	}
-
 	// create the raw dataset
 	log.Infof("Creating raw dataset '%s' from '%s'", datasetName, datasetPath)
 	ds, groups, indexFields, err := createRawDataset(datasetPath, datasetName)

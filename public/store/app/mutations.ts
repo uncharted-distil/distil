@@ -36,7 +36,9 @@ export const mutations = {
   setTA2VersionNumber(state: AppState, ta2Version: string) {
     state.ta2Version = ta2Version;
   },
-
+  setShouldScaleImages(state: AppState, shouldScale: boolean) {
+    state.shouldScaleImages = shouldScale;
+  },
   setTrainTestSplit(state: AppState, trainTestSplit: string) {
     state.trainTestSplit = parseFloat(trainTestSplit);
   },

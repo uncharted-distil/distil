@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"path"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/araddon/dateparse"
@@ -147,9 +148,27 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 	if err != nil {
 		return nil, err
 	}
-
+	labelHeader := "label"
+	expectedHeaders := []string{model.D3MIndexFieldName, "image_file", "group_id", "band", "timestamp", "coordinates", labelHeader, "geo_coordinates"}
+	headerNames := append([]string(nil),expectedHeaders...)
+	if len(imageFolders) == 0 {
+		// search just in case the above order is changed at some point
+		labelIdx := sort.Search(len(headerNames), func(i int) bool {
+			return labelHeader == headerNames[i]
+		})
+		// remove "label" header due to 0 folders
+		if labelIdx == len(headerNames)-1 {
+			// if label is at the end can't use the method below it will index out of range
+			headerNames = headerNames[:labelIdx]
+		} else {
+			// this maintains order of the slice
+			headerNames = append(headerNames[:labelIdx], headerNames[labelIdx+1:]...)
+		}
+		// add the parent folder as the imageFolder
+		imageFolders = append(imageFolders, s.ExtractedFilePath)
+	}
 	csvData := make([][]string, 0)
-	csvData = append(csvData, []string{model.D3MIndexFieldName, "image_file", "group_id", "band", "timestamp", "coordinates", "label", "geo_coordinates"})
+	csvData = append(csvData, headerNames)
 	mediaFolder := util.GetUniqueFolder(path.Join(outputDatasetPath, "media"))
 
 	// need to keep track of d3m Index values since they are shared for a whole group
@@ -159,6 +178,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 	// the folder name represents the label to apply for all containing images
 	errorCount := 0
 	timestampType := model.DateTimeType
+	indicesToKeep := getIndicesToKeep(expectedHeaders, headerNames)
 	for _, imageFolder := range imageFolders {
 		log.Infof("processing satellite image folder '%s'", imageFolder)
 		label := path.Base(imageFolder)
@@ -216,8 +236,10 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 					d3mIDRunning = d3mIDRunning + 1
 					d3mIDs[groupID] = d3mID
 				}
+				// remove values that are not needed based on the headerNames (expects values, expectedHeaders and headerNames to be IN ORDER)
+				csvLine := removeMissingValues(indicesToKeep, []string{fmt.Sprintf("%d", d3mID), path.Base(targetImageFilename), groupID, band, timestamp, coordinates.String(), label, coordinates.ToGeometryString()})
 
-				csvData = append(csvData, []string{fmt.Sprintf("%d", d3mID), path.Base(targetImageFilename), groupID, band, timestamp, coordinates.String(), label, coordinates.ToGeometryString()})
+				csvData = append(csvData, csvLine)
 			}
 		}
 	}
@@ -228,37 +250,47 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 	meta := model.NewMetadata(datasetName, datasetName, "", datasetID)
 	dr := model.NewDataResource(compute.DefaultResourceID, model.ResTypeTable, map[string][]string{compute.D3MResourceFormat: {"csv"}})
 	dr.ResPath = dataFilePath
+	varCounter := 0
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(0, model.D3MIndexFieldName, model.D3MIndexFieldName, model.D3MIndexFieldName,
+		model.NewVariable(varCounter, model.D3MIndexFieldName, model.D3MIndexFieldName, model.D3MIndexFieldName,
 			model.D3MIndexFieldName, model.IntegerType, model.IntegerType, "D3M index",
 			[]string{model.RoleMultiIndex}, model.VarDistilRoleIndex, nil, dr.Variables, false),
 	)
+	varCounter++
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(1, "image_file", "image_file", "image_file", "image_file", model.MultiBandImageType,
+		model.NewVariable(varCounter, "image_file", "image_file", "image_file", "image_file", model.MultiBandImageType,
 			model.StringType, "Reference to image file", []string{"attribute"},
 			model.VarDistilRoleData, map[string]interface{}{"resID": "0", "resObject": "item"}, dr.Variables, false))
+	varCounter++
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(2, "group_id", "group_id", "group_id", "group_id", model.StringType,
+		model.NewVariable(varCounter, "group_id", "group_id", "group_id", "group_id", model.StringType,
 			model.StringType, "ID linking all bands of a particular image set together", []string{"attribute", "suggestedGroupingKey"},
 			model.VarDistilRoleGrouping, nil, dr.Variables, false))
+	varCounter++
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(3, "band", "band", "band", "band", model.StringType,
+		model.NewVariable(varCounter, "band", "band", "band", "band", model.StringType,
 			model.StringType, "Image band", []string{"attribute"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
+	varCounter++
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(4, "timestamp", "timestamp", "timestamp", "timestamp", timestampType,
+		model.NewVariable(varCounter, "timestamp", "timestamp", "timestamp", "timestamp", timestampType,
 			model.StringType, "Image timestamp", []string{"attribute"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
+	varCounter++
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(5, "coordinates", "coordinates", "coordinates", "coordinates", model.RealVectorType,
+		model.NewVariable(varCounter, "coordinates", "coordinates", "coordinates", "coordinates", model.RealVectorType,
 			model.RealVectorType, "Coordinates of the image defined by a bounding box", []string{"attribute"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
+	varCounter++
+	if len(expectedHeaders) == len(headerNames) {
+		dr.Variables = append(dr.Variables,
+			model.NewVariable(varCounter, "label", "label", "label", "label", model.CategoricalType,
+				model.StringType, "Label of the image", []string{"suggestedTarget"},
+				model.VarDistilRoleData, nil, dr.Variables, false))
+		varCounter++
+	}
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(6, "label", "label", "label", "label", model.CategoricalType,
-			model.StringType, "Label of the image", []string{"suggestedTarget"},
-			model.VarDistilRoleData, nil, dr.Variables, false))
-	dr.Variables = append(dr.Variables,
-		model.NewVariable(7, "__geo_coordinates", "coordinates", "geo_coordinates", "__geo_coordinates", model.GeoBoundsType,
+		model.NewVariable(varCounter, "__geo_coordinates", "coordinates", "geo_coordinates", "__geo_coordinates", model.GeoBoundsType,
 			model.GeoBoundsType, "postgis structure for the bounding box coordinates of the tile", []string{},
 			model.VarDistilRoleMetadata, nil, dr.Variables, false))
 
@@ -279,6 +311,30 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 	}, nil
 }
 
+// removeValues removes values not needed based on supplied headernames
+func removeMissingValues(indices []int, values []string) []string {
+	result := []string{}
+	// build the value string based on the actual headers that exist
+	for _, idx := range indices {
+		result = append(result, values[idx])
+	}
+	return result
+}
+func getIndicesToKeep(expectedHeaders []string, headers []string) []int{
+	result := []int{}
+	headerMap := map[string]int{}
+	// build map
+	for i, header := range headers {
+		headerMap[header] = i
+	}
+	// check what is missing and append indices
+	for i, header := range expectedHeaders {
+		if _, ok := headerMap[header]; ok{
+			result = append(result, i)
+		}
+	}
+	return result
+}
 func verifySatelliteImage(filename string, defaultType string) bool {
 	typ := path.Ext(filename)
 	if len(typ) > 0 {

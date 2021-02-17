@@ -26,7 +26,8 @@ export const getters = {
   getPendingRequests: read(moduleGetters.getPendingRequests),
 
   // variables
-  getVariables: read(moduleGetters.getVariables),
+  getVariables: read(moduleGetters.getVariables), //filters hidden variables.
+  getAllVariables: read(moduleGetters.getAllVariables), //includes hidden variables.
   getGroupings: read(moduleGetters.getGroupings),
   getTimeseriesGroupingVariables: read(
     moduleGetters.getTimeseriesGroupingVariables

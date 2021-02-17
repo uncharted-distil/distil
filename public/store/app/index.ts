@@ -12,6 +12,7 @@ export interface AppState {
   prototype: boolean;
   trainTestSplit: number;
   trainTestSplitTimeSeries: number;
+  shouldScaleImages: boolean;
 }
 
 export interface StatusPanelState {
@@ -35,6 +36,7 @@ export const state: AppState = {
   prototype: false,
   trainTestSplit: null,
   trainTestSplitTimeSeries: null,
+  shouldScaleImages: false,
 };
 
 export type StatusPanelContentType = DatasetPendingRequestType;

@@ -57,22 +57,6 @@ func (s *Storage) parseExtrema(row pgx.Rows, variable *model.Variable) (*api.Ext
 	}, nil
 }
 
-func (s *Storage) getMinMaxAggsQuery(variableName string, variableType string) string {
-	// get min / max agg names
-	minAggName := api.MinAggPrefix + variableName
-	maxAggName := api.MaxAggPrefix + variableName
-
-	vName := fmt.Sprintf("\"%s\"", variableName)
-	if variableType == model.DateTimeType {
-		vName = fmt.Sprintf("CAST(extract(epoch from \"%s\") AS INTEGER)", variableName)
-	}
-
-	// create aggregations
-	queryPart := fmt.Sprintf("MIN(%s) AS \"%s\", MAX(%s) AS \"%s\"", vName, minAggName, vName, maxAggName)
-	// add aggregations
-	return queryPart
-}
-
 // FetchExtrema return extrema of a variable in a result set.
 func (s *Storage) FetchExtrema(dataset string, storageName string, variable *model.Variable) (*api.Extrema, error) {
 	field, err := s.createField(dataset, storageName, variable, api.DefaultMode)
@@ -83,44 +67,19 @@ func (s *Storage) FetchExtrema(dataset string, storageName string, variable *mod
 	return field.fetchExtremaStorage()
 }
 
-func (s *Storage) fetchExtremaByURI(storageName string, resultURI string, variable *model.Variable) (*api.Extrema, error) {
-	varKey := variable.Key
-	if variable.IsGrouping() && model.IsTimeSeries(variable.Grouping.GetType()) {
-		tsg := variable.Grouping.(*model.TimeseriesGrouping)
-		varKey = tsg.YCol
-	} else if variable.IsGrouping() && model.IsGeoCoordinate(variable.Grouping.GetType()) {
-		gcg := variable.Grouping.(*model.GeoCoordinateGrouping)
-		varKey = gcg.YCol
-	}
-
-	// add min / max aggregation
-	aggQuery := s.getMinMaxAggsQuery(varKey, variable.Type)
-
-	// create a query that does min and max aggregations for each variable
-	queryString := fmt.Sprintf("SELECT %s FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $1;",
-		aggQuery, storageName, s.getResultTable(storageName), model.D3MIndexFieldName)
-
-	// execute the postgres query
-	// NOTE: We may want to use the regular Query operation since QueryRow
-	// hides db exceptions.
-	res, err := s.client.Query(queryString, resultURI)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch extrema for variable summaries from postgres")
-	}
-	if res != nil {
-		defer res.Close()
-	}
-
-	return s.parseExtrema(res, variable)
-}
-
 // FetchExtremaByURI return extrema of a variable in a result set.
 func (s *Storage) FetchExtremaByURI(dataset string, storageName string, resultURI string, varName string) (*api.Extrema, error) {
 	variable, err := s.metadata.FetchVariable(dataset, varName)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch variable description for summary")
 	}
-	return s.fetchExtremaByURI(storageName, resultURI, variable)
+
+	field, err := s.createField(dataset, storageName, variable, api.DefaultMode)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch extrema for variable summaries from postgres")
+	}
+
+	return field.fetchExtremaByURI(resultURI)
 }
 
 func (s *Storage) fetchSummaryData(dataset string, storageName string, varName string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool, mode api.SummaryMode) (*api.VariableSummary, error) {
