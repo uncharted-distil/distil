@@ -27,7 +27,7 @@ html {
 
   /* Action Column */
   --bg-color-action-column: var(--gray-400);
-  --width-action-column: 3rem;
+  --width-action-column: 4.5rem;
 
   /* Side Panels */
   --bg-color-side-panel: var(--gray-100);

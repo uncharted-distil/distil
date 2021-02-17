@@ -1,14 +1,20 @@
 <template>
-  <div class="create-solutions-form mt-2">
+  <div class="create-solutions-form d-flex justify-content-center mt-2">
     <error-modal
-      :show="showCreateFailure"
       title="Model Failed"
+      :show="showCreateFailure"
       :error="createErrorMessage"
       @close="showCreateFailure = !showCreateFailure"
+    />
+    <settings-modal :time-range="dateTimeExtrema" />
+    <b-overlay
+      :show="isPending"
+      rounded
+      opacity="0.6"
+      spinner-small
+      spinner-variant="success"
+      class="d-inline-block"
     >
-    </error-modal>
-    <settings-modal :timeRange="dateTimeExtrema"></settings-modal>
-    <div class="row justify-content-center">
       <b-button-group>
         <b-button
           :variant="createVariant"
@@ -22,19 +28,10 @@
           :variant="createVariant"
           :disabled="disableCreate"
         >
-          <i class="fa fa-cog" aria-hidden="true"></i>
+          <i class="fa fa-cog" aria-hidden="true" />
         </b-button>
       </b-button-group>
-    </div>
-    <div class="solution-progress">
-      <b-progress
-        v-if="isPending"
-        :value="percentComplete"
-        variant="outline-secondary"
-        striped
-        :animated="true"
-      ></b-progress>
-    </div>
+    </b-overlay>
   </div>
 </template>
 
@@ -49,18 +46,17 @@ import {
 } from "../store/app/module";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
-import { actions as viewActions } from "../store/view/module";
 import { RESULTS_ROUTE } from "../store/route/index";
 import { actions as requestActions } from "../store/requests/module";
-import { Solution, NUM_SOLUTIONS } from "../store/requests/index";
-import { Variable, TaskTypes, DataMode } from "../store/dataset/index";
-import { TIMESERIES_TYPE, DATE_TIME_TYPE } from "../util/types";
+import { Solution } from "../store/requests/index";
+import { Variable, DataMode } from "../store/dataset/index";
+import { DATE_TIME_TYPE } from "../util/types";
 import { FilterParams } from "../util/filters";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import Vue from "vue";
 
 export default Vue.extend({
-  name: "create-solutions-form",
+  name: "CreateSolutionsForm",
 
   components: {
     ErrorModal,
@@ -78,6 +74,7 @@ export default Vue.extend({
       $bvModal: null,
     };
   },
+
   computed: {
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
@@ -124,12 +121,13 @@ export default Vue.extend({
       return this.isPending || !this.targetSelected || !this.trainingSelected;
     },
     createVariant(): string {
-      return !this.disableCreate ? "success" : "outline-secondary";
+      return !this.disableCreate ? "success" : "outline-success";
     },
     percentComplete(): number {
       return 100;
     },
   },
+
   methods: {
     // create button handler
     create() {

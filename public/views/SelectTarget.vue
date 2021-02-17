@@ -1,7 +1,7 @@
 <template>
   <div class="container-fluid d-flex flex-column h-100">
     <!-- Spacer for the App.vue <navigation> component -->
-    <div class="row flex-0-nav"></div>
+    <div class="row flex-0-nav" />
 
     <!-- Title of the page -->
     <header class="header row justify-content-center">
@@ -25,14 +25,14 @@
             can plot it on a&nbsp;<strong>Map</strong>.
           </b-col>
           <span class="sub-header-action">
-            <b-button @click="onTimeseriesClick" variant="dark">
-              <i class="fa fa-area-chart"></i> Timeseries
+            <b-button variant="dark" @click="onTimeseriesClick">
+              <i class="fa fa-area-chart" /> Timeseries
             </b-button>
-            <b-button @click="onMapClick" variant="dark">
-              <i class="fa fa-globe"></i> Map
+            <b-button variant="dark" @click="onMapClick">
+              <i class="fa fa-globe" /> Map
             </b-button>
-            <b-button @click="onLabelingClick" variant="dark">
-              <i class="fa fa-tag"></i> Label
+            <b-button variant="dark" @click="onLabelingClick">
+              <i class="fa fa-tag" /> Label
             </b-button>
           </span>
         </b-row>
@@ -46,11 +46,11 @@
           enable-search
           enable-type-change
           enable-type-filtering
-          :facetCount="searchedActiveVariables.length"
+          :facet-count="searchedActiveVariables.length"
           :html="html"
           ignore-highlights
           :instance-name="instanceName"
-          :logActivity="problemDefinition"
+          :log-activity="problemDefinition"
           :pagination="searchedActiveVariables.length > numRowsPerPage"
           :rows-per-page="numRowsPerPage"
           :summaries="summaries"
@@ -92,7 +92,7 @@ import {
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 
 export default Vue.extend({
-  name: "select-target-view",
+  name: "SelectTargetView",
 
   components: {
     VariableFacets,

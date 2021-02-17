@@ -5,7 +5,6 @@ import {
   filterArrayByPage,
   NUM_PER_PAGE,
   NUM_PER_TARGET_PAGE,
-  NUM_PER_DATA_EXPLORER_PAGE,
   searchVariables,
   sortVariablesByImportance,
 } from "../../util/data";
@@ -131,8 +130,6 @@ const fetchVariableSummaries = async (context, args) => {
   let pageLength = NUM_PER_PAGE;
   if (currentRoute === SELECT_TARGET_ROUTE) {
     pageLength = NUM_PER_TARGET_PAGE;
-  } else if (currentRoute === DATA_EXPLORER_ROUTE) {
-    pageLength = NUM_PER_DATA_EXPLORER_PAGE;
   }
 
   const searches = routeGetters.getAllSearchesByRoute(store);
@@ -401,10 +398,18 @@ export const actions = {
       }),
     ]);
   },
+
+  clearAllData(context: ViewContext) {
+    datasetMutations.clearVariableSummaries(store);
+    datasetMutations.setIncludedTableData(store, createEmptyTableData());
+    datasetMutations.setExcludedTableData(store, createEmptyTableData());
+  },
+
   clearDatasetTableData(context: ViewContext) {
     datasetMutations.setIncludedTableData(store, createEmptyTableData());
     datasetMutations.setExcludedTableData(store, createEmptyTableData());
   },
+
   async fetchSelectTargetData(context: ViewContext, clearSummaries: boolean) {
     // clear previous state
     if (clearSummaries) {
@@ -419,7 +424,31 @@ export const actions = {
   async fetchDataExplorerData(context: ViewContext, variables: Variable[]) {
     // fetch new state
     const dataset = context.getters.getRouteDataset;
-    return fetchVariableSummaries(context, { dataset, variables });
+    await fetchVariableSummaries(context, { dataset, variables });
+    fetchClusters(context, { dataset });
+    fetchOutliers(context, { dataset });
+  },
+
+  updateDataExplorerData(context: ViewContext) {
+    const args = {
+      dataset: context.getters.getRouteDataset,
+      filterParams: context.getters.getDecodedSolutionRequestFilterParams,
+      highlight: context.getters.getDecodedHighlight,
+    };
+    const variableArgs = {
+      ...args,
+      varModes: context.getters.getDecodedVarModes,
+    };
+    const tableDataArgs = {
+      ...args,
+      dataMode: context.getters.getDataMode,
+    };
+
+    return Promise.all([
+      fetchVariableSummaries(context, variableArgs),
+      datasetActions.fetchIncludedTableData(store, tableDataArgs),
+      datasetActions.fetchExcludedTableData(store, tableDataArgs),
+    ]);
   },
 
   clearJoinDatasetsData(context) {
@@ -480,6 +509,7 @@ export const actions = {
       datasetActions.fetchExcludedTableData(store, tableDataArgs),
     ]);
   },
+
   updateLabelData(context: ViewContext) {
     // clear any previous state
     const dataset = context.getters.getRouteDataset;

@@ -86,7 +86,7 @@ function getOutlierVariableName(variables: Variable[]) {
   return (
     remoteSensingVariable?.grouping.idCol ??
     groupingVariables[0]?.grouping.idCol ??
-    variables[0].key
+    variables?.[0].key
   );
 }
 
@@ -371,7 +371,7 @@ export const actions = {
     if (routeGetters.isOutlierApplied(store)) return;
 
     const { dataset } = args;
-    const variables = getters.getVariables(context);
+    const variables = getters.getVariables(context) ?? [];
     const variableName = getOutlierVariableName(variables);
 
     // Create the request.

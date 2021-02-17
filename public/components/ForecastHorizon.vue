@@ -30,7 +30,7 @@
     </b-form-group>
 
     <template v-slot:modal-footer="{ ok, cancel }">
-      <b-button @click="cancel()" :disabled="isWaiting">Cancel</b-button>
+      <b-button :disabled="isWaiting" @click="cancel()">Cancel</b-button>
 
       <b-overlay
         :show="isWaiting"
@@ -40,7 +40,7 @@
         spinner-variant="primary"
         class="d-inline-block"
       >
-        <b-button variant="primary" @click="ok()" :disabled="isWaiting">
+        <b-button variant="primary" :disabled="isWaiting" @click="ok()">
           Forecast
         </b-button>
       </b-overlay>
@@ -54,7 +54,7 @@
 
 <script lang="ts">
 import Vue from "vue";
-import { Extrema, TaskTypes } from "../store/dataset/index";
+import { TaskTypes } from "../store/dataset/index";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import {
@@ -69,7 +69,14 @@ import { PREDICTION_ROUTE } from "../store/route";
  * Modal to request a Forecast Horizon.
  */
 export default Vue.extend({
-  name: "forecast-horizon",
+  name: "ForecastHorizon",
+
+  props: {
+    dataset: { type: String, default: null },
+    fittedSolutionId: { type: String, default: null },
+    target: { type: String, default: null },
+    targetType: { type: String, default: null },
+  },
 
   data() {
     return {
@@ -89,13 +96,6 @@ export default Vue.extend({
       showError: false,
       isWaiting: false,
     };
-  },
-
-  props: {
-    dataset: String,
-    fittedSolutionId: String,
-    target: String,
-    targetType: String,
   },
 
   computed: {

@@ -187,6 +187,12 @@ export const getters = {
     return state.query.training ? (state.query.training as string) : null;
   },
 
+  // Return the list of variable displayed in the Data Explorer view
+  getExploreVariables(state: Route): string[] {
+    const explore = state.query?.explore as string;
+    return explore?.split(",") ?? [];
+  },
+
   // Returns a boolean to say that the variables for this dataset has been ranked.
   getRouteIsTrainingVariablesRanked(state: Route): boolean {
     return state.query.varRanked && state.query.varRanked === "1"; // Use "1" for truth.
@@ -384,14 +390,19 @@ export const getters = {
       filters,
       size,
     });
-    // add training vars
-    const training = getters.getDecodedTrainingVariableNames;
-    filterParams.variables = filterParams.variables.concat(training);
-    // add target vars
-    const target = getters.getRouteTargetVariable as string;
-    if (target) {
-      filterParams.variables.push(target);
+
+    // If we have explore variables, we do not show the target & training ones
+    const explore = getters.getExploreVariables;
+    if (!_.isEmpty(explore)) {
+      filterParams.variables = explore;
     }
+    // Otherwise, we list the target & training non-null variables
+    else {
+      const training = getters.getDecodedTrainingVariableNames;
+      const target = getters.getRouteTargetVariable as string;
+      filterParams.variables = [...training, target].filter((v) => v);
+    }
+
     return filterParams;
   },
 

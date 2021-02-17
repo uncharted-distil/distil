@@ -28,7 +28,7 @@
       />
 
       <!-- Tabs to switch views -->
-      <b-tabs pills v-model="activeView" class="mb-3">
+      <b-tabs v-model="activeView" class="tab-container">
         <b-tab
           v-for="(view, index) in activeViews"
           :key="index"
@@ -43,18 +43,22 @@
         <component :is="viewComponent" :instance-name="instanceName" />
       </section>
 
-      <p class="selection-data-size mt-2 mb-0">
-        <data-size
-          :current-size="numRows"
-          :total="totalNumRows"
-          @submit="onDataSizeSubmit"
-        />
-        <strong class="matching-color">matching</strong> samples of
-        {{ totalNumRows }} to model<template v-if="selectionNumRows > 0"
-          >, {{ selectionNumRows }}
-          <strong class="selected-color">selected</strong>
-        </template>
-      </p>
+      <footer class="d-flex justify-content-between">
+        <p class="selection-data-size mt-2 mb-0">
+          <data-size
+            :current-size="numRows"
+            :total="totalNumRows"
+            @submit="onDataSizeSubmit"
+          />
+          <strong class="matching-color">matching</strong> samples of
+          {{ totalNumRows }} to model<template v-if="selectionNumRows > 0">
+            , {{ selectionNumRows }}
+            <strong class="selected-color">selected</strong>
+          </template>
+        </p>
+
+        <create-solutions-form v-if="isCreateModelPossible" />
+      </footer>
     </main>
 
     <status-sidebar />
@@ -64,11 +68,12 @@
 
 <script lang="ts">
 import Vue from "vue";
-import { capitalize, isEmpty } from "lodash";
+import { capitalize, isEmpty, isNil } from "lodash";
 
 // Components
 import ActionColumn, { Action } from "../components/layout/ActionColumn.vue";
 import AddVariablePane from "../components/panel/AddVariablePane.vue";
+import CreateSolutionsForm from "../components/CreateSolutionsForm.vue";
 import DataSize from "../components/buttons/DataSize.vue";
 import FacetListPane from "../components/panel/FacetListPane.vue";
 import LeftSidePanel from "../components/layout/LeftSidePanel.vue";
@@ -77,8 +82,8 @@ import SearchBar from "../components/layout/SearchBar.vue";
 import SearchInput from "../components/SearchInput.vue";
 import SelectDataTable from "../components/SelectDataTable.vue";
 import SelectGeoPlot from "../components/SelectGeoPlot.vue";
-// import SelectGraphView from "../components/SelectGraphView.vue";
-// import SelectTimeseriesView from "../components/SelectTimeseriesView.vue";
+import SelectGraphView from "../components/SelectGraphView.vue";
+import SelectTimeseriesView from "../components/SelectTimeseriesView.vue";
 import StatusPanel from "../components/StatusPanel.vue";
 import StatusSidebar from "../components/StatusSidebar.vue";
 
@@ -109,6 +114,7 @@ import {
 } from "../util/view";
 
 const ACTIONS = [
+  { name: "Create New Variable", icon: "plus", paneId: "add" },
   { name: "All Variables", icon: "database", paneId: "available" },
   { name: "Text Variables", icon: "font", paneId: "text" },
   { name: "Categorical Variables", icon: "align-left", paneId: "categorical" },
@@ -117,8 +123,8 @@ const ACTIONS = [
   { name: "Location Variables", icon: "map-o", paneId: "location" },
   { name: "Image Variables", icon: "image", paneId: "image" },
   { name: "Unknown Variables", icon: "question", paneId: "unknown" },
-  { name: "Selected Variables", icon: "check", paneId: "selected" },
-  { name: "Create New Variable", icon: "plus", paneId: "add" },
+  { name: "Target Variable", icon: "crosshairs", paneId: "target" },
+  { name: "Training Variable", icon: "asterisk", paneId: "training" },
 ] as Action[];
 
 export default Vue.extend({
@@ -127,6 +133,7 @@ export default Vue.extend({
   components: {
     ActionColumn,
     AddVariablePane,
+    CreateSolutionsForm,
     DataSize,
     FacetListPane,
     LeftSidePanel,
@@ -135,8 +142,8 @@ export default Vue.extend({
     SearchInput,
     SelectDataTable,
     SelectGeoPlot,
-    // SelectGraphView,
-    // SelectTimeseriesView,
+    SelectGraphView,
+    SelectTimeseriesView,
     StatusPanel,
     StatusSidebar,
   },
@@ -166,7 +173,7 @@ export default Vue.extend({
     },
 
     activeViews(): string[] {
-      return filterViews(this.selectedVariables);
+      return filterViews(this.variables);
     },
 
     /* All variables, only used for lex as we need to parse the hidden variables from groupings */
@@ -193,6 +200,10 @@ export default Vue.extend({
       return routeGetters.getRouteDataset(this.$store);
     },
 
+    explore(): string[] {
+      return routeGetters.getExploreVariables(this.$store);
+    },
+
     filters(): string {
       return routeGetters.getRouteFilters(this.$store);
     },
@@ -207,6 +218,11 @@ export default Vue.extend({
 
     highlight(): Highlight {
       return routeGetters.getDecodedHighlight(this.$store);
+    },
+
+    isCreateModelPossible(): boolean {
+      // check that we have some target and training variables.
+      return !isNil(this.target) && !isEmpty(this.training);
     },
 
     routeHighlight(): string {
@@ -239,13 +255,11 @@ export default Vue.extend({
       return getNumIncludedRows(this.rowSelection);
     },
 
-    selectedVariables(): Variable[] {
-      return this.variables.filter((v) =>
-        this.cleanTraining.includes(v.key.toLowerCase())
-      );
-    },
-
     spinnerHTML,
+
+    target(): Variable {
+      return routeGetters.getTargetVariable(this.$store);
+    },
 
     totalNumRows(): number {
       return this.hasData
@@ -257,28 +271,36 @@ export default Vue.extend({
       return routeGetters.getDecodedTrainingVariableNames(this.$store);
     },
 
-    cleanTraining(): string[] {
-      return this.training.map((t) => t.toLowerCase());
-    },
-
     variables(): Variable[] {
-      return datasetGetters.getVariables(this.$store);
+      const variables = Array.from(datasetGetters.getVariables(this.$store));
+      variables.sort((a, b) => {
+        // If their ranking are identical or do not exist
+        // sort by importance
+        if (a?.ranking === b?.ranking) {
+          return b.importance - a.importance;
+
+          // otherwise by ranking
+        } else {
+          return b.ranking - a.ranking;
+        }
+      });
+      return variables;
     },
 
-    variablesPerActions(): any {
-      const nonSelectedVariables = this.variables.filter(
-        (v) => !this.cleanTraining.includes(v.key.toLowerCase())
-      );
-
+    variablesPerActions() {
       const variables = {};
       this.availableActions.forEach((action) => {
         if (action.paneId === "add") variables[action.paneId] = null;
-        else if (action.paneId === "selected") {
-          variables[action.paneId] = this.selectedVariables;
-        } else if (action.paneId === "available") {
-          variables[action.paneId] = nonSelectedVariables;
+        else if (action.paneId === "available") {
+          variables[action.paneId] = this.variables;
+        } else if (action.paneId === "target") {
+          variables[action.paneId] = this.target ? [this.target] : [];
+        } else if (action.paneId === "training") {
+          variables[action.paneId] = this.variables.filter((variable) =>
+            this.training.includes(variable.key)
+          );
         } else {
-          variables[action.paneId] = nonSelectedVariables.filter((variable) =>
+          variables[action.paneId] = this.variables.filter((variable) =>
             META_TYPES[action.paneId].includes(variable.colType)
           );
         }
@@ -294,10 +316,36 @@ export default Vue.extend({
     viewComponent() {
       const viewType = this.activeViews[this.activeView] as string;
       if (viewType === GEO_VIEW) return "SelectGeoPlot";
-      // if (viewType === GRAPH_VIEW) return "SelectGraphView";
+      if (viewType === GRAPH_VIEW) return "SelectGraphView";
       if (viewType === IMAGE_VIEW) return "ImageMosaic";
       if (viewType === TABLE_VIEW) return "SelectDataTable";
-      // if (viewType === TIMESERIES_VIEW) return "SelectTimeseriesView";
+      if (viewType === TIMESERIES_VIEW) return "SelectTimeseriesView";
+
+      // Default is TABLE_VIEW
+      return "SelectDataTable";
+    },
+  },
+
+  // Update either the summaries or explore data on user interaction.
+  watch: {
+    activeVariables(n, o) {
+      if (n === o) return;
+      viewActions.fetchDataExplorerData(this.$store, this.activeVariables);
+    },
+
+    filters(n, o) {
+      if (n === o) return;
+      viewActions.updateDataExplorerData(this.$store);
+    },
+
+    highlight(n, o) {
+      if (n === o) return;
+      viewActions.updateDataExplorerData(this.$store);
+    },
+
+    explore(n, o) {
+      if (n === o) return;
+      viewActions.updateDataExplorerData(this.$store);
     },
   },
 
@@ -305,31 +353,11 @@ export default Vue.extend({
     // First get the dataset informations
     await viewActions.fetchDataExplorerData(this.$store, [] as Variable[]);
 
-    // Update the training data
-    viewActions.updateSelectTrainingData(this.$store);
-  },
+    // Pre-select the top 5 variables by importance
+    this.preSelectTopVariables();
 
-  // Update either the summaries or training data on user interaction.
-  watch: {
-    activeVariables(newVariables, oldVariables) {
-      if (oldVariables === newVariables) return;
-      viewActions.fetchDataExplorerData(this.$store, this.activeVariables);
-    },
-
-    filters(newFilters, oldFilters) {
-      if (oldFilters === newFilters) return;
-      viewActions.updateSelectTrainingData(this.$store);
-    },
-
-    highlight(newHighlight, oldHighlight) {
-      if (oldHighlight === newHighlight) return;
-      viewActions.updateSelectTrainingData(this.$store);
-    },
-
-    training(newTraining, oldTraining) {
-      if (oldTraining === newTraining) return;
-      viewActions.fetchDataExplorerData(this.$store, this.activeVariables);
-    },
+    // Update the explore data
+    viewActions.updateDataExplorerData(this.$store);
   },
 
   methods: {
@@ -343,7 +371,7 @@ export default Vue.extend({
     /* When the user request to fetch a different size of data. */
     onDataSizeSubmit(dataSize: number) {
       this.updateRoute({ dataSize });
-      viewActions.updateSelectTrainingData(this.$store);
+      viewActions.updateDataExplorerData(this.$store);
     },
 
     onSetActive(actionName: string): void {
@@ -365,6 +393,20 @@ export default Vue.extend({
     updateRoute(args) {
       const entry = overlayRouteEntry(this.$route, args);
       this.$router.push(entry).catch((err) => console.warn(err));
+    },
+
+    preSelectTopVariables(number = 5): void {
+      // if explore is already filled let's skip
+      if (!isEmpty(this.explore)) return;
+
+      // get the top 5 variables
+      const top5Variables = [...this.variables]
+        .slice(0, number)
+        .map((variable) => variable.key)
+        .join(",");
+
+      // Update the route with the top 5 variable as training
+      this.updateRoute({ explore: top5Variables });
     },
   },
 });
@@ -391,14 +433,54 @@ export default Vue.extend({
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-  padding: 1rem;
+  padding-bottom: 1rem;
+  padding-top: 1rem;
+}
+
+/* Add padding to all elements but the tabs and data */
+.content > *:not(.data-container),
+.content > *:not(.tab-container) {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.tab-container,
+.data-container {
+  border-bottom: 1px solid var(--border-color);
 }
 
 .data-container {
+  background-color: var(--white);
   display: flex;
   flex-flow: wrap;
   height: 100%;
+  padding: 1rem;
   position: relative;
   width: 100%;
+}
+</style>
+<style>
+.view-container .tab-container ul.nav-tabs {
+  border: none;
+  margin-bottom: -1px;
+}
+
+.view-container .tab-container a.nav-link {
+  border: 1px solid transparent;
+  border-bottom-color: var(--border-color);
+  border-top-width: 3px;
+  color: var(--color-text-second);
+  margin-bottom: 0;
+}
+
+.view-container .tab-container a.nav-link.active {
+  background-color: var(--white);
+  border-color: var(--border-color);
+  border-top-color: var(--primary);
+  border-bottom-width: 0;
+  border-top-left-radius: 0.25rem;
+  border-top-right-radius: 0.25rem;
+  color: var(--primary);
+  margin-bottom: -1px;
 }
 </style>

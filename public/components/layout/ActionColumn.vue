@@ -52,7 +52,7 @@ export default Vue.extend({
 
 <style scoped>
 .action-column-container {
-  --width: var(--width-action-column, 3rem);
+  --width: var(--width-action-column);
   height: 100%;
   position: relative;
   width: var(--width);
@@ -80,22 +80,23 @@ export default Vue.extend({
 /* Display a count to know the number of variables. */
 .action-column-nav-bar li[data-count]::after {
   background-color: var(--color-text-disable);
-  border-radius: 50%;
+  border-radius: 0.5em;
   color: var(--white);
   content: attr(data-count);
   display: block;
-  font-size: 0.5rem;
+  font-size: 0.6rem;
   height: 2em;
   line-height: 2em;
+  padding-left: 0.75em;
+  padding-right: 0.75em;
   position: absolute;
   right: 0.5em;
-  top: 0.5em;
+  top: 25%;
   text-align: center;
-  width: 2em;
 }
 
 .action-column-nav-bar button {
+  text-align: left;
   width: var(--width);
-  height: var(--width);
 }
 </style>
