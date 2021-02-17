@@ -250,7 +250,8 @@ func (f *DateTimeField) getHistogramAggQuery(extrema *api.Extrema, numBuckets in
 	// if only a single value, then return a simple count.
 	if extrema.Max == extrema.Min {
 		// want to return the count under bucket 0.
-		bucketQueryString = fmt.Sprintf("(%s\"%s\" - %s\"%s\")", alias, extrema.Key, alias, extrema.Key)
+		// specify a cast because the group by clause sees 0 as not a number
+		bucketQueryString = "cast(0 as integer)"
 	} else {
 		bucketQueryString = fmt.Sprintf("width_bucket(cast(extract(epoch from %s\"%s\") as integer), %d, %d, %d) - 1",
 			alias, extrema.Key, int(extrema.Min), int(extrema.Max), extrema.GetBucketCount(numBuckets))
@@ -494,7 +495,8 @@ func (f *DateTimeField) getResultHistogramAggQuery(extrema *api.Extrema, resultV
 	// if only a single value, then return a simple count.
 	if rounded.Max == rounded.Min {
 		// want to return the count under bucket 0.
-		bucketQueryString = fmt.Sprintf("(\"%s\" - \"%s\")", fieldTyped, fieldTyped)
+		// specify a cast because the group by clause sees 0 as not a number
+		bucketQueryString = "cast(0 as integer)"
 	} else {
 		bucketQueryString = fmt.Sprintf("width_bucket(%s, %d, %d, %d) - 1",
 			fieldTyped, int(rounded.Min), int(rounded.Max), extrema.GetBucketCount(numBuckets))

@@ -199,7 +199,7 @@ func (s *Storage) buildIncludeFilter(dataset string, wheres []string, params []i
 
 	case model.GeoBoundsFilter:
 		// geo bounds
-		where := fmt.Sprintf("ST_WITHIN(%s, $%d)", name, len(params)+1)
+		where := fmt.Sprintf("ST_INTERSECTS(%s, $%d)", name, len(params)+1)
 		params = append(params, buildBoundsGeometryString(filter.Bounds))
 		wheres = append(wheres, where)
 
@@ -326,7 +326,7 @@ func (s *Storage) buildExcludeFilter(dataset string, wheres []string, params []i
 
 	case model.GeoBoundsFilter:
 		// geo bounds
-		where := fmt.Sprintf("ST_WITHIN(%s, $%d)=false", name, len(params)+1)
+		where := fmt.Sprintf("ST_INTERSECTS(%s, $%d)=false", name, len(params)+1)
 		params = append(params, buildBoundsGeometryString(filter.Bounds))
 		wheres = append(wheres, where)
 
