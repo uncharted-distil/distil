@@ -23,6 +23,7 @@
             model-selection
             :pagination="trainingVariables.length > rowsPerPage"
             :summaries="trainingSummariesByImportance"
+            :rows-per-page="rowsPerPage"
           >
           </variable-facets>
         </div>
