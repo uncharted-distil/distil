@@ -1362,7 +1362,7 @@ export const actions = {
 
         try {
           const response = await axios.post(
-            `distil/data/${dataset}/false`,
+            `distil/data/${dataset}/false/true`,
             filterParams
           );
           mutations.setJoinDatasetsTableData(context, {
@@ -1505,7 +1505,7 @@ export const actions = {
 
     try {
       const response = await axios.post(
-        `distil/data/${args.dataset}/${!args.include}`,
+        `distil/data/${args.dataset}/${!args.include}/false`,
         { ...filterParams, orderBy: args.orderBy }
       );
       return response.data;

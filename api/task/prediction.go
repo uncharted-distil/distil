@@ -551,7 +551,7 @@ func CreateComposedVariable(metaStorage api.MetadataStorage, dataStorage api.Dat
 			Variables: []string{model.D3MIndexName},
 		}
 	}
-	rawData, err := dataStorage.FetchData(dataset, storageName, filter, false, nil)
+	rawData, err := dataStorage.FetchData(dataset, storageName, filter, false, false, nil)
 	if err != nil {
 		return err
 	}

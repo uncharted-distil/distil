@@ -5,9 +5,7 @@ go 1.13
 require (
 	github.com/araddon/dateparse v0.0.0-20190622164848-0fb0a474d195
 	github.com/caarlos0/env v3.5.0+incompatible
-	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.1
-	github.com/fatih/color v1.10.0 // indirect
 	github.com/gofrs/uuid v3.3.0+incompatible
 	github.com/golang/protobuf v1.4.2
 	github.com/golangci/golangci-lint v1.33.0 // indirect
@@ -32,8 +30,6 @@ require (
 	github.com/uncharted-distil/distil-compute v0.0.0-20210208222927-a7ae5d433614
 	github.com/uncharted-distil/distil-image-upscale v0.0.0-20210210122944-38e126ef1a20
 	github.com/uncharted-distil/gdal v0.0.0-20200504224203-25f2e6a0dc2a
-	github.com/unchartedsoftware/witch v0.0.0-20200617171400-4f405404126f // indirect
-	github.com/urfave/cli v1.22.5 // indirect
 	github.com/unchartedsoftware/plog v0.0.0-20200807135627-83d59e50ced5
 	github.com/unchartedsoftware/witch v0.0.0-20200617171400-4f405404126f // indirect
 	github.com/urfave/cli v1.22.5 // indirect
