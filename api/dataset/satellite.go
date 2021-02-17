@@ -150,7 +150,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 	}
 	labelHeader := "label"
 	expectedHeaders := []string{model.D3MIndexFieldName, "image_file", "group_id", "band", "timestamp", "coordinates", labelHeader, "geo_coordinates"}
-	headerNames := append([]string(nil),expectedHeaders...)
+	headerNames := append([]string(nil), expectedHeaders...)
 	if len(imageFolders) == 0 {
 		// search just in case the above order is changed at some point
 		labelIdx := sort.Search(len(headerNames), func(i int) bool {
@@ -320,7 +320,7 @@ func removeMissingValues(indices []int, values []string) []string {
 	}
 	return result
 }
-func getIndicesToKeep(expectedHeaders []string, headers []string) []int{
+func getIndicesToKeep(expectedHeaders []string, headers []string) []int {
 	result := []int{}
 	headerMap := map[string]int{}
 	// build map
@@ -329,7 +329,7 @@ func getIndicesToKeep(expectedHeaders []string, headers []string) []int{
 	}
 	// check what is missing and append indices
 	for i, header := range expectedHeaders {
-		if _, ok := headerMap[header]; ok{
+		if _, ok := headerMap[header]; ok {
 			result = append(result, i)
 		}
 	}
