@@ -16,14 +16,29 @@
 package util
 
 import (
-	"github.com/stretchr/testify/assert"
-	log "github.com/unchartedsoftware/plog"
 	"image"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	log "github.com/unchartedsoftware/plog"
 )
 
 func TestImageFromCombination(t *testing.T) {
-	composedImage, err := ImageFromCombination("test/bigearthnet", "S2A_MSIL2A_20171121T112351_79_21", NaturalColors, ImageScale{})
+	bandMap := map[string]string{
+		"b01": "S2A_MSIL2A_20171121T112351_79_21_B01.tif",
+		"b02": "S2A_MSIL2A_20171121T112351_79_21_B02.tif",
+		"b03": "S2A_MSIL2A_20171121T112351_79_21_B03.tif",
+		"b04": "S2A_MSIL2A_20171121T112351_79_21_B04.tif",
+		"b05": "S2A_MSIL2A_20171121T112351_79_21_B05.tif",
+		"b06": "S2A_MSIL2A_20171121T112351_79_21_B06.tif",
+		"b07": "S2A_MSIL2A_20171121T112351_79_21_B07.tif",
+		"b08": "S2A_MSIL2A_20171121T112351_79_21_B08.tif",
+		"b8A": "S2A_MSIL2A_20171121T112351_79_21_B8A.tif",
+		"b09": "S2A_MSIL2A_20171121T112351_79_21_B09.tif",
+		"b11": "S2A_MSIL2A_20171121T112351_79_21_B11.tif",
+		"b12": "S2A_MSIL2A_20171121T112351_79_21_B12.tif",
+	}
+	composedImage, err := ImageFromCombination("test/bigearthnet", bandMap, NaturalColors, ImageScale{})
 	assert.NoError(t, err)
 	assert.NotNil(t, composedImage)
 	assert.True(t, len(composedImage.Pix) > 0)

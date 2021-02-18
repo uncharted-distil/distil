@@ -158,30 +158,19 @@ func init() {
 
 // ImageFromCombination takes a base datsaet directory, fileID and a band combination label and
 // returns a composed image.  NOTE: Currently a bit hardcoded for sentinel-2 data.
-func ImageFromCombination(datasetDir string, fileID string, bandCombo string, imageScale ImageScale, options ...Options) (*image.RGBA, error) {
+func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, bandCombo string, imageScale ImageScale, options ...Options) (*image.RGBA, error) {
 	// attempt to get the folder file type for the supplied dataset dir from the cache, if
 	// not do the look up
 	bandCombination := BandCombinationID(bandCombo)
-	var fileType string
-	cacheValue, ok := folderTypeCache.Get(datasetDir)
-	if !ok {
-		var err error
-		fileType, err = GetFolderFileType(datasetDir)
-		if err != nil {
-			return nil, err
-		}
-		folderTypeCache.Add(datasetDir, fileType)
-	} else {
-		fileType = cacheValue.(string)
-	}
 
 	// map the band files to the inputs
 	filePaths := []string{}
 	if bandCombo, ok := SentinelBandCombinations[strings.ToLower(string(bandCombination))]; ok {
 		for _, bandLabel := range bandCombo.Mapping {
-			filePath := getFilePath(datasetDir, fileID, bandLabel, fileType)
-			filePaths = append(filePaths, filePath)
+			log.Infof("BAND LABEL: %v", bandLabel)
+			filePaths = append(filePaths, path.Join(datasetDir, bandFileMapping[bandLabel]))
 		}
+		log.Infof("FILE PATHS: %v", filePaths)
 		return ImageFromBands(filePaths, bandCombo.Ramp, bandCombo.Transform, imageScale, options...)
 	}
 
