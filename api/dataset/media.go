@@ -272,5 +272,10 @@ func getLabelFolders(folderPath string) ([]string, error) {
 		}
 	}
 
+	// add the parent directory since all media must be in it and not subfolders.
+	if len(labelFolders) == 0 {
+		labelFolders = append(labelFolders, folderPath)
+	}
+
 	return labelFolders, nil
 }

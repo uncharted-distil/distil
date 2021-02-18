@@ -17,6 +17,7 @@ package routes
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"path"
 	"strconv"
@@ -44,7 +45,7 @@ func getOptions(requestURI string) string {
 }
 
 // MultiBandImageHandler fetches individual band images and combines them into a single RGB image using the supplied mapping.
-func MultiBandImageHandler(ctor api.MetadataStorageCtor, config env.Config) func(http.ResponseWriter, *http.Request) {
+func MultiBandImageHandler(ctor api.MetadataStorageCtor, dataCtor api.DataStorageCtor, config env.Config) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
 		imageID := pat.Param(r, "image-id")
@@ -62,6 +63,12 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, config env.Config) func
 			handleError(w, err)
 			return
 		}
+		dataStorage, err := dataCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
 		res, err := storage.FetchDataset(dataset, false, false, false)
 		if err != nil {
 			handleError(w, err)
@@ -94,7 +101,15 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, config env.Config) func
 			// if thumbnail scale should be 0
 			options.Scale = 0
 		}
-		img, err := util.ImageFromCombination(sourcePath, imageID, bandCombo, imageScale, options)
+
+		// need to get the band -> filename from the data
+		bandMapping, err := getBandMapping(res, imageID, dataStorage)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		img, err := util.ImageFromCombination(sourcePath, bandMapping, bandCombo, imageScale, options)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -120,4 +135,72 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, config env.Config) func
 			return
 		}
 	}
+}
+
+func getBandMapping(ds *api.Dataset, groupKey string, dataStorage api.DataStorage) (map[string]string, error) {
+	// build a filter to only include rows matching a group id
+	var groupingCol *model.Variable
+	var bandCol *model.Variable
+	var fileCol *model.Variable
+	for _, v := range ds.Variables {
+		if v.DistilRole == model.VarDistilRoleGrouping && !v.IsGrouping() {
+			groupingCol = v
+		} else if v.Key == "band" {
+			bandCol = v
+		} else if !v.IsGrouping() && model.IsMultiBandImage(v.Type) {
+			fileCol = v
+		}
+	}
+	if groupingCol == nil {
+		return nil, errors.Errorf("no grouping col found in dataset")
+	}
+	if fileCol == nil {
+		return nil, errors.Errorf("no file col found in dataset")
+	}
+	if bandCol == nil {
+		return nil, errors.Errorf("no band col found in dataset")
+	}
+
+	filter := &api.FilterParams{}
+	filter.Filters = []*model.Filter{
+		{
+			Key:        groupingCol.Key,
+			Type:       model.CategoricalFilter,
+			Categories: []string{groupKey},
+			Mode:       model.IncludeFilter,
+		},
+	}
+	filter.Variables = []string{fileCol.Key, bandCol.Key}
+
+	// pull back all rows for a group id
+	data, err := dataStorage.FetchData(ds.ID, ds.StorageName, filter, false, false, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// cycle through results to build the band mapping
+	fileColumn := -1
+	bandColumn := -1
+	for i, c := range data.Columns {
+		if c.Key == fileCol.Key {
+			fileColumn = i
+		} else if c.Key == bandCol.Key {
+			bandColumn = i
+		}
+	}
+	if fileColumn == -1 {
+		return nil, errors.Errorf("no file column found in stored data")
+	}
+	if bandColumn == -1 {
+		return nil, errors.Errorf("no band column found in stored data")
+	}
+
+	mapping := map[string]string{}
+	for _, r := range data.Values {
+		// the mapping expects bXX but the database only stores XX
+		bandKey := fmt.Sprintf("b%s", r[bandColumn].Value.(string))
+		mapping[bandKey] = r[fileColumn].Value.(string)
+	}
+
+	return mapping, nil
 }

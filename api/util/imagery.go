@@ -28,7 +28,6 @@ import (
 	"path"
 	"strings"
 
-	lru "github.com/hashicorp/golang-lru"
 	"github.com/nfnt/resize"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/gdal"
@@ -124,19 +123,9 @@ func NormalizingTransform(bandValues ...uint16) float64 {
 var (
 	// SentinelBandCombinations defines a list of recommended band combinations for sentinel 2 satellite missions
 	SentinelBandCombinations = map[string]*BandCombination{}
-
-	// Cache to hold directory file type search results
-	folderTypeCache *lru.Cache
 )
 
 func init() {
-	// create an LRU cache to hold the results of time consuming directory content analysis
-	var err error
-	folderTypeCache, err = lru.New(100)
-	if err != nil {
-		log.Error(errors.Wrap(err, "failed to init directory type cache"))
-	}
-
 	// initialize the band combination structures - needs to be done in init so that referenced color ramps are built
 	SentinelBandCombinations = map[string]*BandCombination{
 		NaturalColors:          {NaturalColors, "Natural Colors", []string{"b04", "b03", "b02"}, nil, nil},
@@ -158,30 +147,19 @@ func init() {
 
 // ImageFromCombination takes a base datsaet directory, fileID and a band combination label and
 // returns a composed image.  NOTE: Currently a bit hardcoded for sentinel-2 data.
-func ImageFromCombination(datasetDir string, fileID string, bandCombo string, imageScale ImageScale, options ...Options) (*image.RGBA, error) {
+func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, bandCombo string, imageScale ImageScale, options ...Options) (*image.RGBA, error) {
 	// attempt to get the folder file type for the supplied dataset dir from the cache, if
 	// not do the look up
 	bandCombination := BandCombinationID(bandCombo)
-	var fileType string
-	cacheValue, ok := folderTypeCache.Get(datasetDir)
-	if !ok {
-		var err error
-		fileType, err = GetFolderFileType(datasetDir)
-		if err != nil {
-			return nil, err
-		}
-		folderTypeCache.Add(datasetDir, fileType)
-	} else {
-		fileType = cacheValue.(string)
-	}
 
 	// map the band files to the inputs
 	filePaths := []string{}
 	if bandCombo, ok := SentinelBandCombinations[strings.ToLower(string(bandCombination))]; ok {
 		for _, bandLabel := range bandCombo.Mapping {
-			filePath := getFilePath(datasetDir, fileID, bandLabel, fileType)
-			filePaths = append(filePaths, filePath)
+			log.Infof("BAND LABEL: %v", bandLabel)
+			filePaths = append(filePaths, path.Join(datasetDir, bandFileMapping[bandLabel]))
 		}
+		log.Infof("FILE PATHS: %v", filePaths)
 		return ImageFromBands(filePaths, bandCombo.Ramp, bandCombo.Transform, imageScale, options...)
 	}
 
@@ -532,13 +510,6 @@ func SplitMultiBandImage(dataset gdal.Dataset, outputFolder string, bandMapping 
 	}
 
 	return files, nil
-}
-
-// getFilePath takes a top level dataset directory, a file ID and a band label and composes them
-// into a coherent path for a BigEarthNet file.
-func getFilePath(datasetDir string, fileID string, bandLabel string, fileType string) string {
-	fileName := fmt.Sprintf("%s_%s.%s", fileID, strings.ToUpper(bandLabel), fileType)
-	return path.Join(datasetDir, fileName)
 }
 
 func lerp(v0 float64, v1 float64, t float64) float64 {

@@ -55,7 +55,7 @@ func getVariableByKey(key string, variables []*model.Variable) *model.Variable {
 	return nil
 }
 
-func (s *Storage) parseFilteredData(dataset string, filterVariables []*model.Variable, numRows int, rows pgx.Rows) (*api.FilteredData, error) {
+func (s *Storage) parseFilteredData(dataset string, filterVariables []*model.Variable, numRows int, includeGroupingCol bool, rows pgx.Rows) (*api.FilteredData, error) {
 	result := &api.FilteredData{
 		NumRows: numRows,
 		Values:  make([][]*api.FilteredDataValue, 0),
@@ -80,7 +80,7 @@ func (s *Storage) parseFilteredData(dataset string, filterVariables []*model.Var
 						Type:  variable.Type,
 					})
 					fieldIndexMap = append(fieldIndexMap, fieldIdx)
-				} else if fieldKey == variable.Key && variable.DistilRole != model.VarDistilRoleGrouping {
+				} else if fieldKey == variable.Key && (includeGroupingCol || variable.DistilRole != model.VarDistilRoleGrouping) {
 					columns = append(columns, &api.Column{
 						Key:   variable.Key,
 						Label: variable.DisplayName,
@@ -727,7 +727,7 @@ func (s *Storage) fetchNumRowsJoined(storageName string, variables []*model.Vari
 // FetchData creates a postgres query to fetch a set of rows.  Applies filters to restrict the
 // results to a user selected set of fields, with rows further filtered based on allowed ranges and
 // categories.
-func (s *Storage) FetchData(dataset string, storageName string, filterParams *api.FilterParams, invert bool, orderByVar *model.Variable) (*api.FilteredData, error) {
+func (s *Storage) FetchData(dataset string, storageName string, filterParams *api.FilterParams, invert bool, includeGroupingCol bool, orderByVar *model.Variable) (*api.FilteredData, error) {
 	variables, err := s.metadata.FetchVariables(dataset, true, true, true)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
@@ -821,7 +821,7 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 	}
 
 	// parse the result
-	filteredData, err := s.parseFilteredData(dataset, filterVariables, numRows, res)
+	filteredData, err := s.parseFilteredData(dataset, filterVariables, numRows, includeGroupingCol, res)
 	if err != nil {
 		return nil, err
 	}
