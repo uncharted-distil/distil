@@ -1,6 +1,6 @@
 <template>
   <div
-    v-observe-visibility="visibilityChanged"
+    v-observe-visibility="{ callback: visibilityChanged }"
     :class="{ 'is-hidden': !isVisible && !preventHiding }"
     :style="{
       width: `${width}px`, // + 2 for boarder
@@ -111,7 +111,7 @@ export default Vue.extend({
       if (newUrl === null) {
         return;
       }
-      if (newUrl !== oldUrl) {
+      if (newUrl !== oldUrl && this.isVisible) {
         this.cleanUp();
         this.hasRendered = false;
         this.hasRequested = false;
