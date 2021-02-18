@@ -473,17 +473,22 @@ export const actions = {
     args: {
       produceRequestId: string;
       newDatasetName: string;
+      includeDatasetFeatures?: boolean;
     }
-  ): Promise<void> {
+  ): Promise<Error> {
     try {
       const endPoint = "/distil/clone-result/";
       const params = `${args.produceRequestId}`;
       const response = await axios.post(
         `/distil/clone-result/${encodeURIComponent(args.produceRequestId)}`,
-        { datasetName: args.newDatasetName }
+        {
+          datasetName: args.newDatasetName,
+          includeDatasetFeatures: args.includeDatasetFeatures,
+        }
       );
     } catch (error) {
       console.error(error);
+      return error;
     }
     return null;
   },
