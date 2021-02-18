@@ -17,6 +17,7 @@ package routes
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"path"
 	"strconv"
@@ -142,11 +143,11 @@ func getBandMapping(ds *api.Dataset, groupKey string, dataStorage api.DataStorag
 	var bandCol *model.Variable
 	var fileCol *model.Variable
 	for _, v := range ds.Variables {
-		if v.DistilRole == model.VarDistilRoleGrouping {
+		if v.DistilRole == model.VarDistilRoleGrouping && !v.IsGrouping() {
 			groupingCol = v
 		} else if v.Key == "band" {
 			bandCol = v
-		} else if v.RefersTo != nil {
+		} else if !v.IsGrouping() && model.IsMultiBandImage(v.Type) {
 			fileCol = v
 		}
 	}
@@ -169,6 +170,7 @@ func getBandMapping(ds *api.Dataset, groupKey string, dataStorage api.DataStorag
 			Mode:       model.IncludeFilter,
 		},
 	}
+	filter.Variables = []string{fileCol.Key, bandCol.Key}
 
 	// pull back all rows for a group id
 	data, err := dataStorage.FetchData(ds.ID, ds.StorageName, filter, false, false, nil)
@@ -195,7 +197,9 @@ func getBandMapping(ds *api.Dataset, groupKey string, dataStorage api.DataStorag
 
 	mapping := map[string]string{}
 	for _, r := range data.Values {
-		mapping[r[bandColumn].Value.(string)] = r[fileColumn].Value.(string)
+		// the mapping expects bXX but the database only stores XX
+		bandKey := fmt.Sprintf("b%s", r[bandColumn].Value.(string))
+		mapping[bandKey] = r[fileColumn].Value.(string)
 	}
 
 	return mapping, nil
