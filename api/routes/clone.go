@@ -231,10 +231,12 @@ func getCloningParams(predictionRequestID string, metaStorage api.MetadataStorag
 		}
 
 		features = make([]string, len(ds.Variables)-1)
-		for i, v := range ds.Variables {
+		counter := 0
+		for _, v := range ds.Variables {
 			// the target is not a feature!
 			if v.Key != targetName {
-				features[i] = v.Key
+				features[counter] = v.Key
+				counter++
 			}
 		}
 	}

@@ -34,7 +34,10 @@
           <b-form-input
             v-model="newDatasetName"
             placeholder="Enter dataset name to use for new dataset"
-          ></b-form-input>
+          />
+          <b-form-checkbox v-model="includeAllFeatures" class="pt-2">
+            Include data not used in model
+          </b-form-checkbox>
         </div>
       </div>
     </b-modal>
@@ -111,6 +114,7 @@ export default Vue.extend({
     return {
       saveFileName: "",
       newDatasetName: "",
+      includeAllFeatures: false,
     };
   },
 
@@ -282,9 +286,28 @@ export default Vue.extend({
     },
 
     async createDataset() {
-      await predictionActions.createDataset(this.$store, {
+      const err = await predictionActions.createDataset(this.$store, {
         produceRequestId: this.produceRequestId,
         newDatasetName: this.newDatasetName,
+        includeDatasetFeatures: this.includeAllFeatures,
+      });
+      const location = "b-toaster-bottom-right";
+      if (err) {
+        this.$bvToast.toast(err.message, {
+          title: "Error creating dataset ${this.newDatasetName}",
+          solid: true,
+          appendToast: true,
+          variant: "danger",
+          toaster: location,
+        });
+        return;
+      }
+      this.$bvToast.toast(`Success`, {
+        title: `Success creating dataset ${this.newDatasetName}`,
+        solid: true,
+        appendToast: true,
+        variant: "success",
+        toaster: location,
       });
     },
   },
