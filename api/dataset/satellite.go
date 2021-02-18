@@ -20,7 +20,6 @@ import (
 	"io/ioutil"
 	"path"
 	"regexp"
-	"sort"
 	"strings"
 
 	"github.com/araddon/dateparse"
@@ -57,6 +56,12 @@ var (
 		13: "8A",
 	}
 )
+
+// RemoteSensingDatasetProperties lists the data properties of a remote sensing dataset.
+type RemoteSensingDatasetProperties struct {
+	MultiClass     bool
+	MultiTimestamp bool
+}
 
 // Satellite captures the data in a satellite (remote sensing) dataset.
 type Satellite struct {
@@ -148,25 +153,14 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 	if err != nil {
 		return nil, err
 	}
+	props := s.readProperties(imageFolders)
 	labelHeader := "label"
-	expectedHeaders := []string{model.D3MIndexFieldName, "image_file", "group_id", "band", "timestamp", "coordinates", labelHeader, "geo_coordinates"}
-	headerNames := append([]string(nil), expectedHeaders...)
-	if len(imageFolders) == 0 {
-		// search just in case the above order is changed at some point
-		labelIdx := sort.Search(len(headerNames), func(i int) bool {
-			return labelHeader == headerNames[i]
-		})
-		// remove "label" header due to 0 folders
-		if labelIdx == len(headerNames)-1 {
-			// if label is at the end can't use the method below it will index out of range
-			headerNames = headerNames[:labelIdx]
-		} else {
-			// this maintains order of the slice
-			headerNames = append(headerNames[:labelIdx], headerNames[labelIdx+1:]...)
-		}
-		// add the parent folder as the imageFolder
-		imageFolders = append(imageFolders, s.ExtractedFilePath)
+	expectedHeaders := []string{model.D3MIndexFieldName, "image_file", "group_id", "band", "timestamp", "coordinates", "geo_coordinates"}
+	if props.MultiClass {
+		expectedHeaders = append(expectedHeaders, labelHeader)
 	}
+	headerNames := append([]string{}, expectedHeaders...)
+
 	csvData := make([][]string, 0)
 	csvData = append(csvData, headerNames)
 	mediaFolder := util.GetUniqueFolder(path.Join(outputDatasetPath, "media"))
@@ -228,7 +222,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 					timestampType = model.StringType
 				}
 
-				groupID := extractGroupID(targetImageFilename)
+				groupID := extractGroupID(targetImageFilename, props)
 
 				d3mID := d3mIDs[groupID]
 				if d3mID == 0 {
@@ -237,7 +231,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 					d3mIDs[groupID] = d3mID
 				}
 				// remove values that are not needed based on the headerNames (expects values, expectedHeaders and headerNames to be IN ORDER)
-				csvLine := removeMissingValues(indicesToKeep, []string{fmt.Sprintf("%d", d3mID), path.Base(targetImageFilename), groupID, band, timestamp, coordinates.String(), label, coordinates.ToGeometryString()})
+				csvLine := removeMissingValues(indicesToKeep, []string{fmt.Sprintf("%d", d3mID), path.Base(targetImageFilename), groupID, band, timestamp, coordinates.String(), coordinates.ToGeometryString(), label})
 
 				csvData = append(csvData, csvLine)
 			}
@@ -282,17 +276,17 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 			model.RealVectorType, "Coordinates of the image defined by a bounding box", []string{"attribute"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
 	varCounter++
+	dr.Variables = append(dr.Variables,
+		model.NewVariable(varCounter, "__geo_coordinates", "coordinates", "geo_coordinates", "__geo_coordinates", model.GeoBoundsType,
+			model.GeoBoundsType, "postgis structure for the bounding box coordinates of the tile", []string{},
+			model.VarDistilRoleMetadata, nil, dr.Variables, false))
+	varCounter++
 	if len(expectedHeaders) == len(headerNames) {
 		dr.Variables = append(dr.Variables,
 			model.NewVariable(varCounter, "label", "label", "label", "label", model.CategoricalType,
 				model.StringType, "Label of the image", []string{"suggestedTarget"},
 				model.VarDistilRoleData, nil, dr.Variables, false))
-		varCounter++
 	}
-	dr.Variables = append(dr.Variables,
-		model.NewVariable(varCounter, "__geo_coordinates", "coordinates", "geo_coordinates", "__geo_coordinates", model.GeoBoundsType,
-			model.GeoBoundsType, "postgis structure for the bounding box coordinates of the tile", []string{},
-			model.VarDistilRoleMetadata, nil, dr.Variables, false))
 
 	// create the data resource for the referenced images
 	imageTypeLookup := satTypeMap[s.ImageType]
@@ -309,6 +303,34 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 		Metadata:        meta,
 		DefinitiveTypes: true,
 	}, nil
+}
+
+func (s *Satellite) readProperties(imageFolders []string) *RemoteSensingDatasetProperties {
+	// cycle through folders to determine the dataset properties
+	props := &RemoteSensingDatasetProperties{
+		MultiClass: len(imageFolders) > 1,
+	}
+
+	// cycle through image names to determine if there are at least 2 timestamps
+	firstTimestamp := ""
+	for _, imageFolder := range imageFolders {
+		imageFiles, err := ioutil.ReadDir(imageFolder)
+		if err != nil {
+			break
+		}
+
+		for _, imageFile := range imageFiles {
+			timestamp, _ := extractTimestamp(imageFile.Name())
+			if firstTimestamp == "" {
+				firstTimestamp = timestamp
+			} else if firstTimestamp != timestamp {
+				props.MultiTimestamp = true
+				break
+			}
+		}
+	}
+
+	return props
 }
 
 // removeValues removes values not needed based on supplied headernames
@@ -370,11 +392,20 @@ func extractTimestamp(filename string) (string, error) {
 	return parsed.Format("2006-01-02 03:04:05"), nil
 }
 
-func extractGroupID(filename string) string {
+func extractGroupID(filename string, props *RemoteSensingDatasetProperties) string {
 	bandRaw := bandRegex.Find([]byte(filename))
 	adjustedFilename := path.Base(filename)
 	if len(bandRaw) > 0 {
 		adjustedFilename = strings.Replace(adjustedFilename, string(bandRaw), ".", 1)
+	}
+
+	// remove the timestamp from the group id if there is only one timestamp.
+	if !props.MultiTimestamp {
+		timestampRaw := timestampRegex.Find([]byte(adjustedFilename))
+		if len(timestampRaw) > 0 {
+			timestampString := fmt.Sprintf("_%s", string(timestampRaw))
+			adjustedFilename = strings.Replace(adjustedFilename, timestampString, "", 1)
+		}
 	}
 
 	adjustedFilename = strings.TrimSuffix(adjustedFilename, path.Ext(adjustedFilename))
