@@ -18,33 +18,54 @@
     </left-side-panel>
 
     <main class="content">
-      <search-input class="mb-3" />
       <search-bar
-        class="mb-3"
         :variables="allVariables"
         :filters="filters"
         :highlight="routeHighlight"
-        @lex-query="updateFilterFromLexQuery"
+        @lex-query="updateFilterAndHighlightFromLexQuery"
       />
 
       <!-- Tabs to switch views -->
-      <b-tabs v-model="activeView" class="tab-container">
-        <b-tab
-          v-for="(view, index) in activeViews"
-          :key="index"
-          :active="view === activeViews[activeView]"
-          :title="capitalize(view)"
-        />
-      </b-tabs>
 
+      <div class="d-flex flex-row align-items-end mt-2">
+        <div class="flex-grow-1 mr-2">
+          <b-tabs v-model="activeView" class="tab-container">
+            <b-tab
+              v-for="(view, index) in activeViews"
+              :key="index"
+              :active="view === activeViews[activeView]"
+              :title="capitalize(view)"
+            />
+          </b-tabs>
+        </div>
+        <b-button
+          class="select-data-action-exclude align-self-center"
+          variant="outline-secondary"
+          @click="onExcludeClick"
+        >
+          <i
+            class="fa fa-minus-circle pr-1"
+            :class="{
+              'exclude-highlight': isFilteringHighlights,
+            }"
+          />
+          Exclude
+        </b-button>
+      </div>
       <!-- <layer-selection v-if="isMultiBandImage" class="layer-select-dropdown" /> -->
       <section class="data-container">
         <div v-if="!hasData" v-html="spinnerHTML" />
-        <component :is="viewComponent" :instance-name="instanceName" />
+        <component
+          :is="viewComponent"
+          :instance-name="instanceName"
+          :included-active="includedActive"
+        />
       </section>
 
-      <footer class="d-flex justify-content-between">
-        <p class="selection-data-size mt-2 mb-0">
+      <footer
+        class="d-flex align-items-end d-flex justify-content-between mt-1 mb-0"
+      >
+        <div class="flex-grow-1">
           <data-size
             :current-size="numRows"
             :total="totalNumRows"
@@ -55,9 +76,24 @@
             , {{ selectionNumRows }}
             <strong class="selected-color">selected</strong>
           </template>
-        </p>
-
-        <create-solutions-form v-if="isCreateModelPossible" />
+        </div>
+        <b-button-toolbar>
+          <b-button-group class="ml-2 mt-1">
+            <b-button
+              variant="primary"
+              :disabled="includedActive"
+              @click="setIncludedActive"
+              >Included</b-button
+            >
+            <b-button
+              variant="secondary"
+              :disabled="!includedActive"
+              @click="setExcludedActive"
+              >Excluded</b-button
+            >
+          </b-button-group>
+        </b-button-toolbar>
+        <create-solutions-form v-if="isCreateModelPossible" class="ml-2" />
       </footer>
     </main>
 
@@ -98,7 +134,18 @@ import { getters as routeGetters } from "../store/route/module";
 import { actions as viewActions } from "../store/view/module";
 
 // Util
-import { deepUpdateFiltersInRoute } from "../util/filters";
+import {
+  Filter,
+  addFilterToRoute,
+  deepUpdateFiltersInRoute,
+  EXCLUDE_FILTER,
+  INCLUDE_FILTER,
+} from "../util/filters";
+import {
+  clearHighlight,
+  createFilterFromHighlight,
+  updateHighlight,
+} from "../util/highlights";
 import { lexQueryToFiltersAndHighlight } from "../util/lex";
 import { overlayRouteEntry } from "../util/routes";
 import { getNumIncludedRows } from "../util/row";
@@ -241,6 +288,19 @@ export default Vue.extend({
       });
     },
 
+    includedActive(): boolean {
+      return routeGetters.getRouteInclude(this.$store);
+    },
+
+    /* Disable the Exclude filter button. */
+    isExcludeDisabled(): boolean {
+      return !this.isFilteringHighlights;
+    },
+
+    isFilteringHighlights(): boolean {
+      return !!this.highlight;
+    },
+
     numRows(): number {
       return this.hasData
         ? datasetGetters.getIncludedTableDataLength(this.$store)
@@ -363,15 +423,29 @@ export default Vue.extend({
   methods: {
     capitalize,
 
-    updateFilterFromLexQuery(lexQuery) {
+    updateFilterAndHighlightFromLexQuery(lexQuery) {
       const lqfh = lexQueryToFiltersAndHighlight(lexQuery, this.dataset);
       deepUpdateFiltersInRoute(this.$router, lqfh.filters);
+      updateHighlight(this.$router, lqfh.highlight);
     },
 
     /* When the user request to fetch a different size of data. */
     onDataSizeSubmit(dataSize: number) {
       this.updateRoute({ dataSize });
       viewActions.updateDataExplorerData(this.$store);
+    },
+
+    onExcludeClick() {
+      let filter = null;
+      if (this.isFilteringHighlights) {
+        filter = createFilterFromHighlight(this.highlight, EXCLUDE_FILTER);
+      }
+
+      addFilterToRoute(this.$router, filter);
+
+      if (this.isFilteringHighlights) {
+        clearHighlight(this.$router);
+      }
     },
 
     onSetActive(actionName: string): void {
@@ -388,6 +462,20 @@ export default Vue.extend({
         pane: activePane,
         [`${DATA_EXPLORER_VAR_INSTANCE}${ROUTE_PAGE_SUFFIX}`]: 1,
       });
+    },
+
+    setIncludedActive() {
+      const entry = overlayRouteEntry(this.$route, {
+        include: "true",
+      });
+      this.$router.push(entry).catch((err) => console.warn(err));
+    },
+
+    setExcludedActive() {
+      const entry = overlayRouteEntry(this.$route, {
+        include: "false",
+      });
+      this.$router.push(entry).catch((err) => console.warn(err));
     },
 
     updateRoute(args) {
@@ -482,5 +570,15 @@ export default Vue.extend({
   border-top-right-radius: 0.25rem;
   color: var(--primary);
   margin-bottom: -1px;
+}
+
+.select-data-action-exclude:not([disabled]) .include-highlight,
+.select-data-action-exclude:not([disabled]) .exclude-highlight {
+  color: var(--blue); /* #255dcc; */
+}
+
+.select-data-action-exclude:not([disabled]) .include-selection,
+.select-data-action-exclude:not([disabled]) .exclude-selection {
+  color: var(--red); /* #ff0067; */
 }
 </style>
