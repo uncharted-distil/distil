@@ -420,7 +420,12 @@ export function getRowSelectionLabels(summary: VariableSummary): string[] {
       }
     })
   );
-
+  // if date time parse into numeric value
+  if (summary.varType === DATE_TIME_TYPE) {
+    rowKeys = rowKeys.map((key) => {
+      return (Date.parse(key) / 1000).toString(); // convert to seconds
+    });
+  }
   if (summary.type === NUMERICAL_SUMMARY) {
     const bucketFloors = summary.baseline.buckets.map((b) => _.toNumber(b.key));
     rowKeys = rowKeys.map((rk) => _.toNumber(rk));

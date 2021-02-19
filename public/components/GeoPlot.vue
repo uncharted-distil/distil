@@ -557,15 +557,12 @@ export default Vue.extend({
     highlight(): Highlight {
       return routeGetters.getDecodedHighlight(this.$store);
     },
-
     mapCenter(): number[] {
       return routeGetters.getGeoCenter(this.$store);
     },
-
     mapZoom(): number {
       return routeGetters.getGeoZoom(this.$store);
     },
-
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
     },
@@ -604,12 +601,8 @@ export default Vue.extend({
     multibandImageGroupColumn(): string {
       const groupColumns = datasetGetters
         .getVariables(this.$store)
-        .filter((v) => v.colType === MULTIBAND_IMAGE_TYPE)
-        .map((v) => (v.grouping as MultiBandImageGrouping).idCol);
-      if (groupColumns.length > 1) {
-        console.error("only 1 grouping column is expected");
-      }
-      return groupColumns[0];
+        .find((v) => v.colType === MULTIBAND_IMAGE_TYPE);
+      return groupColumns.key;
     },
 
     band(): string {
@@ -1106,7 +1099,7 @@ export default Vue.extend({
     tableDataToAreas(tableData: any[]): Area[] {
       const areas = tableData.map((item, i) => {
         const imageUrl = this.isMultiBandImage
-          ? item[this.multibandImageGroupColumn]
+          ? item[this.multibandImageGroupColumn].value
           : null;
         const fullCoordinates = item[this.coordinateColumn].value.Elements;
         if (fullCoordinates.some((x) => x === undefined)) return;
