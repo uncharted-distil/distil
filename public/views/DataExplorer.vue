@@ -39,17 +39,32 @@
           </b-tabs>
         </div>
         <b-button
+          v-if="includedActive"
           class="select-data-action-exclude align-self-center"
           variant="outline-secondary"
+          :disabled="isExcludeDisabled"
           @click="onExcludeClick"
         >
           <i
             class="fa fa-minus-circle pr-1"
             :class="{
               'exclude-highlight': isFilteringHighlights,
+              'exclude-selection': isFilteringSelection,
             }"
           />
           Exclude
+        </b-button>
+        <b-button
+          v-if="!includedActive"
+          variant="outline-secondary"
+          :disabled="!isFilteringSelection"
+          @click="onReincludeClick"
+        >
+          <i
+            class="fa fa-plus-circle pr-1"
+            :class="{ 'include-selection': isFilteringSelection }"
+          />
+          Reinclude
         </b-button>
       </div>
       <!-- <layer-selection v-if="isMultiBandImage" class="layer-select-dropdown" /> -->
@@ -124,8 +139,12 @@ import StatusPanel from "../components/StatusPanel.vue";
 import StatusSidebar from "../components/StatusSidebar.vue";
 
 // Store
+import { actions as appActions } from "../store/app/module";
 import { Highlight, RowSelection, Variable } from "../store/dataset/index";
-import { getters as datasetGetters } from "../store/dataset/module";
+import {
+  actions as datasetActions,
+  getters as datasetGetters,
+} from "../store/dataset/module";
 import {
   DATA_EXPLORER_VAR_INSTANCE,
   ROUTE_PAGE_SUFFIX,
@@ -148,9 +167,15 @@ import {
 } from "../util/highlights";
 import { lexQueryToFiltersAndHighlight } from "../util/lex";
 import { overlayRouteEntry } from "../util/routes";
-import { getNumIncludedRows } from "../util/row";
+import {
+  clearRowSelection,
+  getNumIncludedRows,
+  getNumExcludedRows,
+  createFilterFromRowSelection,
+} from "../util/row";
 import { spinnerHTML } from "../util/spinner";
 import { META_TYPES } from "../util/types";
+import { Feature, Activity, SubActivity } from "../util/userEvents";
 import {
   GEO_VIEW,
   GRAPH_VIEW,
@@ -294,11 +319,15 @@ export default Vue.extend({
 
     /* Disable the Exclude filter button. */
     isExcludeDisabled(): boolean {
-      return !this.isFilteringHighlights;
+      return !this.isFilteringHighlights && !this.isFilteringSelection;
     },
 
     isFilteringHighlights(): boolean {
       return !!this.highlight;
+    },
+
+    isFilteringSelection(): boolean {
+      return !!this.rowSelection;
     },
 
     numRows(): number {
@@ -439,13 +468,64 @@ export default Vue.extend({
       let filter = null;
       if (this.isFilteringHighlights) {
         filter = createFilterFromHighlight(this.highlight, EXCLUDE_FILTER);
+      } else {
+        filter = createFilterFromRowSelection(
+          this.rowSelection,
+          EXCLUDE_FILTER
+        );
       }
 
       addFilterToRoute(this.$router, filter);
 
       if (this.isFilteringHighlights) {
         clearHighlight(this.$router);
+      } else {
+        clearRowSelection(this.$router);
       }
+
+      datasetActions.fetchVariableRankings(this.$store, {
+        dataset: this.dataset,
+        target: this.target.key,
+      });
+
+      appActions.logUserEvent(this.$store, {
+        feature: Feature.FILTER_DATA,
+        activity: Activity.DATA_PREPARATION,
+        subActivity: SubActivity.DATA_TRANSFORMATION,
+        details: { filter: filter },
+      });
+    },
+
+    onReincludeClick() {
+      let filter = null;
+      if (this.isFilteringHighlights) {
+        filter = createFilterFromHighlight(this.highlight, INCLUDE_FILTER);
+      } else {
+        filter = createFilterFromRowSelection(
+          this.rowSelection,
+          INCLUDE_FILTER
+        );
+      }
+
+      addFilterToRoute(this.$router, filter);
+
+      if (this.isFilteringHighlights) {
+        clearHighlight(this.$router);
+      } else {
+        clearRowSelection(this.$router);
+      }
+
+      datasetActions.fetchVariableRankings(this.$store, {
+        dataset: this.dataset,
+        target: this.target.key,
+      });
+
+      appActions.logUserEvent(this.$store, {
+        feature: Feature.UNFILTER_DATA,
+        activity: Activity.DATA_PREPARATION,
+        subActivity: SubActivity.DATA_TRANSFORMATION,
+        details: { filter: filter },
+      });
     },
 
     onSetActive(actionName: string): void {
