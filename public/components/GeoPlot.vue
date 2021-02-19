@@ -599,7 +599,6 @@ export default Vue.extend({
 
     // Return name of column used as grouping column for the table data
     multibandImageGroupColumn(): string {
-      console.log(datasetGetters.getVariables(this.$store));
       const groupColumns = datasetGetters
         .getVariables(this.$store)
         .find((v) => v.colType === MULTIBAND_IMAGE_TYPE);
