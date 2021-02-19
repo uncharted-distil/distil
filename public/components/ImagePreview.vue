@@ -111,7 +111,7 @@ export default Vue.extend({
       if (newUrl === null) {
         return;
       }
-      if (newUrl !== oldUrl && this.isVisible) {
+      if (newUrl !== oldUrl) {
         this.cleanUp();
         this.hasRendered = false;
         this.hasRequested = false;
