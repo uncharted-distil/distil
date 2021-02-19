@@ -17,11 +17,15 @@ package routes
 
 import (
 	"net/http"
+	"path"
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/primitive/compute"
+	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/task"
 	"github.com/uncharted-distil/distil/api/util/json"
 )
@@ -97,7 +101,7 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 		leftVariables = append(leftVariables, d3mIndexVar)
 
 		// run joining pipeline
-		path, data, err := join(leftJoin, rightJoin, leftVariables, rightVariables, datasetRight, params)
+		path, data, err := join(leftJoin, rightJoin, leftVariables, rightVariables, datasetRight, params, meta)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -148,18 +152,18 @@ func parseVariables(variablesRaw []interface{}) ([]*model.Variable, error) {
 	return variables, nil
 }
 
-func join(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, varsLeft []*model.Variable,
-	varsRight []*model.Variable, datasetRight map[string]interface{}, params map[string]interface{}) (string, *api.FilteredData, error) {
+func join(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, varsLeft []*model.Variable, varsRight []*model.Variable,
+	datasetRight map[string]interface{}, params map[string]interface{}, metaStorage api.MetadataStorage) (string, *api.FilteredData, error) {
 	// determine if distil or datamart
 	if params["searchResultIndex"] == nil {
-		return joinDistil(joinLeft, joinRight, varsLeft, varsRight, datasetRight, params)
+		return joinDistil(joinLeft, joinRight, params, metaStorage)
 	}
 
 	return joinDatamart(joinLeft, joinRight, varsLeft, varsRight, datasetRight, params)
 }
 
-func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, varsLeft []*model.Variable,
-	varsRight []*model.Variable, datasetRight map[string]interface{}, params map[string]interface{}) (string, *api.FilteredData, error) {
+func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec,
+	params map[string]interface{}, metaStorage api.MetadataStorage) (string, *api.FilteredData, error) {
 	if params["datasetAColumn"] == nil {
 		return "", nil, errors.Errorf("missing parameter 'datasetAColumn'")
 	}
@@ -169,7 +173,21 @@ func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, varsLeft []*m
 	}
 	rightCol := params["datasetBColumn"].(string)
 
-	path, data, err := task.JoinDistil(joinLeft, joinRight, varsLeft, varsRight, leftCol, rightCol)
+	// need to read variables from disk for the variable list
+	metaLeft, err := getDiskMetadata(joinLeft.DatasetID, metaStorage)
+	if err != nil {
+		return "", nil, err
+	}
+	metaRight, err := getDiskMetadata(joinRight.DatasetID, metaStorage)
+	if err != nil {
+		return "", nil, err
+	}
+	joinLeft.Variables = metaLeft.GetMainDataResource().Variables
+	joinRight.Variables = metaRight.GetMainDataResource().Variables
+	joinLeft.ExistingMetadata = metaLeft
+	joinRight.ExistingMetadata = metaRight
+
+	path, data, err := task.JoinDistil(joinLeft, joinRight, leftCol, rightCol)
 	if err != nil {
 		return "", nil, err
 	}
@@ -206,12 +224,29 @@ func joinDatamart(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, varsLeft []
 	if err != nil {
 		return "", nil, errors.Wrap(err, "Unable to parse join origin from JSON")
 	}
+	joinLeft.Variables = varsLeft
+	joinRight.Variables = varsRight
 
 	// run joining pipeline
-	path, data, err := task.JoinDatamart(joinLeft, joinRight, varsLeft, varsRight, &targetOriginModel)
+	path, data, err := task.JoinDatamart(joinLeft, joinRight, &targetOriginModel)
 	if err != nil {
 		return "", nil, err
 	}
 
 	return path, data, nil
+}
+
+func getDiskMetadata(dataset string, metaStorage api.MetadataStorage) (*model.Metadata, error) {
+	ds, err := metaStorage.FetchDataset(dataset, true, true, true)
+	if err != nil {
+		return nil, err
+	}
+
+	folderPath := env.ResolvePath(ds.Source, ds.Folder)
+	dsDisk, err := serialization.ReadDataset(path.Join(folderPath, compute.D3MDataSchema))
+	if err != nil {
+		return nil, err
+	}
+
+	return dsDisk.Metadata, nil
 }

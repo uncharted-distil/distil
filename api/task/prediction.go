@@ -716,12 +716,12 @@ func copyFeatureGroups(fittedSolutionID string, datasetName string, solutionStor
 	if err != nil {
 		return err
 	}
-	variableMap := createVarMap(variables, false, false)
+	variableMap := comp.MapVariables(variables, func(variable *model.Variable) string { return variable.Key })
 	variablesPrediction, err := metaStorage.FetchVariables(datasetName, false, true, false)
 	if err != nil {
 		return err
 	}
-	variablePredictionMap := createVarMap(variablesPrediction, false, false)
+	variablePredictionMap := comp.MapVariables(variablesPrediction, func(variable *model.Variable) string { return variable.Key })
 
 	// copy over the groups that are found and dont already exist in the prediction dataset
 	for _, feature := range solutionRequest.Features {
