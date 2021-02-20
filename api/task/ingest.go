@@ -329,7 +329,7 @@ func Featurize(originalSchemaFile string, schemaFile string, data api.DataStorag
 func Ingest(originalSchemaFile string, schemaFile string, data api.DataStorage,
 	storage api.MetadataStorage, params *IngestParams, config *IngestTaskConfig, steps *IngestSteps) (string, error) {
 	// TODO: A LOT OF THIS CODE SHOULD BE IN THE STORAGE PACKAGES!!!
-	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, params.Source, nil, config, steps.VerifyMetadata, steps.FallbackMerged)
+	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, params, config, steps)
 	if err != nil {
 		return "", err
 	}
@@ -428,7 +428,7 @@ func VerifySuggestedTypes(dataset string, dataStorage api.DataStorage, metaStora
 // IngestMetadata ingests the data to ES.
 func IngestMetadata(originalSchemaFile string, schemaFile string, data api.DataStorage,
 	storage api.MetadataStorage, params *IngestParams, config *IngestTaskConfig, steps *IngestSteps) (string, error) {
-	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, params.Source, params.Origins, config, steps.VerifyMetadata, steps.FallbackMerged)
+	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, params, config, steps)
 	if err != nil {
 		return "", err
 	}
@@ -463,7 +463,7 @@ func IngestMetadata(originalSchemaFile string, schemaFile string, data api.DataS
 
 // IngestPostgres ingests a dataset to PG storage.
 func IngestPostgres(originalSchemaFile string, schemaFile string, params *IngestParams, config *IngestTaskConfig, steps *IngestSteps) error {
-	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, params.Source, nil, config, steps.VerifyMetadata, steps.FallbackMerged)
+	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, params, config, steps)
 	if err != nil {
 		return err
 	}
@@ -565,15 +565,14 @@ func IngestPostgres(originalSchemaFile string, schemaFile string, params *Ingest
 	return nil
 }
 
-func loadMetadataForIngest(originalSchemaFile string, schemaFile string, source metadata.DatasetSource,
-	origins []*model.DatasetOrigin, config *IngestTaskConfig, verifyMetadata bool, mergedFallback bool) (string, *model.Metadata, error) {
+func loadMetadataForIngest(originalSchemaFile string, schemaFile string, params *IngestParams, config *IngestTaskConfig, steps *IngestSteps) (string, *model.Metadata, error) {
 	datasetDir := path.Dir(schemaFile)
-	meta, err := metadata.LoadMetadataFromClassification(schemaFile, path.Join(datasetDir, config.ClassificationOutputPathRelative), true, mergedFallback)
+	meta, err := metadata.LoadMetadataFromClassification(schemaFile, path.Join(datasetDir, config.ClassificationOutputPathRelative), true, steps.FallbackMerged)
 	if err != nil {
 		return "", nil, errors.Wrap(err, "unable to load original schema file")
 	}
 
-	if source == metadata.Seed {
+	if params.Source == metadata.Seed {
 		meta.DatasetFolder = path.Base(path.Dir(path.Dir(originalSchemaFile)))
 	} else {
 		meta.DatasetFolder = path.Base(path.Dir(originalSchemaFile))
@@ -584,15 +583,15 @@ func loadMetadataForIngest(originalSchemaFile string, schemaFile string, source 
 	log.Infof("using %s as data directory (built from %s and %s)", dataDir, datasetDir, mainDR.ResPath)
 
 	// check and fix metadata issues
-	if verifyMetadata {
-		updated, err := metadata.VerifyAndUpdate(meta, dataDir, source)
+	if steps.VerifyMetadata {
+		updated, err := metadata.VerifyAndUpdate(meta, dataDir, params.Source)
 		if err != nil {
 			return "", nil, errors.Wrap(err, "unable to fix metadata")
 		}
 
 		// store the updated metadata
 		if updated {
-			extendedOutput := source == metadata.Augmented
+			extendedOutput := params.Source == metadata.Augmented
 			log.Infof("storing updated (extended: %v) metadata to %s", extendedOutput, originalSchemaFile)
 			datasetStorage := serialization.GetStorage(originalSchemaFile)
 			err = datasetStorage.WriteMetadata(originalSchemaFile, meta, extendedOutput, false)
@@ -626,8 +625,15 @@ func loadMetadataForIngest(originalSchemaFile string, schemaFile string, source 
 	}
 
 	// set the origin
-	if origins != nil {
-		meta.DatasetOrigins = origins
+	if params.Origins != nil {
+		meta.DatasetOrigins = params.Origins
+	}
+
+	// set the definitive types
+	for _, v := range meta.GetMainDataResource().Variables {
+		if params.DefinitiveTypes != nil && params.DefinitiveTypes[v.Key] != nil {
+			v.Type = params.DefinitiveTypes[v.Key].Type
+		}
 	}
 
 	return datasetDir, meta, nil

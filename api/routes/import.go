@@ -28,6 +28,7 @@ import (
 
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
+	apiCompute "github.com/uncharted-distil/distil/api/compute"
 	"github.com/uncharted-distil/distil/api/dataset"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
@@ -120,20 +121,32 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 				ingestParams.IndexFields = creationResult.indexFields
 				ingestSteps.VerifyMetadata = false
 
-				// if no groups were created, copy them from the passed in datasets
-				if len(ingestParams.RawGroupings) == 0 && originalDataset != nil {
-					log.Infof("copying groupings from source datasets")
-					groups, err := getDatasetGroups(originalDataset)
+				if originalDataset != nil {
+					// if no groups were created, copy them from the passed in datasets
+					if len(ingestParams.RawGroupings) == 0 {
+						log.Infof("copying groupings from source datasets")
+						groups, err := getDatasetGroups(originalDataset)
+						if err != nil {
+							handleError(w, errors.Wrap(err, "unable to get original dataset groups"))
+							return
+						}
+						groupsJoin, err := getDatasetGroups(joinedDataset)
+						if err != nil {
+							handleError(w, errors.Wrap(err, "unable to get joining dataset groups"))
+							return
+						}
+						ingestParams.RawGroupings = append(groups, groupsJoin...)
+					}
+
+					// set the definitive types based on the currently stored metadata
+					metaStore, err := esMetaCtor()
 					if err != nil {
-						handleError(w, errors.Wrap(err, "unable to get original dataset groups"))
+						handleError(w, errors.Wrap(err, "unable to create metadata storage"))
 						return
 					}
-					groupsJoin, err := getDatasetGroups(originalDataset)
-					if err != nil {
-						handleError(w, errors.Wrap(err, "unable to get joining dataset groups"))
-						return
-					}
-					ingestParams.RawGroupings = append(groups, groupsJoin...)
+					definitiveVars := append(getVariablesDefault(originalDataset["id"].(string), metaStore), getVariablesDefault(joinedDataset["id"].(string), metaStore)...)
+					ingestParams.DefinitiveTypes = apiCompute.MapVariables(definitiveVars, func(variable *model.Variable) string { return variable.Key })
+
 				}
 
 				log.Infof("Created dataset '%s' from local source '%s'", ingestParams.ID, ingestParams.Path)
@@ -369,4 +382,14 @@ func getDatasetGroups(dsRaw map[string]interface{}) ([]map[string]interface{}, e
 	}
 
 	return groups, nil
+}
+
+func getVariablesDefault(datasetID string, metaStorage api.MetadataStorage) []*model.Variable {
+	ds, err := metaStorage.FetchDataset(datasetID, true, true, true)
+	if err != nil {
+		log.Infof("unable to fetch variables so defaulting to empty list")
+		return []*model.Variable{}
+	}
+
+	return ds.Variables
 }
