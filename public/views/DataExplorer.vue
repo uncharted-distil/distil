@@ -18,33 +18,69 @@
     </left-side-panel>
 
     <main class="content">
-      <search-input class="mb-3" />
       <search-bar
-        class="mb-3"
         :variables="allVariables"
         :filters="filters"
         :highlight="routeHighlight"
-        @lex-query="updateFilterFromLexQuery"
+        @lex-query="updateFilterAndHighlightFromLexQuery"
       />
 
       <!-- Tabs to switch views -->
-      <b-tabs v-model="activeView" class="tab-container">
-        <b-tab
-          v-for="(view, index) in activeViews"
-          :key="index"
-          :active="view === activeViews[activeView]"
-          :title="capitalize(view)"
-        />
-      </b-tabs>
 
+      <div class="d-flex flex-row align-items-end mt-2">
+        <div class="flex-grow-1 mr-2">
+          <b-tabs v-model="activeView" class="tab-container">
+            <b-tab
+              v-for="(view, index) in activeViews"
+              :key="index"
+              :active="view === activeViews[activeView]"
+              :title="capitalize(view)"
+            />
+          </b-tabs>
+        </div>
+        <b-button
+          v-if="includedActive"
+          class="select-data-action-exclude align-self-center"
+          variant="outline-secondary"
+          :disabled="isExcludeDisabled"
+          @click="onExcludeClick"
+        >
+          <i
+            class="fa fa-minus-circle pr-1"
+            :class="{
+              'exclude-highlight': isFilteringHighlights,
+              'exclude-selection': isFilteringSelection,
+            }"
+          />
+          Exclude
+        </b-button>
+        <b-button
+          v-if="!includedActive"
+          variant="outline-secondary"
+          :disabled="!isFilteringSelection"
+          @click="onReincludeClick"
+        >
+          <i
+            class="fa fa-plus-circle pr-1"
+            :class="{ 'include-selection': isFilteringSelection }"
+          />
+          Reinclude
+        </b-button>
+      </div>
       <!-- <layer-selection v-if="isMultiBandImage" class="layer-select-dropdown" /> -->
       <section class="data-container">
         <div v-if="!hasData" v-html="spinnerHTML" />
-        <component :is="viewComponent" :instance-name="instanceName" />
+        <component
+          :is="viewComponent"
+          :instance-name="instanceName"
+          :included-active="includedActive"
+        />
       </section>
 
-      <footer class="d-flex justify-content-between">
-        <p class="selection-data-size mt-2 mb-0">
+      <footer
+        class="d-flex align-items-end d-flex justify-content-between mt-1 mb-0"
+      >
+        <div class="flex-grow-1">
           <data-size
             :current-size="numRows"
             :total="totalNumRows"
@@ -55,9 +91,24 @@
             , {{ selectionNumRows }}
             <strong class="selected-color">selected</strong>
           </template>
-        </p>
-
-        <create-solutions-form v-if="isCreateModelPossible" />
+        </div>
+        <b-button-toolbar>
+          <b-button-group class="ml-2 mt-1">
+            <b-button
+              variant="primary"
+              :disabled="includedActive"
+              @click="setIncludedActive"
+              >Included</b-button
+            >
+            <b-button
+              variant="secondary"
+              :disabled="!includedActive"
+              @click="setExcludedActive"
+              >Excluded</b-button
+            >
+          </b-button-group>
+        </b-button-toolbar>
+        <create-solutions-form v-if="isCreateModelPossible" class="ml-2" />
       </footer>
     </main>
 
@@ -88,8 +139,12 @@ import StatusPanel from "../components/StatusPanel.vue";
 import StatusSidebar from "../components/StatusSidebar.vue";
 
 // Store
+import { actions as appActions } from "../store/app/module";
 import { Highlight, RowSelection, Variable } from "../store/dataset/index";
-import { getters as datasetGetters } from "../store/dataset/module";
+import {
+  actions as datasetActions,
+  getters as datasetGetters,
+} from "../store/dataset/module";
 import {
   DATA_EXPLORER_VAR_INSTANCE,
   ROUTE_PAGE_SUFFIX,
@@ -98,12 +153,29 @@ import { getters as routeGetters } from "../store/route/module";
 import { actions as viewActions } from "../store/view/module";
 
 // Util
-import { deepUpdateFiltersInRoute } from "../util/filters";
+import {
+  Filter,
+  addFilterToRoute,
+  deepUpdateFiltersInRoute,
+  EXCLUDE_FILTER,
+  INCLUDE_FILTER,
+} from "../util/filters";
+import {
+  clearHighlight,
+  createFilterFromHighlight,
+  updateHighlight,
+} from "../util/highlights";
 import { lexQueryToFiltersAndHighlight } from "../util/lex";
 import { overlayRouteEntry } from "../util/routes";
-import { getNumIncludedRows } from "../util/row";
+import {
+  clearRowSelection,
+  getNumIncludedRows,
+  getNumExcludedRows,
+  createFilterFromRowSelection,
+} from "../util/row";
 import { spinnerHTML } from "../util/spinner";
 import { META_TYPES } from "../util/types";
+import { Feature, Activity, SubActivity } from "../util/userEvents";
 import {
   GEO_VIEW,
   GRAPH_VIEW,
@@ -241,6 +313,23 @@ export default Vue.extend({
       });
     },
 
+    includedActive(): boolean {
+      return routeGetters.getRouteInclude(this.$store);
+    },
+
+    /* Disable the Exclude filter button. */
+    isExcludeDisabled(): boolean {
+      return !this.isFilteringHighlights && !this.isFilteringSelection;
+    },
+
+    isFilteringHighlights(): boolean {
+      return !!this.highlight;
+    },
+
+    isFilteringSelection(): boolean {
+      return !!this.rowSelection;
+    },
+
     numRows(): number {
       return this.hasData
         ? datasetGetters.getIncludedTableDataLength(this.$store)
@@ -363,15 +452,80 @@ export default Vue.extend({
   methods: {
     capitalize,
 
-    updateFilterFromLexQuery(lexQuery) {
+    updateFilterAndHighlightFromLexQuery(lexQuery) {
       const lqfh = lexQueryToFiltersAndHighlight(lexQuery, this.dataset);
       deepUpdateFiltersInRoute(this.$router, lqfh.filters);
+      updateHighlight(this.$router, lqfh.highlight);
     },
 
     /* When the user request to fetch a different size of data. */
     onDataSizeSubmit(dataSize: number) {
       this.updateRoute({ dataSize });
       viewActions.updateDataExplorerData(this.$store);
+    },
+
+    onExcludeClick() {
+      let filter = null;
+      if (this.isFilteringHighlights) {
+        filter = createFilterFromHighlight(this.highlight, EXCLUDE_FILTER);
+      } else {
+        filter = createFilterFromRowSelection(
+          this.rowSelection,
+          EXCLUDE_FILTER
+        );
+      }
+
+      addFilterToRoute(this.$router, filter);
+
+      if (this.isFilteringHighlights) {
+        clearHighlight(this.$router);
+      } else {
+        clearRowSelection(this.$router);
+      }
+
+      datasetActions.fetchVariableRankings(this.$store, {
+        dataset: this.dataset,
+        target: this.target.key,
+      });
+
+      appActions.logUserEvent(this.$store, {
+        feature: Feature.FILTER_DATA,
+        activity: Activity.DATA_PREPARATION,
+        subActivity: SubActivity.DATA_TRANSFORMATION,
+        details: { filter: filter },
+      });
+    },
+
+    onReincludeClick() {
+      let filter = null;
+      if (this.isFilteringHighlights) {
+        filter = createFilterFromHighlight(this.highlight, INCLUDE_FILTER);
+      } else {
+        filter = createFilterFromRowSelection(
+          this.rowSelection,
+          INCLUDE_FILTER
+        );
+      }
+
+      addFilterToRoute(this.$router, filter);
+
+      if (this.isFilteringHighlights) {
+        clearHighlight(this.$router);
+      } else {
+        clearRowSelection(this.$router);
+      }
+
+      datasetActions.fetchVariableRankings(this.$store, {
+        dataset: this.dataset,
+        target: this.target.key,
+      });
+
+      appActions.logUserEvent(this.$store, {
+        feature: Feature.UNFILTER_DATA,
+        activity: Activity.DATA_PREPARATION,
+        subActivity: SubActivity.DATA_TRANSFORMATION,
+        details: { filter: filter },
+      });
     },
 
     onSetActive(actionName: string): void {
@@ -388,6 +542,20 @@ export default Vue.extend({
         pane: activePane,
         [`${DATA_EXPLORER_VAR_INSTANCE}${ROUTE_PAGE_SUFFIX}`]: 1,
       });
+    },
+
+    setIncludedActive() {
+      const entry = overlayRouteEntry(this.$route, {
+        include: "true",
+      });
+      this.$router.push(entry).catch((err) => console.warn(err));
+    },
+
+    setExcludedActive() {
+      const entry = overlayRouteEntry(this.$route, {
+        include: "false",
+      });
+      this.$router.push(entry).catch((err) => console.warn(err));
     },
 
     updateRoute(args) {
@@ -482,5 +650,15 @@ export default Vue.extend({
   border-top-right-radius: 0.25rem;
   color: var(--primary);
   margin-bottom: -1px;
+}
+
+.select-data-action-exclude:not([disabled]) .include-highlight,
+.select-data-action-exclude:not([disabled]) .exclude-highlight {
+  color: var(--blue); /* #255dcc; */
+}
+
+.select-data-action-exclude:not([disabled]) .include-selection,
+.select-data-action-exclude:not([disabled]) .exclude-selection {
+  color: var(--red); /* #ff0067; */
 }
 </style>
