@@ -18,6 +18,7 @@ package serialization
 import (
 	"path"
 
+	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
 )
@@ -71,8 +72,7 @@ func GetParquetStorage() Storage {
 
 // ReadDataset reads the metadata to find the main data reference, then reads that.
 func ReadDataset(schemaPath string) (*api.RawDataset, error) {
-	// metadata can be read by CSV storage
-	meta, err := csvStorage.ReadMetadata(schemaPath)
+	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaPath, false)
 	if err != nil {
 		return nil, err
 	}
