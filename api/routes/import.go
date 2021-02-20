@@ -41,14 +41,24 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 	fileMetaCtor api.MetadataStorageCtor, esMetaCtor api.MetadataStorageCtor,
 	config *env.Config) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		datasetID := pat.Param(r, "datasetID")
+		datasetIDSource := pat.Param(r, "datasetID")
 		source := metadata.DatasetSource(pat.Param(r, "source"))
 		provenance := pat.Param(r, "provenance")
 		isSampling := true // Flag to sample imported dataset
 
-		var origins []*model.DatasetOrigin
-		ingestSteps := &task.IngestSteps{ClassificationOverwrite: false}
-		datasetPath := ""
+		ingestSteps := &task.IngestSteps{
+			ClassificationOverwrite: false,
+			VerifyMetadata:          true,
+			FallbackMerged:          true,
+			CheckMatch:              true,
+		}
+		ingestParams := &task.IngestParams{
+			Source:   source,
+			DataCtor: dataCtor,
+			MetaCtor: esMetaCtor,
+			ID:       datasetIDSource,
+			Type:     api.DatasetTypeModelling,
+		}
 		if (source == metadata.Augmented || source == metadata.Public) && provenance == "local" {
 			// parse POST params
 			params, err := getPostParameters(r)
@@ -67,6 +77,14 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 				isSampling = false
 			}
 
+			// one of path or joined dataset is needed
+			if params["joinedDataset"] == nil && params["path"] == nil {
+				missingParamErr(w, "path or joinedDataset")
+				return
+			}
+
+			var originalDataset map[string]interface{}
+			var joinedDataset map[string]interface{}
 			if params["joinedDataset"] != nil {
 				if params["originalDataset"] == nil {
 					missingParamErr(w, "originalDataset")
@@ -74,37 +92,51 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 				}
 
 				// set the origin information
-				originalDataset, okOriginal := params["originalDataset"].(map[string]interface{})
-				joinedDataset, okJoined := params["joinedDataset"].(map[string]interface{})
+				var okOriginal, okJoined bool
+				originalDataset, okOriginal = params["originalDataset"].(map[string]interface{})
+				joinedDataset, okJoined = params["joinedDataset"].(map[string]interface{})
 				if okOriginal && okJoined {
 					// combine the origin and joined dateset into an array of structs
-					origins, err = getOriginsFromMaps(originalDataset, joinedDataset)
+					origins, err := getOriginsFromMaps(originalDataset, joinedDataset)
 					if err != nil {
 						handleError(w, errors.Wrap(err, "unable to marshal dataset origins from JSON to struct"))
 						return
 					}
+					ingestParams.Origins = origins
 				}
-			} else {
-				if params["path"] == nil {
-					missingParamErr(w, "path")
-					return
-				}
+			}
 
+			if params["path"] != nil {
 				datasetPathRaw := params["path"].(string)
-				log.Infof("Creating dataset '%s' from '%s'", datasetID, datasetPathRaw)
-				creationResult, err := createDataset(datasetPathRaw, datasetID, config)
+				log.Infof("Creating dataset '%s' from '%s'", ingestParams.ID, datasetPathRaw)
+				creationResult, err := createDataset(datasetPathRaw, ingestParams.ID, config)
 				if err != nil {
 					handleError(w, errors.Wrap(err, "unable to create raw dataset"))
 					return
 				}
-				datasetID = creationResult.name
-				datasetPath = creationResult.path
-				ingestSteps = &task.IngestSteps{
-					RawGroupings:            creationResult.groups,
-					IndexFields:             creationResult.indexFields,
-					ClassificationOverwrite: false,
+				ingestParams.ID = creationResult.name
+				ingestParams.Path = creationResult.path
+				ingestParams.RawGroupings = creationResult.groups
+				ingestParams.IndexFields = creationResult.indexFields
+				ingestSteps.VerifyMetadata = false
+
+				// if no groups were created, copy them from the passed in datasets
+				if len(ingestParams.RawGroupings) == 0 && originalDataset != nil {
+					log.Infof("copying groupings from source datasets")
+					groups, err := getDatasetGroups(originalDataset)
+					if err != nil {
+						handleError(w, errors.Wrap(err, "unable to get original dataset groups"))
+						return
+					}
+					groupsJoin, err := getDatasetGroups(originalDataset)
+					if err != nil {
+						handleError(w, errors.Wrap(err, "unable to get joining dataset groups"))
+						return
+					}
+					ingestParams.RawGroupings = append(groups, groupsJoin...)
 				}
-				log.Infof("Created dataset '%s' from local source '%s'", datasetID, datasetPath)
+
+				log.Infof("Created dataset '%s' from local source '%s'", ingestParams.ID, ingestParams.Path)
 			}
 		}
 
@@ -121,12 +153,11 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		}
 
 		// import the dataset to the local filesystem.
-		uri := datasetPath
-		if uri == "" {
-			uri = env.ResolvePath(source, datasetID)
+		if ingestParams.Path == "" {
+			ingestParams.Path = env.ResolvePath(source, ingestParams.ID)
 		}
-		log.Infof("Importing dataset '%s' from '%s'", datasetID, uri)
-		_, err = meta.ImportDataset(datasetID, uri)
+		log.Infof("Importing dataset '%s' from '%s'", ingestParams.ID, ingestParams.Path)
+		_, err = meta.ImportDataset(ingestParams.ID, ingestParams.Path)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -139,17 +170,8 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		if !isSampling {
 			ingestConfig.SampleRowLimit = math.MaxInt32 // Maximum int value.
 		}
-		ingestParams := &task.IngestParams{
-			Source:   source,
-			DataCtor: dataCtor,
-			MetaCtor: esMetaCtor,
-			ID:       datasetID,
-			Origins:  origins,
-			Type:     api.DatasetTypeModelling,
-			Path:     uri,
-		}
 
-		log.Infof("Ingesting dataset '%s'", uri)
+		log.Infof("Ingesting dataset '%s'", ingestParams.Path)
 		ingestResult, err := task.IngestDataset(ingestParams, ingestConfig, ingestSteps)
 		if err != nil {
 			handleError(w, err)
@@ -334,4 +356,17 @@ func createRemoteSensingDataset(datasetName string, imageType string, extractedF
 	}
 
 	return ds, nil
+}
+
+func getDatasetGroups(dsRaw map[string]interface{}) ([]map[string]interface{}, error) {
+	// cycle through variables, pulling groups out as they are found
+	groups := []map[string]interface{}{}
+	for _, v := range dsRaw["variables"].([]interface{}) {
+		rawVariables := v.(map[string]interface{})
+		if rawVariables["grouping"] != nil {
+			groups = append(groups, rawVariables["grouping"].(map[string]interface{}))
+		}
+	}
+
+	return groups, nil
 }

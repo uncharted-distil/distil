@@ -241,7 +241,15 @@ func ImportPredictionDataset(params *PredictParams) (string, string, error) {
 func IngestPredictionDataset(params *PredictParams) error {
 	schemaPath := params.SchemaPath
 	// ingest the dataset but without running simon, duke, etc.
-	err := IngestPostgres(schemaPath, schemaPath, metadata.Augmented, nil, params.IngestConfig, true, false, false)
+	steps := &IngestSteps{
+		VerifyMetadata:       true,
+		FallbackMerged:       false,
+		CreateMetadataTables: false,
+	}
+	ingestParams := &IngestParams{
+		Source: metadata.Augmented,
+	}
+	err := IngestPostgres(schemaPath, schemaPath, ingestParams, params.IngestConfig, steps)
 	if err != nil {
 		return errors.Wrap(err, "unable to ingest prediction data")
 	}

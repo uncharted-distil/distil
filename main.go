@@ -229,7 +229,12 @@ func main() {
 			Origins:  nil,
 			Type:     model.DatasetTypeModelling,
 		}
-		_, err = task.IngestDataset(ingestParams, ingestConfig, &task.IngestSteps{ClassificationOverwrite: true})
+		steps := &task.IngestSteps{
+			ClassificationOverwrite: true,
+			VerifyMetadata:          true,
+			FallbackMerged:          true,
+		}
+		_, err = task.IngestDataset(ingestParams, ingestConfig, steps)
 		if err != nil {
 			log.Errorf("%+v", err)
 			os.Exit(1)

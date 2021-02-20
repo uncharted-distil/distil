@@ -105,7 +105,7 @@ func (d *D3M) isFullySpecified(ds *api.RawDataset) bool {
 	// check the variable list against the header in the data
 	for i, h := range ds.Data[0] {
 		if varMapIndex[i] == nil || varMapIndex[i].HeaderName != h {
-			log.Infof("header in data file does not match metadata variable list")
+			log.Infof("header in data file does not match metadata variable list (%s differs from %s at position %d)", h, varMapIndex[i].HeaderName, i)
 			return false
 		}
 	}

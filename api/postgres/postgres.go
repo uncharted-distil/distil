@@ -607,8 +607,10 @@ func (d *Database) InitializeTable(tableName string, ds *Dataset) error {
 		tableType := dataTypeText
 		viewVar := fmt.Sprintf("COALESCE(CAST(%s AS %s), %v) AS \"%s\"", ValueForFieldType(variable.Type, variable.Key),
 			MapD3MTypeToPostgresType(variable.Type), DefaultPostgresValueFromD3MType(variable.Type), variable.Key)
-		if variable.Type == model.GeoBoundsType {
-			tableType = "geometry"
+
+		// it needs to be a geometry if it was originally typed as a geobounds
+		if variable.Type == model.GeoBoundsType || variable.OriginalType == model.GeoBoundsType {
+			tableType = dataTypeGeometry
 			viewVar = fmt.Sprintf("\"%s\"", variable.Key)
 		}
 		varsTable = fmt.Sprintf("%s\n\"%s\" %s,", varsTable, variable.Key, tableType)
@@ -656,7 +658,7 @@ func (d *Database) InitializeDataset(meta *model.Metadata) (*Dataset, error) {
 	// geobounds data not batched using copy from due to issues with loading of the data
 	loadFunction := insertFromSourceBase
 	for _, v := range meta.GetMainDataResource().Variables {
-		if v.Type == model.GeoBoundsType {
+		if v.Type == model.GeoBoundsType || v.OriginalType == model.GeoBoundsType {
 			loadFunction = insertFromSourceGeometry
 			break
 		}

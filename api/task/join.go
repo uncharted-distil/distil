@@ -130,6 +130,7 @@ func createDatasetFromCSV(config *env.Config, csvFile string, datasetName string
 
 	mergedVariables, referencedResources := joinMetadataVariables(inputData[0], joinLeft.Variables, joinLeft.ExistingMetadata, joinRight.Variables, joinRight.ExistingMetadata)
 	dataResource.Variables = mergedVariables
+	inputData[0] = dataResource.GenerateHeader()
 
 	metadata.DataResources = append(referencedResources, dataResource)
 

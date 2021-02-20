@@ -374,10 +374,18 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 	}
 
 	// store new dataset metadata
+	steps := &IngestSteps{
+		VerifyMetadata:       false,
+		FallbackMerged:       false,
+		CreateMetadataTables: false,
+	}
+	params := &IngestParams{
+		Source: metadata.Augmented,
+		Type:   api.DatasetTypeModelling,
+	}
 	ingestConfig := NewConfig(config)
 	cloneSchemaPath := path.Join(outputPath, compute.D3MDataSchema)
-	_, err = IngestMetadata(cloneSchemaPath, cloneSchemaPath, nil, metaStorage,
-		metadata.Augmented, nil, api.DatasetTypeModelling, ingestConfig, false, false)
+	_, err = IngestMetadata(cloneSchemaPath, cloneSchemaPath, nil, metaStorage, params, ingestConfig, steps)
 	if err != nil {
 		return "", err
 	}
@@ -397,7 +405,7 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 	}
 
 	// ingest to postgres from disk
-	err = IngestPostgres(cloneSchemaPath, cloneSchemaPath, metadata.Augmented, nil, ingestConfig, false, false, false)
+	err = IngestPostgres(cloneSchemaPath, cloneSchemaPath, params, ingestConfig, steps)
 	if err != nil {
 		return "", err
 	}
