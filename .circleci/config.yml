@@ -30,7 +30,7 @@ jobs:
       - run:
           name: build and push app binary
           command: |
-            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+            if [ "${CIRCLE_BRANCH}" == "main" ]; then
               TAG=dev-$CIRCLE_BUILD_NUM
               docker login docker.uncharted.software -u "$UNCHARTED_DOCKER_USERNAME" -p "$UNCHARTED_DOCKER_PW"
               docker login docker-hub.uncharted.software -u "$UNCHARTED_DOCKER_USERNAME" -p "$UNCHARTED_DOCKER_PW"
