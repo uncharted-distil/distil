@@ -18,13 +18,20 @@ RUN mkdir /usr/local/tensorflow && \
     rm -rf /usr/local/tensorflow && \
     ldconfig
 
+# create our application dir
 RUN mkdir /distil
+
+# download static models and copy them into the application dir
+RUN wget https://github.com/uncharted-distil/distil-image-upscale/archive/master.zip -P /usr/local && \
+    unzip /usr/local/master.zip -d /usr/local && \
+    mkdir -p /distil/static_resources && \
+    cp -r /usr/local/distil-image-upscale-master/models /distil/static_resources && \
+    rm -rf /usr/local/distil-image-upscale-master
 
 WORKDIR /distil
 
 COPY distil .
 COPY dist ./dist
-COPY static_resources ./static_resources
 
 ENV PATH="${PATH}:/distil"
 
