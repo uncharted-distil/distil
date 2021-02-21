@@ -241,7 +241,15 @@ func ImportPredictionDataset(params *PredictParams) (string, string, error) {
 func IngestPredictionDataset(params *PredictParams) error {
 	schemaPath := params.SchemaPath
 	// ingest the dataset but without running simon, duke, etc.
-	err := IngestPostgres(schemaPath, schemaPath, metadata.Augmented, nil, params.IngestConfig, true, false, false)
+	steps := &IngestSteps{
+		VerifyMetadata:       true,
+		FallbackMerged:       false,
+		CreateMetadataTables: false,
+	}
+	ingestParams := &IngestParams{
+		Source: metadata.Augmented,
+	}
+	err := IngestPostgres(schemaPath, schemaPath, ingestParams, params.IngestConfig, steps)
 	if err != nil {
 		return errors.Wrap(err, "unable to ingest prediction data")
 	}
@@ -716,12 +724,12 @@ func copyFeatureGroups(fittedSolutionID string, datasetName string, solutionStor
 	if err != nil {
 		return err
 	}
-	variableMap := createVarMap(variables, false, false)
+	variableMap := comp.MapVariables(variables, func(variable *model.Variable) string { return variable.Key })
 	variablesPrediction, err := metaStorage.FetchVariables(datasetName, false, true, false)
 	if err != nil {
 		return err
 	}
-	variablePredictionMap := createVarMap(variablesPrediction, false, false)
+	variablePredictionMap := comp.MapVariables(variablesPrediction, func(variable *model.Variable) string { return variable.Key })
 
 	// copy over the groups that are found and dont already exist in the prediction dataset
 	for _, feature := range solutionRequest.Features {

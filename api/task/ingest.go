@@ -73,8 +73,10 @@ type IngestTaskConfig struct {
 // IngestSteps is a collection of parameters that specify ingest behaviour.
 type IngestSteps struct {
 	ClassificationOverwrite bool
-	RawGroupings            []map[string]interface{}
-	IndexFields             []string
+	VerifyMetadata          bool
+	FallbackMerged          bool
+	CreateMetadataTables    bool
+	CheckMatch              bool
 }
 
 // NewDefaultClient creates a new client to use when submitting pipelines.
@@ -132,13 +134,16 @@ type IngestResult struct {
 
 // IngestParams contains the parameters needed to ingest a dataset
 type IngestParams struct {
-	Source   metadata.DatasetSource
-	DataCtor api.DataStorageCtor
-	MetaCtor api.MetadataStorageCtor
-	ID       string
-	Origins  []*model.DatasetOrigin
-	Type     api.DatasetType
-	Path     string
+	Source          metadata.DatasetSource
+	DataCtor        api.DataStorageCtor
+	MetaCtor        api.MetadataStorageCtor
+	ID              string
+	Origins         []*model.DatasetOrigin
+	Type            api.DatasetType
+	Path            string
+	RawGroupings    []map[string]interface{}
+	IndexFields     []string
+	DefinitiveTypes map[string]*model.Variable
 }
 
 func (i *IngestParams) getSchemaDocPath() string {
@@ -192,7 +197,6 @@ func IngestDataset(params *IngestParams, config *IngestTaskConfig, steps *Ingest
 	latestSchemaOutput = output
 	log.Infof("finished cleaning the dataset")
 
-	definitiveClassification := false
 	if config.ClassificationEnabled {
 		if steps.ClassificationOverwrite || !classificationExists(latestSchemaOutput, config) {
 			_, err = Classify(latestSchemaOutput, params.ID, config)
@@ -204,7 +208,6 @@ func IngestDataset(params *IngestParams, config *IngestTaskConfig, steps *Ingest
 			}
 			log.Infof("finished classifying the dataset")
 		} else {
-			definitiveClassification = true
 			log.Infof("skipping classification because it already exists")
 		}
 	} else {
@@ -251,17 +254,16 @@ func IngestDataset(params *IngestParams, config *IngestTaskConfig, steps *Ingest
 		log.Infof("finished sampling dataset")
 	}
 
-	datasetID, err := Ingest(originalSchemaFile, latestSchemaOutput, dataStorage, metaStorage, params.ID,
-		params.Source, params.Origins, params.Type, steps.IndexFields, config, true, !definitiveClassification, true)
+	datasetID, err := Ingest(originalSchemaFile, latestSchemaOutput, dataStorage, metaStorage, params, config, steps)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to ingest ranked data")
 	}
 	log.Infof("finished ingesting the dataset")
 
 	// set the known grouping information
-	if steps.RawGroupings != nil {
+	if params.RawGroupings != nil {
 		log.Infof("creating groupings in metadata")
-		err = SetGroups(datasetID, steps.RawGroupings, metaStorage, config)
+		err = SetGroups(datasetID, params.RawGroupings, metaStorage, config)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to set grouping")
 		}
@@ -324,10 +326,10 @@ func Featurize(originalSchemaFile string, schemaFile string, data api.DataStorag
 }
 
 // Ingest the metadata to ES and the data to Postgres.
-func Ingest(originalSchemaFile string, schemaFile string, data api.DataStorage, storage api.MetadataStorage, dataset string, source metadata.DatasetSource,
-	origins []*model.DatasetOrigin, datasetType api.DatasetType, indexFields []string, config *IngestTaskConfig, checkMatch bool, verifyMetadata bool, fallbackMerged bool) (string, error) {
+func Ingest(originalSchemaFile string, schemaFile string, data api.DataStorage,
+	storage api.MetadataStorage, params *IngestParams, config *IngestTaskConfig, steps *IngestSteps) (string, error) {
 	// TODO: A LOT OF THIS CODE SHOULD BE IN THE STORAGE PACKAGES!!!
-	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, source, nil, config, verifyMetadata, fallbackMerged)
+	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, params, config, steps)
 	if err != nil {
 		return "", err
 	}
@@ -341,7 +343,7 @@ func Ingest(originalSchemaFile string, schemaFile string, data api.DataStorage, 
 		}
 
 		if uniqueName != meta.Name {
-			extendedOutput := source == metadata.Augmented
+			extendedOutput := params.Source == metadata.Augmented
 			log.Infof("storing (extended: %v) metadata with new name to %s (new: '%s', old: '%s')", extendedOutput, originalSchemaFile, uniqueName, meta.Name)
 			meta.Name = uniqueName
 			meta.ID = model.NormalizeDatasetID(uniqueName)
@@ -370,7 +372,7 @@ func Ingest(originalSchemaFile string, schemaFile string, data api.DataStorage, 
 	}
 
 	// Check for existing dataset
-	if checkMatch && config.IngestOverwrite {
+	if steps.CheckMatch && config.IngestOverwrite {
 		match, err := matchDataset(storage, meta)
 		// Ignore the error for now as if this fails we still want ingest to succeed.
 		if err != nil {
@@ -387,24 +389,24 @@ func Ingest(originalSchemaFile string, schemaFile string, data api.DataStorage, 
 	}
 
 	// ingest the metadata
-	_, err = IngestMetadata(originalSchemaFile, schemaFile, data, storage, source, origins, datasetType, config, verifyMetadata, fallbackMerged)
+	updatedDatasetID, err := IngestMetadata(originalSchemaFile, schemaFile, data, storage, params, config, steps)
 	if err != nil {
 		return "", err
 	}
 
 	// ingest the data
-	err = IngestPostgres(originalSchemaFile, schemaFile, source, indexFields, config, verifyMetadata, false, fallbackMerged)
+	err = IngestPostgres(originalSchemaFile, schemaFile, params, config, steps)
 	if err != nil {
 		return "", err
 	}
 
 	// expand the suggested types to be the exhaustive list of types it can be
-	err = VerifySuggestedTypes(dataset, data, storage)
+	err = VerifySuggestedTypes(updatedDatasetID, data, storage)
 	if err != nil {
 		return "", err
 	}
 
-	return meta.ID, nil
+	return updatedDatasetID, nil
 }
 
 // VerifySuggestedTypes checks expands the suggested types to include all valid
@@ -424,13 +426,13 @@ func VerifySuggestedTypes(dataset string, dataStorage api.DataStorage, metaStora
 }
 
 // IngestMetadata ingests the data to ES.
-func IngestMetadata(originalSchemaFile string, schemaFile string, data api.DataStorage, storage api.MetadataStorage, source metadata.DatasetSource,
-	origins []*model.DatasetOrigin, datasetType api.DatasetType, config *IngestTaskConfig, verifyMetadata bool, fallbackMerged bool) (string, error) {
-	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, source, origins, config, verifyMetadata, fallbackMerged)
+func IngestMetadata(originalSchemaFile string, schemaFile string, data api.DataStorage,
+	storage api.MetadataStorage, params *IngestParams, config *IngestTaskConfig, steps *IngestSteps) (string, error) {
+	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, params, config, steps)
 	if err != nil {
 		return "", err
 	}
-	meta.Type = string(datasetType)
+	meta.Type = string(params.Type)
 
 	if data != nil {
 		storageName, err := data.GetStorageName(meta.ID)
@@ -449,7 +451,7 @@ func IngestMetadata(originalSchemaFile string, schemaFile string, data api.DataS
 	}
 	meta.Immutable = true
 	// Ingest the dataset info into the metadata storage
-	err = storage.IngestDataset(source, meta)
+	err = storage.IngestDataset(params.Source, meta)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to ingest metadata")
 	}
@@ -460,9 +462,8 @@ func IngestMetadata(originalSchemaFile string, schemaFile string, data api.DataS
 }
 
 // IngestPostgres ingests a dataset to PG storage.
-func IngestPostgres(originalSchemaFile string, schemaFile string, source metadata.DatasetSource, indexFields []string,
-	config *IngestTaskConfig, verifyMetadata bool, createMetadataTables bool, fallbackMerged bool) error {
-	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, source, nil, config, verifyMetadata, fallbackMerged)
+func IngestPostgres(originalSchemaFile string, schemaFile string, params *IngestParams, config *IngestTaskConfig, steps *IngestSteps) error {
+	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, params, config, steps)
 	if err != nil {
 		return err
 	}
@@ -485,7 +486,7 @@ func IngestPostgres(originalSchemaFile string, schemaFile string, source metadat
 	}
 
 	dbTable := meta.StorageName
-	if createMetadataTables {
+	if steps.CreateMetadataTables {
 		err = pg.CreateSolutionMetadataTables()
 		if err != nil {
 			return err
@@ -554,7 +555,7 @@ func IngestPostgres(originalSchemaFile string, schemaFile string, source metadat
 	}
 
 	log.Infof("checking if indices are necessary")
-	err = createIndices(pg, meta.ID, indexFields, meta, config)
+	err = createIndices(pg, meta.ID, params.IndexFields, meta, config)
 	if err != nil {
 		return err
 	}
@@ -564,15 +565,14 @@ func IngestPostgres(originalSchemaFile string, schemaFile string, source metadat
 	return nil
 }
 
-func loadMetadataForIngest(originalSchemaFile string, schemaFile string, source metadata.DatasetSource,
-	origins []*model.DatasetOrigin, config *IngestTaskConfig, verifyMetadata bool, mergedFallback bool) (string, *model.Metadata, error) {
+func loadMetadataForIngest(originalSchemaFile string, schemaFile string, params *IngestParams, config *IngestTaskConfig, steps *IngestSteps) (string, *model.Metadata, error) {
 	datasetDir := path.Dir(schemaFile)
-	meta, err := metadata.LoadMetadataFromClassification(schemaFile, path.Join(datasetDir, config.ClassificationOutputPathRelative), true, mergedFallback)
+	meta, err := metadata.LoadMetadataFromClassification(schemaFile, path.Join(datasetDir, config.ClassificationOutputPathRelative), true, steps.FallbackMerged)
 	if err != nil {
 		return "", nil, errors.Wrap(err, "unable to load original schema file")
 	}
 
-	if source == metadata.Seed {
+	if params.Source == metadata.Seed {
 		meta.DatasetFolder = path.Base(path.Dir(path.Dir(originalSchemaFile)))
 	} else {
 		meta.DatasetFolder = path.Base(path.Dir(originalSchemaFile))
@@ -583,15 +583,15 @@ func loadMetadataForIngest(originalSchemaFile string, schemaFile string, source 
 	log.Infof("using %s as data directory (built from %s and %s)", dataDir, datasetDir, mainDR.ResPath)
 
 	// check and fix metadata issues
-	if verifyMetadata {
-		updated, err := metadata.VerifyAndUpdate(meta, dataDir, source)
+	if steps.VerifyMetadata {
+		updated, err := metadata.VerifyAndUpdate(meta, dataDir, params.Source)
 		if err != nil {
 			return "", nil, errors.Wrap(err, "unable to fix metadata")
 		}
 
 		// store the updated metadata
 		if updated {
-			extendedOutput := source == metadata.Augmented
+			extendedOutput := params.Source == metadata.Augmented
 			log.Infof("storing updated (extended: %v) metadata to %s", extendedOutput, originalSchemaFile)
 			datasetStorage := serialization.GetStorage(originalSchemaFile)
 			err = datasetStorage.WriteMetadata(originalSchemaFile, meta, extendedOutput, false)
@@ -625,8 +625,15 @@ func loadMetadataForIngest(originalSchemaFile string, schemaFile string, source 
 	}
 
 	// set the origin
-	if origins != nil {
-		meta.DatasetOrigins = origins
+	if params.Origins != nil {
+		meta.DatasetOrigins = params.Origins
+	}
+
+	// set the definitive types
+	for _, v := range meta.GetMainDataResource().Variables {
+		if params.DefinitiveTypes != nil && params.DefinitiveTypes[v.Key] != nil {
+			v.Type = params.DefinitiveTypes[v.Key].Type
+		}
 	}
 
 	return datasetDir, meta, nil

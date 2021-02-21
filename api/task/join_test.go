@@ -39,18 +39,21 @@ func TestJoin(t *testing.T) {
 	varsLeft := []*model.Variable{
 		{
 			Key:         "d3mIndex",
+			HeaderName:  "D3M Index",
 			DisplayName: "D3M Index",
 			Type:        model.IntegerType,
 			DistilRole:  "data",
 		},
 		{
 			Key:         "alpha",
+			HeaderName:  "Alpha",
 			DisplayName: "Alpha",
 			Type:        model.RealType,
 			DistilRole:  "data",
 		},
 		{
 			Key:         "bravo",
+			HeaderName:  "Bravo",
 			DisplayName: "Bravo",
 			Type:        model.IntegerType,
 			DistilRole:  "data",
@@ -60,19 +63,21 @@ func TestJoin(t *testing.T) {
 	varsRight := []*model.Variable{
 		{
 			Key:         "d3mIndex",
+			HeaderName:  "D3M Index",
 			DisplayName: "D3M Index",
 			Type:        model.IntegerType,
 			DistilRole:  "data",
 		},
 		{
-			Key:          "charlie",
-			DisplayName:  "Charlie",
-			Type:         model.CountryType,
-			OriginalType: model.CategoricalFilter,
-			DistilRole:   "data",
+			Key:         "charlie",
+			HeaderName:  "Charlie",
+			DisplayName: "Charlie",
+			Type:        model.CategoricalType,
+			DistilRole:  "data",
 		},
 		{
 			Key:         "delta",
+			HeaderName:  "Delta",
 			DisplayName: "Delta",
 			Type:        model.IntegerType,
 			DistilRole:  "data",
@@ -91,12 +96,14 @@ func TestJoin(t *testing.T) {
 		DatasetID:     "test_1",
 		DatasetFolder: "test_1_TRAIN",
 		DatasetSource: "contrib",
+		Variables:     varsLeft,
 	}
 
 	rightJoin := &JoinSpec{
 		DatasetID:     "test_2",
 		DatasetFolder: "test_2_TRAIN",
 		DatasetSource: "contrib",
+		Variables:     varsRight,
 	}
 
 	rightOrigin := &model.DatasetOrigin{
@@ -108,7 +115,7 @@ func TestJoin(t *testing.T) {
 		"Join to be reviewed by user", rightOrigin.SearchResult, rightOrigin.Provenance)
 	assert.NoError(t, err)
 	datasetLeftURI := env.ResolvePath(leftJoin.DatasetSource, leftJoin.DatasetFolder)
-	_, result, err := join(leftJoin, rightJoin, varsLeft, varsRight, pipelineDesc, []string{datasetLeftURI}, testSubmitter{}, &cfg)
+	_, result, err := join(leftJoin, rightJoin, pipelineDesc, []string{datasetLeftURI}, testSubmitter{}, &cfg)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -148,7 +155,7 @@ func TestJoin(t *testing.T) {
 		},
 		{
 			Label:  "Charlie",
-			Key:    "Charlie",
+			Key:    "charlie",
 			Type:   model.CategoricalType,
 			Weight: float64(0),
 		},
@@ -165,7 +172,7 @@ func TestJoin(t *testing.T) {
 	assert.Equal(t, result.NumRows, 4)
 	for i := 0; i < len(expectedTyped); i++ {
 		for j := 0; j < len(expectedTyped[i]); j++ {
-			assert.Equal(t, result.Values[i][j].Value, expectedTyped[i][j])
+			assert.Equal(t, expectedTyped[i][j], result.Values[i][j].Value)
 		}
 	}
 }

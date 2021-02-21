@@ -541,15 +541,17 @@ export const actions = {
     }
 
     let postParams = {};
-    if (args.originalDataset !== null) {
-      postParams = {
-        originalDataset: args.originalDataset,
-        joinedDataset: args.joinedDataset,
-      };
-    } else if (args.path !== "") {
+    if (args.path !== "") {
       postParams = {
         path: args.path,
         nosample: args.nosample,
+        originalDataset: args.originalDataset,
+        joinedDataset: args.joinedDataset,
+      };
+    } else if (args.originalDataset !== null) {
+      postParams = {
+        originalDataset: args.originalDataset,
+        joinedDataset: args.joinedDataset,
       };
     }
     const response = await axios.post(
