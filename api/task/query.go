@@ -17,6 +17,7 @@ package task
 
 import (
 	"fmt"
+	"os"
 	"path"
 	"strconv"
 
@@ -27,11 +28,15 @@ import (
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/serialization"
+	log "github.com/unchartedsoftware/plog"
 )
 
 const (
 	// image retrieval primitive has hardcoded field name
 	queryFieldName = "annotations"
+
+	// appended to dataset ID to generate the image retrieval cache name
+	queryCacheAppend = "query-cache"
 )
 
 // QueryParams helper struct to simplify query task calling.
@@ -72,7 +77,7 @@ func Query(params QueryParams) (map[string]interface{}, error) {
 	}
 
 	// create the image retrieval pipeline
-	desc, err := description.CreateImageQueryPipeline("image query", "pipeline to retrieve pertinent images")
+	desc, err := description.CreateImageQueryPipeline("image query", "pipeline to retrieve pertinent images", getQueryCachePath(ds.ID))
 	if err != nil {
 		return nil, err
 	}
@@ -101,6 +106,7 @@ func Query(params QueryParams) (map[string]interface{}, error) {
 
 	return nil, nil
 }
+
 func convertResultToRanking(results *[][]string) error {
 	// index for result values
 	valueIdx := 1
@@ -131,6 +137,15 @@ func convertResultToRanking(results *[][]string) error {
 	return nil
 }
 
+// DeleteQueryCache deletes the query cache folder if it exists.
+func DeleteQueryCache(datasetID string) {
+	log.Infof("removing %s", datasetID)
+	cachePath := getQueryCachePath(datasetID)
+	if err := os.RemoveAll(cachePath); err != nil {
+		log.Warnf("failed to remove query cache - %s", err)
+	}
+}
+
 // getColumnIndices returns: target, d3mIndex
 func getColumnIndices(targetName string, data [][]string) (int, int) {
 	targetIndex := -1
@@ -144,6 +159,7 @@ func getColumnIndices(targetName string, data [][]string) (int, int) {
 	}
 	return targetIndex, d3mIndex
 }
+
 func extractQueryDataset(targetName string, data [][]string) [][]string {
 	// get the needed column indices
 	targetIndex, d3mIndex := getColumnIndices(targetName, data)
@@ -239,4 +255,9 @@ func persistQueryResults(params QueryParams, storageName string, resultData [][]
 	}
 
 	return nil
+}
+
+func getQueryCachePath(datasetID string) string {
+	datasetIDTarget := fmt.Sprintf("%s-%s", datasetID, queryCacheAppend)
+	return path.Join(env.GetTmpPath(), datasetIDTarget)
 }
