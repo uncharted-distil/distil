@@ -18,6 +18,7 @@ package routes
 import (
 	"net/http"
 
+	"github.com/uncharted-distil/distil/api/task"
 	"github.com/uncharted-distil/distil/api/util"
 
 	"github.com/pkg/errors"
@@ -72,6 +73,10 @@ func DeletingDatasetHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataS
 			handleError(w, err)
 			return
 		}
+
+		// delete the query cache associated wit this dataset if it exists
+		task.DeleteQueryCache(dataset)
+
 		// send json
 		err = handleJSON(w, map[string]interface{}{"success": true})
 		if err != nil {
