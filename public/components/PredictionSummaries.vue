@@ -271,6 +271,7 @@ export default Vue.extend({
     async savePredictions() {
       const csvStr = await predictionActions.fetchExportData(this.$store, {
         produceRequestId: this.produceRequestId,
+        format: "csv",
       });
       if (!csvStr) {
         console.error("No CSV Data");

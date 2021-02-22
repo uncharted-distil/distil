@@ -13,6 +13,8 @@ require (
 	github.com/h2non/filetype v1.0.12
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/jackc/pgconn v1.6.1
+	github.com/jackc/pgproto3/v2 v2.0.2
+	github.com/jackc/pgtype v1.4.0
 	github.com/jackc/pgx/v4 v4.7.1
 	github.com/lucasb-eyer/go-colorful v1.0.3
 	github.com/mattn/go-isatty v0.0.12
@@ -27,8 +29,8 @@ require (
 	github.com/russross/blackfriday v2.0.0+incompatible
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/stretchr/testify v1.6.1
-	github.com/uncharted-distil/distil-image-upscale v0.0.0-20210211160256-b9cb91e1a5c9
 	github.com/uncharted-distil/distil-compute v0.0.0-20210222122537-5b7d569fcaef
+	github.com/uncharted-distil/distil-image-upscale v0.0.0-20210211160256-b9cb91e1a5c9
 	github.com/uncharted-distil/gdal v0.0.0-20200504224203-25f2e6a0dc2a
 	github.com/unchartedsoftware/plog v0.0.0-20200807135627-83d59e50ced5
 	github.com/unchartedsoftware/witch v0.0.0-20200617171400-4f405404126f // indirect

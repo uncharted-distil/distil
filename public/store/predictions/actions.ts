@@ -455,12 +455,12 @@ export const actions = {
     context: PredictionContext,
     args: {
       produceRequestId: string;
+      format: string;
     }
   ): Promise<string> {
     try {
-      const endPoint = "/distil/export-results/";
-      const params = `${args.produceRequestId}`;
-      const response = await axios.get(endPoint + params);
+      const endPoint = `/distil/export-results/${args.produceRequestId}/${args.format}`;
+      const response = await axios.get(endPoint);
       return response.data;
     } catch (error) {
       console.error(error);

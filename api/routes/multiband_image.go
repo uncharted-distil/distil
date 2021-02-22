@@ -147,7 +147,7 @@ func getBandMapping(ds *api.Dataset, groupKey string, dataStorage api.DataStorag
 			groupingCol = v
 		} else if v.Key == "band" {
 			bandCol = v
-		} else if !v.IsGrouping() && model.IsMultiBandImage(v.Type) {
+		} else if !v.IsGrouping() && (model.IsMultiBandImage(v.Type) || v.Key == "image_file") {
 			fileCol = v
 		}
 	}
