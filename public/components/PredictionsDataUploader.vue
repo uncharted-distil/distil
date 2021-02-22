@@ -5,7 +5,7 @@
     @ok="handleOk"
     @show="clearForm"
   >
-    <b-form-group label="Select a Source File (csv, zip)">
+    <b-form-group label="Select a Source File (csv, zip) or dataset">
       <b-form-file
         ref="fileinput"
         v-model="file"
@@ -13,6 +13,15 @@
         accept=".csv, .zip"
         plain
       />
+      <b-form-select v-model="selectedDataset" name="model-scoring" size="sm">
+        <b-form-select-option
+          v-for="dataset in datasets"
+          :key="dataset.id"
+          :value="dataset.id"
+        >
+          {{ dataset.name }}
+        </b-form-select-option>
+      </b-form-select>
     </b-form-group>
     <!-- <div class="mt-3">Selected file: {{ file ? file.name : "" }}</div> -->
 
@@ -27,11 +36,7 @@
         spinner-variant="primary"
         class="d-inline-block"
       >
-        <b-button
-          variant="primary"
-          :disabled="isWaiting || !Boolean(file)"
-          @click="ok()"
-        >
+        <b-button variant="primary" :disabled="!canApply" @click="ok()">
           Apply Model to Input Data
         </b-button>
       </b-overlay>
@@ -47,7 +52,11 @@ import {
 } from "../store/requests/module";
 import { actions as appActions } from "../store/app/module";
 import { getters as routeGetters } from "../store/route/module";
-import { actions as datasetActions } from "../store/dataset/module";
+import { Dataset } from "../store/dataset/index";
+import {
+  actions as datasetActions,
+  getters as datasetGetters,
+} from "../store/dataset/module";
 import {
   getBase64,
   generateUniqueDatasetName,
@@ -73,12 +82,21 @@ export default Vue.extend({
       uploadData: {},
       uploadStatus: "",
       isWaiting: false,
+      selectedDataset: "",
     };
   },
 
   computed: {
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
+    },
+    datasets(): Dataset[] {
+      return datasetGetters.getDatasets(this.$store);
+    },
+    canApply(): boolean {
+      return (
+        !this.isWaiting && (Boolean(this.file) || this.selectedDataset !== "")
+      );
     },
   },
 
@@ -93,16 +111,20 @@ export default Vue.extend({
       // Prevent modal from closing
       bvModalEvt.preventDefault();
 
-      if (!this.file) {
+      if (!this.canApply) {
         return;
       }
 
       this.isWaiting = true;
-      this.makeRequest();
+      if (!this.file) {
+        this.makePrediction(true, this.selectedDataset, "");
+      } else {
+        this.makeRequest();
+      }
     },
 
     async makeRequest() {
-      const deconflictedName = generateUniqueDatasetName(
+      var deconflictedName = generateUniqueDatasetName(
         removeExtension(this.file.name)
       );
 
@@ -124,22 +146,35 @@ export default Vue.extend({
           }
         );
 
+        this.makePrediction(
+          false,
+          deconflictedName,
+          uploadResponse.data.location
+        );
+      } catch (err) {
+        this.predictionFinish(err, null);
+      }
+    },
+
+    async makePrediction(existing, dataset, datasetPath) {
+      // Apply model to a prediction dataset.
+      try {
         const requestMsg = {
-          datasetId: deconflictedName,
+          datasetId: dataset,
           fittedSolutionId: this.fittedSolutionId,
           target: this.target,
           targetType: this.targetType,
-          datasetPath: uploadResponse.data.location,
-          existingDataset: false,
+          datasetPath: datasetPath,
+          existingDataset: existing,
         };
         const predictResponse = await requestActions.createPredictRequest(
           this.$store,
           requestMsg
         );
 
-        this.uploadFinish(null, predictResponse);
+        this.predictionFinish(null, predictResponse);
       } catch (err) {
-        this.uploadFinish(err, null);
+        this.predictionFinish(err, null);
       }
     },
 
@@ -156,7 +191,7 @@ export default Vue.extend({
       });
     },
 
-    uploadFinish(err: Error, response: any) {
+    predictionFinish(err: Error, response: any) {
       this.isWaiting = false;
       this.uploadStatus = err ? "error" : "success";
 
