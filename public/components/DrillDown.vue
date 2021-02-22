@@ -183,6 +183,15 @@ export default Vue.extend({
           t.coordinates as LatLngBoundsLiteral
         ).getCenter();
         const indices = this.getIndex(center.lng, center.lat);
+        if (
+          indices.x < 0 ||
+          indices.y < 0 ||
+          indices.x >= this.cols ||
+          indices.y >= this.rows
+        ) {
+          // tile outside defined area
+          return;
+        }
         const invertY = this.rows - 1 - indices.y;
         result[invertY][indices.x].selected = t;
         result[invertY][indices.x].overlapped.push(t);
