@@ -507,7 +507,7 @@ func getPredictionDataset(requestTask *api.Task, request *api.PredictRequest, pr
 			return "", "", err
 		}
 
-		return ds.ID, env.ResolvePath(ds.Source, ds.Folder), nil
+		return ds.ID, path.Join(env.ResolvePath(ds.Source, ds.Folder), compute.D3MDataSchema), nil
 	}
 
 	// ingest the data as a new prediction dataset

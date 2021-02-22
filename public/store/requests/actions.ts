@@ -616,6 +616,7 @@ export const actions = {
         targetType: request.targetType,
         intervalCount: request.intervalCount ?? null,
         intervalLength: request.intervalLength ?? null,
+        existingDataset: request.existingDataset,
       });
     });
   },
