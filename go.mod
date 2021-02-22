@@ -27,8 +27,8 @@ require (
 	github.com/russross/blackfriday v2.0.0+incompatible
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/stretchr/testify v1.6.1
-	github.com/uncharted-distil/distil-compute v0.0.0-20210208222927-a7ae5d433614
 	github.com/uncharted-distil/distil-image-upscale v0.0.0-20210211160256-b9cb91e1a5c9
+	github.com/uncharted-distil/distil-compute v0.0.0-20210222122537-5b7d569fcaef
 	github.com/uncharted-distil/gdal v0.0.0-20200504224203-25f2e6a0dc2a
 	github.com/unchartedsoftware/plog v0.0.0-20200807135627-83d59e50ced5
 	github.com/unchartedsoftware/witch v0.0.0-20200617171400-4f405404126f // indirect
@@ -42,5 +42,3 @@ require (
 	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c // indirect
 	google.golang.org/grpc v1.25.1
 )
-
-replace github.com/uncharted-distil/distil-compute => ../distil-compute

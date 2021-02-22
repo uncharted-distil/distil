@@ -550,6 +550,8 @@ github.com/ultraware/whitespace v0.0.4 h1:If7Va4cM03mpgrNH9k49/VOicWpGoG70XPBFFO
 github.com/ultraware/whitespace v0.0.4/go.mod h1:aVMh/gQve5Maj9hQ/hg+F75lr/X5A89uZnzAmWSineA=
 github.com/uncharted-distil/distil-compute v0.0.0-20210208222927-a7ae5d433614 h1:GUHDkf0VWeRcNe91fIWHINGD3MEJyY+AP3p6b19POZo=
 github.com/uncharted-distil/distil-compute v0.0.0-20210208222927-a7ae5d433614/go.mod h1:iFA7B2kb+WJfkzukdwfZJVY3o/ZFEjHPsA8k2N6I+B8=
+github.com/uncharted-distil/distil-compute v0.0.0-20210222122537-5b7d569fcaef h1:hQ58Bi5DpeYpgjkwHy4ah8jNMFXdEBoM1MQNf3SzDnk=
+github.com/uncharted-distil/distil-compute v0.0.0-20210222122537-5b7d569fcaef/go.mod h1:iFA7B2kb+WJfkzukdwfZJVY3o/ZFEjHPsA8k2N6I+B8=
 github.com/uncharted-distil/distil-image-upscale v0.0.0-20210210122944-38e126ef1a20 h1:cKyGWuu+FB6Nfudu3fUxPliC9jx6haa1CyPINzOK2io=
 github.com/uncharted-distil/distil-image-upscale v0.0.0-20210210122944-38e126ef1a20/go.mod h1:G5ygnZ86P6T2iRh4gUY5R3oAxj3ZMn9j+HX+r3qiWBo=
 github.com/uncharted-distil/distil-image-upscale v0.0.0-20210211160256-b9cb91e1a5c9 h1:FZXa8V3DNuym+TVnHF7rxxyKr74tpm8vjmO7vUQwD/w=
