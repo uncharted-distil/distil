@@ -25,6 +25,8 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/paulmach/orb"
+	geo "github.com/paulmach/orb/geojson"
 	"github.com/pkg/errors"
 	"goji.io/v3/pat"
 
@@ -231,17 +233,12 @@ func exportGeoJSON(target string, results *api.FilteredData) (string, string, []
 	}
 
 	// build the geojson content
-	output := []map[string]interface{}{}
+	output := []*geo.Feature{}
 	for _, row := range results.Values {
-		geometry := map[string]interface{}{
-			"type":        "Polygon",
-			"coordinates": getPointsFromVector(row[coordinateColumnIndex].Value.([]float64)),
-		}
-		output = append(output, map[string]interface{}{
-			"type":       "Feature",
-			"properties": map[string]interface{}{target: row[predictionColumnIndex].Value.(string)},
-			"geometry":   geometry,
-		})
+		geometry := createGeometry(row[coordinateColumnIndex].Value.([]float64))
+		feature := geo.NewFeature(geometry)
+		feature.Properties[target] = row[predictionColumnIndex].Value.(string)
+		output = append(output, feature)
 	}
 
 	outputBin, err := json.Marshal(output)
@@ -257,6 +254,7 @@ func getPointsFromVector(polygon []float64) [][]float64 {
 	for i := 0; i < len(polygon); i += 2 {
 		points = append(points, []float64{polygon[i], polygon[i+1]})
 	}
+	points = append(points, points[0])
 
 	return points
 }
@@ -268,4 +266,20 @@ func canExportGeoJSON(results *api.FilteredData) bool {
 		types[c.Type] = true
 	}
 	return types[model.MultiBandImageType] && types[model.RealVectorType]
+}
+
+func createGeometry(coordinates []float64) orb.Geometry {
+	pointsCoordinates := getPointsFromVector(coordinates)
+	points := make([]orb.Point, len(pointsCoordinates))
+	for i, p := range pointsCoordinates {
+		points[i] = [2]float64{p[0], p[1]}
+	}
+	rings := []orb.Ring{points}
+
+	// make sure we follow the right hand rule (ie counter-clockwise direction)
+	if rings[0].Orientation() == orb.CW {
+		rings[0].Reverse()
+	}
+
+	return orb.Polygon{rings[0]}
 }
