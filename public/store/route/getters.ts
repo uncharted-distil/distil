@@ -385,7 +385,7 @@ export const getters = {
     const filters = getters.getDecodedFilters;
     const size = getters.getRouteDataSize;
     const filterParams = _.cloneDeep({
-      highlight: null,
+      highlights: [],
       variables: [],
       filters,
       size,

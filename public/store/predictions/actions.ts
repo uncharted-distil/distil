@@ -126,7 +126,7 @@ export const actions = {
     }
   ) {
     const filterParamsBlank = {
-      highlight: null,
+      highlights: [],
       variables: [],
       filters: [],
     };
@@ -166,7 +166,7 @@ export const actions = {
     }
   ) {
     const filterParamsBlank = {
-      highlight: null,
+      highlights: [],
       variables: [],
       filters: [],
     };
@@ -181,7 +181,10 @@ export const actions = {
     }
     filterParams.filters.push(args.filter);
     // if highlight is null there is nothing to invert so return null
-    if (filterParams.highlight === null) {
+    if (
+      filterParams.highlights === null &&
+      filterParams.highlights.length > 0
+    ) {
       mutations.setAreaOfInterestOuter(context, createEmptyTableData());
       return;
     }
@@ -228,7 +231,7 @@ export const actions = {
     }
 
     let filterParams = {
-      highlight: null,
+      highlights: [],
       variables: [],
       filters: [],
     };
@@ -266,7 +269,7 @@ export const actions = {
     }
   ) {
     let filterParams: FilterParams = {
-      highlight: null,
+      highlights: [],
       variables: [],
       filters: [],
     };
@@ -329,7 +332,7 @@ export const actions = {
     }
 
     let filterParams = {
-      highlight: null,
+      highlights: [],
       variables: [],
       filters: [],
     };

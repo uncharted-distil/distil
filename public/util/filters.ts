@@ -109,7 +109,7 @@ export interface Filter {
 }
 
 export interface FilterParams {
-  highlight: Filter;
+  highlights: Filter[];
   filters: Filter[];
   variables: string[];
   size?: number;

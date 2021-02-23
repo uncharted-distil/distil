@@ -148,7 +148,7 @@ export function addHighlightToFilterParams(
   const params = _.cloneDeep(filterParams);
   const highlightFilter = createFilterFromHighlight(highlight, mode);
   if (highlightFilter) {
-    params.highlight = highlightFilter;
+    params.highlights = [highlightFilter];
   }
   return params;
 }
