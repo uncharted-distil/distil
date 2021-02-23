@@ -158,14 +158,14 @@ func ExportResultHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.Data
 		results = api.ReplaceNaNs(results, api.EmptyString)
 
 		// write out the result to CSV
-		output, err := createExportedData(req.TargetFeature(), format, results)
+		contentType, extension, output, err := createExportedData(req.TargetFeature(), format, results)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		w.Header().Set("Content-Type", "text/csv")
-		w.Header().Set("Content-Disposition", "attachment;filename=TheCSVFileName.csv")
+		w.Header().Set("Content-Type", contentType)
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment;filename=TheCSVFileName.%s", extension))
 		_, err = w.Write(output)
 		if err != nil {
 			handleError(w, err)
@@ -174,18 +174,18 @@ func ExportResultHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.Data
 	}
 }
 
-func createExportedData(target string, format string, results *api.FilteredData) ([]byte, error) {
+func createExportedData(target string, format string, results *api.FilteredData) (string, string, []byte, error) {
 	switch format {
 	case "csv":
 		return exportCSV(results)
 	case "geojson":
 		return exportGeoJSON(target, results)
 	default:
-		return nil, errors.Errorf("unsupported export format '%s'", format)
+		return "", "", nil, errors.Errorf("unsupported export format '%s'", format)
 	}
 }
 
-func exportCSV(results *api.FilteredData) ([]byte, error) {
+func exportCSV(results *api.FilteredData) (string, string, []byte, error) {
 	outputBuffer := &bytes.Buffer{}
 	wr := csv.NewWriter(outputBuffer)
 
@@ -195,7 +195,7 @@ func exportCSV(results *api.FilteredData) ([]byte, error) {
 	}
 	err := wr.Write(header)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to write csv header")
+		return "", "", nil, errors.Wrapf(err, "unable to write csv header")
 	}
 
 	for _, row := range results.Values {
@@ -207,17 +207,17 @@ func exportCSV(results *api.FilteredData) ([]byte, error) {
 		}
 		err = wr.Write(record)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unable to write csv record")
+			return "", "", nil, errors.Wrapf(err, "unable to write csv record")
 		}
 	}
 	wr.Flush()
 
-	return outputBuffer.Bytes(), nil
+	return "text/csv", "csv", outputBuffer.Bytes(), nil
 }
 
-func exportGeoJSON(target string, results *api.FilteredData) ([]byte, error) {
+func exportGeoJSON(target string, results *api.FilteredData) (string, string, []byte, error) {
 	if !canExportGeoJSON(results) {
-		return nil, errors.Errorf("unable to export results to geo json")
+		return "", "", nil, errors.Errorf("unable to export results to geo json")
 	}
 
 	coordinateColumnIndex := -1
@@ -246,10 +246,10 @@ func exportGeoJSON(target string, results *api.FilteredData) ([]byte, error) {
 
 	outputBin, err := json.Marshal(output)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to marshal geojson output")
+		return "", "", nil, errors.Wrapf(err, "unable to marshal geojson output")
 	}
 
-	return outputBin, nil
+	return "application/json", "json", outputBin, nil
 }
 
 func getPointsFromVector(polygon []float64) [][]float64 {
