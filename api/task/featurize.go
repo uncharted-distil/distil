@@ -38,6 +38,10 @@ func submitForBatch(pip *description.FullySpecifiedPipeline) func(string) (strin
 	}
 }
 
+func createFeaturizedDatasetID(datasetID string) string {
+	return fmt.Sprintf("%s-featurized", datasetID)
+}
+
 // FeaturizeDataset creates a featurized output of the data that can be used
 // in simplified pipelines.
 func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset string, metaStorage api.MetadataStorage, config *IngestTaskConfig) (string, string, error) {
@@ -71,7 +75,7 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 	}
 
 	// create the dataset folder
-	featurizedDatasetID := fmt.Sprintf("%s-featurized", dataset)
+	featurizedDatasetID := createFeaturizedDatasetID(dataset)
 	featurizedDatasetID, err = GetUniqueOutputFolder(featurizedDatasetID, env.GetAugmentedPath())
 	if err != nil {
 		return "", "", err

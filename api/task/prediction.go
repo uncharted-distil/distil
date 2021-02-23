@@ -179,6 +179,164 @@ type PredictParams struct {
 	Config             *env.Config
 }
 
+func createPredictionDatasetID(existingDatasetID string, fittedSolutionID string) string {
+	return model.NormalizeDatasetID(fmt.Sprintf("%s-%s", existingDatasetID, fittedSolutionID))
+}
+
+func cloneDiskDataset(existingFolder string, cloneFolder string, cloneDatasetID string) error {
+	err := util.Copy(existingFolder, cloneFolder)
+	if err != nil {
+		return err
+	}
+	schemaPath := path.Join(cloneFolder, compute.D3MDataSchema)
+	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaPath, false)
+	if err != nil {
+		return err
+	}
+	meta.ID = cloneDatasetID
+	meta.GetMainDataResource().ResPath = path.Join(cloneFolder, compute.D3MDataFolder, compute.D3MLearningData)
+	writer := serialization.GetStorage(meta.GetMainDataResource().ResPath)
+	err = writer.WriteMetadata(schemaPath, meta, false, false)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func cloneDataset(sourceDatasetID string, cloneDatasetID string, cloneFolder string,
+	cloneLearningDataset bool, metaStorage api.MetadataStorage, dataStorage api.DataStorage) error {
+
+	ds, err := metaStorage.FetchDataset(sourceDatasetID, false, false, false)
+	if err != nil {
+		return err
+	}
+
+	folderExisting := env.ResolvePath(ds.Source, ds.Folder)
+	folderClone := env.ResolvePath(metadata.Augmented, cloneDatasetID)
+	storageNameClone, err := dataStorage.GetStorageName(cloneDatasetID)
+	if err != nil {
+		return err
+	}
+
+	err = metaStorage.CloneDataset(sourceDatasetID, cloneDatasetID, storageNameClone, cloneFolder)
+	if err != nil {
+		return err
+	}
+
+	err = dataStorage.CloneDataset(sourceDatasetID, ds.StorageName, cloneDatasetID, storageNameClone)
+	if err != nil {
+		return err
+	}
+
+	// if there is a learning dataset, need to copy it as well and update the metadata
+	if cloneLearningDataset && ds.LearningDataset != "" {
+		cloneLearningFolder := createFeaturizedDatasetID(folderClone)
+		err = cloneDiskDataset(ds.GetLearningFolder(), cloneLearningFolder, cloneDatasetID)
+		if err != nil {
+			return err
+		}
+
+		dsCloned, err := metaStorage.FetchDataset(cloneDatasetID, true, true, true)
+		if err != nil {
+			return err
+		}
+		dsCloned.LearningDataset = cloneLearningFolder
+		err = metaStorage.UpdateDataset(dsCloned)
+		if err != nil {
+			return err
+		}
+	}
+	err = cloneDiskDataset(folderExisting, folderClone, cloneDatasetID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// PrepExistingPredictionDataset sets up an existing dataset to be usable for predictions.
+func PrepExistingPredictionDataset(params *PredictParams) (string, string, error) {
+	// we need to clone the base dataset and use the clone for predictions
+	// otherwise we would be updating the base dataset with new data
+	cloneDatasetID := createPredictionDatasetID(params.Dataset, params.FittedSolutionID)
+	dsCloned, err := params.MetaStorage.FetchDataset(cloneDatasetID, true, true, true)
+	if err != nil {
+		return "", "", err
+	}
+	if dsCloned != nil {
+		// already cloned so assume everything is good to go
+		return cloneDatasetID, dsCloned.GetLearningFolder(), nil
+	}
+
+	dsSource, err := params.MetaStorage.FetchDataset(params.Dataset, true, true, true)
+	if err != nil {
+		return "", "", err
+	}
+	targetFolder := fmt.Sprintf("%s-%s", dsSource.Folder, params.FittedSolutionID)
+	schemaPath := path.Join(targetFolder, compute.D3MDataSchema)
+
+	// clone the base dataset, then add the necessary fields
+	err = cloneDataset(params.Dataset, cloneDatasetID, targetFolder, false, params.MetaStorage, params.DataStorage)
+	if err != nil {
+		return "", "", err
+	}
+
+	// pull the cloned dataset for updates
+	dsCloned, err = params.MetaStorage.FetchDataset(cloneDatasetID, true, true, true)
+	if err != nil {
+		return "", "", err
+	}
+
+	// make sure the dataset on disk has the target variable!
+	// (if performance here becomes an issue, only need data if adding target)
+	dsDisk, err := serialization.ReadDataset(schemaPath)
+	if err != nil {
+		return "", "", err
+	}
+	mainDR := dsDisk.Metadata.GetMainDataResource()
+
+	foundTarget := false
+	for i, v := range mainDR.Variables {
+		if v.Key == params.Target.Key {
+			// not ideal to update the target as a side effect...
+			foundTarget = true
+			params.Target.Index = i
+			break
+		}
+	}
+	if !foundTarget {
+		// not ideal to update the target as a side effect...
+		params.Target.Index = len(mainDR.Variables)
+		mainDR.Variables = append(mainDR.Variables, params.Target)
+
+		// need to append the target to the underlying data
+		for i, row := range dsDisk.Data {
+			dsDisk.Data[i] = append(row, "")
+		}
+		dsCloned.Variables = append(dsCloned.Variables, params.Target)
+		err = serialization.WriteDataset(targetFolder, dsDisk)
+		if err != nil {
+			return "", "", err
+		}
+		err = params.MetaStorage.UpdateDataset(dsCloned)
+		if err != nil {
+			return "", "", err
+		}
+	}
+
+	// update the learning dataset
+	if dsSource.LearningDataset != "" {
+		targetFolder = createFeaturizedDatasetID(targetFolder)
+		_, err = comp.UpdatePrefeaturizedDataset(targetFolder, dsSource.GetLearningFolder(), dsCloned, dsDisk.Data)
+		if err != nil {
+			return "", "", err
+		}
+	}
+
+	return cloneDatasetID, targetFolder, nil
+}
+
 // ImportPredictionDataset imports a dataset to be used for predictions.
 func ImportPredictionDataset(params *PredictParams) (string, string, error) {
 	meta := params.Meta
@@ -330,8 +488,7 @@ func IngestPredictionDataset(params *PredictParams) error {
 
 // Predict processes input data to generate predictions.
 func Predict(params *PredictParams) (string, error) {
-	log.Infof("generating predictions for fitted solution ID %s", params.FittedSolutionID)
-	datasetPath := path.Join(params.OutputPath, params.Dataset)
+	log.Infof("generating predictions for fitted solution ID %s found at '%s'", params.FittedSolutionID, params.SchemaPath)
 	schemaPath := params.SchemaPath
 	datasetName := params.Dataset
 
@@ -342,7 +499,7 @@ func Predict(params *PredictParams) (string, error) {
 		return "", errors.Wrap(err, "unable to read latest dataset doc")
 	}
 	meta.ID = params.SourceDatasetID
-	datasetStorage := serialization.GetStorage(schemaPath)
+	datasetStorage := serialization.GetStorage(meta.GetMainDataResource().ResPath)
 	err = datasetStorage.WriteMetadata(schemaPath, meta, true, false)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to update dataset doc")
@@ -368,8 +525,8 @@ func Predict(params *PredictParams) (string, error) {
 	}
 
 	// submit the new dataset for predictions
-	log.Infof("generating predictions using data found at '%s'", datasetPath)
-	predictionResult, err := comp.GeneratePredictions(datasetPath, solution.SolutionID, params.FittedSolutionID, client)
+	log.Infof("generating predictions using data found at '%s'", params.SchemaPath)
+	predictionResult, err := comp.GeneratePredictions(params.SchemaPath, solution.SolutionID, params.FittedSolutionID, client)
 	if err != nil {
 		return "", err
 	}
@@ -607,6 +764,7 @@ func createComposedFields(data []*api.FilteredDataValue, fields []string, mapped
 	}
 	return strings.Join(dataToJoin, separator)
 }
+
 func createClassification(params *PredictParams, datasetPath string, variables []*model.Variable) error {
 	outputPath := path.Join(datasetPath, params.Config.ClassificationOutputPath)
 	log.Info("writing predicted dataset type classification to file")
@@ -618,6 +776,7 @@ func createClassification(params *PredictParams, datasetPath string, variables [
 	}
 	return nil
 }
+
 func updateMetaDataTypes(solutionStorage api.SolutionStorage, metaStorage api.MetadataStorage,
 	dataStorage api.DataStorage, meta *model.Metadata, fittedSolutionID string, dataset string, storageName string) []*model.Variable {
 	variables := meta.GetMainDataResource().Variables

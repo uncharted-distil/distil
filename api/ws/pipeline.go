@@ -501,13 +501,12 @@ func createPredictionDataset(requestTask *api.Task, request *api.PredictRequest,
 func getPredictionDataset(requestTask *api.Task, request *api.PredictRequest, predictParams *task.PredictParams) (string, string, error) {
 	// check if the dataset already exists
 	if request.ExistingDataset {
-		// read path from metadata storage
-		ds, err := predictParams.MetaStorage.FetchDataset(request.DatasetID, true, true, true)
+		clonedID, clonedPath, err := task.PrepExistingPredictionDataset(predictParams)
 		if err != nil {
 			return "", "", err
 		}
 
-		return ds.ID, path.Join(env.ResolvePath(ds.Source, ds.Folder), compute.D3MDataSchema), nil
+		return clonedID, path.Join(clonedPath, compute.D3MDataSchema), nil
 	}
 
 	// ingest the data as a new prediction dataset

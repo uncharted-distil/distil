@@ -195,7 +195,7 @@ func updateLearningDataset(newDataset *api.RawDataset, metaDataset *api.Dataset,
 	}
 
 	// copy the learning dataset
-	learningFolder := fmt.Sprintf("%s-featurized", newDataset.Metadata.ID)
+	learningFolder := createFeaturizedDatasetID(newDataset.Metadata.ID)
 	learningFolder = path.Join(path.Dir(parentDS.LearningDataset), learningFolder)
 	err := util.Copy(parentDS.LearningDataset, learningFolder)
 	if err != nil {
