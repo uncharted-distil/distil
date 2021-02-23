@@ -12,6 +12,8 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/h2non/filetype v1.0.12
 	github.com/jackc/pgconn v1.6.1
+	github.com/jackc/pgproto3/v2 v2.0.2
+	github.com/jackc/pgtype v1.4.0
 	github.com/jackc/pgx/v4 v4.7.1
 	github.com/klauspost/compress v1.11.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
@@ -26,6 +28,7 @@ require (
 	github.com/olivere/elastic/v7 v7.0.15
 	github.com/otiai10/copy v1.0.2
 	github.com/patrickmn/go-cache v2.1.0+incompatible
+	github.com/paulmach/orb v0.2.1
 	github.com/pkg/errors v0.9.1
 	github.com/russross/blackfriday v2.0.0+incompatible
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
@@ -42,6 +45,6 @@ require (
 	golang.org/x/net v0.0.0-20201021035429-f5854403a974
 	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
-	google.golang.org/grpc v1.25.1
+	google.golang.org/grpc v1.27.0
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 )

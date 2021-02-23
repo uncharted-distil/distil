@@ -16,15 +16,21 @@
 package routes
 
 import (
+	"bytes"
 	"context"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
+	"github.com/paulmach/orb"
+	geo "github.com/paulmach/orb/geojson"
 	"github.com/pkg/errors"
 	"goji.io/v3/pat"
 
+	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
@@ -61,6 +67,12 @@ func ExportResultHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.Data
 		produceRequestID, err := url.PathUnescape(pat.Param(r, "produce-request-id"))
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to unescape produce request id"))
+			return
+		}
+
+		format, err := url.PathUnescape(pat.Param(r, "format"))
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to unescape format"))
 			return
 		}
 
@@ -148,33 +160,126 @@ func ExportResultHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.Data
 		results = api.ReplaceNaNs(results, api.EmptyString)
 
 		// write out the result to CSV
-		wr := csv.NewWriter(w)
-		w.Header().Set("Content-Type", "text/csv")
-		w.Header().Set("Content-Disposition", "attachment;filename=TheCSVFileName.csv")
-
-		header := make([]string, len(results.Columns))
-		for i, c := range results.Columns {
-			header[i] = c.Label
-		}
-		err = wr.Write(header)
+		contentType, extension, output, err := createExportedData(req.TargetFeature(), format, results)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		for _, row := range results.Values {
-			record := make([]string, len(row))
-			for i, v := range row {
-				if v != nil {
-					record[i] = fmt.Sprintf("%v", v.Value)
-				}
-			}
-			err = wr.Write(record)
-			if err != nil {
-				handleError(w, err)
-				return
+		w.Header().Set("Content-Type", contentType)
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment;filename=TheCSVFileName.%s", extension))
+		_, err = w.Write(output)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+	}
+}
+
+func createExportedData(target string, format string, results *api.FilteredData) (string, string, []byte, error) {
+	switch format {
+	case "csv":
+		return exportCSV(results)
+	case "geojson":
+		return exportGeoJSON(target, results)
+	default:
+		return "", "", nil, errors.Errorf("unsupported export format '%s'", format)
+	}
+}
+
+func exportCSV(results *api.FilteredData) (string, string, []byte, error) {
+	outputBuffer := &bytes.Buffer{}
+	wr := csv.NewWriter(outputBuffer)
+
+	header := make([]string, len(results.Columns))
+	for i, c := range results.Columns {
+		header[i] = c.Label
+	}
+	err := wr.Write(header)
+	if err != nil {
+		return "", "", nil, errors.Wrapf(err, "unable to write csv header")
+	}
+
+	for _, row := range results.Values {
+		record := make([]string, len(row))
+		for i, v := range row {
+			if v != nil {
+				record[i] = fmt.Sprintf("%v", v.Value)
 			}
 		}
-		wr.Flush()
+		err = wr.Write(record)
+		if err != nil {
+			return "", "", nil, errors.Wrapf(err, "unable to write csv record")
+		}
 	}
+	wr.Flush()
+
+	return "text/csv", "csv", outputBuffer.Bytes(), nil
+}
+
+func exportGeoJSON(target string, results *api.FilteredData) (string, string, []byte, error) {
+	if !canExportGeoJSON(results) {
+		return "", "", nil, errors.Errorf("unable to export results to geo json")
+	}
+
+	coordinateColumnIndex := -1
+	predictionColumnIndex := -1
+	for i, c := range results.Columns {
+		if model.IsVector(c.Type) {
+			coordinateColumnIndex = i
+		} else if strings.Contains(c.Key, ":predicted") {
+			predictionColumnIndex = i
+		}
+	}
+
+	// build the geojson content
+	output := []*geo.Feature{}
+	for _, row := range results.Values {
+		geometry := createGeometry(row[coordinateColumnIndex].Value.([]float64))
+		feature := geo.NewFeature(geometry)
+		feature.Properties[target] = row[predictionColumnIndex].Value.(string)
+		output = append(output, feature)
+	}
+
+	outputBin, err := json.Marshal(output)
+	if err != nil {
+		return "", "", nil, errors.Wrapf(err, "unable to marshal geojson output")
+	}
+
+	return "application/json", "json", outputBin, nil
+}
+
+func getPointsFromVector(polygon []float64) [][]float64 {
+	points := [][]float64{}
+	for i := 0; i < len(polygon); i += 2 {
+		points = append(points, []float64{polygon[i], polygon[i+1]})
+	}
+	points = append(points, points[0])
+
+	return points
+}
+
+func canExportGeoJSON(results *api.FilteredData) bool {
+	// would expect a multiband image and a real vector
+	types := map[string]bool{}
+	for _, c := range results.Columns {
+		types[c.Type] = true
+	}
+	return types[model.MultiBandImageType] && types[model.RealVectorType]
+}
+
+func createGeometry(coordinates []float64) orb.Geometry {
+	pointsCoordinates := getPointsFromVector(coordinates)
+	points := make([]orb.Point, len(pointsCoordinates))
+	for i, p := range pointsCoordinates {
+		points[i] = [2]float64{p[0], p[1]}
+	}
+	rings := []orb.Ring{points}
+
+	// make sure we follow the right hand rule (ie counter-clockwise direction)
+	if rings[0].Orientation() == orb.CW {
+		rings[0].Reverse()
+	}
+
+	return orb.Polygon{rings[0]}
 }

@@ -277,7 +277,7 @@ func main() {
 	registerRoute(mux, "/distil/multiband-combinations/:dataset", routes.MultiBandCombinationsHandler(esMetadataStorageCtor))
 	registerRoute(mux, "/distil/load/:solution-id/:fitted", routes.LoadHandler(esExportedModelStorageCtor, pgSolutionStorageCtor, esMetadataStorageCtor))
 	registerRoute(mux, "/distil/solution-variable-rankings/:solution-id", routes.SolutionVariableRankingHandler(esMetadataStorageCtor, pgSolutionStorageCtor))
-	registerRoute(mux, "/distil/export-results/:produce-request-id", routes.ExportResultHandler(pgSolutionStorageCtor, pgDataStorageCtor, esMetadataStorageCtor))
+	registerRoute(mux, "/distil/export-results/:produce-request-id/:format", routes.ExportResultHandler(pgSolutionStorageCtor, pgDataStorageCtor, esMetadataStorageCtor))
 	registerRoute(mux, "/distil/model-metrics/:task", routes.ModelMetricsHandler(esMetadataStorageCtor))
 	registerRoute(mux, "/ws", ws.SolutionHandler(solutionClient, esMetadataStorageCtor, pgDataStorageCtor, pgSolutionStorageCtor, esExportedModelStorageCtor))
 	registerRoute(mux, "/distil/image-attention/:dataset/:result-id/:index/:opacity/:color-scale", routes.ImageAttentionHandler(pgSolutionStorageCtor, esMetadataStorageCtor))

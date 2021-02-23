@@ -22,6 +22,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jackc/pgproto3/v2"
+	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
@@ -395,13 +397,14 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 	// Parse the columns (skipping weights columns)
 	if rows != nil {
 		var columns []*api.Column
+		var fields []pgproto3.FieldDescription
 		weightCount := 0
 		predictedCol := -1
 		explainCol := -1
 		// Parse the row data.
 		for rows.Next() {
 			if columns == nil {
-				fields := rows.FieldDescriptions()
+				fields = rows.FieldDescriptions()
 				columns = make([]*api.Column, 0)
 				for i := 0; i < len(fields); i++ {
 					key := string(fields[i].Name)
@@ -454,8 +457,12 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 						varIndex--
 					}
 				} else if varIndex < len(weightedValues) {
+					parsedValue, err := parsePostgresType(columnValues[i], fields[i])
+					if err != nil {
+						return nil, err
+					}
 					weightedValues[varIndex] = &api.FilteredDataValue{
-						Value: columnValues[i],
+						Value: parsedValue,
 					}
 				} else if columnValues[i] != nil && columns[varIndex-weightCount].Key != model.D3MIndexFieldName {
 					weightedValues[varIndex-weightCount].Weight = columnValues[i].(float64)
@@ -486,6 +493,20 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 	}
 
 	return result, nil
+}
+
+func parsePostgresType(columnValue interface{}, description pgproto3.FieldDescription) (interface{}, error) {
+	// do not want to return postgres specific types here
+	if description.DataTypeOID == pgtype.Float8ArrayOID {
+		output := []float64{}
+		typed := columnValue.(pgtype.Float8Array)
+		err := typed.AssignTo(&output)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to parse float array")
+		}
+		return output, nil
+	}
+	return columnValue, nil
 }
 
 func isCorrectnessCategory(categoryName string) bool {

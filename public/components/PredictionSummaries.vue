@@ -54,6 +54,19 @@
             v-model="saveFileName"
             placeholder="Enter name to save as"
           ></b-form-input>
+          <b-form-select
+            v-model="selectedFormat"
+            name="model-scoring"
+            size="sm"
+          >
+            <b-form-select-option
+              v-for="format in formats"
+              :key="format"
+              :value="format"
+            >
+              {{ format }}
+            </b-form-select-option>
+          </b-form-select>
         </div>
       </div>
     </b-modal>
@@ -115,6 +128,8 @@ export default Vue.extend({
       saveFileName: "",
       newDatasetName: "",
       includeAllFeatures: false,
+      selectedFormat: "",
+      formats: ["csv", "geojson"],
     };
   },
 
@@ -269,19 +284,30 @@ export default Vue.extend({
     },
 
     async savePredictions() {
-      const csvStr = await predictionActions.fetchExportData(this.$store, {
+      let dataStr = await predictionActions.fetchExportData(this.$store, {
         produceRequestId: this.produceRequestId,
+        format: this.selectedFormat,
       });
-      if (!csvStr) {
-        console.error("No CSV Data");
+      if (!dataStr) {
+        console.error("No Data");
         return;
       }
+
+      let dataType = "text/csv";
+      let extension = "csv";
+      if (this.selectedFormat == "geojson") {
+        dataType = "application/json";
+        extension = "json";
+        dataStr = JSON.stringify(dataStr);
+      }
+
       const hiddenElement = document.createElement("a");
       const fileName =
         this.saveFileName === "" ? "predictions" : this.saveFileName;
-      hiddenElement.href = "data:text/csv;charset=utf-8," + encodeURI(csvStr);
+      hiddenElement.href =
+        `data:${dataType};charset=utf-8,` + encodeURI(dataStr);
       hiddenElement.target = "_blank";
-      hiddenElement.download = `${fileName}.csv`;
+      hiddenElement.download = `${fileName}.${extension}`;
       hiddenElement.click();
     },
 
