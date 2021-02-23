@@ -617,7 +617,7 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 
 	// reset the filter params since the residual filter has been handled already
 	filterParamsClone := filterParams.Clone()
-	filterParamsClone.Highlight = nil
+	filterParamsClone.Highlights = nil
 	filterParamsClone.Filters = filtersSplit.genericFilters
 
 	// clear filters since they are used in subselect
