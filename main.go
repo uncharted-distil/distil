@@ -242,7 +242,7 @@ func main() {
 	}
 	// Loads image enhancement library
 	if config.ShouldScaleImages {
-		err = c_util.LoadImageUpscaleLibrary()
+		err = c_util.LoadImageUpscaleLibrary(c_util.GetModelType(config.ModelType))
 		if err != nil {
 			log.Error(err)
 			os.Exit(1)
