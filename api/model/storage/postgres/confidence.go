@@ -76,8 +76,12 @@ func (s *Storage) fetchExplainHistogram(dataset string, storageName string, targ
 	// use a numerical sub select
 	field := NewNumericalFieldSubSelect(s, dataset, storageName, explainFieldAlias, explainFieldName, model.RealType, "", s.explainSubSelect(storageName, explainFieldName, explainFieldAlias))
 
-	// use predefined ranged of [0,1]
-	extrema, _ := api.NewExtrema(0.0, 1.0)
+	// use predefined ranged of [0,1] for everything except rank - we'll leave that as nil so that it
+	// will be computed when the histogram is fetched
+	var extrema *api.Extrema
+	if explainFieldName != "rank" {
+		extrema, _ = api.NewExtrema(0.0, 1.0)
+	}
 
 	// filter for the single result confidences instead of having all result confidences
 	if filterParams == nil {
