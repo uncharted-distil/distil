@@ -40,6 +40,8 @@ export interface ResultsState {
   correctnessSummaries: VariableSummary[];
   // confidence summary (how sure the system is of it's predictions) for any predicted data
   confidenceSummaries: VariableSummary[];
+  // ranking summary
+  rankingSummaries: VariableSummary[];
   // timeseries by solutionID, timeseriesID
   timeseries: Dictionary<TimeSeries>;
   // forecasts by solution ID
@@ -72,6 +74,8 @@ export const state: ResultsState = {
   correctnessSummaries: [],
   // confidence summary (how sure the system is of it's predictions) for any predicted data
   confidenceSummaries: [],
+  // ranking summary (used in tandem with confidence)
+  rankingSummaries: [],
   // forecasts
   timeseries: {},
   forecasts: {},

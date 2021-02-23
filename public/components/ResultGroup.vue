@@ -135,6 +135,20 @@
           @range-change="onConfidenceRangeChange"
           @facet-click="onConfidenceClick"
         />
+        <component
+          :is="getFacetByType(summary.type)"
+          v-for="summary in rankingSummaries"
+          :key="summary.key"
+          enable-highlighting
+          :summary="summary"
+          :highlight="highlight"
+          :enabled-type-changes="[]"
+          :row-selection="rowSelection"
+          :instance-name="rankingInstanceName"
+          :style="facetColors"
+          @range-change="onConfidenceRangeChange"
+          @facet-click="onConfidenceClick"
+        />
       </template>
     </div>
   </div>
@@ -197,6 +211,7 @@ export default Vue.extend({
     residualsSummary: Object as () => VariableSummary,
     correctnessSummary: Object as () => VariableSummary,
     confidenceSummary: Object as () => VariableSummary,
+    rankingSummary: Object as () => VariableSummary,
   },
 
   data() {
@@ -260,7 +275,9 @@ export default Vue.extend({
     confidenceInstanceName(): string {
       return `confidence-result-facet-${this.solutionId}`;
     },
-
+    rankingInstanceName(): string {
+      return `ranking-result-facet-${this.solutionId}`;
+    },
     routeSolutionId(): string {
       return routeGetters.getRouteSolutionId(store);
     },
@@ -303,7 +320,9 @@ export default Vue.extend({
     confidenceSummaries(): VariableSummary[] {
       return this.confidenceSummary ? [this.confidenceSummary] : [];
     },
-
+    rankingSummaries(): VariableSummary[] {
+      return this.rankingSummary ? [this.rankingSummary] : [];
+    },
     residualSummaries(): VariableSummary[] {
       return this.residualsSummary ? [this.residualsSummary] : [];
     },

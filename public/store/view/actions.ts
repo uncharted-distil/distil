@@ -855,6 +855,14 @@ export const actions = {
         dataMode: dataMode,
         varModes: varModes,
       });
+      resultActions.fetchRankingSummaries(store, {
+        dataset: dataset,
+        target: target,
+        requestIds: requestIds,
+        highlight: highlight,
+        dataMode: dataMode,
+        varModes: varModes,
+      });
     } else {
       console.error(`unhandled task type ${task}`);
     }

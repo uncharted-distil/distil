@@ -77,6 +77,7 @@ export const ERROR_SUFFIX = "_error";
 // constants for accessing variable summaries
 export const VARIABLE_SUMMARY_BASE = "summary";
 export const VARIABLE_SUMMARY_CONFIDENCE = "confidence";
+export const VARIABLE_SUMMARY_RANKING = "rank";
 
 export const NUM_PER_PAGE = 10;
 export const NUM_PER_TARGET_PAGE = 9;
@@ -610,7 +611,13 @@ export async function fetchSolutionResultSummary(
     if (!summary) {
       return;
     }
-    await fetchResultExemplars(dataset, target, key, solutionId, summary);
+    await fetchResultExemplars(
+      dataset,
+      target,
+      resultProperty,
+      solutionId,
+      summary
+    );
     summary.solutionId = solutionId;
     summary.dataset = dataset;
     updateFunction(context, summary);
@@ -910,6 +917,11 @@ export function getTableDataItems(data: TableData): TableRow[] {
           }
           if (colValue.confidence !== undefined) {
             const conKey = "confidence";
+            row[conKey] = {};
+            row[conKey].value = colValue.confidence;
+          }
+          if (colValue.rank !== undefined) {
+            const conKey = "rank";
             row[conKey] = {};
             row[conKey].value = colValue.confidence;
           }

@@ -113,6 +113,15 @@ func ConfidenceSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api
 				confSummary.Label = "Confidence"
 			}
 		}
+		if summary["rank"] != nil {
+			rankSummary := summary["rank"]
+			if rankSummary.Baseline.IsEmpty() {
+				summary["rank"] = nil
+			} else {
+				rankSummary.Key = api.GetRankKey(res.SolutionID)
+				rankSummary.Label = "Rank"
+			}
+		}
 
 		// marshal data and sent the response back
 		err = handleJSON(w, summary)

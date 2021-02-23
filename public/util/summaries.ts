@@ -38,3 +38,9 @@ export function getConfidenceSummary(solutionID: string): VariableSummary {
     .find((s) => getIDFromKey(s.key) === solutionID);
   return null;
 }
+export function getRankingSummary(solutionID: string): VariableSummary {
+  return resultGetters
+    .getRankingSummaries(store)
+    .find((s) => getIDFromKey(s.key) === solutionID);
+  return null;
+}

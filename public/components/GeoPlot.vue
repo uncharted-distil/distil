@@ -271,7 +271,13 @@ export default Vue.extend({
     confidenceAccessFunc: {
       type: Function,
       default: (d) => {
-        return d.confidence?.value;
+        if (d.rank !== undefined) {
+          return d.rank.value;
+        }
+        if (d.confidence !== undefined) {
+          return d.confidence.value;
+        }
+        return undefined;
       },
     },
   },
