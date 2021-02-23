@@ -1,7 +1,9 @@
 <template>
   <loading-spinner v-if="loading" :state="loadingState" />
   <div v-else class="row flex-1 pb-3 h-100">
-    <div class="col-12 col-md-3 d-flex h-100 flex-column">
+    <div
+      class="col-12 col-md-3 d-flex h-100 flex-column border-right border-color"
+    >
       <h5 class="header-title">Labels</h5>
       <variable-facets
         enable-highlighting
@@ -39,6 +41,18 @@
           @save="onSaveClick"
         />
       </div>
+    </div>
+    <div
+      class="col-12 col-md-3 d-flex h-100 flex-column border-left border-color"
+    >
+      <h5 class="header-title">Scores</h5>
+      <variable-facets
+        enable-highlighting
+        enable-type-filtering
+        :summaries="scoreSummary"
+        :instance-name="instance"
+        class="h-18"
+      />
     </div>
     <b-modal :id="modalId" title="Label Creation" @hide="onLabelSubmit">
       <b-form-group
@@ -137,7 +151,15 @@ export default Vue.extend({
     },
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store).filter((v) => {
-        return v.distilRole !== DISTIL_ROLES.SystemData;
+        return (
+          v.distilRole !== DISTIL_ROLES.SystemData ||
+          v.key !== LOW_SHOT_SCORE_COLUMN_NAME
+        );
+      });
+    },
+    scores(): Variable {
+      return datasetGetters.getVariables(this.$store).find((v) => {
+        return v.key === LOW_SHOT_SCORE_COLUMN_NAME;
       });
     },
     availableTargetVarsSearch(): string {
@@ -195,8 +217,17 @@ export default Vue.extend({
     // filters out the low shot labels
     featureSummaries(): VariableSummary[] {
       return this.summaries.filter((s) => {
-        return s.key !== LOW_SHOT_LABEL_COLUMN_NAME;
+        return (
+          s.key !== LOW_SHOT_LABEL_COLUMN_NAME &&
+          s.key !== LOW_SHOT_SCORE_COLUMN_NAME
+        );
       });
+    },
+    scoreSummary(): VariableSummary[] {
+      const score = this.summaries.find((s) => {
+        return s.key === LOW_SHOT_SCORE_COLUMN_NAME;
+      });
+      return !score ? [] : [score];
     },
     summaries(): VariableSummary[] {
       const pageIndex = routeGetters.getLabelFeaturesVarsPage(this.$store);
@@ -352,6 +383,17 @@ export default Vue.extend({
       const filterParams = routeGetters.getDecodedSolutionRequestFilterParams(
         this.$store
       );
+      if (
+        this.variables.some((v) => {
+          return v.key === LOW_SHOT_SCORE_COLUMN_NAME;
+        })
+      ) {
+        // delete confidence variable when saving
+        await datasetActions.deleteVariable(this.$store, {
+          dataset: this.dataset,
+          key: LOW_SHOT_SCORE_COLUMN_NAME,
+        });
+      }
       const dataMode = routeGetters.getDataMode(this.$store);
       await datasetActions.saveDataset(this.$store, {
         dataset: this.dataset,
@@ -465,5 +507,8 @@ export default Vue.extend({
 <style scoped>
 .h-18 {
   height: 18% !important;
+}
+.border-color {
+  border-color: var(--gray-500) !important;
 }
 </style>

@@ -34,7 +34,7 @@ require (
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/stretchr/testify v1.6.1
 	github.com/uncharted-distil/distil-compute v0.0.0-20210222122537-5b7d569fcaef
-	github.com/uncharted-distil/distil-image-upscale v0.0.0-20210211160256-b9cb91e1a5c9
+	github.com/uncharted-distil/distil-image-upscale v0.0.0-20210223142454-e2adf2b3dbb6
 	github.com/uncharted-distil/gdal v0.0.0-20200504224203-25f2e6a0dc2a
 	github.com/unchartedsoftware/plog v0.0.0-20200807135627-83d59e50ced5
 	github.com/vova616/xxhash v0.0.0-20130313230233-f0a9a8b74d48

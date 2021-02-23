@@ -230,7 +230,7 @@ func persistQueryResults(params QueryParams, storageName string, resultData [][]
 		if err != nil {
 			return err
 		}
-		err = params.MetaStorage.AddVariable(params.Dataset, targetScore, "confidence", model.RealType, model.VarDistilRoleMetadata)
+		err = params.MetaStorage.AddVariable(params.Dataset, targetScore, "confidence", model.RealType, model.VarDistilRoleData)
 		if err != nil {
 			return err
 		}

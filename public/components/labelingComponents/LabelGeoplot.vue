@@ -30,6 +30,7 @@ import {
   getAllDataItems,
   LOW_SHOT_LABEL_COLUMN_NAME,
   LowShotLabels,
+  LOW_SHOT_SCORE_COLUMN_NAME,
 } from "../../util/data";
 import { isGeoLocatedType } from "../../util/types";
 import { actions as viewActions } from "../../store/view/module";
@@ -114,6 +115,9 @@ export default Vue.extend({
       }
       if (item[LOW_SHOT_LABEL_COLUMN_NAME] === LowShotLabels.negative) {
         return 0;
+      }
+      if (item[LOW_SHOT_SCORE_COLUMN_NAME]) {
+        return item[LOW_SHOT_SCORE_COLUMN_NAME].value;
       }
       return 1.0 - idx / this.dataItems.length;
     },
