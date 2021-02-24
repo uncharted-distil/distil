@@ -923,7 +923,7 @@ export function getTableDataItems(data: TableData): TableRow[] {
           if (colValue.rank !== undefined) {
             const conKey = "rank";
             row[conKey] = {};
-            row[conKey].value = colValue.confidence;
+            row[conKey].value = colValue.rank;
           }
         } else {
           row[key] = formatValue(colValue.value, colType);

@@ -202,6 +202,15 @@ async function updateCurrentSolutionResults(
         ? varModes.get(req.target)
         : SummaryMode.Default,
     });
+    resultsActions.fetchRankingSummary(store, {
+      dataset: req.dataset,
+      solutionId: res.solutionId,
+      highlight: context.getters.getDecodedHighlight,
+      dataMode: dataMode,
+      varMode: varModes.has(req.target)
+        ? varModes.get(req.target)
+        : SummaryMode.Default,
+    });
   }
 }
 

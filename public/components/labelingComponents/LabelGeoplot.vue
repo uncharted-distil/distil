@@ -116,10 +116,11 @@ export default Vue.extend({
       if (item[LOW_SHOT_LABEL_COLUMN_NAME] === LowShotLabels.negative) {
         return 0;
       }
+      // comes back order by confidence so the rank is already engrained in the array
       if (item[LOW_SHOT_SCORE_COLUMN_NAME]) {
-        return item[LOW_SHOT_SCORE_COLUMN_NAME].value;
+        return idx / this.dataItems.length;
       }
-      return 1.0 - idx / this.dataItems.length;
+      return undefined;
     },
     async onTileClick(data: TileClickData) {
       // filter for area of interests
