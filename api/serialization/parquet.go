@@ -255,7 +255,7 @@ func (d *Parquet) WriteMetadata(uri string, meta *model.Metadata, extended bool,
 
 	// make sure the resource format and path match expected parquet types
 	mainDR := meta.GetMainDataResource()
-	if mainDR.ResFormat[compute.DistilParquetLearningData] == nil {
+	if mainDR.ResFormat[compute.DistilParquetResourceFormat] == nil {
 		if !update {
 			return errors.Errorf("main data resource not set to parquet format")
 		}

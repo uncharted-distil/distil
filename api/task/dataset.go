@@ -142,6 +142,7 @@ func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage 
 
 	// need to write the prefeaturized version of the dataset if it exists
 	if metaDataset.ParentDataset != "" {
+		log.Infof("exporting dataset %s that has parent dataset %s", dataset, metaDataset.ParentDataset)
 		parentDS, err := metaStorage.FetchDataset(metaDataset.ParentDataset, false, false, false)
 		if err != nil {
 			return "", "", err
@@ -154,15 +155,24 @@ func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage 
 
 		// read metadata of the parent from disk to get the non main data resources
 		parentDatasetDoc := path.Join(env.ResolvePath(parentDS.Source, parentDS.Folder), compute.D3MDataSchema)
-		metaDisk, err := serialization.ReadMetadata(parentDatasetDoc)
+		parentMetaDisk, err := serialization.ReadMetadata(parentDatasetDoc)
 		if err != nil {
 			return "", "", err
 		}
-		metaDiskMainDR := metaDisk.GetMainDataResource()
-		for _, dr := range metaDisk.DataResources {
-			if dr != metaDiskMainDR {
+		parentMetaDiskMainDR := parentMetaDisk.GetMainDataResource()
+		for _, dr := range parentMetaDisk.DataResources {
+			if dr != parentMetaDiskMainDR {
 				dr.ResPath = model.GetResourcePath(parentDatasetDoc, dr)
 				meta.DataResources = append(meta.DataResources, dr)
+			}
+		}
+
+		// main data resources need to be checked for any resource references
+		parentVariablesMap := apicompute.MapVariables(parentMetaDiskMainDR.Variables, func(variable *model.Variable) string { return variable.Key })
+		for _, v := range dataRaw.Metadata.GetMainDataResource().Variables {
+			parentVar := parentVariablesMap[v.Key]
+			if parentVar != nil && parentVar.RefersTo != nil {
+				v.RefersTo = parentVar.RefersTo
 			}
 		}
 	}
@@ -195,7 +205,7 @@ func updateLearningDataset(newDataset *api.RawDataset, metaDataset *api.Dataset,
 	}
 
 	// copy the learning dataset
-	learningFolder := fmt.Sprintf("%s-featurized", newDataset.Metadata.ID)
+	learningFolder := createFeaturizedDatasetID(newDataset.Metadata.ID)
 	learningFolder = path.Join(path.Dir(parentDS.LearningDataset), learningFolder)
 	err := util.Copy(parentDS.LearningDataset, learningFolder)
 	if err != nil {
@@ -282,6 +292,7 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 	}
 
 	// need to expand feature set to handle groups
+	varsExpanded := map[string]bool{}
 	varsSource := map[string]*model.Variable{}
 	groups := []*model.Variable{}
 	for _, v := range sourceDS.Variables {
@@ -292,7 +303,14 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 	}
 	featuresExpanded := []string{}
 	for _, f := range features {
-		featuresExpanded = append(featuresExpanded, getComponentVariables(varsSource[f])...)
+		expandedFeature := getComponentVariables(varsSource[f])
+		// make sure each feature is only included once
+		for _, ef := range expandedFeature {
+			if !varsExpanded[ef] {
+				featuresExpanded = append(featuresExpanded, ef)
+				varsExpanded[ef] = true
+			}
+		}
 	}
 
 	// extract the data from the database (result + base)
@@ -350,6 +368,9 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 		return "", err
 	}
 
+	// update the header of the data since the data from the database uses keys as header
+	data[0] = metaDisk.GetMainDataResource().GenerateHeader()
+
 	metaDisk.ID = newDatasetID
 	metaDisk.Name = newDatasetName
 	metaDisk.StorageName = newStorageName
@@ -399,6 +420,17 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 		v.Index = len(newDS.Variables)
 		newDS.Variables = append(newDS.Variables, v)
 	}
+
+	// update prefeaturized dataset based on the source dataset since the target already exists but is blank!
+	if sourceDS.LearningDataset != "" {
+		targetFolder := env.ResolvePath(newDS.Source, createFeaturizedDatasetID(newDatasetID))
+		_, err = apicompute.UpdatePrefeaturizedDataset(targetFolder, sourceDS.GetLearningFolder(), newDS, rawDS.Data, true)
+		if err != nil {
+			return "", err
+		}
+		newDS.LearningDataset = targetFolder
+	}
+
 	err = metaStorage.UpdateDataset(newDS)
 	if err != nil {
 		return "", err

@@ -156,10 +156,8 @@ func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, 
 	filePaths := []string{}
 	if bandCombo, ok := SentinelBandCombinations[strings.ToLower(string(bandCombination))]; ok {
 		for _, bandLabel := range bandCombo.Mapping {
-			log.Infof("BAND LABEL: %v", bandLabel)
 			filePaths = append(filePaths, path.Join(datasetDir, bandFileMapping[bandLabel]))
 		}
-		log.Infof("FILE PATHS: %v", filePaths)
 		return ImageFromBands(filePaths, bandCombo.Ramp, bandCombo.Transform, imageScale, options...)
 	}
 
