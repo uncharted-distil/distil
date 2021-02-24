@@ -311,7 +311,8 @@ func PrepExistingPredictionDataset(params *PredictParams) (string, string, error
 		mainDR.Variables = append(mainDR.Variables, params.Target)
 
 		// need to append the target to the underlying data
-		for i, row := range dsDisk.Data {
+		dsDisk.Data[0] = append(dsDisk.Data[0], params.Target.HeaderName)
+		for i, row := range dsDisk.Data[1:] {
 			dsDisk.Data[i] = append(row, "")
 		}
 		dsCloned.Variables = append(dsCloned.Variables, params.Target)
