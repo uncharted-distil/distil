@@ -210,9 +210,23 @@ func (s *Storage) PersistExplainedResult(dataset string, storageName string, res
 
 // FetchResultDataset extracts the complete results and base table data.
 func (s *Storage) FetchResultDataset(dataset string, storageName string, predictionName string, features []string, resultURI string) ([][]string, error) {
+	// base table can have geometry fields!
+	vars, err := s.metadata.FetchVariables(dataset, true, true, true)
+	if err != nil {
+		return nil, err
+	}
+	varsMapped := map[string]string{}
+	for _, v := range vars {
+		varsMapped[v.Key] = v.Type
+	}
+
 	fields := []string{}
 	for _, v := range features {
-		fields = append(fields, fmt.Sprintf("COALESCE(\"%s\", '') AS \"%s\"", v, v))
+		if model.IsGeoBounds(varsMapped[v]) {
+			fields = append(fields, fmt.Sprintf("ST_AsText(\"%s\") AS \"%s\"", v, v))
+		} else {
+			fields = append(fields, fmt.Sprintf("COALESCE(\"%s\", '') AS \"%s\"", v, v))
+		}
 	}
 	fields = append(fields, fmt.Sprintf("COALESCE(result.value) AS \"%s\"", predictionName))
 	sql := fmt.Sprintf(`
