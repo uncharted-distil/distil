@@ -27,6 +27,7 @@
         :instance-name="instanceName"
         :summaries="trainingSummaries"
         :area-of-interest-items="{ inner: inner, outer: outer }"
+        :confidence-access-func="colorTile"
         @tileClicked="onTileClick"
       />
     </div>
@@ -129,7 +130,11 @@ export default Vue.extend({
         return cf.solutionId === this.solutionId;
       })[0];
     },
-
+    rankSummary(): VariableSummary {
+      return resultsGetters.getRankingSummaries(this.$store).filter((rank) => {
+        return rank.solutionId === this.solutionId;
+      })[0];
+    },
     solutionHasErrored(): boolean {
       return this.solution
         ? this.solution.progress === SolutionStatus.SOLUTION_ERRORED
@@ -282,6 +287,15 @@ export default Vue.extend({
   },
 
   methods: {
+    colorTile(d) {
+      if (d.rank !== undefined) {
+        return d.rank.value / this.rankSummary.baseline.extrema.max;
+      }
+      if (d.confidence !== undefined) {
+        return d.confidence.value;
+      }
+      return undefined;
+    },
     errorCount(dataColumn: TableRow[]): number {
       return dataColumn.filter((item) => {
         if (this.regressionEnabled) {

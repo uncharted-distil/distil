@@ -53,6 +53,7 @@ export interface Solution extends SolutionRequest {
   resultId: string;
   scores: Score[];
   predictedKey: string;
+  rankKey: string;
   errorKey: string;
   confidenceKey: string;
   isBad: boolean;

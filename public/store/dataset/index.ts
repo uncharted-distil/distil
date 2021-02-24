@@ -193,6 +193,7 @@ export interface TableValue {
   value: any;
   weight: number;
   confidence: number;
+  rank?: number;
 }
 
 export interface TableData {

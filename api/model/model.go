@@ -210,6 +210,11 @@ func GetConfidenceKey(solutionID string) string {
 	return solutionID + ":confidence"
 }
 
+// GetRankKey returns a solutions rank col key.
+func GetRankKey(solutionID string) string {
+	return solutionID + ":rank"
+}
+
 // IsPredictedKey returns true if the key matches a predicted key.
 func IsPredictedKey(key string) bool {
 	return strings.HasSuffix(key, ":predicted")
@@ -220,9 +225,14 @@ func IsErrorKey(key string) bool {
 	return strings.HasSuffix(key, ":error")
 }
 
-// IsConfidenceKey returns true if the key matches an error key.
+// IsConfidenceKey returns true if the key matches a confidence key.
 func IsConfidenceKey(key string) bool {
 	return strings.HasSuffix(key, ":confidence")
+}
+
+// IsRankKey returns true if the key matches a rank key
+func IsRankKey(key string) bool {
+	return strings.HasSuffix(key, ":rank")
 }
 
 // IsResultKey returns true if the key matches an predicted or error key.

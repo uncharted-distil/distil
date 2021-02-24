@@ -155,7 +155,10 @@ export const getters = {
   getCorrectnessSummaries(state: ResultsState): VariableSummary[] {
     return state.correctnessSummaries;
   },
-
+  // ranking
+  getRankingSummaries(state: ResultsState): VariableSummary[] {
+    return state.rankingSummaries;
+  },
   // confidence
 
   getConfidenceSummaries(state: ResultsState): VariableSummary[] {

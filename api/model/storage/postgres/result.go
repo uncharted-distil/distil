@@ -707,6 +707,16 @@ func addExcludeConfidenceResultToWhere(wheres []string, params []interface{}, co
 	return wheres, params
 }
 
+func addExcludeRankResultToWhere(wheres []string, params []interface{}, rankFilter *model.Filter) ([]string, []interface{}) {
+	where := fmt.Sprintf("((explain_values -> 'rank')::double precision < $%d OR (explain_values -> 'rank')::double precision > $%d)", len(params)+1, len(params)+2)
+	params = append(params, *rankFilter.Min)
+	params = append(params, *rankFilter.Max)
+
+	// Append the AND clause
+	wheres = append(wheres, where)
+	return wheres, params
+}
+
 func addTableAlias(prefix string, fields []string, addToColumn bool) []string {
 	fieldsPrepended := make([]string, len(fields))
 	for i, f := range fields {
@@ -816,7 +826,13 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 			wheres, params = addExcludeConfidenceResultToWhere(wheres, params, filters.confidenceFilter)
 		}
 	}
-
+	if filters.rankFilter != nil {
+		if filters.rankFilter.Mode == model.IncludeFilter {
+			wheres, params = s.buildRankResultWhere(wheres, params, filters.rankFilter, "predicted")
+		} else {
+			wheres, params = addExcludeRankResultToWhere(wheres, params, filters.rankFilter)
+		}
+	}
 	// If this is a timeseries forecast we don't want to include the target, predicted target or error
 	// info in the returned data.  That information is fetched on a per-timeseries basis using the info
 	// provided by this call.
@@ -825,7 +841,6 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 		selectedVars = fmt.Sprintf("%s %s ", distincts, strings.Join(fieldsData, ", "))
 	} else {
 		predictedCol := api.GetPredictedKey(id)
-
 		// If our results are numerical we need to compute residuals and store them in a column called 'error'
 		errorCol := api.GetErrorKey(id)
 		errorExpr := ""

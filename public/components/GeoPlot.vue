@@ -270,8 +270,14 @@ export default Vue.extend({
     },
     confidenceAccessFunc: {
       type: Function,
-      default: (d) => {
-        return d.confidence?.value;
+      default: (d, i, length) => {
+        if (d.rank !== undefined) {
+          return d.rank.value / length;
+        }
+        if (d.confidence !== undefined) {
+          return d.confidence.value;
+        }
+        return undefined;
       },
     },
   },
@@ -341,7 +347,13 @@ export default Vue.extend({
       if (!this.dataItems.length) {
         return false;
       }
-      return this.confidenceAccessFunc(this.dataItems[0], 0) !== undefined;
+      return (
+        this.confidenceAccessFunc(
+          this.dataItems[0],
+          0,
+          this.dataItems.length
+        ) !== undefined
+      );
     },
     getTopVariables(): string[] {
       const variables = datasetGetters
@@ -1274,10 +1286,15 @@ export default Vue.extend({
         return "#999999";
       }
       if (this.isColoringByConfidence) {
-        if (this.confidenceAccessFunc(item, idx) === undefined) {
+        if (
+          this.confidenceAccessFunc(item, idx, this.dataItems.length) ===
+          undefined
+        ) {
           return undefined;
         }
-        return this.colorScale(this.confidenceAccessFunc(item, idx));
+        return this.colorScale(
+          this.confidenceAccessFunc(item, idx, this.dataItems.length)
+        );
       }
       if (item[this.targetField] && item[this.predictedField]) {
         color =

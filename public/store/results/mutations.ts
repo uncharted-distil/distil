@@ -85,7 +85,10 @@ export const mutations = {
   updateCorrectnessSummaries(state: ResultsState, summary: VariableSummary) {
     updateSummaries(summary, state.correctnessSummaries);
   },
-
+  // ranking
+  updateRankingSummaries(state: ResultsState, summary: VariableSummary) {
+    updateSummaries(summary, state.rankingSummaries);
+  },
   // confidence
 
   updateConfidenceSummaries(state: ResultsState, summary: VariableSummary) {

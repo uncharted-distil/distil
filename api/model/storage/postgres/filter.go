@@ -561,7 +561,19 @@ func (s *Storage) buildConfidenceResultWhere(wheres []string, params []interface
 	wheres = append(wheres, where)
 	return wheres, params
 }
+func (s *Storage) buildRankResultWhere(wheres []string, params []interface{}, rankFilter *model.Filter, alias string) ([]string, []interface{}) {
+	// Add a clause to filter confidence to the existing where
+	if alias != "" {
+		alias = alias + "."
+	}
+	where := fmt.Sprintf("((%sexplain_values -> 'rank')::double precision >= $%d AND (%sexplain_values -> 'rank')::double precision <= $%d)", alias, len(params)+1, alias, len(params)+2)
+	params = append(params, *rankFilter.Min)
+	params = append(params, *rankFilter.Max)
 
+	// Append the AND clause
+	wheres = append(wheres, where)
+	return wheres, params
+}
 func (s *Storage) buildPredictedResultWhere(dataset string, wheres []string, params []interface{}, alias string, resultURI string, resultFilter *model.Filter) ([]string, []interface{}) {
 	// handle the general category case
 
@@ -602,6 +614,8 @@ func (s *Storage) buildResultQueryFilters(dataset string, storageName string, re
 		}
 	} else if filters.confidenceFilter != nil {
 		wheres, params = s.buildConfidenceResultWhere(wheres, params, filters.confidenceFilter, "result")
+	} else if filters.rankFilter != nil {
+		wheres, params = s.buildRankResultWhere(wheres, params, filters.rankFilter, "result")
 	}
 	return wheres, params, nil
 }
@@ -612,6 +626,7 @@ type filters struct {
 	residualFilter    *model.Filter
 	correctnessFilter *model.Filter
 	confidenceFilter  *model.Filter
+	rankFilter        *model.Filter
 }
 
 func splitFilters(filterParams *api.FilterParams) *filters {
@@ -620,6 +635,7 @@ func splitFilters(filterParams *api.FilterParams) *filters {
 	var residualFilter *model.Filter
 	var correctnessFilter *model.Filter
 	var confidenceFilter *model.Filter
+	var rankFilter *model.Filter
 	var remaining []*model.Filter
 
 	if filterParams == nil {
@@ -638,6 +654,8 @@ func splitFilters(filterParams *api.FilterParams) *filters {
 			}
 		} else if api.IsConfidenceKey(highlight.Key) {
 			confidenceFilter = highlight
+		} else if api.IsRankKey(highlight.Key) {
+			rankFilter = highlight
 		} else {
 			remaining = append(remaining, highlight)
 		}
@@ -654,6 +672,8 @@ func splitFilters(filterParams *api.FilterParams) *filters {
 			}
 		} else if api.IsConfidenceKey(filter.Key) {
 			confidenceFilter = filter
+		} else if api.IsRankKey(filter.Key) {
+			rankFilter = filter
 		} else {
 			remaining = append(remaining, filter)
 		}
@@ -665,6 +685,7 @@ func splitFilters(filterParams *api.FilterParams) *filters {
 		residualFilter:    residualFilter,
 		correctnessFilter: correctnessFilter,
 		confidenceFilter:  confidenceFilter,
+		rankFilter:        rankFilter,
 	}
 }
 
