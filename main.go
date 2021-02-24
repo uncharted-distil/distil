@@ -68,7 +68,45 @@ func registerRoutePost(mux *goji.Mux, pattern string, handler func(http.Response
 	mux.HandleFunc(pat.Post(pattern), handler)
 }
 
+func validateULimit(config env.Config) {
+	var rLimit syscall.Rlimit
+
+	err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+
+	if err != nil {
+		fmt.Println("Error Getting Rlimit ", err)
+	}
+
+	if config.PoolFeatures {
+		if rLimit.Cur < 2048 {
+			rLimit.Cur = 2048
+			err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+			if err != nil {
+				fmt.Println("Error Setting Rlimit ", err)
+			}
+		}
+	} else if rLimit.Cur < 16384 {
+		rLimit.Cur = 16384
+		err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+		if err != nil {
+			fmt.Println("Error Setting Rlimit ", err)
+		}
+	}
+
+	fmt.Println("ulimit: ", rLimit.Cur)
+}
+
 func main() {
+	// load config from env
+	config, err := env.LoadConfig()
+	if err != nil {
+		log.Errorf("%+v", err)
+		os.Exit(1)
+	}
+
+	log.Infof("Validating ulimit..")
+	validateULimit(config)
+
 	log.Infof("version: %s built: %s", version, timestamp)
 	servicesToWait := make(map[string]service.Heartbeat)
 
@@ -76,12 +114,6 @@ func main() {
 	apiVersion := compute.GetAPIVersion()
 	log.Infof("user agent: %s api version: %s", userAgent, apiVersion)
 
-	// load config from env
-	config, err := env.LoadConfig()
-	if err != nil {
-		log.Errorf("%+v", err)
-		os.Exit(1)
-	}
 	log.Infof("%+v", spew.Sdump(config))
 
 	err = env.Initialize(&config)
@@ -215,6 +247,7 @@ func main() {
 
 	// Ingest the data specified by the environment
 	if config.InitialDataset != "" && !config.SkipIngest {
+
 		log.Infof("Loading initial dataset '%s'", config.InitialDataset)
 		err = util.Copy(path.Join(config.InitialDataset, "TRAIN", "dataset_TRAIN"), path.Join(config.DatamartImportFolder, "initial"))
 		if err != nil {
