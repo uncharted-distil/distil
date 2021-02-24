@@ -313,7 +313,7 @@ func PrepExistingPredictionDataset(params *PredictParams) (string, string, error
 		// need to append the target to the underlying data
 		dsDisk.Data[0] = append(dsDisk.Data[0], params.Target.HeaderName)
 		for i, row := range dsDisk.Data[1:] {
-			dsDisk.Data[i] = append(row, "")
+			dsDisk.Data[i+1] = append(row, "")
 		}
 		dsCloned.Variables = append(dsCloned.Variables, params.Target)
 		err = serialization.WriteDataset(targetFolder, dsDisk)
