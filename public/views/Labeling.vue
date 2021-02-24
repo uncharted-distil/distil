@@ -4,7 +4,7 @@
     <div
       class="col-12 col-md-3 d-flex h-100 flex-column border-right border-color"
     >
-      <h5 class="header-title">Labels</h5>
+      <h5 class="header-title border-bottom border-color">Labels</h5>
       <variable-facets
         enable-highlighting
         enable-type-filtering
@@ -12,7 +12,7 @@
         :instance-name="instance"
         class="h-18"
       />
-      <h5 class="header-title">Features</h5>
+      <h5 class="header-title border-bottom border-color">Features</h5>
       <variable-facets
         enable-highlighting
         enable-type-filtering
@@ -45,7 +45,7 @@
     <div
       class="col-12 col-md-3 d-flex h-100 flex-column border-left border-color"
     >
-      <h5 class="header-title">Scores</h5>
+      <h5 class="header-title border-bottom border-color">Scores</h5>
       <variable-facets
         enable-highlighting
         enable-type-filtering
@@ -509,6 +509,6 @@ export default Vue.extend({
   height: 18% !important;
 }
 .border-color {
-  border-color: var(--gray-500) !important;
+  border-color: #e0e0e0 !important;
 }
 </style>

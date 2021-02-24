@@ -7,14 +7,20 @@
       title="Annotate selected items to positive"
       @click="onButtonClick(positive)"
     >
-      <i class="fa fa-check text-success" aria-hidden="true"></i>
+      <span class="stacked-icons">
+        <i class="fa fa-circle fa-stack-1x" />
+        <i class="fa fa-plus-circle text-success fa-stack-1x" />
+      </span>
       Positive
     </b-button>
     <b-button
       title="Annotate selected items to negative"
       @click="onButtonClick(negative)"
     >
-      <i class="fa fa-times red" aria-hidden="true"></i>
+      <span class="stacked-icons">
+        <i class="fa fa-circle fa-stack-1x" />
+        <i class="fa fa-minus-circle red fa-stack-1x" />
+      </span>
       Negative</b-button
     >
     <b-button
@@ -64,5 +70,13 @@ export default Vue.extend({
 <style scoped>
 .red {
   color: var(--red);
+}
+.stacked-icons {
+  position: relative;
+  display: inline-block;
+  width: 2em;
+  height: 1em;
+  line-height: 1em;
+  vertical-align: middle;
 }
 </style>
