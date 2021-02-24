@@ -515,7 +515,7 @@ export default Vue.extend({
         Float: number;
         Status: number;
       }[];
-      return listData.map((l) => l.Float);
+      return listData?.map((l) => l.Float);
     },
     onPagination(page: number) {
       removeTimeseries(

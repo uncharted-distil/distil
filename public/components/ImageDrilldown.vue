@@ -159,7 +159,7 @@ export default Vue.extend({
 
       return this.items[
         this.carouselPosition
-      ]?.coordinates?.value.Elements.slice(0, 2).map((x) => x.Float);
+      ]?.coordinates?.value.Elements?.slice(0, 2).map((x) => x.Float);
     },
     brightnessValue(): string {
       return this.currentBrightness.toFixed(2);

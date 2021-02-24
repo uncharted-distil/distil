@@ -293,7 +293,23 @@ export function formatValue(colValue: any, colType: string): any {
     }
     return colValue;
   }
-
+  // We've got a floating point value - set precision based on
+  // type.
+  switch (colType) {
+    case LONGITUDE_TYPE:
+    case LATITUDE_TYPE:
+      return colValue.toFixed(6);
+    case REAL_LIST_TYPE:
+    case REAL_VECTOR_TYPE:
+      if (colValue.Elements === undefined) {
+        return {
+          Elements: colValue.map((v) => {
+            return { Float: v, Status: 2 };
+          }),
+        };
+      }
+      return colValue;
+  }
   // If the schema type is numeric and the value is a number stored as a string,
   // parse it and format again.
   if (
@@ -316,17 +332,6 @@ export function formatValue(colValue: any, colType: string): any {
 
   if (colValue === "") {
     return colValue;
-  }
-
-  // We've got a floating point value - set precision based on
-  // type.
-  switch (colType) {
-    case LONGITUDE_TYPE:
-    case LATITUDE_TYPE:
-      return colValue.toFixed(6);
-    case REAL_LIST_TYPE:
-    case REAL_VECTOR_TYPE:
-      return colValue;
   }
   return colValue.toFixed ? colValue.toFixed(4) : colValue;
 }

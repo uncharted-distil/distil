@@ -1114,6 +1114,9 @@ export default Vue.extend({
           ? item[this.multibandImageGroupColumn].value
           : null;
         const fullCoordinates = item[this.coordinateColumn].value.Elements;
+        if (!fullCoordinates) {
+          return;
+        }
         if (fullCoordinates.some((x) => x === undefined)) return;
 
         /*
