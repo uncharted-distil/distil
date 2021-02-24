@@ -69,7 +69,6 @@ func registerRoutePost(mux *goji.Mux, pattern string, handler func(http.Response
 }
 
 func validateULimit(config env.Config) {
-	log.Infof("version: %s built: %s", version, timestamp)
 	var rLimit syscall.Rlimit
 
 	err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
@@ -105,8 +104,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	log.Infof("Validating ulimit..")
 	validateULimit(config)
 
+	log.Infof("version: %s built: %s", version, timestamp)
 	servicesToWait := make(map[string]service.Heartbeat)
 
 	userAgent := fmt.Sprintf("uncharted-distil-%s-%s", version, timestamp)
@@ -246,7 +247,6 @@ func main() {
 
 	// Ingest the data specified by the environment
 	if config.InitialDataset != "" && !config.SkipIngest {
-		log.Infof("Validating ulimit..")
 
 		log.Infof("Loading initial dataset '%s'", config.InitialDataset)
 		err = util.Copy(path.Join(config.InitialDataset, "TRAIN", "dataset_TRAIN"), path.Join(config.DatamartImportFolder, "initial"))
