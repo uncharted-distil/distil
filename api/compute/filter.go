@@ -173,7 +173,8 @@ func preparePrefilteringDataset(outputFolder string, sourceDataset *api.Dataset,
 
 	// if learning dataset, then update that
 	if sourceDataset.LearningDataset != "" {
-		return UpdatePrefeaturizedDataset(outputFolder, sourceDataset.LearningDataset, sourceDataset, data)
+		// TODO: Figure out if it matters if that last param is true. Currently set to false due to deadline.
+		return UpdatePrefeaturizedDataset(outputFolder, sourceDataset.LearningDataset, sourceDataset, data, false)
 	}
 
 	// read the metadata from disk to keep the reference data resources
@@ -227,7 +228,7 @@ func preparePrefilteringDataset(outputFolder string, sourceDataset *api.Dataset,
 
 // UpdatePrefeaturizedDataset updates a featurized dataset that already exists
 // on disk to have new variables included
-func UpdatePrefeaturizedDataset(outputFolder string, prefeaturizedPath string, sourceDataset *api.Dataset, storedData [][]string) ([]*model.Variable, error) {
+func UpdatePrefeaturizedDataset(outputFolder string, prefeaturizedPath string, sourceDataset *api.Dataset, storedData [][]string, updateMetadata bool) ([]*model.Variable, error) {
 	// copy the prefeaturized dataset to the output folder
 	err := util.Copy(prefeaturizedPath, outputFolder)
 	if err != nil {
@@ -287,6 +288,13 @@ func UpdatePrefeaturizedDataset(outputFolder string, prefeaturizedPath string, s
 			rowComplete := append(row, newDataMap[d3mIndexPre]...)
 			preFeaturizedOutput = append(preFeaturizedOutput, rowComplete)
 		}
+	}
+
+	// make sure the ids and names match
+	if updateMetadata {
+		dsDisk.Metadata.ID = sourceDataset.ID
+		dsDisk.Metadata.Name = sourceDataset.Name
+		dsDisk.Metadata.StorageName = sourceDataset.StorageName
 	}
 
 	// output the new pre featurized data

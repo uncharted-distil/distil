@@ -180,7 +180,7 @@ type PredictParams struct {
 }
 
 func createPredictionDatasetID(existingDatasetID string, fittedSolutionID string) string {
-	return model.NormalizeDatasetID(fmt.Sprintf("%s-%s", existingDatasetID, fittedSolutionID))
+	return fmt.Sprintf("%s-%s", existingDatasetID, fittedSolutionID)
 }
 
 func cloneDiskDataset(existingFolder string, cloneFolder string, cloneDatasetID string) error {
@@ -213,13 +213,12 @@ func cloneDataset(sourceDatasetID string, cloneDatasetID string, cloneFolder str
 	}
 
 	folderExisting := env.ResolvePath(ds.Source, ds.Folder)
-	folderClone := env.ResolvePath(metadata.Augmented, cloneDatasetID)
 	storageNameClone, err := dataStorage.GetStorageName(cloneDatasetID)
 	if err != nil {
 		return err
 	}
 
-	err = metaStorage.CloneDataset(sourceDatasetID, cloneDatasetID, storageNameClone, cloneFolder)
+	err = metaStorage.CloneDataset(sourceDatasetID, cloneDatasetID, storageNameClone, path.Base(cloneFolder))
 	if err != nil {
 		return err
 	}
@@ -231,7 +230,7 @@ func cloneDataset(sourceDatasetID string, cloneDatasetID string, cloneFolder str
 
 	// if there is a learning dataset, need to copy it as well and update the metadata
 	if cloneLearningDataset && ds.LearningDataset != "" {
-		cloneLearningFolder := createFeaturizedDatasetID(folderClone)
+		cloneLearningFolder := createFeaturizedDatasetID(cloneFolder)
 		err = cloneDiskDataset(ds.GetLearningFolder(), cloneLearningFolder, cloneDatasetID)
 		if err != nil {
 			return err
@@ -247,7 +246,7 @@ func cloneDataset(sourceDatasetID string, cloneDatasetID string, cloneFolder str
 			return err
 		}
 	}
-	err = cloneDiskDataset(folderExisting, folderClone, cloneDatasetID)
+	err = cloneDiskDataset(folderExisting, cloneFolder, cloneDatasetID)
 	if err != nil {
 		return err
 	}
@@ -273,10 +272,11 @@ func PrepExistingPredictionDataset(params *PredictParams) (string, string, error
 	if err != nil {
 		return "", "", err
 	}
-	targetFolder := fmt.Sprintf("%s-%s", dsSource.Folder, params.FittedSolutionID)
+	targetFolder := fmt.Sprintf("%s-%s", env.ResolvePath(dsSource.Source, dsSource.Folder), params.FittedSolutionID)
 	schemaPath := path.Join(targetFolder, compute.D3MDataSchema)
 
 	// clone the base dataset, then add the necessary fields
+	log.Infof("cloning '%s' for predictions using '%s' as new id stored on disk at '%s'", params.Dataset, cloneDatasetID, targetFolder)
 	err = cloneDataset(params.Dataset, cloneDatasetID, targetFolder, false, params.MetaStorage, params.DataStorage)
 	if err != nil {
 		return "", "", err
@@ -319,7 +319,9 @@ func PrepExistingPredictionDataset(params *PredictParams) (string, string, error
 		if err != nil {
 			return "", "", err
 		}
-		err = params.MetaStorage.UpdateDataset(dsCloned)
+
+		// target field needs to exist in data storage as well
+		err = params.DataStorage.AddVariable(dsCloned.ID, dsCloned.StorageName, params.Target.Key, params.Target.Type, "")
 		if err != nil {
 			return "", "", err
 		}
@@ -328,10 +330,16 @@ func PrepExistingPredictionDataset(params *PredictParams) (string, string, error
 	// update the learning dataset
 	if dsSource.LearningDataset != "" {
 		targetFolder = createFeaturizedDatasetID(targetFolder)
-		_, err = comp.UpdatePrefeaturizedDataset(targetFolder, dsSource.GetLearningFolder(), dsCloned, dsDisk.Data)
+		_, err = comp.UpdatePrefeaturizedDataset(targetFolder, dsSource.GetLearningFolder(), dsCloned, dsDisk.Data, true)
 		if err != nil {
 			return "", "", err
 		}
+		dsCloned.LearningDataset = targetFolder
+	}
+	dsCloned.Type = api.DatasetTypeInference
+	err = params.MetaStorage.UpdateDataset(dsCloned)
+	if err != nil {
+		return "", "", err
 	}
 
 	return cloneDatasetID, targetFolder, nil
@@ -547,6 +555,7 @@ func Predict(params *PredictParams) (string, error) {
 }
 
 func persistPredictionResults(datasetName string, params *PredictParams, meta *model.Metadata, resultID string, predictionResult *comp.PredictionResult) error {
+	log.Infof("persisting prediction results for %s using storage name %s", datasetName, meta.StorageName)
 	if predictionResult.StepFeatureWeightURI != "" {
 		featureWeights, err := comp.ExplainFeatureOutput(predictionResult.ResultURI, predictionResult.StepFeatureWeightURI)
 		if err != nil {
