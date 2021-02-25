@@ -5,18 +5,18 @@
     :selection.prop="selection"
     :subselection.prop="subSelection"
     :disabled.prop="!enableHighlighting"
-    @facet-element-updated="updateSelection"
     class="facet-image"
+    @facet-element-updated="updateSelection"
   >
     <div slot="header-label" :class="headerClass">
-      <i :class="getGroupIcon(summary) + ' facet-header-icon'"></i>
+      <i :class="getGroupIcon(summary) + ' facet-header-icon'" />
       <span>{{ summary.label.toUpperCase() }}</span>
       <type-change-menu
         v-if="facetEnableTypeChanges"
         class="facet-header-dropdown"
         :dataset="summary.dataset"
         :field="summary.key"
-        :expandCollapse="expandCollapse"
+        :expand-collapse="expandCollapse"
       />
     </div>
     <facet-template target="facet-terms-value" class="facet-content-container">
@@ -43,7 +43,7 @@
         v-if="this.html"
         v-child="computeCustomHTML()"
         class="facet-footer-custom-html"
-      ></div>
+      />
     </div>
   </facet-terms>
 </template>
@@ -70,7 +70,7 @@ import _ from "lodash";
 import { IMAGE_TYPE } from "../../util/types";
 
 export default Vue.extend({
-  name: "facet-image",
+  name: "FacetImage",
 
   components: {
     TypeChangeMenu,

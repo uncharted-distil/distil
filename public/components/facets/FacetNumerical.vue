@@ -8,47 +8,41 @@
   >
     <div slot="header-label" :class="headerClass">
       <span>{{ summary.label.toUpperCase() }}</span>
-      <importance-bars
-        v-if="importance"
-        :importance="importance"
-      ></importance-bars>
+      <importance-bars v-if="importance" :importance="importance" />
       <type-change-menu
         v-if="facetEnableTypeChanges"
         class="facet-header-dropdown"
         :dataset="summary.dataset"
         :field="summary.key"
-        :expandCollapse="expandCollapse"
-      >
-      </type-change-menu>
+        :expand-collapse="expandCollapse"
+      />
     </div>
 
     <facet-template
+      v-if="facetData.values.length > 0"
       target="facet-bars-value"
       title="${tooltip}"
-      v-if="facetData.values.length > 0"
-    >
-    </facet-template>
+    />
 
-    <div slot="content" v-else></div>
+    <div v-else slot="content" />
 
     <div
+      v-if="facetData.values.length > 0"
       slot="footer"
       class="facet-footer-container"
-      v-if="facetData.values.length > 0"
     >
       <facet-plugin-zoom-bar
         min-bar-width="8"
         auto-hide="true"
         round-caps="true"
-      >
-      </facet-plugin-zoom-bar>
+      />
       <div
         v-if="this.html"
         v-child="computeCustomHTML()"
         class="facet-footer-custom-html"
-      ></div>
+      />
     </div>
-    <div slot="footer" class="facet-footer-container" v-else>
+    <div v-else slot="footer" class="facet-footer-container">
       No Data Avialable
     </div>
   </facet-bars>
@@ -72,7 +66,7 @@ import {
 import _ from "lodash";
 
 export default Vue.extend({
-  name: "facet-numerical",
+  name: "FacetNumerical",
 
   components: {
     TypeChangeMenu,

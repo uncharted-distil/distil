@@ -9,20 +9,16 @@
     @facet-element-updated="updateSelection"
   >
     <div slot="header-label" :class="headerClass">
-      <i :class="getGroupIcon(summary) + ' facet-header-icon'"></i>
+      <i :class="getGroupIcon(summary) + ' facet-header-icon'" />
       <span>{{ summary.label.toUpperCase() }}</span>
-      <importance-bars
-        v-if="importance"
-        :importance="importance"
-      ></importance-bars>
+      <importance-bars v-if="importance" :importance="importance" />
       <type-change-menu
         v-if="facetEnableTypeChanges"
         class="facet-header-dropdown"
         :dataset="summary.dataset"
         :field="summary.key"
-        :expandCollapse="expandCollapse"
-      >
-      </type-change-menu>
+        :expand-collapse="expandCollapse"
+      />
     </div>
 
     <div slot="footer" class="facet-footer-container">
@@ -41,7 +37,7 @@
         v-if="this.html"
         v-child="computeCustomHTML()"
         class="facet-footer-custom-html"
-      ></div>
+      />
     </div>
   </facet-terms>
 </template>
@@ -68,7 +64,7 @@ import _ from "lodash";
 import { getVariableImportance } from "../../util/data";
 
 export default Vue.extend({
-  name: "facet-categorical",
+  name: "FacetCategorical",
 
   components: {
     TypeChangeMenu,

@@ -8,35 +8,29 @@
   >
     <div slot="header-label" :class="headerClass">
       <span>{{ summary.label.toUpperCase() }}</span>
-      <importance-bars
-        v-if="importance"
-        :importance="importance"
-      ></importance-bars>
+      <importance-bars v-if="importance" :importance="importance" />
       <type-change-menu
         v-if="facetEnableTypeChanges"
         class="facet-header-dropdown"
         :dataset="summary.dataset"
         :field="summary.key"
-        :expandCollapse="expandCollapse"
-      >
-      </type-change-menu>
+        :expand-collapse="expandCollapse"
+      />
     </div>
 
-    <facet-template target="facet-bars-value" title="${tooltip}">
-    </facet-template>
+    <facet-template target="facet-bars-value" title="${tooltip}" />
 
     <div slot="footer" class="facet-footer-container">
       <facet-plugin-zoom-bar
         min-bar-width="8"
         auto-hide="true"
         round-caps="true"
-      >
-      </facet-plugin-zoom-bar>
+      />
       <div
         v-if="this.html"
         v-child="computeCustomHTML()"
         class="facet-footer-custom-html"
-      ></div>
+      />
     </div>
   </facet-bars>
 </template>
@@ -62,7 +56,7 @@ import _ from "lodash";
 import moment from "moment";
 
 export default Vue.extend({
-  name: "facet-date-time",
+  name: "FacetDateTime",
 
   components: {
     TypeChangeMenu,
