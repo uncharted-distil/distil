@@ -24,7 +24,12 @@
     </view-type-toggle>
 
     <div class="fake-search-input">
-      <filter-badge v-if="activeFilter" active-filter :filter="activeFilter" />
+      <filter-badge
+        v-for="(highlight, index) in activeHighlights"
+        :key="index"
+        :filter="highlight"
+      />
+
       <filter-badge
         v-for="(filter, index) in filters"
         :key="index"
@@ -49,8 +54,9 @@
           @submit="onDataSizeSubmit"
         />
         <strong class="matching-color">matching</strong> samples of
-        {{ numRows }} to model<template v-if="selectionNumRows > 0"
-          >, {{ selectionNumRows }}
+        {{ numRows }} to model
+        <template v-if="selectionNumRows > 0">
+          , {{ selectionNumRows }}
           <strong class="selected-color">selected</strong>
         </template>
       </p>
@@ -133,7 +139,7 @@ import {
 } from "../util/filters";
 import {
   clearHighlight,
-  createFilterFromHighlight,
+  createFiltersFromHighlights,
   updateHighlight,
 } from "../util/highlights";
 import { lexQueryToFiltersAndHighlight } from "../util/lex";
@@ -213,8 +219,8 @@ export default Vue.extend({
       return appGetters.isPrototype(this.$store);
     },
 
-    highlight(): Highlight {
-      return routeGetters.getDecodedHighlight(this.$store);
+    highlights(): Highlight[] {
+      return routeGetters.getDecodedHighlights(this.$store);
     },
 
     target(): string {
@@ -252,33 +258,35 @@ export default Vue.extend({
         : 0;
     },
 
-    activeFilter(): Filter {
-      if (!this.highlight || !this.highlight.value) {
+    activeHighlights(): Filter[] {
+      if (!this.highlights || this.highlights.length < 1) {
         return null;
       }
       if (this.includedActive) {
-        return createFilterFromHighlight(this.highlight, INCLUDE_FILTER);
+        return createFiltersFromHighlights(this.highlights, INCLUDE_FILTER);
       }
-      return createFilterFromHighlight(this.highlight, EXCLUDE_FILTER);
+      return createFiltersFromHighlights(this.highlights, EXCLUDE_FILTER);
     },
 
     /* Check if the Active Filter is from an available feature. */
-    isActiveFilterFromAnAvailableFeature(): boolean {
-      if (!this.activeFilter) {
+    areActiveHighlightsFromAnAvailableFeature(): boolean {
+      if (this.activeHighlights.length < 1) {
         return false;
       }
 
-      const activeFilterName = this.activeFilter.key;
+      const activeHighlightNames = this.activeHighlights.map((v) => v.key);
       const availableVariablesNames = this.availableVariables.map((v) => v.key);
-
-      return availableVariablesNames.includes(activeFilterName);
+      return activeHighlightNames.reduce(
+        (acc, afn) => acc || availableVariablesNames.includes(afn),
+        false
+      );
     },
 
     /* Disable the Exclude filter button. */
     isExcludeDisabled(): boolean {
       return (
         (!this.isFilteringHighlights && !this.isFilteringSelection) ||
-        this.isActiveFilterFromAnAvailableFeature
+        this.areActiveHighlightsFromAnAvailableFeature
       );
     },
 
@@ -309,7 +317,11 @@ export default Vue.extend({
     },
 
     isFilteringHighlights(): boolean {
-      return !this.isFilteringSelection && !!this.highlight;
+      return (
+        !this.isFilteringSelection &&
+        this.highlights &&
+        this.highlights.length > 0
+      );
     },
 
     isFilteringSelection(): boolean {
@@ -335,7 +347,7 @@ export default Vue.extend({
     onExcludeClick() {
       let filter = null;
       if (this.isFilteringHighlights) {
-        filter = createFilterFromHighlight(this.highlight, EXCLUDE_FILTER);
+        filter = createFiltersFromHighlights(this.highlights, EXCLUDE_FILTER);
       } else {
         filter = createFilterFromRowSelection(
           this.rowSelection,
@@ -367,7 +379,7 @@ export default Vue.extend({
     onReincludeClick() {
       let filter = null;
       if (this.isFilteringHighlights) {
-        filter = createFilterFromHighlight(this.highlight, INCLUDE_FILTER);
+        filter = createFiltersFromHighlights(this.highlights, INCLUDE_FILTER);
       } else {
         filter = createFilterFromRowSelection(
           this.rowSelection,

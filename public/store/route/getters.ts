@@ -406,7 +406,7 @@ export const getters = {
     return filterParams;
   },
 
-  getDecodedHighlight(state: Route): Highlight {
+  getDecodedHighlights(state: Route): Highlight[] {
     return decodeHighlights(state.query.highlights as string);
   },
 

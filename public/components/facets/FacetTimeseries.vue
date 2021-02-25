@@ -2,7 +2,7 @@
   <div class="facet-timeseries">
     <facet-sparklines
       :summary="summary"
-      :highlight="highlight"
+      :highlights="highlights"
       :row-selection="rowSelection"
       :enabled-type-changes="enabledTypeChanges"
       :enable-highlighting="
@@ -24,7 +24,7 @@
       :is="facetType"
       v-if="!!timelineSummary && expand"
       :summary="timelineSummary"
-      :highlight="highlight"
+      :highlights="highlights"
       :row-selection="rowSelection"
       :enabled-type-changes="enabledTypeChanges"
       :instance-name="instanceName"
@@ -71,7 +71,7 @@ export default Vue.extend({
 
   props: {
     summary: Object as () => VariableSummary,
-    highlight: Object as () => Highlight,
+    highlights: Array as () => Highlight[],
     rowSelection: Object as () => RowSelection,
     instanceName: String as () => string,
     enabledTypeChanges: Array as () => string[],

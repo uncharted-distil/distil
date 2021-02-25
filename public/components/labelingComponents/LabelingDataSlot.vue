@@ -1,7 +1,11 @@
 <template>
   <div class="flex-1 d-flex flex-column pb-1 pt-2">
     <div class="fake-search-input">
-      <filter-badge v-if="activeFilter" active-filter :filter="activeFilter" />
+      <filter-badge
+        v-for="(highlight, index) in activeHighlights"
+        :key="index"
+        :filter="highlight"
+      />
       <filter-badge
         v-for="(filter, index) in filters"
         :key="index"
@@ -66,7 +70,7 @@ import {
   LOW_SHOT_SCORE_COLUMN_NAME,
   getAllDataItems,
 } from "../../util/data";
-import { createFilterFromHighlight } from "../../util/highlights";
+import { createFiltersFromHighlights } from "../../util/highlights";
 import { Filter, INCLUDE_FILTER } from "../../util/filters";
 import LabelHeaderButtons from "./LabelHeaderButtons.vue";
 import FilterBadge from "../FilterBadge.vue";
@@ -101,14 +105,14 @@ export default Vue.extend({
     };
   },
   computed: {
-    activeFilter(): Filter {
-      if (!this.highlight || !this.highlight.value) {
-        return null;
+    activeHighlights(): Filter[] {
+      if (!this.highlights || this.highlights.length < 1) {
+        return [];
       }
-      return createFilterFromHighlight(this.highlight, INCLUDE_FILTER);
+      return createFiltersFromHighlights(this.highlights, INCLUDE_FILTER);
     },
-    highlight(): Highlight {
-      return routeGetters.getDecodedHighlight(this.$store);
+    highlights(): Highlight[] {
+      return routeGetters.getDecodedHighlights(this.$store);
     },
     filters(): Filter[] {
       return routeGetters

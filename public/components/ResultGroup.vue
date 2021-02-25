@@ -75,7 +75,7 @@
             :is="getFacetByType(summary.type)"
             enable-highlighting
             :summary="summary"
-            :highlight="highlight"
+            :highlights="highlights"
             :enabled-type-changes="[]"
             :row-selection="rowSelection"
             :instance-name="predictedInstanceName"
@@ -95,7 +95,7 @@
             show-origin
             enable-highlighting
             :summary="summary"
-            :highlight="highlight"
+            :highlights="highlights"
             :enabled-type-changes="[]"
             :row-selection="rowSelection"
             :instance-name="residualInstanceName"
@@ -113,7 +113,7 @@
           :key="summary.key"
           enable-highlighting
           :summary="summary"
-          :highlight="highlight"
+          :highlights="highlights"
           :enabled-type-changes="[]"
           :row-selection="rowSelection"
           :instance-name="correctnessInstanceName"
@@ -127,7 +127,7 @@
           :key="summary.key"
           enable-highlighting
           :summary="summary"
-          :highlight="highlight"
+          :highlights="highlights"
           :enabled-type-changes="[]"
           :row-selection="rowSelection"
           :instance-name="confidenceInstanceName"
@@ -308,8 +308,8 @@ export default Vue.extend({
       return this.residualsSummary ? [this.residualsSummary] : [];
     },
 
-    highlight(): Highlight {
-      return routeGetters.getDecodedHighlight(this.$store);
+    highlights(): Highlight[] {
+      return routeGetters.getDecodedHighlights(this.$store);
     },
 
     residualThreshold(): Extrema {
@@ -442,7 +442,11 @@ export default Vue.extend({
       value: { from: number; to: number },
       dataset: string
     ) {
-      if (!this.highlight || this.highlight.key !== key) {
+      const uniqueHighlight = this.highlights.reduce(
+        (acc, highlight) => highlight.key !== key || acc,
+        false
+      );
+      if (uniqueHighlight) {
         updateHighlight(this.$router, {
           context: context,
           dataset: dataset,
@@ -479,7 +483,11 @@ export default Vue.extend({
       value: { from: number; to: number },
       dataset: string
     ) {
-      if (!this.highlight || this.highlight.key !== key) {
+      const uniqueHighlight = this.highlights.reduce(
+        (acc, highlight) => highlight.key !== key || acc,
+        false
+      );
+      if (uniqueHighlight) {
         updateHighlight(this.$router, {
           context: context,
           dataset: dataset,
@@ -516,7 +524,11 @@ export default Vue.extend({
       value: { from: number; to: number },
       dataset: string
     ) {
-      if (!this.highlight || this.highlight.key !== key) {
+      const uniqueHighlight = this.highlights.reduce(
+        (acc, highlight) => highlight.key !== key || acc,
+        false
+      );
+      if (uniqueHighlight) {
         updateHighlight(this.$router, {
           context: context,
           dataset: dataset,

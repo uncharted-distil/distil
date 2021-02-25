@@ -65,7 +65,7 @@ import _ from "lodash";
 import Vue from "vue";
 import IconBase from "./icons/IconBase.vue";
 import IconBookmark from "./icons/IconBookmark.vue";
-import { SuggestedType, Variable, Highlight } from "../store/dataset/index";
+import { SuggestedType, Variable } from "../store/dataset/index";
 import {
   actions as datasetActions,
   getters as datasetGetters,
@@ -94,6 +94,7 @@ import {
 } from "../store/route";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
+import { hasHighlightInRoute } from "../util/highlights";
 
 const PROBABILITY_THRESHOLD = 0.8;
 
@@ -185,18 +186,11 @@ export default Vue.extend({
     target(): string {
       return routeGetters.getRouteTargetVariable(this.$store);
     },
-    highlight(): Highlight {
-      return routeGetters.getDecodedHighlight(this.$store);
-    },
     isCluster(): boolean {
       return isClusterType(normalizedEquivalentType(this.type));
     },
     isDisabled(): boolean {
-      return (
-        hasFilterInRoute(this.field) ||
-        (this.highlight && this.highlight.key === this.field) ||
-        this.isComputedFeature
-      );
+      return hasFilterInRoute(this.field) || hasHighlightInRoute(this.field);
     },
     isComputedFeature(): boolean {
       return this.variable && hasComputedVarPrefix(this.variable.key);

@@ -146,7 +146,7 @@ export default Vue.extend({
       // fetch data selected by map tool
       const resp = await datasetActions.fetchTableData(this.$store, {
         dataset: selection.dataset,
-        highlight: selection,
+        highlights: [selection],
         filterParams: filterParams,
         dataMode: null,
         include: true,

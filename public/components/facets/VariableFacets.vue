@@ -37,7 +37,7 @@
             <facet-timeseries
               :style="facetColors"
               :summary="summary"
-              :highlight="highlight"
+              :highlights="highlights"
               :row-selection="rowSelection"
               :html="html"
               :enabled-type-changes="enabledTypeChanges"
@@ -71,7 +71,7 @@
             <facet-image
               :style="facetColors"
               :summary="summary"
-              :highlight="highlight"
+              :highlights="highlights"
               :row-selection="rowSelection"
               :ranking="ranking[summary.key]"
               :html="html"
@@ -86,7 +86,7 @@
             <facet-date-time
               :style="facetColors"
               :summary="summary"
-              :highlight="highlight"
+              :highlights="highlights"
               :row-selection="rowSelection"
               :importance="ranking[summary.key]"
               :ranking="ranking[summary.key]"
@@ -103,7 +103,7 @@
             <facet-categorical
               :style="facetColors"
               :summary="summary"
-              :highlight="highlight"
+              :highlights="highlights"
               :row-selection="rowSelection"
               :importance="ranking[summary.key]"
               :html="html"
@@ -118,7 +118,7 @@
             <facet-numerical
               :style="facetColors"
               :summary="summary"
-              :highlight="highlight"
+              :highlights="highlights"
               :row-selection="rowSelection"
               :importance="ranking[summary.key]"
               :html="html"
@@ -277,8 +277,8 @@ export default Vue.extend({
         return checkMap.has(v.key);
       });
     },
-    highlight(): Highlight {
-      return routeGetters.getDecodedHighlight(this.$store);
+    highlights(): Highlight[] {
+      return routeGetters.getDecodedHighlights(this.$store);
     },
 
     rowSelection(): RowSelection {
@@ -442,7 +442,11 @@ export default Vue.extend({
       dataset: string
     ) {
       if (this.enableHighlighting) {
-        if (!this.highlight || this.highlight.key !== key) {
+        const uniqueHighlight = this.highlights.reduce(
+          (acc, highlight) => highlight.key !== key || acc,
+          false
+        );
+        if (uniqueHighlight) {
           updateHighlight(this.$router, {
             context: this.instanceName,
             dataset: dataset,

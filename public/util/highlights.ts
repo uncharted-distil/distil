@@ -24,131 +24,136 @@ import store from "../store/store";
 import VueRouter from "vue-router";
 
 export function encodeHighlights(highlight: Highlight): string {
+  const currentHighlights = routeGetters.getDecodedHighlights(store);
+  console.log(currentHighlights);
+
   if (_.isEmpty(highlight)) {
     return null;
   }
-  return btoa(JSON.stringify(highlight));
+  return btoa(JSON.stringify([highlight, ...currentHighlights]));
 }
 
-export function decodeHighlights(highlight: string): Highlight {
+export function decodeHighlights(highlight: string): Highlight[] {
   if (_.isEmpty(highlight)) {
-    return null;
+    return [];
   }
-  return JSON.parse(atob(highlight)) as Highlight;
+  return JSON.parse(atob(highlight)) as Highlight[];
 }
 
-export function createFilterFromHighlight(
-  highlight: Highlight,
+export function createFiltersFromHighlights(
+  highlights: Highlight[],
   mode: string
-): Filter {
-  if (!highlight || highlight.value === null || highlight.value === undefined) {
-    return null;
+): Filter[] {
+  if (!highlights || highlights.length < 1) {
+    return [];
   }
 
-  // inject metadata prefix for metadata vars
-  const key = highlight.key;
+  const filterHighlights = highlights.map((highlight) => {
+    // inject metadata prefix for metadata vars
+    const key = highlight.key;
 
-  const variables = datasetGetters.getVariables(store);
+    const variables = datasetGetters.getVariables(store);
 
-  const variable = variables.find((v) => v.key === key);
-  let grouping = null;
-  if (variable && variable.grouping) {
-    grouping = variable.grouping;
-  }
-
-  const type = getVarType(key);
-  const displayName = variable?.colDisplayName;
-  if (type === IMAGE_TYPE) {
-    return {
-      key: key,
-      type: CLUSTER_FILTER,
-      mode: mode,
-      categories: [highlight.value],
-      displayName: displayName,
-    };
-  }
-
-  if (type === TEXT_TYPE) {
-    return {
-      key: key,
-      type: TEXT_FILTER,
-      mode: mode,
-      categories: [highlight.value],
-      displayName: displayName,
-    };
-  }
-
-  if (_.isString(highlight.value)) {
-    return {
-      key: key,
-      type: CATEGORICAL_FILTER,
-      mode: mode,
-      categories: [highlight.value],
-      displayName: displayName,
-    };
-  }
-
-  if (highlight.value.from !== undefined && highlight.value.to !== undefined) {
-    // TODO: we currently have no support for filter timeseries data by
-    // ranges and handle it in the client.
-    if (grouping && grouping.type === TIMESERIES_TYPE) {
-      return null;
+    const variable = variables.find((v) => v.key === key);
+    let grouping = null;
+    if (variable && variable.grouping) {
+      grouping = variable.grouping;
     }
 
-    if (isCollectionType(type)) {
+    const type = getVarType(key);
+    const displayName = variable?.colDisplayName;
+    if (type === IMAGE_TYPE) {
       return {
         key: key,
-        type: VECTOR_FILTER,
-        nestedType: highlight.value.type,
+        type: CLUSTER_FILTER,
+        mode: mode,
+        categories: [highlight.value],
+        displayName: displayName,
+      };
+    }
+
+    if (type === TEXT_TYPE) {
+      return {
+        key: key,
+        type: TEXT_FILTER,
+        mode: mode,
+        categories: [highlight.value],
+        displayName: displayName,
+      };
+    }
+
+    if (_.isString(highlight.value)) {
+      return {
+        key: key,
+        type: CATEGORICAL_FILTER,
+        mode: mode,
+        categories: [highlight.value],
+        displayName: displayName,
+      };
+    }
+
+    if (
+      highlight.value.from !== undefined &&
+      highlight.value.to !== undefined
+    ) {
+      // TODO: we currently have no support for filter timeseries data by
+      // ranges and handle it in the client.
+      if (grouping && grouping.type === TIMESERIES_TYPE) {
+        return null;
+      }
+
+      if (isCollectionType(type)) {
+        return {
+          key: key,
+          type: VECTOR_FILTER,
+          nestedType: highlight.value.type,
+          mode: mode,
+          min: highlight.value.from,
+          max: highlight.value.to,
+          displayName: displayName,
+        };
+      }
+
+      return {
+        key: key,
+        type: highlight.value.type,
         mode: mode,
         min: highlight.value.from,
         max: highlight.value.to,
         displayName: displayName,
       };
     }
+    if (
+      highlight.value.minX !== undefined &&
+      highlight.value.maxX !== undefined &&
+      highlight.value.minY !== undefined &&
+      highlight.value.maxY !== undefined
+    ) {
+      return {
+        key: key,
+        type: GEOBOUNDS_FILTER,
+        mode: mode,
+        minX: highlight.value.minX,
+        maxX: highlight.value.maxX,
+        minY: highlight.value.minY,
+        maxY: highlight.value.maxY,
+        displayName: displayName,
+      };
+    }
+  });
 
-    return {
-      key: key,
-      type: highlight.value.type,
-      mode: mode,
-      min: highlight.value.from,
-      max: highlight.value.to,
-      displayName: displayName,
-    };
-  }
-  if (
-    highlight.value.minX !== undefined &&
-    highlight.value.maxX !== undefined &&
-    highlight.value.minY !== undefined &&
-    highlight.value.maxY !== undefined
-  ) {
-    return {
-      key: key,
-      type: GEOBOUNDS_FILTER,
-      mode: mode,
-      minX: highlight.value.minX,
-      maxX: highlight.value.maxX,
-      minY: highlight.value.minY,
-      maxY: highlight.value.maxY,
-      displayName: displayName,
-    };
-  }
-  return null;
+  return filterHighlights;
 }
 
 export function addHighlightToFilterParams(
   filterParams: FilterParams,
-  highlight: Highlight,
+  highlights: Highlight[],
   mode: string = INCLUDE_FILTER
 ): FilterParams {
-  if (highlight && highlight.include) {
-    // added the potential for tweaking the mode outside of the immediate store code
-    mode = highlight.include;
-  }
   const params = _.cloneDeep(filterParams);
-  const highlightFilter = createFilterFromHighlight(highlight, mode);
-  if (highlightFilter) {
-    params.highlights = [highlightFilter];
+  const highlightFilters = createFiltersFromHighlights(highlights, mode);
+  if (highlightFilters.length > 0) {
+    params.highlights = highlightFilters;
   }
   return params;
 }
@@ -169,8 +174,20 @@ export function clearHighlight(router: VueRouter) {
   router.push(entry).catch((err) => console.warn(err));
 }
 
-export function highlightsExist(router: VueRouter) {
+export function highlightsExist() {
   const route = routeGetters.getRoute(store);
   const highlights = "highlights";
   return route.query[highlights] !== null;
+}
+
+export function hasHighlightInRoute(key: string): boolean {
+  // retrieve the highlights from the route
+
+  const highlights = routeGetters.getRouteHighlight(store);
+  const decoded = decodeHighlights(highlights);
+  return (
+    decoded.filter((h) => {
+      return h.key && h.key === key;
+    }).length > 0
+  );
 }

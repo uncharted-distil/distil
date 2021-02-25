@@ -209,11 +209,12 @@ export default Vue.extend({
     },
 
     latHighlight(): Object {
-      if (this.hasValidGeoHighlight) {
+      if (this.hasValidGeoHighlights) {
+        const latLonRanges = this.getLatLonRanges();
         return {
           value: {
-            from: this.calcBucketKey(this.highlight.value.minY, LATITUDE_TYPE),
-            to: this.calcBucketKey(this.highlight.value.maxY, LATITUDE_TYPE),
+            from: this.calcBucketKey(latLonRanges.minY, LATITUDE_TYPE),
+            to: this.calcBucketKey(latLonRanges.maxY, LATITUDE_TYPE),
           },
           context: LATITUDE_TYPE,
           key: this.summary.key,
@@ -225,11 +226,12 @@ export default Vue.extend({
     },
 
     lonHighlight(): Object {
-      if (this.hasValidGeoHighlight) {
+      if (this.hasValidGeoHighlights) {
+        const latLonRanges = this.getLatLonRanges();
         return {
           value: {
-            from: this.calcBucketKey(this.highlight.value.minX, LONGITUDE_TYPE),
-            to: this.calcBucketKey(this.highlight.value.maxX, LONGITUDE_TYPE),
+            from: this.calcBucketKey(latLonRanges.minX, LONGITUDE_TYPE),
+            to: this.calcBucketKey(latLonRanges.maxX, LONGITUDE_TYPE),
           },
           context: LONGITUDE_TYPE,
           key: this.summary.key,
@@ -380,19 +382,22 @@ export default Vue.extend({
     },
 
     // is data currently being highlighted
-    highlight(): Highlight {
-      return routeGetters.getDecodedHighlight(this.$store);
+    highlights(): Highlight[] {
+      return routeGetters.getDecodedHighlights(this.$store);
     },
 
-    hasValidGeoHighlight(): Boolean {
-      return (
-        !!this.highlight &&
-        !!this.highlight.value &&
-        !!this.highlight.value.minX &&
-        !!this.highlight.value.minY &&
-        !!this.highlight.value.maxX &&
-        !!this.highlight.value.maxY
-      );
+    hasValidGeoHighlights(): Boolean {
+      return this.highlights.reduce((hasGeoHighlight, highlight) => {
+        return (
+          hasGeoHighlight ||
+          (!!highlight &&
+            !!highlight.value &&
+            !!highlight.value.minX &&
+            !!highlight.value.minY &&
+            !!highlight.value.maxX &&
+            !!highlight.value.maxY)
+        );
+      }, false);
     },
 
     selectedRows(): RowSelection {
@@ -421,14 +426,43 @@ export default Vue.extend({
   },
 
   methods: {
-    calcBucketKey(value: string, type: string): string {
-      const numValue = _.toNumber(value);
+    getLatLonRanges(): {
+      minX: number;
+      maxX: number;
+      minY: number;
+      maxY: number;
+    } {
+      const latLonRanges = {
+        minX: null,
+        maxX: null,
+        minY: null,
+        maxY: null,
+      };
+      const keys = Object.keys(latLonRanges);
+      this.highlights.forEach((highlight) => {
+        keys.forEach((key) => {
+          if (
+            highlight &&
+            highlight.value[key] &&
+            (latLonRanges[key] === null ||
+              (key.includes("min") &&
+                latLonRanges[key] > highlight.value[key]) ||
+              (key.includes("max") && latLonRanges[key] < highlight.value[key]))
+          ) {
+            latLonRanges[key] = highlight.value[key];
+          }
+        });
+      });
+      return latLonRanges;
+    },
+
+    calcBucketKey(value: number, type: string): string {
       const buckets =
         type === LONGITUDE_TYPE
           ? this.lonSummary.baseline.buckets
           : this.latSummary.baseline.buckets;
       const step = _.toNumber(buckets[1].key) - _.toNumber(buckets[0].key);
-      return _.toString(numValue - (numValue % step));
+      return _.toString(value - (value % step));
     },
 
     numericWithMetadata(buckets: Bucket[]): BucketData {
@@ -573,26 +607,36 @@ export default Vue.extend({
       geocoordinateComponent: string,
       actionType
     ) {
-      if (this.hasValidGeoHighlight) {
-        const currentValue = this.highlight.value;
-        const highlightValue = {
-          minX: currentValue.minX,
-          maxX: currentValue.maxX,
-          minY: currentValue.minY,
-          maxY: currentValue.maxY,
-        };
-        if (value === null) {
-          clearHighlight(this.$router);
-        } else {
-          if (geocoordinateComponent === LONGITUDE_TYPE) {
-            highlightValue.minX = value.from;
-            highlightValue.maxX = value.to;
-          } else {
-            highlightValue.minY = value.from;
-            highlightValue.maxY = value.to;
+      if (this.hasValidGeoHighlights) {
+        this.highlights.forEach((highlight) => {
+          if (
+            highlight.value &&
+            highlight.value.minX &&
+            highlight.value.minY &&
+            highlight.value.maxX &&
+            highlight.value.maxY
+          ) {
+            const currentValue = highlight.value;
+            const highlightValue = {
+              minX: currentValue.minX,
+              maxX: currentValue.maxX,
+              minY: currentValue.minY,
+              maxY: currentValue.maxY,
+            };
+            if (value === null) {
+              clearHighlight(this.$router);
+            } else {
+              if (geocoordinateComponent === LONGITUDE_TYPE) {
+                highlightValue.minX = value.from;
+                highlightValue.maxX = value.to;
+              } else {
+                highlightValue.minY = value.from;
+                highlightValue.maxY = value.to;
+              }
+              this.createHighlight(highlightValue);
+            }
           }
-          this.createHighlight(highlightValue);
-        }
+        });
       } else {
         this.createHighlight({
           minX: this.lonSummary.baseline.extrema.min,
@@ -818,15 +862,23 @@ export default Vue.extend({
       minY: number;
       maxY: number;
     }) {
-      if (
-        this.highlight &&
-        this.highlight.value &&
-        this.highlight.value.minX === value.minX &&
-        this.highlight.value.maxX === value.maxX &&
-        this.highlight.value.minY === value.minY &&
-        this.highlight.value.maxY === value.maxY
-      ) {
-        return;
+      if (this.highlights && this.highlights.length > 0) {
+        const isExistingHighlight = this.highlights.reduce(
+          (hasHighlight, highlight) => {
+            return (
+              hasHighlight ||
+              (highlight.value &&
+                highlight.value.minX === value.minX &&
+                highlight.value.maxX === value.maxX &&
+                highlight.value.minY === value.minY &&
+                highlight.value.maxY === value.maxY)
+            );
+          },
+          false
+        );
+        if (isExistingHighlight) {
+          return;
+        }
       }
 
       updateHighlight(this.$router, {
@@ -838,36 +890,39 @@ export default Vue.extend({
     },
 
     drawHighlight() {
-      if (
-        this.highlight &&
-        this.highlight.value.minX !== undefined &&
-        this.highlight.value.maxX !== undefined &&
-        this.highlight.value.minY !== undefined &&
-        this.highlight.value.maxY !== undefined
-      ) {
-        const rect = leaflet.rectangle(
-          [
-            [this.highlight.value.minY, this.highlight.value.minX],
-            [this.highlight.value.maxY, this.highlight.value.maxX],
-          ],
-          {
-            color: "#255DCC",
-            weight: 1,
-            bubblingMouseEvents: false,
-          }
-        );
-        rect.on("click", (e) => {
-          this.setSelection(e.target);
-        });
-        rect.addTo(this.map);
+      if (this.highlights && this.highlights.length > 0) {
+        this.highlights.forEach((highlight) => {
+          if (
+            highlight.value.minX !== undefined &&
+            highlight.value.maxX !== undefined &&
+            highlight.value.minY !== undefined &&
+            highlight.value.maxY !== undefined
+          ) {
+            const rect = leaflet.rectangle(
+              [
+                [highlight.value.minY, highlight.value.minX],
+                [highlight.value.maxY, highlight.value.maxX],
+              ],
+              {
+                color: "#255DCC",
+                weight: 1,
+                bubblingMouseEvents: false,
+              }
+            );
+            rect.on("click", (e) => {
+              this.setSelection(e.target);
+            });
+            rect.addTo(this.map);
 
-        this.setSelection(rect);
+            this.setSelection(rect);
+          }
+        });
       }
     },
 
     paint() {
       // NOTE: this component re-mounts on any change, so do everything in here
-      if (!this.highlight) {
+      if (!this.highlights || this.highlights.length < 1) {
         this.clearSelectionRect();
       }
 
@@ -914,7 +969,10 @@ export default Vue.extend({
         //  mode we show only excluded data and render it in black.
 
         if (this.includedActive) {
-          if (!this.highlight && !this.hasFilters) {
+          if (
+            (!this.highlights || this.highlights.length < 1) &&
+            !this.hasFilters
+          ) {
             // if there's no highlight active render from the baseline (all) set of buckets.
             const d = (maxVal - minVal) / BLUE_PALETTE.length;
             const domain = BLUE_PALETTE.map(

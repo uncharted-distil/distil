@@ -97,7 +97,7 @@ export default Vue.extend({
       Function as () => Function,
     ],
     expandCollapse: Function as () => Function,
-    highlight: Object as () => Highlight,
+    highlights: Array as () => Highlight[],
     enableHighlighting: Boolean as () => boolean,
     instanceName: String as () => string,
     rowSelection: Object as () => RowSelection,
@@ -155,22 +155,20 @@ export default Vue.extend({
       return getSubSelectionValues(this.summary, this.rowSelection, this.max);
     },
     selection(): number[] {
-      if (!this.isHighlightedGroup(this.highlight, this.summary.key)) {
+      if (!this.enableHighlighting || !this.isHighlightedGroup()) {
         return null;
       }
-      const highlightValue = this.getHighlightValue(this.highlight);
-      if (!highlightValue) {
-        return null;
-      }
+      const highlightValues = this.getHighlightValues();
       const buckets = this.summary.baseline.buckets;
+      const highlightValuesFlat = highlightValues.reduce(
+        (acc, val) => (val.from && val.to ? [...acc, val.from, val.to] : acc),
+        []
+      );
 
       // map the values used for the highlight filter back to the buckets
       const highlightAsSelection = buckets.reduce((acc, val, ind) => {
         const key = _.toNumber(val.key);
-        if (
-          key === _.toNumber(highlightValue.from) ||
-          key === _.toNumber(highlightValue.to)
-        ) {
+        if (highlightValuesFlat.includes(key)) {
           acc.push(ind);
         }
         return acc;
@@ -188,17 +186,23 @@ export default Vue.extend({
   },
 
   methods: {
-    getHighlightValue(highlight: Highlight): any {
-      if (highlight && highlight.value) {
-        return highlight.value;
-      }
-      return null;
+    getHighlightValues(): { from: number; to: number }[] {
+      return this.highlights.reduce(
+        (acc, highlight) =>
+          highlight.value && highlight.value.to && highlight.value.from
+            ? [...acc, highlight.value]
+            : acc,
+        []
+      );
     },
-    isHighlightedInstance(highlight: Highlight): boolean {
-      return highlight && highlight.context === this.instanceName;
-    },
-    isHighlightedGroup(highlight: Highlight, key: string): boolean {
-      return this.isHighlightedInstance(highlight) && highlight.key === key;
+    isHighlightedGroup(): boolean {
+      return this.highlights.reduce(
+        (acc, highlight) =>
+          (highlight.key === this.summary.key &&
+            highlight.context === this.instanceName) ||
+          acc,
+        false
+      );
     },
     getRange(facet): { from: number; to: number; type: string } {
       if (!facet.selection) {

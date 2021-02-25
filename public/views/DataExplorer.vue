@@ -162,7 +162,7 @@ import {
 } from "../util/filters";
 import {
   clearHighlight,
-  createFilterFromHighlight,
+  createFiltersFromHighlights,
   updateHighlight,
 } from "../util/highlights";
 import { lexQueryToFiltersAndHighlight } from "../util/lex";
@@ -288,8 +288,8 @@ export default Vue.extend({
       return isEmpty(this.activeVariables);
     },
 
-    highlight(): Highlight {
-      return routeGetters.getDecodedHighlight(this.$store);
+    highlights(): Highlight[] {
+      return routeGetters.getDecodedHighlights(this.$store);
     },
 
     isCreateModelPossible(): boolean {
@@ -323,7 +323,7 @@ export default Vue.extend({
     },
 
     isFilteringHighlights(): boolean {
-      return !!this.highlight;
+      return this.highlights && this.highlights.length > 0;
     },
 
     isFilteringSelection(): boolean {
@@ -467,7 +467,7 @@ export default Vue.extend({
     onExcludeClick() {
       let filter = null;
       if (this.isFilteringHighlights) {
-        filter = createFilterFromHighlight(this.highlight, EXCLUDE_FILTER);
+        filter = createFiltersFromHighlights(this.highlights, EXCLUDE_FILTER);
       } else {
         filter = createFilterFromRowSelection(
           this.rowSelection,
@@ -499,7 +499,7 @@ export default Vue.extend({
     onReincludeClick() {
       let filter = null;
       if (this.isFilteringHighlights) {
-        filter = createFilterFromHighlight(this.highlight, INCLUDE_FILTER);
+        filter = createFiltersFromHighlights(this.highlights, INCLUDE_FILTER);
       } else {
         filter = createFilterFromRowSelection(
           this.rowSelection,

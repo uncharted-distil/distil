@@ -879,7 +879,7 @@ export function addOrderBy(orderByName: string) {
 }
 
 export function fetchLowShotScores() {
-  const highlight = routeGetters.getDecodedHighlight(store);
+  const highlights = routeGetters.getDecodedHighlights(store);
   const filterParams = _.cloneDeep(
     routeGetters.getDecodedSolutionRequestFilterParams(store)
   );
@@ -889,7 +889,7 @@ export function fetchLowShotScores() {
   datasetActions.fetchIncludedTableData(store, {
     dataset,
     filterParams,
-    highlight,
+    highlights,
     dataMode,
     orderBy: lowShotScore,
   });

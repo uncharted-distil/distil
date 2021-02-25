@@ -37,7 +37,7 @@ import {
   ValueStateValue,
   RelationState,
 } from "@uncharted.software/lex";
-import { decodeHighlights, createFilterFromHighlight } from "./highlights";
+import { decodeHighlights, createFiltersFromHighlights } from "./highlights";
 import { Dictionary } from "./dict";
 
 const HIGHLIGHT = "highlight";
@@ -151,23 +151,21 @@ export function filterParamsToLexQuery(
   allVariables: Variable[]
 ) {
   const decodedFilters = decodeFilters(filter).filter((f) => f.type !== "row");
-  const decodedHighlight =
-    highlight &&
-    createFilterFromHighlight(decodeHighlights(highlight), HIGHLIGHT);
+  const decodedHighlights = createFiltersFromHighlights(
+    decodeHighlights(highlight),
+    HIGHLIGHT
+  );
 
   const variableDict = buildVariableDictionary(allVariables);
   const filterVariables = decodedFilters.map((f) => {
     return variableDict[f.key];
   });
-  const highlightVariable = variableDict[decodedHighlight?.key];
-  const hasHighlight = !!highlight && !!highlightVariable;
+  const highlightVariables = decodedHighlights.map((h) => {
+    return variableDict[h.key];
+  });
 
-  const activeVariables = hasHighlight
-    ? [highlightVariable, ...filterVariables]
-    : filterVariables;
-  const lexableElements = hasHighlight
-    ? [decodedHighlight, ...decodedFilters]
-    : decodedFilters;
+  const activeVariables = [...highlightVariables, ...filterVariables];
+  const lexableElements = [...decodedHighlights, ...decodedFilters];
 
   const suggestions = variablesToLexSuggestions(activeVariables);
 

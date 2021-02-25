@@ -44,7 +44,7 @@
 <script lang="ts">
 import Vue from "vue";
 import VariableFacets from "./facets/VariableFacets.vue";
-import { Variable, VariableSummary, Highlight } from "../store/dataset/index";
+import { Variable, VariableSummary } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
 import {
   getters as datasetGetters,
@@ -88,9 +88,6 @@ export default Vue.extend({
     },
     includedActive(): boolean {
       return routeGetters.getRouteInclude(this.$store);
-    },
-    highlight(): Highlight {
-      return routeGetters.getDecodedHighlight(this.$store);
     },
     trainingVarsSearch(): string {
       return routeGetters.getRouteTrainingVarsSearch(this.$store);

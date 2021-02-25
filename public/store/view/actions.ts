@@ -9,7 +9,12 @@ import {
   sortVariablesByImportance,
 } from "../../util/data";
 import { Dictionary } from "../../util/dict";
-import { EXCLUDE_FILTER, Filter, invertFilter } from "../../util/filters";
+import {
+  EXCLUDE_FILTER,
+  Filter,
+  invertFilter,
+  FilterParams,
+} from "../../util/filters";
 import { getPredictionsById } from "../../util/predictions";
 import {
   DataMode,
@@ -104,8 +109,9 @@ const fetchVariableSummaries = async (context, args) => {
   const dataset = args.dataset as string;
   const variables =
     args.variables ?? (context.getters.getVariables as Variable[]);
-  const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
-  const highlight = context.getters.getDecodedHighlight;
+  const filterParams = context.getters
+    .getDecodedSolutionRequestFilterParams as FilterParams;
+  const highlights = context.getters.getDecodedHighlights as Highlight[];
   const varModes = context.getters.getDecodedVarModes;
   const dataMode = context.getters.getDataMode;
 
@@ -198,7 +204,7 @@ const fetchVariableSummaries = async (context, args) => {
     dataset: dataset,
     variables: allActiveVariables,
     filterParams: filterParams,
-    highlight: highlight,
+    highlights: highlights,
     dataMode: dataMode,
     varModes: varModes,
   };
@@ -301,7 +307,7 @@ function clearVariableSummaries(context: ViewContext) {
 export type ViewContext = ActionContext<ViewState, DistilState>;
 
 export const actions = {
-  async fetchHomeData(context: ViewContext) {
+  async fetchHomeData() {
     // clear any previous state
     requestMutations.clearSolutionRequests(store);
     requestMutations.clearSolutions(store);
@@ -358,7 +364,7 @@ export const actions = {
     datasetMutations.clearJoinDatasetsTableData(store);
 
     const datasetIDs = context.getters.getRouteJoinDatasets;
-    const highlight = context.getters.getDecodedHighlight;
+    const highlights = context.getters.getDecodedHighlights as Highlight[];
     const filterParams = context.getters.getDecodedJoinDatasetsFilterParams;
     const datasets = context.getters.getDatasets;
     const dataMode = context.getters.getDataMode as DataMode;
@@ -379,7 +385,7 @@ export const actions = {
         dataset: datasetA.id,
         variables: datasetA.variables,
         filterParams: filterParams,
-        highlight: highlight,
+        highlights: highlights,
         dataMode: dataMode,
         varModes: varModes,
       }),
@@ -387,25 +393,25 @@ export const actions = {
         dataset: datasetB.id,
         variables: datasetB.variables,
         filterParams: filterParams,
-        highlight: highlight,
+        highlights: highlights,
         dataMode: dataMode,
         varModes: varModes,
       }),
       datasetActions.fetchJoinDatasetsTableData(store, {
         datasets: datasetIDs,
         filterParams: filterParams,
-        highlight: highlight,
+        highlights: highlights,
       }),
     ]);
   },
 
-  clearAllData(context: ViewContext) {
+  clearAllData() {
     datasetMutations.clearVariableSummaries(store);
     datasetMutations.setIncludedTableData(store, createEmptyTableData());
     datasetMutations.setExcludedTableData(store, createEmptyTableData());
   },
 
-  clearDatasetTableData(context: ViewContext) {
+  clearDatasetTableData() {
     datasetMutations.setIncludedTableData(store, createEmptyTableData());
     datasetMutations.setExcludedTableData(store, createEmptyTableData());
   },
@@ -431,9 +437,10 @@ export const actions = {
 
   updateDataExplorerData(context: ViewContext) {
     const args = {
-      dataset: context.getters.getRouteDataset,
-      filterParams: context.getters.getDecodedSolutionRequestFilterParams,
-      highlight: context.getters.getDecodedHighlight,
+      dataset: context.getters.getRouteDataset as string,
+      filterParams: context.getters
+        .getDecodedSolutionRequestFilterParams as FilterParams,
+      highlights: context.getters.getDecodedHighlights as Highlight[],
     };
     const variableArgs = {
       ...args,
@@ -491,8 +498,9 @@ export const actions = {
   updateSelectTrainingData(context: ViewContext) {
     const args = {
       dataset: context.getters.getRouteDataset,
-      filterParams: context.getters.getDecodedSolutionRequestFilterParams,
-      highlight: context.getters.getDecodedHighlight,
+      filterParams: context.getters
+        .getDecodedSolutionRequestFilterParams as FilterParams,
+      highlights: context.getters.getDecodedHighlights as Highlight[],
     };
     const variableArgs = {
       ...args,
@@ -513,8 +521,9 @@ export const actions = {
   updateLabelData(context: ViewContext) {
     // clear any previous state
     const dataset = context.getters.getRouteDataset;
-    const highlight = context.getters.getDecodedHighlight;
-    const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
+    const highlights = context.getters.getDecodedHighlights as Highlight[];
+    const filterParams = context.getters
+      .getDecodedSolutionRequestFilterParams as FilterParams;
     const numRows = datasetGetters.getNumberOfRecords(store);
     filterParams.size = numRows;
     const dataMode = context.getters.getDataMode;
@@ -528,14 +537,14 @@ export const actions = {
         dataset,
         variables,
         filterParams,
-        highlight,
+        highlights,
         dataMode,
         varModes,
       }),
       datasetActions.fetchIncludedTableData(store, {
         dataset,
         filterParams,
-        highlight,
+        highlights,
         dataMode,
         orderBy,
       }),
@@ -543,22 +552,23 @@ export const actions = {
   },
   updateHighlight(context: ViewContext) {
     const dataset = context.getters.getRouteDataset;
-    const highlight = context.getters.getDecodedHighlight;
-    const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
+    const highlights = context.getters.getDecodedHighlights as Highlight[];
+    const filterParams = context.getters
+      .getDecodedSolutionRequestFilterParams as FilterParams;
     const dataMode = context.getters.getDataMode;
     filterParams.size = datasetGetters.getNumberOfRecords(store);
     return Promise.all([
       datasetActions.fetchHighlightedTableData(store, {
         dataset: dataset,
         filterParams: filterParams,
-        highlight: highlight,
+        highlights: highlights,
         dataMode: dataMode,
         include: true,
       }), // include
       datasetActions.fetchHighlightedTableData(store, {
         dataset: dataset,
         filterParams: filterParams,
-        highlight: highlight,
+        highlights: highlights,
         dataMode: dataMode,
         include: false,
       }), // exclude
@@ -566,8 +576,9 @@ export const actions = {
   },
   async updateAreaOfInterest(context: ViewContext, filter: Filter) {
     const dataset = context.getters.getRouteDataset;
-    const highlight = context.getters.getDecodedHighlight;
-    const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
+    const filterParams = context.getters
+      .getDecodedSolutionRequestFilterParams as FilterParams;
+    const highlights = context.getters.getDecodedHighlights as Highlight[];
     const dataMode = context.getters.getDataMode;
     // artificially add filter but dont add it to the url
     // this is a hack to avoid adding an extra field just for the area of interest
@@ -582,13 +593,14 @@ export const actions = {
       f.mode = invertFilter(f.mode);
     });
     clonedFilterParamsExclude.filters.push(clonedExcludeFilter);
-    const invertedHighlight =
-      highlight === null ? null : { ...highlight, include: EXCLUDE_FILTER };
+    const invertedHighlights = highlights.map((highlight) => {
+      return { ...highlight, include: EXCLUDE_FILTER };
+    });
     return Promise.all([
       datasetActions.fetchAreaOfInterestData(store, {
         dataset: dataset,
         filterParams: clonedFilterParams,
-        highlight: highlight,
+        highlights: highlights,
         dataMode: dataMode,
         include: true,
         mutatorIsInclude: true,
@@ -597,7 +609,7 @@ export const actions = {
       datasetActions.fetchAreaOfInterestData(store, {
         dataset: dataset,
         filterParams: clonedFilterParams,
-        highlight: invertedHighlight,
+        highlights: invertedHighlights,
         dataMode: dataMode,
         include: true,
         mutatorIsInclude: false,
@@ -606,7 +618,7 @@ export const actions = {
       datasetActions.fetchAreaOfInterestData(store, {
         dataset: dataset,
         filterParams: clonedFilterParamsExclude,
-        highlight: highlight,
+        highlights: highlights,
         dataMode: dataMode,
         include: true,
         mutatorIsInclude: true,
@@ -615,7 +627,7 @@ export const actions = {
       datasetActions.fetchAreaOfInterestData(store, {
         dataset: dataset,
         filterParams: clonedFilterParamsExclude,
-        highlight: invertedHighlight,
+        highlights: invertedHighlights,
         dataMode: dataMode,
         include: true,
         mutatorIsInclude: false,
@@ -672,7 +684,7 @@ export const actions = {
     // fetch new state
     const dataset = routeGetters.getRouteDataset(store);
     const solutionId = routeGetters.getRouteSolutionId(store);
-    const highlight = routeGetters.getDecodedHighlight(store);
+    const highlights = routeGetters.getDecodedHighlights(store);
     const dataMode = context.getters.getDataMode;
     const size = routeGetters.getRouteDataSize(store);
 
@@ -680,7 +692,7 @@ export const actions = {
       resultActions.fetchAreaOfInterestInner(store, {
         dataset: dataset,
         solutionId: solutionId,
-        highlight: highlight,
+        highlights: highlights,
         dataMode: dataMode,
         size,
         filter: filter,
@@ -688,7 +700,7 @@ export const actions = {
       resultActions.fetchAreaOfInterestOuter(store, {
         dataset: dataset,
         solutionId: solutionId,
-        highlight: highlight,
+        highlights: highlights,
         dataMode: dataMode,
         size,
         filter: filter,
@@ -699,21 +711,21 @@ export const actions = {
     // fetch new state
     const dataset = routeGetters.getRouteDataset(store);
     const produceRequestId = routeGetters.getRouteProduceRequestId(store);
-    const highlight = routeGetters.getDecodedHighlight(store);
+    const highlights = routeGetters.getDecodedHighlights(store);
     const size = routeGetters.getRouteDataSize(store);
 
     return Promise.all([
       predictionActions.fetchAreaOfInterestInner(store, {
         dataset: dataset,
         produceRequestId,
-        highlight: highlight,
+        highlights: highlights,
         size,
         filter: filter,
       }),
       predictionActions.fetchAreaOfInterestOuter(store, {
         dataset: dataset,
         produceRequestId,
-        highlight: highlight,
+        highlights: highlights,
         size,
         filter: filter,
       }),
@@ -724,7 +736,7 @@ export const actions = {
     const trainingVariables = requestGetters.getActiveSolutionTrainingVariables(
       store
     );
-    const highlight = routeGetters.getDecodedHighlight(store);
+    const highlights = routeGetters.getDecodedHighlights(store);
     const dataMode = context.getters.getDataMode;
     const varModes: Map<string, SummaryMode> = routeGetters.getDecodedVarModes(
       store
@@ -742,7 +754,7 @@ export const actions = {
       dataset: dataset,
       training: activeTrainingVariables,
       solutionId: solutionId,
-      highlight: highlight,
+      highlights: highlights,
       dataMode: dataMode,
       varModes: varModes,
     });
@@ -766,7 +778,7 @@ export const actions = {
     const target = routeGetters.getRouteTargetVariable(store);
     const requestIds = requestGetters.getRelevantSolutionRequestIds(store);
     const solutionId = routeGetters.getRouteSolutionId(store);
-    const highlight = routeGetters.getDecodedHighlight(store);
+    const highlights = routeGetters.getDecodedHighlights(store);
     const dataMode = context.getters.getDataMode;
     const varModes: Map<string, SummaryMode> = routeGetters.getDecodedVarModes(
       store
@@ -776,7 +788,7 @@ export const actions = {
     await resultActions.fetchResultTableData(store, {
       dataset: dataset,
       solutionId: solutionId,
-      highlight: highlight,
+      highlights: highlights,
       dataMode: dataMode,
       isMapData: false,
       size,
@@ -786,7 +798,7 @@ export const actions = {
     resultActions.fetchResultTableData(store, {
       dataset: dataset,
       solutionId: solutionId,
-      highlight: highlight,
+      highlights: highlights,
       dataMode: dataMode,
       isMapData: true,
       size: allData,
@@ -795,7 +807,7 @@ export const actions = {
       dataset: dataset,
       target: target,
       solutionId: solutionId,
-      highlight: highlight,
+      highlights: highlights,
       dataMode: dataMode,
       varMode: varModes.has(target)
         ? varModes.get(target)
@@ -808,7 +820,7 @@ export const actions = {
       dataset: dataset,
       target: target,
       requestIds: requestIds,
-      highlight: highlight,
+      highlights: highlights,
       dataMode: dataMode,
       varModes: varModes,
     });
@@ -833,7 +845,7 @@ export const actions = {
         dataset: dataset,
         target: target,
         requestIds: requestIds,
-        highlight: highlight,
+        highlights: highlights,
         dataMode: dataMode,
         varModes: varModes,
       });
@@ -842,7 +854,7 @@ export const actions = {
         dataset: dataset,
         target: target,
         requestIds: requestIds,
-        highlight: highlight,
+        highlights: highlights,
         dataMode: dataMode,
         varModes: varModes,
       });
@@ -851,7 +863,7 @@ export const actions = {
         dataset: dataset,
         target: target,
         requestIds: requestIds,
-        highlight: highlight,
+        highlights: highlights,
         dataMode: dataMode,
         varModes: varModes,
       });
@@ -893,19 +905,16 @@ export const actions = {
       context.getters.getPredictions,
       produceRequestId
     ).dataset;
-    const highlight = <Highlight>context.getters.getDecodedHighlight;
+    const highlights = context.getters.getDecodedHighlights as Highlight[];
     const varModes = <Map<string, SummaryMode>>(
       context.getters.getDecodedVarModes
     );
-    const currentSearch = <string>(
-      context.getters.getRouteResultTrainingVarsSearch
-    );
-    const trainingVariables = <Variable[]>(
-      searchVariables(
-        context.getters.getActivePredictionTrainingVariables,
-        currentSearch
-      )
-    );
+    const currentSearch = context.getters
+      .getRouteResultTrainingVarsSearch as string;
+    const trainingVariables = searchVariables(
+      context.getters.getActivePredictionTrainingVariables,
+      currentSearch
+    ) as Variable[];
     const page = routeGetters.getRouteResultTrainingVarsPage(store);
     const pageSize = NUM_PER_PAGE;
     const activeTrainingVariables = filterArrayByPage(
@@ -917,7 +926,7 @@ export const actions = {
     predictionActions.fetchTrainingSummaries(store, {
       dataset: inferenceDataset,
       training: activeTrainingVariables,
-      highlight: highlight,
+      highlights: highlights,
       varModes: varModes,
       produceRequestId: produceRequestId,
     });
@@ -928,18 +937,18 @@ export const actions = {
     predictionMutations.setIncludedPredictionTableData(store, null);
 
     // fetch new state
-    const produceRequestId = <string>context.getters.getRouteProduceRequestId;
-    const fittedSolutionId = <string>context.getters.getRouteFittedSolutionId;
+    const produceRequestId = context.getters.getRouteProduceRequestId as string;
+    const fittedSolutionId = context.getters.getRouteFittedSolutionId as string;
     const inferenceDataset = getPredictionsById(
       context.getters.getPredictions,
       produceRequestId
     ).dataset;
-    const highlight = <Highlight>context.getters.getDecodedHighlight;
+    const highlights = context.getters.getDecodedHighlights as Highlight[];
     const size = routeGetters.getRouteDataSize(store);
 
     predictionActions.fetchPredictionTableData(store, {
       dataset: inferenceDataset,
-      highlight: highlight,
+      highlights: highlights,
       produceRequestId: produceRequestId,
       size,
     });
@@ -947,7 +956,7 @@ export const actions = {
     actions.updatePredictionTrainingSummaries(context);
 
     predictionActions.fetchPredictedSummaries(store, {
-      highlight: highlight,
+      highlights: highlights,
       fittedSolutionId: fittedSolutionId,
     });
   },

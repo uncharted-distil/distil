@@ -398,7 +398,7 @@ export default Vue.extend({
   },
 
   watch: {
-    highlight() {
+    highlights() {
       this.initialized = false;
     },
 
@@ -464,8 +464,8 @@ export default Vue.extend({
       return `${Math.abs(this.normalizeError(error) * 50)}%`;
     },
 
-    highlight(): Highlight {
-      return routeGetters.getDecodedHighlight(this.$store);
+    highlights(): Highlight[] {
+      return routeGetters.getDecodedHighlights(this.$store);
     },
 
     errorBarLeft(error: number): string {
