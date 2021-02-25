@@ -210,9 +210,13 @@ function dedupeRowFilters(filters: Filter[]): Filter[] {
   return remaining;
 }
 
-function addFilter(filters: string, filter: Filter): string {
-  const decoded = decodeFilters(filters);
-  decoded.push(filter);
+function addFilter(filters: string, filter: Filter | Filter[]): string {
+  let decoded = decodeFilters(filters);
+  if (Array.isArray(filter)) {
+    decoded = [...decoded, ...filter];
+  } else {
+    decoded.push(filter as Filter);
+  }
   return encodeFilters(dedupeRowFilters(decoded));
 }
 
@@ -241,7 +245,7 @@ export function hasFilterInRoute(variable: string): boolean {
   );
 }
 
-export function addFilterToRoute(router: VueRouter, filter: Filter) {
+export function addFilterToRoute(router: VueRouter, filter: Filter | Filter[]) {
   // retrieve the filters from the route
   const filters = routeGetters.getRouteFilters(store);
   // merge the updated filters back into the route query params

@@ -381,9 +381,9 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, wheres []string, param
 	if len(highlightWheres) > 0 {
 		where := ""
 		if invert {
-			where = fmt.Sprintf("NOT(%s)", strings.Join(highlightWheres, " AND "))
+			where = fmt.Sprintf("NOT(%s)", strings.Join(highlightWheres, " OR "))
 		} else {
-			where = strings.Join(highlightWheres, " AND ")
+			where = strings.Join(highlightWheres, " OR ")
 		}
 		wheres = append(wheres, where)
 	}
