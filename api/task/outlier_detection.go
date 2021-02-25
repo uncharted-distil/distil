@@ -113,10 +113,10 @@ func OutlierDetection(dataset *api.Dataset, variable string) ([]*OutlierPoint, e
 
 	outlierLabelIndex := getFieldIndex(header, "outlier_label")
 	if outlierLabelIndex == -1 {
-		// cluster label may be returned with target name
+		// outlier label may be returned with target name
 		outlierLabelIndex = getFieldIndex(header, variable)
 	}
-	d3mIndex := getFieldIndex(header, model.D3MIndexName)
+	d3mIndex := getFieldIndex(header, model.D3MIndexFieldName)
 	if outlierLabelIndex == -1 && len(header) == 2 {
 		// default to second column
 		outlierLabelIndex = (d3mIndex + 1) % 2

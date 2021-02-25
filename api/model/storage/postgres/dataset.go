@@ -732,14 +732,14 @@ func (s *Storage) UpdateVariableBatch(storageName string, varName string, update
 	// loop through the updates, building batches to minimize overhead
 	tableNameTmp := fmt.Sprintf("%s_utmp", storageName)
 	dataSQL := fmt.Sprintf("CREATE TEMP TABLE \"%s\" (\"%s\" TEXT NOT NULL, \"%s\" TEXT) ON COMMIT DROP;",
-		tableNameTmp, model.D3MIndexName, varName)
+		tableNameTmp, model.D3MIndexFieldName, varName)
 	_, err = tx.Exec(context.Background(), dataSQL)
 	if err != nil {
 		_ = tx.Rollback(context.Background())
 		return errors.Wrap(err, "unable to create temp table")
 	}
 
-	err = s.insertBulkCopyTransaction(tx, tableNameTmp, []string{model.D3MIndexName, varName}, params)
+	err = s.insertBulkCopyTransaction(tx, tableNameTmp, []string{model.D3MIndexFieldName, varName}, params)
 	if err != nil {
 		_ = tx.Rollback(context.Background())
 		return errors.Wrap(err, "unable to insert into temp table")
@@ -747,7 +747,7 @@ func (s *Storage) UpdateVariableBatch(storageName string, varName string, update
 
 	// run the update
 	updateSQL := fmt.Sprintf("UPDATE %s.%s.\"%s_base\" AS b SET \"%s\" = t.\"%s\" FROM \"%s\" AS t WHERE t.\"%s\" = b.\"%s\";",
-		"distil", "public", storageName, varName, varName, tableNameTmp, model.D3MIndexName, model.D3MIndexName)
+		"distil", "public", storageName, varName, varName, tableNameTmp, model.D3MIndexFieldName, model.D3MIndexFieldName)
 	_, err = tx.Exec(context.Background(), updateSQL)
 	if err != nil {
 		_ = tx.Rollback(context.Background())
@@ -780,21 +780,21 @@ func (s *Storage) UpdateData(dataset string, storageName string, varName string,
 
 	tableNameTmp := fmt.Sprintf("%s_utmp", storageName)
 	dataSQL := fmt.Sprintf("CREATE TEMP TABLE \"%s\" (\"%s\" TEXT NOT NULL, \"%s\" TEXT) ON COMMIT DROP;",
-		tableNameTmp, model.D3MIndexName, varName)
+		tableNameTmp, model.D3MIndexFieldName, varName)
 	_, err = tx.Exec(context.Background(), dataSQL)
 	if err != nil {
 		_ = tx.Rollback(context.Background())
 		return errors.Wrap(err, "unable to create temp table")
 	}
 
-	err = s.insertBulkCopyTransaction(tx, tableNameTmp, []string{model.D3MIndexName, varName}, params)
+	err = s.insertBulkCopyTransaction(tx, tableNameTmp, []string{model.D3MIndexFieldName, varName}, params)
 	if err != nil {
 		_ = tx.Rollback(context.Background())
 		return errors.Wrap(err, "unable to insert into temp table")
 	}
 
 	// build the filter structure
-	wheres := []string{fmt.Sprintf("t.\"%s\" = b.\"%s\"::text", model.D3MIndexName, model.D3MIndexName)}
+	wheres := []string{fmt.Sprintf("t.\"%s\" = b.\"%s\"::text", model.D3MIndexFieldName, model.D3MIndexFieldName)}
 	paramsFilter := make([]interface{}, 0)
 	wheres, paramsFilter = s.buildFilteredQueryWhere(dataset, wheres, paramsFilter, "b", filterParams, false)
 

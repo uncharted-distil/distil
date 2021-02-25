@@ -645,7 +645,7 @@ func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Varia
 				log.Warnf("field '%s' not found in source dataset - column will be empty", predictVariable.Key)
 				predictVariablesMap[i] = -1
 			}
-			if predictVariable.Key == model.D3MIndexName {
+			if predictVariable.Key == model.D3MIndexFieldName {
 				addIndex = false
 			}
 		}
@@ -662,7 +662,7 @@ func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Varia
 
 	// read the d3m field index if present
 	d3mFieldIndex := -1
-	if variable, ok := sourceVariableMap[strings.ToLower(model.D3MIndexName)]; ok {
+	if variable, ok := sourceVariableMap[strings.ToLower(model.D3MIndexFieldName)]; ok {
 		d3mFieldIndex = variable.Index
 	}
 
@@ -723,7 +723,7 @@ func CreateComposedVariable(metaStorage api.MetadataStorage, dataStorage api.Dat
 		// No grouping column - just use the d3mIndex as we'll just stick some placeholder
 		// data in.
 		filter = &api.FilterParams{
-			Variables: []string{model.D3MIndexName},
+			Variables: []string{model.D3MIndexFieldName},
 		}
 	}
 	rawData, err := dataStorage.FetchData(dataset, storageName, filter, false, false, nil)
@@ -736,7 +736,7 @@ func CreateComposedVariable(metaStorage api.MetadataStorage, dataStorage api.Dat
 	d3mIndexFieldindex := -1
 	colNameToIdx := make(map[string]int)
 	for i, c := range rawData.Columns {
-		if c.Label == model.D3MIndexName {
+		if c.Label == model.D3MIndexFieldName {
 			d3mIndexFieldindex = i
 		} else {
 			colNameToIdx[c.Label] = i

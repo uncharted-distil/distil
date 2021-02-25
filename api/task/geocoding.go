@@ -166,7 +166,7 @@ func GeocodeForward(datasetInputDir string, dataset string, variable *model.Vari
 
 	latIndex := getFieldIndex(header, fmt.Sprintf("%s_latitude", variable.HeaderName))
 	lonIndex := getFieldIndex(header, fmt.Sprintf("%s_longitude", variable.HeaderName))
-	d3mIndexIndex := getFieldIndex(header, model.D3MIndexName)
+	d3mIndexIndex := getFieldIndex(header, model.D3MIndexFieldName)
 	for i, v := range res {
 		lat := v[latIndex].(string)
 		lon := v[lonIndex].(string)

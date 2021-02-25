@@ -161,7 +161,7 @@ func getClusterVariables(meta *model.Metadata, prefix string) ([]*FeatureRequest
 func getD3MIndexField(dr *model.DataResource) int {
 	d3mIndexField := -1
 	for _, v := range dr.Variables {
-		if v.Key == model.D3MIndexName {
+		if v.Key == model.D3MIndexFieldName {
 			d3mIndexField = v.Index
 		}
 	}
