@@ -41,7 +41,7 @@ func (s *Storage) FetchCorrectnessSummary(dataset string, storageName string, re
 
 	var baseline *api.Histogram
 	var filtered *api.Histogram
-	baseline, err = s.fetchHistogram(dataset, storageName, variable, targetName, resultURI, nil, mode)
+	baseline, err = s.fetchHistogram(dataset, storageName, variable, targetName, resultURI, api.GetBaselineFilter(filterParams), mode)
 	if err != nil {
 		return nil, err
 	}
