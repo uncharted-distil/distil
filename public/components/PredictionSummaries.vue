@@ -200,12 +200,16 @@ export default Vue.extend({
         if (this.summaries && this.produceRequestId !== getIDFromKey(key)) {
           this.onClick(key);
         }
-        updateHighlight(this.$router, {
-          context: context,
-          dataset: dataset,
-          key: key,
-          value: value,
-        });
+        if (key && value) {
+          updateHighlight(this.$router, {
+            context: context,
+            dataset: dataset,
+            key: key,
+            value: value,
+          });
+        } else {
+          clearHighlight(this.$router);
+        }
         appActions.logUserEvent(this.$store, {
           feature: Feature.CHANGE_HIGHLIGHT,
           activity: Activity.PREDICTION_ANALYSIS,
@@ -221,12 +225,16 @@ export default Vue.extend({
       value: { from: { label: string[] }; to: { label: string[] } },
       dataset: string
     ) {
-      updateHighlight(this.$router, {
-        context: context,
-        dataset: dataset,
-        key: key,
-        value: value,
-      });
+      if (key && value) {
+        updateHighlight(this.$router, {
+          context: context,
+          dataset: dataset,
+          key: key,
+          value: value,
+        });
+      } else {
+        clearHighlight(this.$router);
+      }
       appActions.logUserEvent(this.$store, {
         feature: Feature.CHANGE_HIGHLIGHT,
         activity: Activity.PREDICTION_ANALYSIS,

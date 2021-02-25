@@ -447,12 +447,16 @@ export default Vue.extend({
         false
       );
       if (uniqueHighlight) {
-        updateHighlight(this.$router, {
-          context: context,
-          dataset: dataset,
-          key: key,
-          value: value,
-        });
+        if (key && value) {
+          updateHighlight(this.$router, {
+            context: context,
+            dataset: dataset,
+            key: key,
+            value: value,
+          });
+        } else {
+          clearHighlight(this.$router);
+        }
       }
     },
 
@@ -462,12 +466,16 @@ export default Vue.extend({
       value: { from: { label: string[] }; to: { label: string[] } },
       dataset: string
     ) {
-      updateHighlight(this.$router, {
-        context: context,
-        dataset: dataset,
-        key: key,
-        value: value,
-      });
+      if (key && value) {
+        updateHighlight(this.$router, {
+          context: context,
+          dataset: dataset,
+          key: key,
+          value: value,
+        });
+      } else {
+        clearHighlight(this.$router);
+      }
       appActions.logUserEvent(this.$store, {
         feature: Feature.CHANGE_HIGHLIGHT,
         activity: Activity.MODEL_SELECTION,
@@ -488,12 +496,16 @@ export default Vue.extend({
         false
       );
       if (uniqueHighlight) {
-        updateHighlight(this.$router, {
-          context: context,
-          dataset: dataset,
-          key: key,
-          value: value,
-        });
+        if (key && value) {
+          updateHighlight(this.$router, {
+            context: context,
+            dataset: dataset,
+            key: key,
+            value: value,
+          });
+        } else {
+          clearHighlight(this.$router);
+        }
       }
     },
 
@@ -503,12 +515,16 @@ export default Vue.extend({
       value: { from: number; to: number },
       dataset: string
     ) {
-      updateHighlight(this.$router, {
-        context: context,
-        dataset: dataset,
-        key: key,
-        value: value,
-      });
+      if (key && value) {
+        updateHighlight(this.$router, {
+          context: context,
+          dataset: dataset,
+          key: key,
+          value: value,
+        });
+      } else {
+        clearHighlight(this.$router);
+      }
       appActions.logUserEvent(this.$store, {
         feature: Feature.CHANGE_HIGHLIGHT,
         activity: Activity.MODEL_SELECTION,
@@ -544,12 +560,16 @@ export default Vue.extend({
       value: { from: number; to: number },
       dataset: string
     ) {
-      updateHighlight(this.$router, {
-        context: context,
-        dataset: dataset,
-        key: key,
-        value: value,
-      });
+      if (key && value) {
+        updateHighlight(this.$router, {
+          context: context,
+          dataset: dataset,
+          key: key,
+          value: value,
+        });
+      } else {
+        clearHighlight(this.$router);
+      }
       appActions.logUserEvent(this.$store, {
         feature: Feature.CHANGE_HIGHLIGHT,
         activity: Activity.MODEL_SELECTION,

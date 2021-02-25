@@ -394,12 +394,16 @@ export default Vue.extend({
       value: { from: number; to: number },
       dataset: string
     ) {
-      updateHighlight(this.$router, {
-        context: context,
-        dataset: dataset,
-        key: key,
-        value: value,
-      });
+      if (key && value) {
+        updateHighlight(this.$router, {
+          context: context,
+          dataset: dataset,
+          key: key,
+          value: value,
+        });
+      } else {
+        clearHighlight(this.$router);
+      }
       this.$emit("range-change", key, value);
       appActions.logUserEvent(this.$store, {
         feature: Feature.CHANGE_HIGHLIGHT,
@@ -447,12 +451,16 @@ export default Vue.extend({
           false
         );
         if (uniqueHighlight) {
-          updateHighlight(this.$router, {
-            context: this.instanceName,
-            dataset: dataset,
-            key: key,
-            value: value,
-          });
+          if (key && value) {
+            updateHighlight(this.$router, {
+              context: context,
+              dataset: dataset,
+              key: key,
+              value: value,
+            });
+          } else {
+            clearHighlight(this.$router);
+          }
         }
       }
       this.$emit("numerical-click", key);

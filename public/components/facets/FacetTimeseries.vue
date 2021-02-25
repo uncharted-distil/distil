@@ -61,7 +61,7 @@ import { EXPAND_ACTION_TYPE, COLLAPSE_ACTION_TYPE } from "../../util/types";
  * @param {Boolean} [expanded=false] - To display the facet expanded; Collapsed by default.
  */
 export default Vue.extend({
-  name: "facet-timeseries",
+  name: "FacetTimeseries",
 
   components: {
     FacetSparklines,
