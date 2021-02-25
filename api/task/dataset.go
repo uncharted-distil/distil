@@ -421,10 +421,15 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 		newDS.Variables = append(newDS.Variables, v)
 	}
 
-	// update prefeaturized dataset based on the source dataset since the target already exists but is blank!
-	if sourceDS.LearningDataset != "" {
+	// if the prediction data is prefeaturized, then update the target variable with the new values
+	if predictionDS.LearningDataset != "" {
 		targetFolder := env.ResolvePath(newDS.Source, createFeaturizedDatasetID(newDatasetID))
-		_, err = apicompute.UpdatePrefeaturizedDataset(targetFolder, sourceDS.GetLearningFolder(), newDS, rawDS.Data, true)
+		err := util.Copy(predictionDS.GetLearningFolder(), targetFolder)
+		if err != nil {
+			return "", err
+		}
+		//_, err = apicompute.UpdatePrefeaturizedDataset(targetFolder, predictionDS.GetLearningFolder(), newDS, rawDS.Data, true)
+		err = updatePrefeaturizedDatasetVariable(targetFolder, varsSource[targetName].HeaderName, rawDS)
 		if err != nil {
 			return "", err
 		}
@@ -443,6 +448,68 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 	}
 
 	return metaDisk.ID, nil
+}
+
+func updatePrefeaturizedDatasetVariable(prefeaturizedPath string, variableName string, updatedData *api.RawDataset) error {
+	log.Infof("updating variable '%s' in prefeaturized dataset found at '%s'", variableName, prefeaturizedPath)
+	schemaPath := path.Join(prefeaturizedPath, compute.D3MDataSchema)
+	dsDisk, err := serialization.ReadDataset(schemaPath)
+	if err != nil {
+		return err
+	}
+
+	dsDisk.Metadata.ID = updatedData.Metadata.ID
+	dsDisk.Metadata.Name = updatedData.Metadata.Name
+	dsDisk.Metadata.StorageName = updatedData.Metadata.StorageName
+
+	// get the variable column to update and the d3m index column
+	indicesPrefeaturized, err := getVariableIndices(dsDisk.Data[0], []string{variableName, model.D3MIndexFieldName})
+	if err != nil {
+		return err
+	}
+	indicesUpdated, err := getVariableIndices(updatedData.Data[0], []string{variableName, model.D3MIndexFieldName})
+	if err != nil {
+		return err
+	}
+
+	// create the updated data lookup
+	updatedDataLookup := map[string]string{}
+	for _, row := range updatedData.Data[1:] {
+		updatedDataLookup[row[indicesUpdated[model.D3MIndexFieldName]]] = row[indicesUpdated[variableName]]
+	}
+
+	// cycle through updates
+	for _, row := range dsDisk.Data[1:] {
+		d3mIndexValue := row[indicesPrefeaturized[model.D3MIndexFieldName]]
+		row[indicesPrefeaturized[variableName]] = updatedDataLookup[d3mIndexValue]
+	}
+
+	// output updated dataset
+	err = serialization.WriteDataset(prefeaturizedPath, dsDisk)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func getVariableIndices(header []string, variables []string) (map[string]int, error) {
+	indices := map[string]int{}
+	for _, v := range variables {
+		varIndex := -1
+		for i, h := range header {
+			if h == v {
+				varIndex = i
+				break
+			}
+		}
+		if varIndex == -1 {
+			return nil, errors.Errorf("variable '%s' does not exist in header", v)
+		}
+		indices[v] = varIndex
+	}
+
+	return indices, nil
 }
 
 // UpdateExtremas will update every field's extremas in the specified dataset.
