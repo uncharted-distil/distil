@@ -197,6 +197,68 @@ func (d *Dataset) GetLearningFolder() string {
 	return env.ResolvePath(d.Source, d.Folder)
 }
 
+// SyncMetadata updates the key metadata properties to match a given metadata.
+// This is often use to update the metadata for prediction or prefeaturization purposes.
+func (d *RawDataset) SyncMetadata(metaToSync *model.Metadata) {
+	d.Metadata.ID = metaToSync.ID
+	d.Metadata.Name = metaToSync.Name
+	d.Metadata.StorageName = metaToSync.StorageName
+}
+
+// AddField adds a field to the dataset, updating both the data and the metadata.
+func (d *RawDataset) AddField(variable *model.Variable) error {
+	if d.FieldExists(variable) {
+		return errors.Errorf("field '%s' already exists in the raw dataset", variable.Key)
+	}
+	d.Metadata.GetMainDataResource().Variables = append(d.Metadata.GetMainDataResource().Variables, variable)
+
+	// the first row is the header row
+	d.Data[0] = append(d.Data[0], variable.HeaderName)
+	for i, row := range d.Data[1:] {
+		d.Data[i+1] = append(row, "")
+	}
+
+	return nil
+}
+
+// FieldExists returns true if a field is already part of the metadata.
+func (d *RawDataset) FieldExists(variable *model.Variable) bool {
+	for _, v := range d.Metadata.GetMainDataResource().Variables {
+		if v.Key == variable.Key {
+			return true
+		}
+	}
+
+	return false
+}
+
+// GetVariableIndex returns the index of the variable as found in the header
+// or -1 if not found in the header.
+func (d *RawDataset) GetVariableIndex(variableHeaderName string) int {
+	for i, f := range d.Data[0] {
+		if f == variableHeaderName {
+			return i
+		}
+	}
+
+	return -1
+}
+
+// GetVariableIndices returns the mapping of variable header name to header index.
+// It will error if a field is not found in the header.
+func (d *RawDataset) GetVariableIndices(variableHeaderNames []string) (map[string]int, error) {
+	indices := map[string]int{}
+	for _, v := range variableHeaderNames {
+		varIndex := d.GetVariableIndex(v)
+		if varIndex == -1 {
+			return nil, errors.Errorf("variable '%s' does not exist in header", v)
+		}
+		indices[v] = varIndex
+	}
+
+	return indices, nil
+}
+
 // UpdateExtremas updates the variable extremas based on the data stored.
 func UpdateExtremas(dataset string, varName string, storageMeta MetadataStorage, storageData DataStorage) error {
 	// get the metadata and then query the data storage for the latest values
