@@ -307,7 +307,7 @@ func PrepExistingPredictionDataset(params *PredictParams) (string, string, error
 		}
 		dsCloned.LearningDataset = learningFolder
 
-		dsLearning, err := serialization.ReadDataset(path.Join(learningFolder, compute.D3MDataSchema))
+		dsLearning, err = serialization.ReadDataset(path.Join(learningFolder, compute.D3MDataSchema))
 		if err != nil {
 			return "", "", err
 		}

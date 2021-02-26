@@ -210,7 +210,9 @@ func (d *RawDataset) AddField(variable *model.Variable) error {
 	if d.FieldExists(variable) {
 		return errors.Errorf("field '%s' already exists in the raw dataset", variable.Key)
 	}
-	d.Metadata.GetMainDataResource().Variables = append(d.Metadata.GetMainDataResource().Variables, variable)
+	clone := variable.Clone()
+	clone.Index = len(d.Metadata.GetMainDataResource().Variables)
+	d.Metadata.GetMainDataResource().Variables = append(d.Metadata.GetMainDataResource().Variables, clone)
 
 	// the first row is the header row
 	d.Data[0] = append(d.Data[0], variable.HeaderName)
