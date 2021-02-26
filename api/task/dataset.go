@@ -280,7 +280,6 @@ func updateLearningDataset(newDataset *api.RawDataset, metaDataset *api.Dataset,
 // to the model
 func CreateDatasetFromResult(newDatasetName string, predictionDataset string, sourceDataset string, features []string,
 	targetName string, resultURI string, metaStorage api.MetadataStorage, dataStorage api.DataStorage, config env.Config) (string, error) {
-	newDatasetID := model.NormalizeDatasetID(newDatasetName)
 	// get the prediction dataset
 	predictionDS, err := metaStorage.FetchDataset(predictionDataset, true, true, true)
 	if err != nil {
@@ -371,7 +370,7 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 	// update the header of the data since the data from the database uses keys as header
 	data[0] = metaDisk.GetMainDataResource().GenerateHeader()
 
-	metaDisk.ID = newDatasetID
+	metaDisk.ID = newDatasetName
 	metaDisk.Name = newDatasetName
 	metaDisk.StorageName = newStorageName
 	metaDisk.DatasetFolder = newDatasetName
@@ -412,7 +411,7 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 	}
 
 	// add all groups
-	newDS, err := metaStorage.FetchDataset(newDatasetID, true, true, true)
+	newDS, err := metaStorage.FetchDataset(newDatasetName, true, true, true)
 	if err != nil {
 		return "", err
 	}
@@ -423,7 +422,7 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 
 	// if the prediction data is prefeaturized, then update the target variable with the new values
 	if predictionDS.LearningDataset != "" {
-		targetFolder := env.ResolvePath(newDS.Source, createFeaturizedDatasetID(newDatasetID))
+		targetFolder := env.ResolvePath(newDS.Source, createFeaturizedDatasetID(newDatasetName))
 		err := util.Copy(predictionDS.GetLearningFolder(), targetFolder)
 		if err != nil {
 			return "", err
@@ -496,13 +495,7 @@ func updatePrefeaturizedDatasetVariable(prefeaturizedPath string, variableName s
 func getVariableIndices(header []string, variables []string) (map[string]int, error) {
 	indices := map[string]int{}
 	for _, v := range variables {
-		varIndex := -1
-		for i, h := range header {
-			if h == v {
-				varIndex = i
-				break
-			}
-		}
+		varIndex := getFieldIndex(header, v)
 		if varIndex == -1 {
 			return nil, errors.Errorf("variable '%s' does not exist in header", v)
 		}
