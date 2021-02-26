@@ -214,9 +214,9 @@ export function filterParamsToLexQuery(
 export function lexQueryToFiltersAndHighlight(
   lexQuery: any[][],
   dataset: string
-): { filters: Filter[]; highlight: Highlight } {
+): { filters: Filter[]; highlights: Highlight[] } {
   const filters = [];
-  let highlight = null;
+  const highlights = [];
 
   lexQuery[0].forEach((lq) => {
     if (lq.relation.key !== HIGHLIGHT) {
@@ -250,7 +250,7 @@ export function lexQueryToFiltersAndHighlight(
     } else {
       const key = lq.field.key;
       const type = lq.field.meta.type;
-      highlight = {
+      const highlight = {
         dataset,
         context: "lex-bar",
         key,
@@ -274,11 +274,13 @@ export function lexQueryToFiltersAndHighlight(
       } else {
         highlight.value = lq.value.key;
       }
+
+      highlights.push(highlight);
     }
   });
   return {
     filters: filters,
-    highlight: highlight,
+    highlights: highlights,
   };
 }
 

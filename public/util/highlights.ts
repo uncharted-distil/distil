@@ -23,14 +23,21 @@ import _ from "lodash";
 import store from "../store/store";
 import VueRouter from "vue-router";
 
-export function encodeHighlights(highlight: Highlight): string {
-  const currentHighlights = routeGetters.getDecodedHighlights(store);
-  console.log(currentHighlights);
-
-  if (_.isEmpty(highlight)) {
+export function encodeHighlights(
+  highlights: Highlight | Highlight[],
+  deepUpdate: boolean
+): string {
+  if (_.isEmpty(highlights)) {
     return null;
   }
-  return btoa(JSON.stringify([highlight, ...currentHighlights]));
+  const currentHighlights = deepUpdate
+    ? []
+    : routeGetters.getDecodedHighlights(store);
+  if (Array.isArray(highlights)) {
+    return btoa(JSON.stringify([...highlights, ...currentHighlights]));
+  } else {
+    return btoa(JSON.stringify([highlights, ...currentHighlights]));
+  }
 }
 
 export function decodeHighlights(highlight: string): Highlight[] {
@@ -158,9 +165,13 @@ export function addHighlightToFilterParams(
   return params;
 }
 
-export function updateHighlight(router: VueRouter, highlight: Highlight) {
+export function updateHighlight(
+  router: VueRouter,
+  highlights: Highlight | Highlight[],
+  deepUpdate?: boolean
+) {
   const entry = overlayRouteEntry(routeGetters.getRoute(store), {
-    highlights: encodeHighlights(highlight),
+    highlights: encodeHighlights(highlights, deepUpdate),
     row: null, // clear row
   });
   router.push(entry).catch((err) => console.warn(err));

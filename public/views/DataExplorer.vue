@@ -455,7 +455,7 @@ export default Vue.extend({
     updateFilterAndHighlightFromLexQuery(lexQuery) {
       const lqfh = lexQueryToFiltersAndHighlight(lexQuery, this.dataset);
       deepUpdateFiltersInRoute(this.$router, lqfh.filters);
-      updateHighlight(this.$router, lqfh.highlight);
+      updateHighlight(this.$router, lqfh.highlights, true);
     },
 
     /* When the user request to fetch a different size of data. */
