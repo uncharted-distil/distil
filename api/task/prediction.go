@@ -713,19 +713,13 @@ func CreateComposedVariable(metaStorage api.MetadataStorage, dataStorage api.Dat
 	}
 
 	composedData := map[string]string{}
-	var filter *api.FilterParams
-	if len(sourceVarNames) > 0 {
-		// Fetch data using the source names as the filter
-		filter = &api.FilterParams{
-			Variables: sourceVarNames,
-		}
-	} else {
-		// No grouping column - just use the d3mIndex as we'll just stick some placeholder
-		// data in.
-		filter = &api.FilterParams{
-			Variables: []string{model.D3MIndexName},
-		}
+	// No grouping column - just use the d3mIndex as we'll just stick some placeholder
+	// data in.
+	filter := &api.FilterParams{
+		Variables: []string{model.D3MIndexName},
 	}
+	// Fetch data using the source names as the filter
+	filter.Variables = append(filter.Variables, sourceVarNames...)
 	rawData, err := dataStorage.FetchData(dataset, storageName, filter, false, false, nil)
 	if err != nil {
 		return err
