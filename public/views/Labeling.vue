@@ -419,7 +419,7 @@ export default Vue.extend({
           value: value,
         });
       } else {
-        clearHighlight(this.$router);
+        clearHighlight(this.$router, key);
       }
       appActions.logUserEvent(this.$store, {
         feature: Feature.CHANGE_HIGHLIGHT,

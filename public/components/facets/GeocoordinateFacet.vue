@@ -624,7 +624,7 @@ export default Vue.extend({
               maxY: currentValue.maxY,
             };
             if (value === null) {
-              clearHighlight(this.$router);
+              clearHighlight(this.$router, key);
             } else {
               if (geocoordinateComponent === LONGITUDE_TYPE) {
                 highlightValue.minX = value.from;
@@ -849,7 +849,7 @@ export default Vue.extend({
       if (this.selectedRect) {
         const rectPath = (<any>this.selectedRect)._path;
         $(rectPath).removeClass("selected");
-        clearHighlight(this.$router);
+        clearHighlight(this.$router, this.summary.key);
       }
       if (this.closeButton) {
         this.closeButton.remove();

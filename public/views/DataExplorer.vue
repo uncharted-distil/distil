@@ -476,12 +476,7 @@ export default Vue.extend({
       }
 
       addFilterToRoute(this.$router, filter);
-
-      if (this.isFilteringHighlights) {
-        clearHighlight(this.$router);
-      } else {
-        clearRowSelection(this.$router);
-      }
+      this.resetHighlightsOrRow();
 
       datasetActions.fetchVariableRankings(this.$store, {
         dataset: this.dataset,
@@ -508,12 +503,7 @@ export default Vue.extend({
       }
 
       addFilterToRoute(this.$router, filter);
-
-      if (this.isFilteringHighlights) {
-        clearHighlight(this.$router);
-      } else {
-        clearRowSelection(this.$router);
-      }
+      this.resetHighlightsOrRow();
 
       datasetActions.fetchVariableRankings(this.$store, {
         dataset: this.dataset,
@@ -561,6 +551,14 @@ export default Vue.extend({
     updateRoute(args) {
       const entry = overlayRouteEntry(this.$route, args);
       this.$router.push(entry).catch((err) => console.warn(err));
+    },
+
+    resetHighlightsOrRow() {
+      if (this.isFilteringHighlights) {
+        clearHighlight(this.$router);
+      } else {
+        clearRowSelection(this.$router);
+      }
     },
 
     preSelectTopVariables(number = 5): void {

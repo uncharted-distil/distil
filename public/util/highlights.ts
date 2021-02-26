@@ -177,12 +177,22 @@ export function updateHighlight(
   router.push(entry).catch((err) => console.warn(err));
 }
 
-export function clearHighlight(router: VueRouter) {
-  const entry = overlayRouteEntry(routeGetters.getRoute(store), {
-    highlights: null,
-    row: null, // clear row
-  });
-  router.push(entry).catch((err) => console.warn(err));
+export function clearHighlight(router: VueRouter, key?: string) {
+  if (!key) {
+    // no key, clear everything
+    const entry = overlayRouteEntry(routeGetters.getRoute(store), {
+      highlights: null,
+      row: null, // clear row
+    });
+    router.push(entry).catch((err) => console.warn(err));
+  } else {
+    // key, clear everything with that key
+    const highlights = routeGetters.getRouteHighlight(store);
+    const decodedHighlights = decodeHighlights(highlights).filter((h) => {
+      return h.key && h.key !== key;
+    });
+    updateHighlight(router, decodedHighlights, true);
+  }
 }
 
 export function highlightsExist() {

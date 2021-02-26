@@ -402,7 +402,7 @@ export default Vue.extend({
           value: value,
         });
       } else {
-        clearHighlight(this.$router);
+        clearHighlight(this.$router, key);
       }
       this.$emit("range-change", key, value);
       appActions.logUserEvent(this.$store, {
@@ -423,7 +423,7 @@ export default Vue.extend({
             value: value,
           });
         } else {
-          clearHighlight(this.$router);
+          clearHighlight(this.$router, key);
         }
         appActions.logUserEvent(this.$store, {
           feature: Feature.CHANGE_HIGHLIGHT,
@@ -459,7 +459,7 @@ export default Vue.extend({
               value: value,
             });
           } else {
-            clearHighlight(this.$router);
+            clearHighlight(this.$router, key);
           }
         }
       }

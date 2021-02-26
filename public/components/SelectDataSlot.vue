@@ -356,12 +356,7 @@ export default Vue.extend({
       }
 
       addFilterToRoute(this.$router, filter);
-
-      if (this.isFilteringHighlights) {
-        clearHighlight(this.$router);
-      } else {
-        clearRowSelection(this.$router);
-      }
+      this.resetHighlightsOrRow();
 
       datasetActions.fetchVariableRankings(this.$store, {
         dataset: this.dataset,
@@ -388,12 +383,7 @@ export default Vue.extend({
       }
 
       addFilterToRoute(this.$router, filter);
-
-      if (this.isFilteringHighlights) {
-        clearHighlight(this.$router);
-      } else {
-        clearRowSelection(this.$router);
-      }
+      this.resetHighlightsOrRow();
 
       datasetActions.fetchVariableRankings(this.$store, {
         dataset: this.dataset,
@@ -431,6 +421,14 @@ export default Vue.extend({
       const entry = overlayRouteEntry(this.$route, { dataSize });
       this.$router.push(entry).catch((err) => console.warn(err));
       viewActions.updateSelectTrainingData(this.$store);
+    },
+
+    resetHighlightsOrRow() {
+      if (this.isFilteringHighlights) {
+        clearHighlight(this.$router);
+      } else {
+        clearRowSelection(this.$router);
+      }
     },
 
     updateFilterAndHighlightFromLexQuery(lexQuery) {
