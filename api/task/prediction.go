@@ -296,6 +296,24 @@ func PrepExistingPredictionDataset(params *PredictParams) (string, string, error
 	}
 	mainDR := dsDisk.Metadata.GetMainDataResource()
 
+	// update the learning dataset
+	learningFolder := targetFolder
+	var dsLearning *api.RawDataset
+	if dsSource.LearningDataset != "" {
+		learningFolder = createFeaturizedDatasetID(learningFolder)
+		err := util.Copy(dsSource.GetLearningFolder(), learningFolder)
+		if err != nil {
+			return "", "", err
+		}
+		dsCloned.LearningDataset = learningFolder
+
+		dsLearning, err = serialization.ReadDataset(path.Join(learningFolder, compute.D3MDataSchema))
+		if err != nil {
+			return "", "", err
+		}
+		dsLearning.SyncMetadata(dsCloned.ToMetadata())
+	}
+
 	foundTarget := false
 	for i, v := range mainDR.Variables {
 		if v.Key == params.Target.Key {
@@ -308,13 +326,20 @@ func PrepExistingPredictionDataset(params *PredictParams) (string, string, error
 	if !foundTarget {
 		// not ideal to update the target as a side effect...
 		params.Target.Index = len(mainDR.Variables)
-		mainDR.Variables = append(mainDR.Variables, params.Target)
+		err = dsDisk.AddField(params.Target)
+		if err != nil {
+			return "", "", err
+		}
+
+		// add it to the prefeaturized dataset
+		if dsLearning != nil {
+			err = dsLearning.AddField(params.Target)
+			if err != nil {
+				return "", "", err
+			}
+		}
 
 		// need to append the target to the underlying data
-		dsDisk.Data[0] = append(dsDisk.Data[0], params.Target.HeaderName)
-		for i, row := range dsDisk.Data[1:] {
-			dsDisk.Data[i+1] = append(row, "")
-		}
 		dsCloned.Variables = append(dsCloned.Variables, params.Target)
 		err = serialization.WriteDataset(targetFolder, dsDisk)
 		if err != nil {
@@ -327,23 +352,20 @@ func PrepExistingPredictionDataset(params *PredictParams) (string, string, error
 			return "", "", err
 		}
 	}
-
-	// update the learning dataset
-	if dsSource.LearningDataset != "" {
-		targetFolder = createFeaturizedDatasetID(targetFolder)
-		_, err = comp.UpdatePrefeaturizedDataset(targetFolder, dsSource.GetLearningFolder(), dsCloned, dsDisk.Data, true)
-		if err != nil {
-			return "", "", err
-		}
-		dsCloned.LearningDataset = targetFolder
-	}
 	dsCloned.Type = api.DatasetTypeInference
 	err = params.MetaStorage.UpdateDataset(dsCloned)
 	if err != nil {
 		return "", "", err
 	}
 
-	return cloneDatasetID, targetFolder, nil
+	if dsLearning != nil {
+		err = serialization.WriteDataset(learningFolder, dsLearning)
+		if err != nil {
+			return "", "", err
+		}
+	}
+
+	return cloneDatasetID, learningFolder, nil
 }
 
 // ImportPredictionDataset imports a dataset to be used for predictions.
@@ -645,7 +667,7 @@ func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Varia
 				log.Warnf("field '%s' not found in source dataset - column will be empty", predictVariable.Key)
 				predictVariablesMap[i] = -1
 			}
-			if predictVariable.Key == model.D3MIndexName {
+			if predictVariable.Key == model.D3MIndexFieldName {
 				addIndex = false
 			}
 		}
@@ -662,7 +684,7 @@ func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Varia
 
 	// read the d3m field index if present
 	d3mFieldIndex := -1
-	if variable, ok := sourceVariableMap[strings.ToLower(model.D3MIndexName)]; ok {
+	if variable, ok := sourceVariableMap[strings.ToLower(model.D3MIndexFieldName)]; ok {
 		d3mFieldIndex = variable.Index
 	}
 
@@ -723,7 +745,7 @@ func CreateComposedVariable(metaStorage api.MetadataStorage, dataStorage api.Dat
 		// No grouping column - just use the d3mIndex as we'll just stick some placeholder
 		// data in.
 		filter = &api.FilterParams{
-			Variables: []string{model.D3MIndexName},
+			Variables: []string{model.D3MIndexFieldName},
 		}
 	}
 	rawData, err := dataStorage.FetchData(dataset, storageName, filter, false, false, nil)
@@ -736,7 +758,7 @@ func CreateComposedVariable(metaStorage api.MetadataStorage, dataStorage api.Dat
 	d3mIndexFieldindex := -1
 	colNameToIdx := make(map[string]int)
 	for i, c := range rawData.Columns {
-		if c.Label == model.D3MIndexName {
+		if c.Label == model.D3MIndexFieldName {
 			d3mIndexFieldindex = i
 		} else {
 			colNameToIdx[c.Label] = i

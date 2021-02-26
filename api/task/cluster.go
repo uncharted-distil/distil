@@ -187,7 +187,7 @@ func Cluster(dataset *api.Dataset, variable string, useKMeans bool) (bool, []*Cl
 		// cluster label may be returned with target name
 		clusterIndex = getFieldIndex(header, variable)
 	}
-	d3mIndexIndex := getFieldIndex(header, model.D3MIndexName)
+	d3mIndexIndex := getFieldIndex(header, model.D3MIndexFieldName)
 	if clusterIndex == -1 && len(header) == 2 {
 		// default to second column
 		clusterIndex = (d3mIndexIndex + 1) % 2

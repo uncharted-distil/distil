@@ -167,7 +167,7 @@ func (s *Storage) PersistExplainedResult(dataset string, storageName string, res
 
 	tableNameTmp := fmt.Sprintf("%s_utmp", storageName)
 	dataSQL := fmt.Sprintf("CREATE TEMP TABLE \"%s\" (\"%s\" TEXT NOT NULL, \"%s\" JSONB) ON COMMIT DROP;",
-		tableNameTmp, model.D3MIndexName, fieldName)
+		tableNameTmp, model.D3MIndexFieldName, fieldName)
 	_, err = tx.Exec(context.Background(), dataSQL)
 	if err != nil {
 		if rbErr := tx.Rollback(context.Background()); rbErr != nil {
@@ -176,7 +176,7 @@ func (s *Storage) PersistExplainedResult(dataset string, storageName string, res
 		return errors.Wrap(err, "unable to create temp table")
 	}
 
-	err = s.insertBulkCopyTransaction(tx, tableNameTmp, []string{model.D3MIndexName, fieldName}, params)
+	err = s.insertBulkCopyTransaction(tx, tableNameTmp, []string{model.D3MIndexFieldName, fieldName}, params)
 	if err != nil {
 		if rbErr := tx.Rollback(context.Background()); rbErr != nil {
 			log.Error("rollback failed")
@@ -186,7 +186,7 @@ func (s *Storage) PersistExplainedResult(dataset string, storageName string, res
 
 	// build the filter structure
 	wheres := []string{
-		fmt.Sprintf("t.\"%s\" = b.index::text", model.D3MIndexName),
+		fmt.Sprintf("t.\"%s\" = b.index::text", model.D3MIndexFieldName),
 		"b.\"result_id\" = $1",
 	}
 	paramsFilter := []interface{}{resultURI}
