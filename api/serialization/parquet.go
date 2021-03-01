@@ -77,7 +77,6 @@ func (d *Parquet) WriteDataset(uri string, data *api.RawDataset) error {
 		return err
 	}
 
-	data.Metadata.GetMainDataResource().ResPath = dataFilename
 	metaFilename := path.Join(uri, compute.D3MDataSchema)
 	err = d.WriteMetadata(metaFilename, data.Metadata, true, true)
 	if err != nil {
@@ -263,7 +262,11 @@ func (d *Parquet) WriteMetadata(uri string, meta *model.Metadata, extended bool,
 		mainDR.ResPath = fmt.Sprintf("%s.parquet", strings.TrimSuffix(mainDR.ResPath, path.Ext(mainDR.ResPath)))
 	}
 	for _, dr := range meta.DataResources {
-		dataResources = append(dataResources, d.writeDataResource(dr, extended))
+		mapped := d.writeDataResource(dr, extended)
+		if dr == mainDR {
+			mapped["resPath"] = path.Join(path.Dir(uri), compute.D3MDataFolder, compute.DistilParquetLearningData)
+		}
+		dataResources = append(dataResources, mapped)
 	}
 
 	about := map[string]interface{}{
