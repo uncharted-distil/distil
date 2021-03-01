@@ -77,6 +77,22 @@ func loadDiskDatasetFromFolder(folder string) (*DiskDataset, error) {
 	}, nil
 }
 
+func (d *DiskDataset) saveDataset() error {
+	err := serialization.WriteDataset(path.Dir(d.schemaPath), d.Dataset)
+	if err != nil {
+		return err
+	}
+
+	if d.FeaturizedDataset != nil {
+		err = d.FeaturizedDataset.saveDataset()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (d *DiskDataset) addField(variable *model.Variable) error {
 	err := d.Dataset.AddField(variable)
 	if err != nil {

@@ -191,7 +191,6 @@ func cloneDataset(sourceDatasetID string, cloneDatasetID string, cloneFolder str
 		return err
 	}
 
-	folderExisting := env.ResolvePath(ds.Source, ds.Folder)
 	storageNameClone, err := dataStorage.GetStorageName(cloneDatasetID)
 	if err != nil {
 		return err
@@ -209,7 +208,7 @@ func cloneDataset(sourceDatasetID string, cloneDatasetID string, cloneFolder str
 	}
 
 	// clone dataset on disk
-	dsDisk, err := loadDiskDatasetFromFolder(folderExisting)
+	dsDisk, err := loadDiskDataset(ds)
 	if err != nil {
 		return err
 	}
@@ -251,7 +250,6 @@ func PrepExistingPredictionDataset(params *PredictParams) (string, string, error
 		return "", "", err
 	}
 	targetFolder := fmt.Sprintf("%s-%s", env.ResolvePath(dsSource.Source, dsSource.Folder), params.FittedSolutionID)
-	schemaPath := path.Join(targetFolder, compute.D3MDataSchema)
 
 	// clone the base dataset, then add the necessary fields
 	log.Infof("cloning '%s' for predictions using '%s' as new id stored on disk at '%s'", params.Dataset, cloneDatasetID, targetFolder)
@@ -268,50 +266,27 @@ func PrepExistingPredictionDataset(params *PredictParams) (string, string, error
 
 	// make sure the dataset on disk has the target variable!
 	// (if performance here becomes an issue, only need data if adding target)
-	dsDisk, err := serialization.ReadDataset(schemaPath)
+	dsDisk, err := loadDiskDataset(dsCloned)
 	if err != nil {
 		return "", "", err
 	}
 
 	// update the learning dataset
-	learningFolder := targetFolder
-	var dsLearning *api.RawDataset
-	if dsSource.LearningDataset != "" {
-		learningFolder = createFeaturizedDatasetID(learningFolder)
-		err := util.Copy(dsSource.GetLearningFolder(), learningFolder)
-		if err != nil {
-			return "", "", err
-		}
-		dsCloned.LearningDataset = learningFolder
+	learningFolder := dsDisk.getLearningFolder()
 
-		dsLearning, err = serialization.ReadDataset(path.Join(learningFolder, compute.D3MDataSchema))
-		if err != nil {
-			return "", "", err
-		}
-		dsLearning.SyncMetadata(dsCloned.ToMetadata())
-	}
-
-	foundTarget := dsDisk.FieldExists(params.Target)
+	foundTarget := dsDisk.Dataset.FieldExists(params.Target)
 	if !foundTarget {
-		err = dsDisk.AddField(params.Target)
+		err = dsDisk.addField(params.Target)
 		if err != nil {
 			return "", "", err
 		}
-
-		// add it to the prefeaturized dataset
-		if dsLearning != nil {
-			err = dsLearning.AddField(params.Target)
-			if err != nil {
-				return "", "", err
-			}
+		err = dsDisk.saveDataset()
+		if err != nil {
+			return "", "", err
 		}
 
 		// need to append the target to the underlying data
 		dsCloned.Variables = append(dsCloned.Variables, params.Target)
-		err = serialization.WriteDataset(targetFolder, dsDisk)
-		if err != nil {
-			return "", "", err
-		}
 
 		// target field needs to exist in data storage as well
 		err = params.DataStorage.AddVariable(dsCloned.ID, dsCloned.StorageName, params.Target.Key, params.Target.Type, "")
@@ -323,13 +298,6 @@ func PrepExistingPredictionDataset(params *PredictParams) (string, string, error
 	err = params.MetaStorage.UpdateDataset(dsCloned)
 	if err != nil {
 		return "", "", err
-	}
-
-	if dsLearning != nil {
-		err = serialization.WriteDataset(learningFolder, dsLearning)
-		if err != nil {
-			return "", "", err
-		}
 	}
 
 	return cloneDatasetID, learningFolder, nil
