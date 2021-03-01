@@ -183,7 +183,8 @@ func createPredictionDatasetID(existingDatasetID string, fittedSolutionID string
 	return fmt.Sprintf("%s-%s", existingDatasetID, fittedSolutionID)
 }
 
-func cloneDataset(sourceDatasetID string, cloneDatasetID string, cloneFolder string,
+// CloneDataset clones a dataset in metadata storage, data storage and on disk.
+func CloneDataset(sourceDatasetID string, cloneDatasetID string, cloneFolder string,
 	cloneLearningDataset bool, metaStorage api.MetadataStorage, dataStorage api.DataStorage) error {
 
 	ds, err := metaStorage.FetchDataset(sourceDatasetID, false, false, false)
@@ -253,7 +254,7 @@ func PrepExistingPredictionDataset(params *PredictParams) (string, string, error
 
 	// clone the base dataset, then add the necessary fields
 	log.Infof("cloning '%s' for predictions using '%s' as new id stored on disk at '%s'", params.Dataset, cloneDatasetID, targetFolder)
-	err = cloneDataset(params.Dataset, cloneDatasetID, targetFolder, false, params.MetaStorage, params.DataStorage)
+	err = CloneDataset(params.Dataset, cloneDatasetID, targetFolder, false, params.MetaStorage, params.DataStorage)
 	if err != nil {
 		return "", "", err
 	}
