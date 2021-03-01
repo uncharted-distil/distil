@@ -198,7 +198,11 @@ import {
 } from "../../util/types";
 import { actions as appActions } from "../../store/app/module";
 import { Feature, Activity, SubActivity } from "../../util/userEvents";
-import { updateHighlight, clearHighlight } from "../../util/highlights";
+import {
+  updateHighlight,
+  clearHighlight,
+  UPDATE_FOR_KEY,
+} from "../../util/highlights";
 import Vue from "vue";
 
 export default Vue.extend({
@@ -413,15 +417,23 @@ export default Vue.extend({
       });
     },
 
-    onFacetClick(context: string, key: string, value: string, dataset: string) {
+    onFacetClick(
+      context: string,
+      key: string,
+      value: string[],
+      dataset: string
+    ) {
       if (this.enableHighlighting) {
-        if (key && value) {
-          updateHighlight(this.$router, {
-            context: context,
-            dataset: dataset,
-            key: key,
-            value: value,
+        if (key && value && Array.isArray(value) && value.length > 0) {
+          const updatedHighlights = value.map((v) => {
+            return {
+              context: context,
+              dataset: dataset,
+              key: key,
+              value: v,
+            };
           });
+          updateHighlight(this.$router, updatedHighlights, UPDATE_FOR_KEY);
         } else {
           clearHighlight(this.$router, key);
         }

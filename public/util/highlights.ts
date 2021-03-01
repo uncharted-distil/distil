@@ -23,21 +23,47 @@ import _ from "lodash";
 import store from "../store/store";
 import VueRouter from "vue-router";
 
+export const UPDATE_ALL = "updateAll";
+export const UPDATE_FOR_KEY = "updateForKey";
+
 export function encodeHighlights(
   highlights: Highlight | Highlight[],
-  deepUpdate: boolean
+  deepUpdate: string
 ): string {
   if (_.isEmpty(highlights)) {
     return null;
   }
-  const currentHighlights = deepUpdate
-    ? []
-    : routeGetters.getDecodedHighlights(store);
-  if (Array.isArray(highlights)) {
-    return btoa(JSON.stringify([...highlights, ...currentHighlights]));
-  } else {
-    return btoa(JSON.stringify([highlights, ...currentHighlights]));
-  }
+
+  // normalize the highlights to an array
+  const incomingHighlights = Array.isArray(highlights)
+    ? highlights
+    : [highlights];
+
+  // get the current highlights
+  const currentHighlights = routeGetters.getDecodedHighlights(store);
+
+  // if updating all highlights, ignored the current highlights
+  // if updating for a given variable (key) filter highlights from that key out of the current highlights
+  // if updating normally, use the current highlights
+  const workingHighlights =
+    deepUpdate === UPDATE_ALL
+      ? []
+      : deepUpdate === UPDATE_FOR_KEY
+      ? currentHighlights.filter((wh) => incomingHighlights[0].key !== wh.key)
+      : currentHighlights;
+
+  // combine the incoming and working highlight sets
+  const allHighlights = [...incomingHighlights, ...workingHighlights];
+
+  // then filter unique highlights, no duplicates
+  const uniqueHighlights = allHighlights.reduce((acc, h) => {
+    if (!acc.find((uh) => uh.value === h.value)) {
+      acc.push(h);
+    }
+    return acc;
+  }, [] as Highlight[]);
+
+  return btoa(JSON.stringify(uniqueHighlights));
 }
 
 export function decodeHighlights(highlight: string): Highlight[] {
@@ -168,7 +194,7 @@ export function addHighlightToFilterParams(
 export function updateHighlight(
   router: VueRouter,
   highlights: Highlight | Highlight[],
-  deepUpdate?: boolean
+  deepUpdate?: string
 ) {
   const entry = overlayRouteEntry(routeGetters.getRoute(store), {
     highlights: encodeHighlights(highlights, deepUpdate),
@@ -191,7 +217,7 @@ export function clearHighlight(router: VueRouter, key?: string) {
     const decodedHighlights = decodeHighlights(highlights).filter((h) => {
       return h.key && h.key !== key;
     });
-    updateHighlight(router, decodedHighlights, true);
+    updateHighlight(router, decodedHighlights, UPDATE_ALL);
   }
 }
 

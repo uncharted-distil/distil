@@ -141,6 +141,7 @@ import {
   clearHighlight,
   createFiltersFromHighlights,
   updateHighlight,
+  UPDATE_ALL,
 } from "../util/highlights";
 import { lexQueryToFiltersAndHighlight } from "../util/lex";
 import {
@@ -434,7 +435,7 @@ export default Vue.extend({
     updateFilterAndHighlightFromLexQuery(lexQuery) {
       const lqfh = lexQueryToFiltersAndHighlight(lexQuery, this.dataset);
       deepUpdateFiltersInRoute(this.$router, lqfh.filters);
-      updateHighlight(this.$router, lqfh.highlights, true);
+      updateHighlight(this.$router, lqfh.highlights, UPDATE_ALL);
     },
   },
 });

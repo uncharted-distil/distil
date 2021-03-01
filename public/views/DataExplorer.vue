@@ -164,13 +164,13 @@ import {
   clearHighlight,
   createFiltersFromHighlights,
   updateHighlight,
+  UPDATE_ALL,
 } from "../util/highlights";
 import { lexQueryToFiltersAndHighlight } from "../util/lex";
 import { overlayRouteEntry } from "../util/routes";
 import {
   clearRowSelection,
   getNumIncludedRows,
-  getNumExcludedRows,
   createFilterFromRowSelection,
 } from "../util/row";
 import { spinnerHTML } from "../util/spinner";
@@ -455,7 +455,7 @@ export default Vue.extend({
     updateFilterAndHighlightFromLexQuery(lexQuery) {
       const lqfh = lexQueryToFiltersAndHighlight(lexQuery, this.dataset);
       deepUpdateFiltersInRoute(this.$router, lqfh.filters);
-      updateHighlight(this.$router, lqfh.highlights, true);
+      updateHighlight(this.$router, lqfh.highlights, UPDATE_ALL);
     },
 
     /* When the user request to fetch a different size of data. */
