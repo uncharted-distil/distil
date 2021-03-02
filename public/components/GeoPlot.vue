@@ -1006,9 +1006,9 @@ export default Vue.extend({
     },
     // packs all data into single aligned memory array
     areaToQuads(): VertexPrimitive[] {
-      const result = [];
+      let result = [];
       this.areas.forEach((area, idx) => {
-        result.concat(
+        result = result.concat(
           area.info.toQuad(this.renderer, this.quadOpacity, idx)
             .vertexPrimitives
         );

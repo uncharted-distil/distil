@@ -600,7 +600,7 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
         Math.log(Math.tan(latRadians) + 1 / Math.cos(latRadians)) / Math.PI) /
       2;
 
-    return { x, y: 1 - y }; // have to invert y
+    return { x, y: 1.0 - y }; // have to invert y
   }
   /**
    *
