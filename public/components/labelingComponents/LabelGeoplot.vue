@@ -118,7 +118,7 @@ export default Vue.extend({
       }
       // comes back order by confidence so the rank is already engrained in the array
       if (item[LOW_SHOT_SCORE_COLUMN_NAME]) {
-        return idx / this.dataItems.length;
+        return 1.0 - idx / this.dataItems.length;
       }
       return undefined;
     },

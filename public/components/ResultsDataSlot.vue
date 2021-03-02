@@ -289,7 +289,7 @@ export default Vue.extend({
   methods: {
     colorTile(d) {
       if (d.rank !== undefined) {
-        return d.rank.value / this.rankSummary.baseline.extrema.max;
+        return 1.0 - d.rank.value / this.rankSummary.baseline.extrema.max;
       }
       if (d.confidence !== undefined) {
         return d.confidence.value;
