@@ -267,25 +267,18 @@ export default Vue.extend({
         event.detail.changedProperties.get("selection") !== undefined &&
         !_.isEqual(facet.selection, this.selection)
       ) {
-        let value = null;
+        const values = [];
         if (facet.selection) {
-          if (this.selection) {
-            const oldKey = Object.keys(this.selection)[0];
-            const incomingKeys = Object.keys(facet.selection);
-            const newKey = incomingKeys.filter(
-              (iKey) => oldKey.indexOf(iKey) < 0
-            )[0];
-            value = this.facetData.values[newKey].label;
-          } else {
-            const newKey = Object.keys(facet.selection)[0];
-            value = this.facetData.values[newKey].label;
-          }
+          const incomingKeys = Object.keys(facet.selection);
+          incomingKeys.forEach((ik) =>
+            values.push(this.facetData.values[ik].label)
+          );
         }
         this.$emit(
           "facet-click",
           this.instanceName,
           this.summary.key,
-          value,
+          values,
           this.summary.dataset
         );
       }
