@@ -60,6 +60,12 @@ func WriteData(uri string, data [][]string) error {
 	return store.WriteData(uri, data)
 }
 
+// WriteMetadata writes the metadata to disk.
+func WriteMetadata(uri string, metadata *model.Metadata) error {
+	store := GetStorage(metadata.GetMainDataResource().ResPath)
+	return store.WriteMetadata(uri, metadata, true, true)
+}
+
 // GetCSVStorage returns the instantiated csv storage.
 func GetCSVStorage() Storage {
 	return csvStorage

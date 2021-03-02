@@ -74,7 +74,6 @@ func (d *CSV) WriteDataset(uri string, data *api.RawDataset) error {
 		return err
 	}
 
-	data.Metadata.GetMainDataResource().ResPath = dataFilename
 	metaFilename := path.Join(uri, compute.D3MDataSchema)
 	err = d.WriteMetadata(metaFilename, data.Metadata, true, true)
 	if err != nil {
@@ -137,7 +136,11 @@ func (d *CSV) WriteMetadata(uri string, meta *model.Metadata, extended bool, upd
 		mainDR.ResPath = fmt.Sprintf("%s.csv", strings.TrimSuffix(mainDR.ResPath, path.Ext(mainDR.ResPath)))
 	}
 	for _, dr := range meta.DataResources {
-		dataResources = append(dataResources, d.writeDataResource(dr, extended))
+		mapped := d.writeDataResource(dr, extended)
+		if dr == mainDR {
+			mapped["resPath"] = path.Join(path.Dir(uri), compute.D3MDataFolder, compute.D3MLearningData)
+		}
+		dataResources = append(dataResources, mapped)
 	}
 
 	about := map[string]interface{}{

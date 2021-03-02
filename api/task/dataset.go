@@ -34,9 +34,124 @@ import (
 	"github.com/uncharted-distil/distil/api/util"
 )
 
+// DiskDataset represents a dataset stored on disk.
+type DiskDataset struct {
+	Dataset           *api.RawDataset
+	FeaturizedDataset *DiskDataset
+	schemaPath        string
+}
+
 // DatasetConstructor is used to build a dataset.
 type DatasetConstructor interface {
 	CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*api.RawDataset, error)
+}
+
+func loadDiskDataset(ds *api.Dataset) (*DiskDataset, error) {
+	folder := env.ResolvePath(ds.Source, ds.Folder)
+	output, err := loadDiskDatasetFromFolder(folder)
+	if err != nil {
+		return nil, err
+	}
+
+	if ds.LearningDataset != "" {
+		pre, err := loadDiskDatasetFromFolder(ds.LearningDataset)
+		if err != nil {
+			return nil, err
+		}
+		output.FeaturizedDataset = pre
+	}
+
+	return output, nil
+}
+
+func loadDiskDatasetFromFolder(folder string) (*DiskDataset, error) {
+	schemaPath := path.Join(folder, compute.D3MDataSchema)
+	dsDisk, err := serialization.ReadDataset(schemaPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return &DiskDataset{
+		Dataset:    dsDisk,
+		schemaPath: schemaPath,
+	}, nil
+}
+
+func (d *DiskDataset) saveDataset() error {
+	err := serialization.WriteDataset(path.Dir(d.schemaPath), d.Dataset)
+	if err != nil {
+		return err
+	}
+
+	if d.FeaturizedDataset != nil {
+		err = d.FeaturizedDataset.saveDataset()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (d *DiskDataset) addField(variable *model.Variable) error {
+	err := d.Dataset.AddField(variable)
+	if err != nil {
+		return err
+	}
+
+	if d.FeaturizedDataset != nil {
+		err = d.FeaturizedDataset.addField(variable)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (d *DiskDataset) clone(targetFolder string, cloneDatasetID string, cloneStorageName string) (*DiskDataset, error) {
+	// easiest clone is to write the dataset to the new location then read it
+	err := serialization.WriteDataset(targetFolder, d.Dataset)
+	if err != nil {
+		return nil, err
+	}
+
+	schemaPath := path.Join(targetFolder, compute.D3MDataSchema)
+	cloned, err := serialization.ReadDataset(schemaPath)
+	if err != nil {
+		return nil, err
+	}
+
+	// update the metadata
+	cloned.Metadata.ID = cloneDatasetID
+	cloned.Metadata.StorageName = cloneStorageName
+	err = serialization.WriteMetadata(schemaPath, cloned.Metadata)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &DiskDataset{
+		Dataset:    cloned,
+		schemaPath: schemaPath,
+	}
+
+	if d.FeaturizedDataset != nil {
+		clonedPrefeaturized, err := d.FeaturizedDataset.clone(fmt.Sprintf("%s-featurized", targetFolder), cloneDatasetID, cloneStorageName)
+		if err != nil {
+			return nil, err
+		}
+		output.FeaturizedDataset = clonedPrefeaturized
+	}
+
+	return output, nil
+}
+
+func (d *DiskDataset) getLearningFolder() string {
+	if d.FeaturizedDataset != nil {
+		return d.FeaturizedDataset.getLearningFolder()
+	}
+
+	return path.Dir(d.schemaPath)
 }
 
 // CreateDataset structures a raw csv file into a valid D3M dataset.
