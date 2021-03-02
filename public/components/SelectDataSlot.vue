@@ -236,6 +236,7 @@ export default Vue.extend({
         : 0;
     },
 
+    // return as filters for easier comparison in setting include/exclude state options.
     activeHighlights(): Filter[] {
       if (!this.highlights || this.highlights.length < 1) {
         return null;
