@@ -66,7 +66,10 @@ async function getVariables(dataset: string): Promise<Variable[]> {
 }
 
 // Return the best variable name of a dataset for outlier detection
-function getOutlierVariableName(variables: Variable[]) {
+function getOutlierVariableName(): string {
+  const variables = getters.getVariables(store) ?? [];
+  const target = routeGetters.getTargetVariable(store) ?? ({} as Variable);
+
   /*
     Find a grouping variable, specially a remote-sensing one.
     This is needed in case the remote-sensing images have not
@@ -81,12 +84,12 @@ function getOutlierVariableName(variables: Variable[]) {
     The variable name to be sent, is, in order of availability:
       - a remote-sensing variable first,
       - a grouping variable second,
-      - or the first dataset variable
+      - or the target variable
   */
   return (
     remoteSensingVariable?.grouping.idCol ??
     groupingVariables[0]?.grouping.idCol ??
-    variables?.[0].key
+    target.key
   );
 }
 
@@ -371,8 +374,7 @@ export const actions = {
     if (routeGetters.isOutlierApplied(store)) return;
 
     const { dataset } = args;
-    const variables = getters.getVariables(context) ?? [];
-    const variableName = getOutlierVariableName(variables);
+    const variableName = getOutlierVariableName();
 
     // Create the request.
     let status;
@@ -401,8 +403,7 @@ export const actions = {
   },
 
   async applyOutliers(context: DatasetContext, dataset: string) {
-    const variables = getters.getVariables(context);
-    const variableName = getOutlierVariableName(variables);
+    const variableName = getOutlierVariableName();
 
     try {
       await axios.get(`/distil/outlier-results/${dataset}/${variableName}`);
