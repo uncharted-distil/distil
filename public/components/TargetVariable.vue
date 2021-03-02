@@ -1,5 +1,5 @@
 <template>
-  <div :class="{ included: includedActive, excluded: !includedActive }">
+  <div>
     <variable-facets
       class="target-summary"
       enable-highlighting
@@ -21,7 +21,7 @@ import { VariableSummary } from "../store/dataset/index";
 import { Activity } from "../util/userEvents";
 
 export default Vue.extend({
-  name: "target-variable",
+  name: "TargetVariable",
 
   components: {
     VariableFacets,
@@ -38,7 +38,6 @@ export default Vue.extend({
     targetSummaries(): VariableSummary[] {
       return routeGetters.getTargetVariableSummaries(this.$store);
     },
-
     instanceName(): string {
       return TARGET_VAR_INSTANCE;
     },

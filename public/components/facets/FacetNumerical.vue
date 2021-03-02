@@ -154,15 +154,12 @@ export default Vue.extend({
       }
       const highlightValues = this.getHighlightValues();
       const buckets = this.summary.baseline.buckets;
-      const highlightValuesFlat = highlightValues.reduce(
-        (acc, val) => (val.from && val.to ? [...acc, val.from, val.to] : acc),
-        []
-      );
 
-      // map the values used for the highlight filter back to the buckets
+      // map the values used for the latest highlight filter back to the buckets
+      // so we can show the latest selection made.
       const highlightAsSelection = buckets.reduce((acc, val, ind) => {
         const key = _.toNumber(val.key);
-        if (highlightValuesFlat.includes(key)) {
+        if (highlightValues[0].from === key || highlightValues[0].to === key) {
           acc.push(ind);
         }
         return acc;

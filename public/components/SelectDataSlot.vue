@@ -23,22 +23,7 @@
       </b-nav-item>
     </view-type-toggle>
 
-    <div class="fake-search-input">
-      <filter-badge
-        v-for="(highlight, index) in activeHighlights"
-        :key="index"
-        :filter="highlight"
-      />
-
-      <filter-badge
-        v-for="(filter, index) in filters"
-        :key="index"
-        :filter="filter"
-      />
-    </div>
-
     <search-bar
-      v-show="isPrototype"
       class="mb-3"
       :variables="allVariables"
       :filters="routeFilters"
@@ -150,10 +135,7 @@ import {
   getNumExcludedRows,
   createFilterFromRowSelection,
 } from "../util/row";
-import {
-  actions as appActions,
-  getters as appGetters,
-} from "../store/app/module";
+import { actions as appActions } from "../store/app/module";
 import { actions as viewActions } from "../store/view/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 
@@ -168,7 +150,6 @@ export default Vue.extend({
 
   components: {
     DataSize,
-    FilterBadge,
     ImageMosaic,
     LayerSelection,
     SearchBar,
@@ -214,10 +195,6 @@ export default Vue.extend({
     },
     includedActive(): boolean {
       return routeGetters.getRouteInclude(this.$store);
-    },
-
-    isPrototype(): boolean {
-      return appGetters.isPrototype(this.$store);
     },
 
     highlights(): Highlight[] {

@@ -98,14 +98,16 @@
               variant="primary"
               :disabled="includedActive"
               @click="setIncludedActive"
-              >Included</b-button
             >
+              Included
+            </b-button>
             <b-button
               variant="secondary"
               :disabled="!includedActive"
               @click="setExcludedActive"
-              >Excluded</b-button
             >
+              Excluded
+            </b-button>
           </b-button-group>
         </b-button-toolbar>
         <create-solutions-form v-if="isCreateModelPossible" class="ml-2" />
@@ -130,7 +132,6 @@ import FacetListPane from "../components/panel/FacetListPane.vue";
 import LeftSidePanel from "../components/layout/LeftSidePanel.vue";
 import ImageMosaic from "../components/ImageMosaic.vue";
 import SearchBar from "../components/layout/SearchBar.vue";
-import SearchInput from "../components/SearchInput.vue";
 import SelectDataTable from "../components/SelectDataTable.vue";
 import SelectGeoPlot from "../components/SelectGeoPlot.vue";
 import SelectGraphView from "../components/SelectGraphView.vue";
@@ -154,7 +155,6 @@ import { actions as viewActions } from "../store/view/module";
 
 // Util
 import {
-  Filter,
   addFilterToRoute,
   deepUpdateFiltersInRoute,
   EXCLUDE_FILTER,
@@ -211,7 +211,6 @@ export default Vue.extend({
     LeftSidePanel,
     ImageMosaic,
     SearchBar,
-    SearchInput,
     SelectDataTable,
     SelectGeoPlot,
     SelectGraphView,
