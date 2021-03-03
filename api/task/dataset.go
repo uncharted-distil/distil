@@ -154,6 +154,32 @@ func (d *DiskDataset) getLearningFolder() string {
 	return path.Dir(d.schemaPath)
 }
 
+func (d *DiskDataset) updateDataset(columnName string, updates map[string]string, filterNotFound bool) error {
+	index := d.Dataset.GetVariableIndex(columnName)
+	if index == -1 {
+		return errors.Errorf("column %s not in dataset for updates", columnName)
+	}
+
+	if filterNotFound {
+		// do an initial filter pass to keep only the rows found in the updates
+		filterMap := map[string]bool{}
+		for key := range updates {
+			filterMap[key] = true
+		}
+		d.Dataset.FilterDataset(index, filterMap)
+	}
+	d.Dataset.UpdateDataset(index, updates)
+
+	if d.FeaturizedDataset != nil {
+		err := d.FeaturizedDataset.updateDataset(columnName, updates, filterNotFound)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // CreateDataset structures a raw csv file into a valid D3M dataset.
 func CreateDataset(dataset string, datasetCtor DatasetConstructor, outputPath string, config *env.Config) (string, string, error) {
 	ingestConfig := NewConfig(*config)

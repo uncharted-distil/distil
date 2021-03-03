@@ -261,6 +261,31 @@ func (d *RawDataset) GetVariableIndices(variableHeaderNames []string) (map[strin
 	return indices, nil
 }
 
+// FilterDataset updates the dataset to only keep the rows that have the specified
+// column in the filter map set to true.
+func (d *RawDataset) FilterDataset(columnIndex int, filter map[string]bool) {
+	// start with the header
+	filteredData := [][]string{d.Data[0]}
+	for i := 1; i < len(d.Data); i++ {
+		if filter[d.Data[i][columnIndex]] {
+			filteredData = append(filteredData, d.Data[i])
+		}
+	}
+	d.Data = filteredData
+}
+
+// UpdateDataset updates a dataset with the value specified in the updates dictionary.
+// If the specified column value is not found in the dictionary, then it is left unchanged.
+func (d *RawDataset) UpdateDataset(columnIndex int, updates map[string]string) {
+	// start with the header
+	for i := 1; i < len(d.Data); i++ {
+		updateValue, ok := updates[d.Data[i][columnIndex]]
+		if ok {
+			d.Data[i][columnIndex] = updateValue
+		}
+	}
+}
+
 // UpdateExtremas updates the variable extremas based on the data stored.
 func UpdateExtremas(dataset string, varName string, storageMeta MetadataStorage, storageData DataStorage) error {
 	// get the metadata and then query the data storage for the latest values
