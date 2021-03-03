@@ -93,15 +93,6 @@
         />
       </div>
     </b-toast>
-    <button
-      v-show="showExit"
-      type="button"
-      class="close selection-exit"
-      aria-label="Close"
-      :style="exitStyle"
-    >
-      <span aria-hidden="true">&times;</span>
-    </button>
   </div>
 </template>
 
@@ -130,7 +121,6 @@ import {
   RowSelection,
   GeoCoordinateGrouping,
   VariableSummary,
-  MultiBandImageGrouping,
   GeoBoundsGrouping,
 } from "../store/dataset/index";
 import { updateHighlight, highlightsExist } from "../util/highlights";
@@ -141,9 +131,6 @@ import {
   REAL_VECTOR_TYPE,
   GEOCOORDINATE_TYPE,
   MULTIBAND_IMAGE_TYPE,
-  isGeoLocatedType,
-  DISTIL_ROLES,
-  isImageType,
   GEOBOUNDS_TYPE,
 } from "../util/types";
 import { scaleThreshold } from "d3";
@@ -154,6 +141,13 @@ import "leaflet/dist/images/marker-icon-2x.png";
 import "leaflet/dist/images/marker-shadow.png";
 import { BLUE_PALETTE } from "../util/color";
 import DrillDown from "./DrillDown.vue";
+import {
+  CoordinateInfo,
+  TileInfo,
+  PointInfo,
+  VertexPrimitive,
+  Coordinate,
+} from "../util/rendering/coordinates";
 
 const SINGLE_FIELD = 1;
 const SPLIT_FIELD = 2;
@@ -165,24 +159,10 @@ interface GeoField {
   field?: string;
 }
 
-interface Point {
-  lat: number;
-  lng: number;
-  row?: TableRow;
-  color?: string;
-}
-
-interface PointGroup {
-  field: GeoField;
-  points: Point[];
-}
-
-type TileLayer = import("leaflet").TileLayer;
 type LatLngBoundsLiteral = import("leaflet").LatLngBoundsLiteral;
 
 interface Area {
-  coordinates: LatLngBoundsLiteral;
-  color: string;
+  info: CoordinateInfo;
   imageUrl: string;
   item: TableRow;
 }
@@ -191,19 +171,7 @@ interface Bucket {
   coordinates: number[][]; // should be two points each with x,y expect -> number[2][2]
   meta: { selected: boolean; count: number }; // count num of tiles in bucket
 }
-interface Quad {
-  x: number; // vertex x
-  y: number; // vertex y
-  r: number; // color r channel
-  g: number; // color g channel
-  b: number; // color b channel
-  a: number; // color alpha channel
-  // id's bytes is broken down into 4 channels
-  iR: number; // id smallest byte
-  iG: number; // id second smallest byte
-  iB: number; // id second largest byte
-  iA: number; // id largest byte
-}
+
 export interface SelectionHighlight {
   context: string;
   dataset: string;
@@ -220,7 +188,7 @@ export interface SelectionHighlight {
 interface MapState {
   onHover(id: number); // onhover callback
   onClick(id: number); // onclick callback
-  quads(): Quad[]; // get quads for rendering
+  vertices(): VertexPrimitive[]; // get quads for rendering
   init(): void; // called when state becomes current state -- essentially put any inits stuff here
   drawMode(): any; // returns DRAW_MODES
 }
@@ -236,7 +204,10 @@ export interface TileClickData {
   type: string;
   callback: (inner: TableRow[], outer: TableRow[]) => void;
 }
-
+enum CoordinateType {
+  TileBased,
+  PointBased,
+}
 export default Vue.extend({
   name: "GeoPlot",
 
@@ -382,6 +353,15 @@ export default Vue.extend({
       const colorScale = routeGetters.getColorScale(this.$store);
       return COLOR_SCALES.get(colorScale);
     },
+    getCoordinateType(): CoordinateType {
+      if (this.coordinateColumn) {
+        return CoordinateType.TileBased;
+      }
+      if (this.fieldSpecs.length > 0) {
+        return CoordinateType.PointBased;
+      }
+      return -1;
+    },
     colorGradient(): string {
       return this.isColoringByConfidence
         ? `background-image:linear-gradient(${[
@@ -507,42 +487,6 @@ export default Vue.extend({
         })
       );
     },
-    pointGroups(): PointGroup[] {
-      const groups = [];
-
-      if (!this.dataItems) {
-        return groups;
-      }
-
-      this.fieldSpecs.forEach((fieldSpec) => {
-        const group = {
-          field: fieldSpec,
-          points: [],
-        };
-
-        group.points = this.dataItems
-          .map((item, i) => {
-            const lat = this.latValue(fieldSpec, item);
-            const lng = this.lngValue(fieldSpec, item);
-
-            if (lat !== undefined && lng !== undefined) {
-              return {
-                lng: lng,
-                lat: lat,
-                row: item,
-                color: this.tileColor(item, i),
-              };
-            }
-
-            return null;
-          })
-          .filter((point) => !!point);
-
-        groups.push(group);
-      });
-
-      return groups;
-    },
 
     predictedField(): string {
       const predictions = requestGetters.getActivePredictions(this.$store);
@@ -569,12 +513,6 @@ export default Vue.extend({
     highlight(): Highlight {
       return routeGetters.getDecodedHighlight(this.$store);
     },
-    mapCenter(): number[] {
-      return routeGetters.getGeoCenter(this.$store);
-    },
-    mapZoom(): number {
-      return routeGetters.getGeoZoom(this.$store);
-    },
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
     },
@@ -591,10 +529,6 @@ export default Vue.extend({
       return variables.some((v) => {
         return v.colType === MULTIBAND_IMAGE_TYPE;
       });
-    },
-
-    isGeoSpatial(): boolean {
-      return routeGetters.isGeoSpatial(this.$store);
     },
 
     // Return name of column containing geobounds associated with a multiband image
@@ -640,6 +574,9 @@ export default Vue.extend({
             console.error(`id: ${id} is outside of this.areas bounds`);
             return; // id outside of bounds
           }
+          if (this.areas[id].imageUrl === null) {
+            return;
+          }
           this.toastTitle = this.areas[id].imageUrl;
           this.hoverItem = this.areas[id].item;
           this.hoverUrl = this.areas[id].imageUrl;
@@ -649,7 +586,7 @@ export default Vue.extend({
         onClick: (id: number) => {
           this.onTileClick(id);
         },
-        quads: () => {
+        vertices: () => {
           return this.areaToQuads();
         },
         init: () => {
@@ -688,7 +625,7 @@ export default Vue.extend({
           };
           this.map.zoomToPosition(this.zoomThreshold, center); // zoom to the center of the cluster clicked. Zoom to the point where the state switches
         },
-        quads: () => {
+        vertices: () => {
           return this.bucketsToQuads();
         },
         init: () => {
@@ -707,6 +644,9 @@ export default Vue.extend({
             console.error(`id: ${id} is outside of this.areas bounds`);
             return; // id outside of bounds
           }
+          if (this.areas[id].imageUrl === null) {
+            return;
+          }
           this.toastTitle = this.areas[id].imageUrl;
           this.hoverItem = this.areas[id].item;
           this.hoverUrl = this.areas[id].imageUrl;
@@ -716,7 +656,7 @@ export default Vue.extend({
         onClick: (id: number) => {
           this.onTileClick(id);
         },
-        quads: () => {
+        vertices: () => {
           return this.areaToPoints();
         },
         init: () => {
@@ -730,10 +670,6 @@ export default Vue.extend({
 
     confidenceClass(): string {
       return this.confidenceIconClass;
-    },
-
-    exitStyle(): string {
-      return `top:${this.selectionToolData.exit.top}px; right:${this.selectionToolData.exit.right}px;`;
     },
   },
 
@@ -797,12 +733,12 @@ export default Vue.extend({
       if (!this.areas.length) {
         return; // no data
       }
-      const quads = this.currentState.quads();
+      const vertices = this.currentState.vertices();
       // get quad set bounds
-      const mapBounds = this.getBounds(quads);
+      const mapBounds = this.getBounds(vertices);
       this.overlay.addQuad(
         this.quadLayerId,
-        quads,
+        vertices,
         this.currentState.drawMode()
       );
 
@@ -838,16 +774,24 @@ export default Vue.extend({
     getInterestBounds(area: Area): LatLngBoundsLiteral {
       const xDistance = (this.drillDownState.numCols - 1) / 2;
       const yDistance = (this.drillDownState.numRows - 1) / 2;
-      const tileWidth = area.coordinates[1][1] - area.coordinates[0][1];
-      const tileHeight = area.coordinates[1][0] - area.coordinates[0][0];
+      const tileWidth =
+        area.info.coordinates[1][Coordinate.lng] -
+        area.info.coordinates[0][Coordinate.lng];
+      const tileHeight =
+        area.info.coordinates[1][Coordinate.lat] -
+        area.info.coordinates[0][Coordinate.lat];
       const result = [
         [0, 0],
         [0, 0],
       ];
-      result[0][0] = area.coordinates[1][0] + yDistance * tileHeight; // top
-      result[0][1] = area.coordinates[0][1] - xDistance * tileWidth; // left
-      result[1][0] = area.coordinates[0][0] - yDistance * tileHeight; // bottom
-      result[1][1] = area.coordinates[1][1] + xDistance * tileWidth; // right
+      result[0][0] =
+        area.info.coordinates[1][Coordinate.lat] + yDistance * tileHeight; // top
+      result[0][1] =
+        area.info.coordinates[0][Coordinate.lng] - xDistance * tileWidth; // left
+      result[1][0] =
+        area.info.coordinates[0][Coordinate.lat] - yDistance * tileHeight; // bottom
+      result[1][1] =
+        area.info.coordinates[1][Coordinate.lng] + xDistance * tileWidth; // right
       return result as LatLngBoundsLiteral;
     },
     onFocusOut() {
@@ -961,7 +905,7 @@ export default Vue.extend({
       // send selection to PostGis
       this.createHighlight({ minX, minY, maxX, maxY });
     },
-    getBounds(quads: Quad[]) {
+    getBounds(quads: VertexPrimitive[]) {
       // set mapBounds to a single tile to start
       const mapBounds = new lumo.Bounds(
         quads[0].x,
@@ -987,6 +931,9 @@ export default Vue.extend({
         );
         return;
       }
+      if (this.areas[id].imageUrl === null) {
+        return;
+      }
       this.drillDownState.centerTile = this.areas[id];
       this.drillDownState.bounds = this.getInterestBounds(this.areas[id]);
       this.$emit("tileClicked", {
@@ -997,7 +944,7 @@ export default Vue.extend({
       });
     },
     // assumes x and y are normalized points this function is for the selection tool
-    pointsToQuad(p1: LumoPoint, p2: LumoPoint): Quad[] {
+    pointsToQuad(p1: LumoPoint, p2: LumoPoint): VertexPrimitive[] {
       const result = [];
       const id = this.renderer.idToRGBA(0); // pass in 0 as the id, currently there is only ever one selection at a time.
       const color = Color(BLUE_PALETTE[0]).rgb().object();
@@ -1017,7 +964,7 @@ export default Vue.extend({
     },
 
     // packs all data into single aligned memory array
-    bucketsToQuads(): Quad[] {
+    bucketsToQuads(): VertexPrimitive[] {
       const maxVal = this.maxBucketCount;
       const minVal = this.minBucketCount;
       const d = (maxVal - minVal) / BLUE_PALETTE.length;
@@ -1055,67 +1002,67 @@ export default Vue.extend({
       });
       return result;
     },
-    areaToPoints(): Quad[] {
-      const result = [];
+    areaToPoints(): VertexPrimitive[] {
+      let result = [];
+
       this.areas.forEach((area, idx) => {
-        const p1 = this.renderer.latlngToNormalized(area.coordinates[0]);
-        const p2 = this.renderer.latlngToNormalized(area.coordinates[1]);
-        const centerPoint = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
-        const color = Color(area.color).rgb().object(); // convert hex color to rgb
-        const maxVal = 255;
-        // normalize color values
-        color.a = this.pointOpacity;
-        color.r /= maxVal;
-        color.g /= maxVal;
-        color.b /= maxVal;
-        const id = this.renderer.idToRGBA(idx); // separate index bytes into 4 channels iR,iG,iB,iA. Used to render the index of the object into webgl FBO
-        // need to get rid of spread operators super slow
-        result.push({ ...centerPoint, ...color, ...id });
+        result = result.concat(
+          area.info.toPoint(this.renderer, this.pointOpacity, idx)
+            .vertexPrimitives
+        );
       });
       return result;
     },
     // packs all data into single aligned memory array
-    areaToQuads(): Quad[] {
-      const result = [];
+    areaToQuads(): VertexPrimitive[] {
+      let result = [];
       this.areas.forEach((area, idx) => {
-        const p1 = this.renderer.latlngToNormalized(area.coordinates[0]);
-        const p2 = this.renderer.latlngToNormalized(area.coordinates[1]);
-        const color = Color(area.color).rgb().object(); // convert hex color to rgb
-        const maxVal = 255;
-        const v = { x: p1.x - p2.x, y: p1.y - p2.y };
-        const magnitude = Math.sqrt(v.x * v.x + v.y * v.y);
-        v.x /= magnitude;
-        v.y /= magnitude;
-        // this add a little distance between tiles to make it easier to see individual tiles in contiguous areas
-        const distance = 0.000002;
-        p1.x = p1.x - v.x * distance;
-        p1.y = p1.y - v.y * distance;
-        p2.x = p2.x + v.x * distance;
-        p2.y = p2.y + v.y * distance;
-        // normalize color values
-        color.a = this.quadOpacity;
-        color.r /= maxVal;
-        color.g /= maxVal;
-        color.b /= maxVal;
-        const id = this.renderer.idToRGBA(idx); // separate index bytes into 4 channels iR,iG,iB,iA. Used to render the index of the object into webgl FBO
-        // need to get rid of spread operators super slow
-        result.push({ ...p1, ...color, ...id });
-        result.push({ x: p2.x, y: p1.y, ...color, ...id });
-        result.push({ ...p2, ...color, ...id });
-        result.push({ ...p1, ...color, ...id });
-        result.push({ x: p1.x, y: p2.y, ...color, ...id });
-        result.push({ ...p2, ...color, ...id });
+        result = result.concat(
+          area.info.toQuad(this.renderer, this.quadOpacity, idx)
+            .vertexPrimitives
+        );
       });
       return result;
     },
+    pointGroups(tableData: any[]): Area[] {
+      let areas = [];
+      this.fieldSpecs.forEach((fieldSpec) => {
+        const temp = tableData.map((item, i) => {
+          const imageUrl = this.isMultiBandImage
+            ? item[this.multibandImageGroupColumn].value
+            : null;
+          const color = this.tileColor(item, i);
+          const lat = this.latValue(fieldSpec, item);
+          const lng = this.lngValue(fieldSpec, item);
+
+          if (lat !== undefined && lng !== undefined) {
+            const coordinates = [[lat, lng]] as LatLngBoundsLiteral; // Corner A as [Lat, Lng]
+            const info = new PointInfo(coordinates, color);
+            return {
+              imageUrl,
+              item,
+              info,
+            } as Area;
+          }
+
+          return null;
+        });
+
+        areas = areas.concat(temp);
+      });
+
+      return areas;
+    },
     tableDataToAreas(tableData: any[]): Area[] {
+      if (this.getCoordinateType === CoordinateType.PointBased) {
+        return this.pointGroups(tableData);
+      }
       const areas = tableData.map((item, i) => {
         const imageUrl = this.isMultiBandImage
           ? item[this.multibandImageGroupColumn].value
           : null;
         const fullCoordinates = item[this.coordinateColumn].value.Elements;
         if (!fullCoordinates) {
-          return;
         }
         if (fullCoordinates.some((x) => x === undefined)) return;
 
@@ -1136,8 +1083,8 @@ export default Vue.extend({
         ] as LatLngBoundsLiteral;
 
         const color = this.tileColor(item, i);
-
-        return { item, imageUrl, coordinates, color } as Area;
+        const info = new TileInfo(coordinates, color);
+        return { item, imageUrl, info } as Area;
       });
 
       return areas;
@@ -1146,14 +1093,11 @@ export default Vue.extend({
       if (!this.areas.length) {
         return false;
       }
-      const p1 = this.renderer.latlngToNormalized(this.areas[0].coordinates[0]);
-      const p2 = this.renderer.latlngToNormalized(this.areas[0].coordinates[1]);
-      const extent = this.map.getPixelExtent();
-      const pixelPos1 = { x: p1.x * extent, y: p1.y * extent };
-      const pixelPos2 = { x: p2.x * extent, y: p2.y * extent };
-      const width = pixelPos2.x - pixelPos1.x;
-      const height = pixelPos2.y - pixelPos1.y;
-      return width * height > this.tileAreaThreshold;
+      return this.areas[0].info.shouldTile(
+        this.renderer,
+        this.map.getPixelExtent(),
+        this.tileAreaThreshold
+      );
     },
     // callback when zooming on map
     onZoom() {
@@ -1182,7 +1126,7 @@ export default Vue.extend({
       this.currentState.init();
       this.overlay.addQuad(
         this.quadLayerId,
-        this.currentState.quads(),
+        this.currentState.vertices(),
         this.currentState.drawMode()
       );
       this.renderer.addListener(
@@ -1314,7 +1258,7 @@ export default Vue.extend({
       // don't show exit button
       this.showExit = false;
       // create quads from latlng
-      const quads = this.currentState.quads();
+      const quads = this.currentState.vertices();
       if (!quads.length) {
         return;
       }

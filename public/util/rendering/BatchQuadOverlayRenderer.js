@@ -591,16 +591,19 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
    * source https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
    */
   latlngToNormalized(latlng) {
+    const lat = parseFloat(latlng[0]);
+    const lng = parseFloat(latlng[1]);
     const maxLon = 180.0;
     const degreesToRadians = Math.PI / 180.0; // Factor for changing degrees to radians
-    const latRadians = latlng[0] * degreesToRadians;
-    const x = (latlng[1] + maxLon) / (maxLon * 2);
+    const latRadians = lat * degreesToRadians;
+    const x = (lng + maxLon) / (maxLon * 2);
     const y =
+      1.0 -
       (1 -
         Math.log(Math.tan(latRadians) + 1 / Math.cos(latRadians)) / Math.PI) /
-      2;
+        2;
 
-    return { x, y: 1 - y }; // have to invert y
+    return { x, y }; // have to invert y
   }
   /**
    *
