@@ -203,7 +203,10 @@ export interface TileClickData {
   type: string;
   callback: (inner: TableRow[], outer: TableRow[]) => void;
 }
-
+enum CoordinateType {
+  TileBased,
+  PointBased,
+}
 export default Vue.extend({
   name: "GeoPlot",
 
@@ -349,12 +352,12 @@ export default Vue.extend({
       const colorScale = routeGetters.getColorScale(this.$store);
       return COLOR_SCALES.get(colorScale);
     },
-    getCoordinateType(): number {
+    getCoordinateType(): CoordinateType {
       if (this.coordinateColumn) {
-        return 0;
+        return CoordinateType.TileBased;
       }
       if (this.fieldSpecs.length > 0) {
-        return 1;
+        return CoordinateType.PointBased;
       }
       return -1;
     },
@@ -726,7 +729,6 @@ export default Vue.extend({
       this.currentState = this.pointState;
       this.map.on(lumo.ZOOM_END, this.onZoom);
       this.currentState.init();
-      console.log(this.getCoordinateType);
       if (!this.areas.length) {
         return; // no data
       }
@@ -1045,7 +1047,7 @@ export default Vue.extend({
       return areas;
     },
     tableDataToAreas(tableData: any[]): Area[] {
-      if (this.getCoordinateType == 1) {
+      if (this.getCoordinateType === CoordinateType.PointBased) {
         return this.pointGroups(tableData);
       }
       const areas = tableData.map((item, i) => {
