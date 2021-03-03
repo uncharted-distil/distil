@@ -301,6 +301,7 @@ export default Vue.extend({
 
     cleanUp() {
       if (this.isMultiBandImage) {
+        this.scale = 0;
         datasetMutations.removeFile(
           this.$store,
           imageId(this.selectedImageUrl)
