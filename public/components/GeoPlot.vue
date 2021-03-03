@@ -146,6 +146,7 @@ import {
   TileInfo,
   PointInfo,
   VertexPrimitive,
+  Coordinate,
 } from "../util/rendering/coordinates";
 
 const SINGLE_FIELD = 1;
@@ -774,17 +775,23 @@ export default Vue.extend({
       const xDistance = (this.drillDownState.numCols - 1) / 2;
       const yDistance = (this.drillDownState.numRows - 1) / 2;
       const tileWidth =
-        area.info.coordinates[1][1] - area.info.coordinates[0][1];
+        area.info.coordinates[1][Coordinate.lng] -
+        area.info.coordinates[0][Coordinate.lng];
       const tileHeight =
-        area.info.coordinates[1][0] - area.info.coordinates[0][0];
+        area.info.coordinates[1][Coordinate.lat] -
+        area.info.coordinates[0][Coordinate.lat];
       const result = [
         [0, 0],
         [0, 0],
       ];
-      result[0][0] = area.info.coordinates[1][0] + yDistance * tileHeight; // top
-      result[0][1] = area.info.coordinates[0][1] - xDistance * tileWidth; // left
-      result[1][0] = area.info.coordinates[0][0] - yDistance * tileHeight; // bottom
-      result[1][1] = area.info.coordinates[1][1] + xDistance * tileWidth; // right
+      result[0][0] =
+        area.info.coordinates[1][Coordinate.lat] + yDistance * tileHeight; // top
+      result[0][1] =
+        area.info.coordinates[0][Coordinate.lng] - xDistance * tileWidth; // left
+      result[1][0] =
+        area.info.coordinates[0][Coordinate.lat] - yDistance * tileHeight; // bottom
+      result[1][1] =
+        area.info.coordinates[1][Coordinate.lng] + xDistance * tileWidth; // right
       return result as LatLngBoundsLiteral;
     },
     onFocusOut() {

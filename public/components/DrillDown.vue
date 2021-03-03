@@ -70,7 +70,7 @@ import { Dictionary } from "../util/dict";
 import { getters as routeGetters } from "../store/route/module";
 import { LatLngBounds, LatLngBoundsLiteral } from "leaflet";
 import OverlapSelection from "./OverlapSelection.vue";
-import { CoordinateInfo } from "../util/rendering/coordinates";
+import { CoordinateInfo, Coordinate } from "../util/rendering/coordinates";
 
 interface Tile {
   imageUrl: string;
@@ -131,11 +131,11 @@ export default Vue.extend({
     tileDims(): Dimensions {
       return {
         width:
-          this.centerTile.info.coordinates[1][1] -
-          this.centerTile.info.coordinates[0][1],
+          this.centerTile.info.coordinates[1][Coordinate.lng] -
+          this.centerTile.info.coordinates[0][Coordinate.lng],
         height:
-          this.centerTile.info.coordinates[1][0] -
-          this.centerTile.info.coordinates[0][0],
+          this.centerTile.info.coordinates[1][Coordinate.lat] -
+          this.centerTile.info.coordinates[0][Coordinate.lat],
       };
     },
     gridColStyle(): string {

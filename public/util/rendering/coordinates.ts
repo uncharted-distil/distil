@@ -1,7 +1,10 @@
 import { BatchQuadOverlayRenderer } from "./BatchQuadOverlayRenderer";
 type LatLngBoundsLiteral = import("leaflet").LatLngBoundsLiteral;
 import Color from "color";
-
+export enum Coordinate {
+  lat,
+  lng,
+}
 export interface VertexPrimitive {
   x: number; // vertex x
   y: number; // vertex y

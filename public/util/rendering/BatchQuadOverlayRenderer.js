@@ -598,11 +598,12 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     const latRadians = lat * degreesToRadians;
     const x = (lng + maxLon) / (maxLon * 2);
     const y =
+      1.0 -
       (1 -
         Math.log(Math.tan(latRadians) + 1 / Math.cos(latRadians)) / Math.PI) /
-      2;
+        2;
 
-    return { x: x, y: 1.0 - y }; // have to invert y
+    return { x, y }; // have to invert y
   }
   /**
    *
