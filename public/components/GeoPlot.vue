@@ -1061,7 +1061,7 @@ export default Vue.extend({
         const imageUrl = this.isMultiBandImage
           ? item[this.multibandImageGroupColumn].value
           : null;
-        const fullCoordinates = item[this.coordinateColumn].value.Elements;
+        const fullCoordinates = item[this.coordinateColumn].value;
         if (!fullCoordinates) {
         }
         if (fullCoordinates.some((x) => x === undefined)) return;
@@ -1078,8 +1078,8 @@ export default Vue.extend({
           [6,7]     [4,5]
         */
         const coordinates = [
-          [fullCoordinates[1].Float, fullCoordinates[0].Float], // Corner A as [Lat, Lng]
-          [fullCoordinates[5].Float, fullCoordinates[4].Float], // Corner C as [Lat, Lng]
+          [fullCoordinates[1], fullCoordinates[0]], // Corner A as [Lat, Lng]
+          [fullCoordinates[5], fullCoordinates[4]], // Corner C as [Lat, Lng]
         ] as LatLngBoundsLiteral;
 
         const color = this.tileColor(item, i);
