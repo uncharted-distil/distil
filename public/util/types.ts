@@ -301,13 +301,6 @@ export function formatValue(colValue: any, colType: string): any {
       return colValue.toFixed(6);
     case REAL_LIST_TYPE:
     case REAL_VECTOR_TYPE:
-      if (colValue.Elements === undefined) {
-        return {
-          Elements: colValue.map((v) => {
-            return { Float: v, Status: 2 };
-          }),
-        };
-      }
       return colValue;
   }
   // If the schema type is numeric and the value is a number stored as a string,

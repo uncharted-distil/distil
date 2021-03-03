@@ -511,11 +511,7 @@ export default Vue.extend({
     },
 
     formatList(value: TableValue) {
-      const listData = value.value.value.Elements as {
-        Float: number;
-        Status: number;
-      }[];
-      return listData?.map((l) => l.Float);
+      return value.value.value;
     },
     onPagination(page: number) {
       removeTimeseries(
