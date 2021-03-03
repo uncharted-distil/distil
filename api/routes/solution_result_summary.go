@@ -143,7 +143,22 @@ func SolutionResultSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor
 			return
 		}
 		storageName := ds.StorageName
-
+		// if the variable is a geobounds and there is a band column, add a filter
+		// to only consider the first band.
+		hasBand := false
+		isGeobounds := false
+		for _, v := range ds.Variables {
+			if v.DisplayName == "band" {
+				hasBand = true
+			} else if model.IsGeoBounds(v.Type) {
+				isGeobounds = true
+			}
+		}
+		if hasBand && isGeobounds {
+			boundsFilter := model.NewCategoricalFilter("band", model.IncludeFilter, []string{"01"})
+			boundsFilter.IsBaselineFilter = true
+			filterParams.Filters = append(filterParams.Filters, boundsFilter)
+		}
 		// extract extrema for solution
 		extrema, err := fetchSolutionPredictedExtrema(meta, data, solution, request.Dataset, storageName, request.TargetFeature(), "")
 		if err != nil {

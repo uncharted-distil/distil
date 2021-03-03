@@ -22,6 +22,7 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/v3/pat"
 
+	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
@@ -96,7 +97,22 @@ func ConfidenceSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api
 			}
 			return
 		}
-
+		// if the variable is a geobounds and there is a band column, add a filter
+		// to only consider the first band.
+		hasBand := false
+		isGeobounds := false
+		for _, v := range ds.Variables {
+			if v.DisplayName == "band" {
+				hasBand = true
+			} else if model.IsGeoBounds(v.Type) {
+				isGeobounds = true
+			}
+		}
+		if hasBand && isGeobounds {
+			boundsFilter := model.NewCategoricalFilter("band", model.IncludeFilter, []string{"01"})
+			boundsFilter.IsBaselineFilter = true
+			filterParams.Filters = append(filterParams.Filters, boundsFilter)
+		}
 		// fetch summary histogram
 		summary, err := data.FetchConfidenceSummary(dataset, storageName, res.ResultURI, filterParams, api.SummaryMode(mode))
 		if err != nil {

@@ -284,7 +284,7 @@ func (f *CategoricalField) FetchPredictedSummaryData(resultURI string, datasetRe
 		return nil, err
 	}
 
-	baseline, err = f.fetchPredictedSummaryData(resultURI, datasetResult, nil, extrema)
+	baseline, err = f.fetchPredictedSummaryData(resultURI, datasetResult, api.GetBaselineFilter(filterParams), extrema)
 	if err != nil {
 		return nil, err
 	}

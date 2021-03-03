@@ -127,7 +127,22 @@ func PredictionResultSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCt
 			handleError(w, err)
 			return
 		}
-
+		// if the variable is a geobounds and there is a band column, add a filter
+		// to only consider the first band.
+		hasBand := false
+		isGeobounds := false
+		for _, v := range ds.Variables {
+			if v.DisplayName == "band" {
+				hasBand = true
+			} else if model.IsGeoBounds(v.Type) {
+				isGeobounds = true
+			}
+		}
+		if hasBand && isGeobounds {
+			boundsFilter := model.NewCategoricalFilter("band", model.IncludeFilter, []string{"01"})
+			boundsFilter.IsBaselineFilter = true
+			filterParams.Filters = append(filterParams.Filters, boundsFilter)
+		}
 		// fetch summary histogram
 		summary, err := data.FetchPredictedSummary(prediction.Dataset, storageName, res.ResultURI, filterParams, extrema, api.SummaryMode(mode))
 		if err != nil {

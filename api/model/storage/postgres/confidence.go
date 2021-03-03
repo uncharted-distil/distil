@@ -42,7 +42,7 @@ func (s *Storage) FetchConfidenceSummary(dataset string, storageName string, res
 	for _, explainName := range explainFields {
 		var baseline *api.Histogram
 		var filtered *api.Histogram
-		baseline, err = s.fetchExplainHistogram(dataset, storageName, targetName, explainName, resultURI, nil, mode)
+		baseline, err = s.fetchExplainHistogram(dataset, storageName, targetName, explainName, resultURI, api.GetBaselineFilter(filterParams), mode)
 		if err != nil {
 			return nil, err
 		}
