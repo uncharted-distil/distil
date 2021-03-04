@@ -1,11 +1,19 @@
 <template>
   <b-modal
     id="predictions-data-upload-modal"
-    title="Select input data"
+    title="Select Input Data"
     @ok="handleOk"
     @show="clearForm"
+    @hide="hide"
   >
-    <b-form-group label="Select a Source File (csv, zip) or dataset">
+    <b-form-group label="Import dataset or choose existing dataset">
+      <b-form-select v-model="inputAvenue" :options="options" />
+    </b-form-group>
+    <b-form-group
+      v-if="isActive(options[0])"
+      class="p-2 mt-4"
+      label="Select a Source File (csv, zip) or dataset"
+    >
       <b-form-file
         ref="fileinput"
         v-model="file"
@@ -13,6 +21,12 @@
         accept=".csv, .zip"
         plain
       />
+    </b-form-group>
+    <b-form-group
+      v-if="isActive(options[1])"
+      class="mt-4"
+      label="Choose an existing dataset"
+    >
       <b-form-select v-model="selectedDataset" name="model-scoring" size="sm">
         <b-form-select-option
           v-for="dataset in datasets"
@@ -57,11 +71,7 @@ import {
   actions as datasetActions,
   getters as datasetGetters,
 } from "../store/dataset/module";
-import {
-  getBase64,
-  generateUniqueDatasetName,
-  removeExtension,
-} from "../util/uploads";
+import { generateUniqueDatasetName, removeExtension } from "../util/uploads";
 import { getPredictionsById } from "../util/predictions";
 import { varModesToString, createRouteEntry } from "../util/routes";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
@@ -83,6 +93,8 @@ export default Vue.extend({
       uploadStatus: "",
       isWaiting: false,
       selectedDataset: "",
+      inputAvenue: null,
+      options: ["Import Dataset", "Select Existing Dataset"],
     };
   },
 
@@ -95,12 +107,22 @@ export default Vue.extend({
     },
     canApply(): boolean {
       return (
-        !this.isWaiting && (Boolean(this.file) || this.selectedDataset !== "")
+        !this.isWaiting &&
+        ((Boolean(this.file) && this.isActive(this.options[0])) ||
+          (this.selectedDataset !== "" && this.isActive(this.options[1])))
       );
     },
   },
 
   methods: {
+    hide() {
+      this.selectedDataset = "";
+      this.inputAvenue = null;
+      this.file = null as File;
+    },
+    isActive(option: string): boolean {
+      return this.inputAvenue === option;
+    },
     clearForm() {
       this.file = null;
       const $refs = this.$refs as any;
@@ -116,7 +138,7 @@ export default Vue.extend({
       }
 
       this.isWaiting = true;
-      if (!this.file) {
+      if (this.selectedDataset !== "" && this.isActive(this.options[1])) {
         this.makePrediction(true, this.selectedDataset, "");
       } else {
         this.makeRequest();
