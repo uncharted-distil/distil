@@ -60,7 +60,7 @@ import {
   filterArrayByPage,
   shouldRunMi,
 } from "../util/data";
-import { Feature, Activity } from "../util/userEvents";
+import { Activity } from "../util/userEvents";
 
 export default Vue.extend({
   name: "results-view",
