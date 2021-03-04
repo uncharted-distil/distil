@@ -27,6 +27,7 @@
               shortenLabels
               alignHorizontal
               :item="item"
+              :is-result="isResult"
             />
           </div>
         </template>
@@ -79,6 +80,7 @@ export default Vue.extend({
     instanceName: String as () => string,
     dataItems: Array as () => any[],
     dataFields: Object as () => Dictionary<TableColumn>,
+    isResult: { type: Boolean as () => boolean, default: false },
   },
 
   data() {
