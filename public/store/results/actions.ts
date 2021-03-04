@@ -833,7 +833,7 @@ export const actions = {
     args: {
       dataset: string;
       solutionId: string;
-      highlight: Highlight;
+      highlights: Highlight[];
       dataMode: DataMode;
       varMode: SummaryMode;
     }
@@ -861,13 +861,13 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlight: null,
+      highlights: [],
       variables: [],
       filters: [],
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
-      args.highlight
+      args.highlights
     );
 
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
@@ -896,7 +896,7 @@ export const actions = {
       dataset: string;
       target: string;
       requestIds: string[];
-      highlight: Highlight;
+      highlights: Highlight[];
       dataMode: DataMode;
       varModes: Map<string, SummaryMode>;
     }
@@ -914,7 +914,7 @@ export const actions = {
         return actions.fetchRankingSummary(context, {
           dataset: args.dataset,
           solutionId: solution.solutionId,
-          highlight: args.highlight,
+          highlights: args.highlights,
           dataMode: args.dataMode,
           varMode: args.varModes.has(args.target)
             ? args.varModes.get(args.target)

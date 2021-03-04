@@ -871,7 +871,7 @@ export const actions = {
         dataset: dataset,
         target: target,
         requestIds: requestIds,
-        highlight: highlight,
+        highlights: highlights,
         dataMode: dataMode,
         varModes: varModes,
       });

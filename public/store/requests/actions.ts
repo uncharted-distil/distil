@@ -205,7 +205,7 @@ async function updateCurrentSolutionResults(
     resultsActions.fetchRankingSummary(store, {
       dataset: req.dataset,
       solutionId: res.solutionId,
-      highlight: context.getters.getDecodedHighlight,
+      highlights: context.getters.getDecodedHighlights,
       dataMode: dataMode,
       varMode: varModes.has(req.target)
         ? varModes.get(req.target)
