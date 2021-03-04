@@ -28,6 +28,7 @@
         :summaries="trainingSummaries"
         :area-of-interest-items="{ inner: inner, outer: outer }"
         :confidence-access-func="colorTile"
+        :is-result="true"
         @tileClicked="onTileClick"
       />
     </div>

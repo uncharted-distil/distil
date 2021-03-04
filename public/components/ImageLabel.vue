@@ -57,15 +57,20 @@ export default Vue.extend({
       type: Boolean as () => boolean,
       default: false,
     },
+    isResult: { type: Boolean as () => boolean, default: false },
   },
 
   computed: {
     fields(): Dictionary<TableColumn> {
+      if (this.isResult) {
+        return this.includedActive
+          ? resultGetters.getIncludedResultTableDataFields(this.$store)
+          : resultGetters.getExcludedResultTableDataFields(this.$store);
+      }
       return this.includedActive
         ? datasetGetters.getIncludedTableDataFields(this.$store)
         : datasetGetters.getExcludedTableDataFields(this.$store);
     },
-
     labels(): Label[] {
       const labels: Label[] = [];
       let status: string;
