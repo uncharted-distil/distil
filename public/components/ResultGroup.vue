@@ -75,7 +75,7 @@
             :is="getFacetByType(summary.type)"
             enable-highlighting
             :summary="summary"
-            :highlight="highlight"
+            :highlights="highlights"
             :enabled-type-changes="[]"
             :row-selection="rowSelection"
             :instance-name="predictedInstanceName"
@@ -95,7 +95,7 @@
             show-origin
             enable-highlighting
             :summary="summary"
-            :highlight="highlight"
+            :highlights="highlights"
             :enabled-type-changes="[]"
             :row-selection="rowSelection"
             :instance-name="residualInstanceName"
@@ -113,7 +113,7 @@
           :key="summary.key"
           enable-highlighting
           :summary="summary"
-          :highlight="highlight"
+          :highlights="highlights"
           :enabled-type-changes="[]"
           :row-selection="rowSelection"
           :instance-name="correctnessInstanceName"
@@ -127,7 +127,7 @@
           :key="summary.key"
           enable-highlighting
           :summary="summary"
-          :highlight="highlight"
+          :highlights="highlights"
           :enabled-type-changes="[]"
           :row-selection="rowSelection"
           :instance-name="confidenceInstanceName"
@@ -327,8 +327,8 @@ export default Vue.extend({
       return this.residualsSummary ? [this.residualsSummary] : [];
     },
 
-    highlight(): Highlight {
-      return routeGetters.getDecodedHighlight(this.$store);
+    highlights(): Highlight[] {
+      return routeGetters.getDecodedHighlights(this.$store);
     },
 
     residualThreshold(): Extrema {
@@ -420,7 +420,7 @@ export default Vue.extend({
           value: value,
         });
       } else {
-        clearHighlight(this.$router);
+        clearHighlight(this.$router, key);
       }
       appActions.logUserEvent(this.$store, {
         feature: Feature.CHANGE_HIGHLIGHT,
@@ -445,7 +445,7 @@ export default Vue.extend({
           value: value,
         });
       } else {
-        clearHighlight(this.$router);
+        clearHighlight(this.$router, key);
       }
       appActions.logUserEvent(this.$store, {
         feature: Feature.CHANGE_HIGHLIGHT,
@@ -461,13 +461,21 @@ export default Vue.extend({
       value: { from: number; to: number },
       dataset: string
     ) {
-      if (!this.highlight || this.highlight.key !== key) {
-        updateHighlight(this.$router, {
-          context: context,
-          dataset: dataset,
-          key: key,
-          value: value,
-        });
+      const uniqueHighlight = this.highlights.reduce(
+        (acc, highlight) => highlight.key !== key || acc,
+        false
+      );
+      if (uniqueHighlight) {
+        if (key && value) {
+          updateHighlight(this.$router, {
+            context: context,
+            dataset: dataset,
+            key: key,
+            value: value,
+          });
+        } else {
+          clearHighlight(this.$router, key);
+        }
       }
     },
 
@@ -477,12 +485,16 @@ export default Vue.extend({
       value: { from: { label: string[] }; to: { label: string[] } },
       dataset: string
     ) {
-      updateHighlight(this.$router, {
-        context: context,
-        dataset: dataset,
-        key: key,
-        value: value,
-      });
+      if (key && value) {
+        updateHighlight(this.$router, {
+          context: context,
+          dataset: dataset,
+          key: key,
+          value: value,
+        });
+      } else {
+        clearHighlight(this.$router, key);
+      }
       appActions.logUserEvent(this.$store, {
         feature: Feature.CHANGE_HIGHLIGHT,
         activity: Activity.MODEL_SELECTION,
@@ -498,13 +510,21 @@ export default Vue.extend({
       value: { from: number; to: number },
       dataset: string
     ) {
-      if (!this.highlight || this.highlight.key !== key) {
-        updateHighlight(this.$router, {
-          context: context,
-          dataset: dataset,
-          key: key,
-          value: value,
-        });
+      const uniqueHighlight = this.highlights.reduce(
+        (acc, highlight) => highlight.key !== key || acc,
+        false
+      );
+      if (uniqueHighlight) {
+        if (key && value) {
+          updateHighlight(this.$router, {
+            context: context,
+            dataset: dataset,
+            key: key,
+            value: value,
+          });
+        } else {
+          clearHighlight(this.$router, key);
+        }
       }
     },
 
@@ -514,12 +534,16 @@ export default Vue.extend({
       value: { from: number; to: number },
       dataset: string
     ) {
-      updateHighlight(this.$router, {
-        context: context,
-        dataset: dataset,
-        key: key,
-        value: value,
-      });
+      if (key && value) {
+        updateHighlight(this.$router, {
+          context: context,
+          dataset: dataset,
+          key: key,
+          value: value,
+        });
+      } else {
+        clearHighlight(this.$router, key);
+      }
       appActions.logUserEvent(this.$store, {
         feature: Feature.CHANGE_HIGHLIGHT,
         activity: Activity.MODEL_SELECTION,
@@ -535,7 +559,11 @@ export default Vue.extend({
       value: { from: number; to: number },
       dataset: string
     ) {
-      if (!this.highlight || this.highlight.key !== key) {
+      const uniqueHighlight = this.highlights.reduce(
+        (acc, highlight) => highlight.key !== key || acc,
+        false
+      );
+      if (uniqueHighlight) {
         updateHighlight(this.$router, {
           context: context,
           dataset: dataset,
@@ -551,12 +579,16 @@ export default Vue.extend({
       value: { from: number; to: number },
       dataset: string
     ) {
-      updateHighlight(this.$router, {
-        context: context,
-        dataset: dataset,
-        key: key,
-        value: value,
-      });
+      if (key && value) {
+        updateHighlight(this.$router, {
+          context: context,
+          dataset: dataset,
+          key: key,
+          value: value,
+        });
+      } else {
+        clearHighlight(this.$router, key);
+      }
       appActions.logUserEvent(this.$store, {
         feature: Feature.CHANGE_HIGHLIGHT,
         activity: Activity.MODEL_SELECTION,

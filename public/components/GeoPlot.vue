@@ -444,7 +444,7 @@ export default Vue.extend({
       this.summaries.forEach((summary) => {
         // compute the bucket size in degrees
         const buckets =
-          summary.filtered && highlightsExist(this.$router)
+          summary.filtered && highlightsExist()
             ? summary.filtered.buckets
             : summary.baseline.buckets;
         const xSize = _.toNumber(buckets[1].key) - _.toNumber(buckets[0].key);
@@ -510,8 +510,8 @@ export default Vue.extend({
       return this.tableDataToAreas(this.dataItems);
     },
 
-    highlight(): Highlight {
-      return routeGetters.getDecodedHighlight(this.$store);
+    highlights(): Highlight[] {
+      return routeGetters.getDecodedHighlights(this.$store);
     },
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
@@ -1151,15 +1151,24 @@ export default Vue.extend({
       minY: number;
       maxY: number;
     }) {
-      if (
-        this.highlight &&
-        this.highlight.value?.minX === value.minX &&
-        this.highlight.value?.maxX === value.maxX &&
-        this.highlight.value?.minY === value.minY &&
-        this.highlight.value?.maxY === value.maxY
-      ) {
+      if (this.highlights && this.highlights.length > 0) {
+        const isExistingHighlight = this.highlights.reduce(
+          (hasHighlight, highlight) => {
+            return (
+              hasHighlight ||
+              (highlight.value &&
+                highlight.value.minX === value.minX &&
+                highlight.value.maxX === value.maxX &&
+                highlight.value.minY === value.minY &&
+                highlight.value.maxY === value.maxY)
+            );
+          },
+          false
+        );
         // dont push existing highlight
-        return;
+        if (isExistingHighlight) {
+          return;
+        }
       }
 
       // TODO: support filtering multiple vars?

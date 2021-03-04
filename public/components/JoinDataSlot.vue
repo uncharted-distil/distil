@@ -2,27 +2,30 @@
   <div class="join-data-slot d-flex flex-column">
     <div class="fake-search-input">
       <div class="filter-badges">
-        <filter-badge v-if="activeFilter" active-filter :filter="activeFilter">
-        </filter-badge>
+        <filter-badge
+          v-for="(highlight, index) in activeHighlights"
+          :key="index"
+          :filter="highlight"
+        />
       </div>
     </div>
 
     <div class="join-data-container flex-1">
-      <div class="join-data-no-results" v-if="!hasData">
-        <div v-html="spinnerHTML"></div>
+      <div v-if="!hasData" class="join-data-no-results">
+        <div v-html="spinnerHTML" />
       </div>
       <template v-if="hasData">
         <join-data-table
           :dataset="dataset"
           :items="items"
           :fields="fields"
-          :numRows="numRows"
-          :hasData="hasData"
+          :num-rows="numRows"
+          :has-data="hasData"
           :instance-name="instanceName"
           :selected-column="selectedColumn"
           :other-selected-column="otherSelectedColumn"
           @col-clicked="onColumnClicked"
-        ></join-data-table>
+        />
       </template>
     </div>
   </div>
@@ -36,7 +39,7 @@ import JoinDataTable from "./JoinDataTable";
 import { getters as routeGetters } from "../store/route/module";
 import FilterBadge from "./FilterBadge";
 import { TableRow, TableColumn, Highlight } from "../store/dataset/index";
-import { createFilterFromHighlight } from "../util/highlights";
+import { createFiltersFromHighlights } from "../util/highlights";
 import { Filter, INCLUDE_FILTER } from "../util/filters";
 
 export default Vue.extend({
@@ -63,18 +66,21 @@ export default Vue.extend({
       return spinnerHTML();
     },
 
-    highlight(): Highlight {
-      return routeGetters.getDecodedHighlight(this.$store);
+    highlights(): Highlight[] {
+      return routeGetters.getDecodedHighlights(this.$store);
     },
 
-    activeFilter(): Filter {
-      if (!this.highlight || !this.highlight.value) {
-        return null;
+    activeHighlights(): Filter[] {
+      if (
+        (this.highlights && this.highlights.length < 1) ||
+        this.highlights.reduce(
+          (acc, highlight) => acc || highlight.dataset !== this.dataset,
+          false
+        )
+      ) {
+        return [];
       }
-      if (this.highlight.dataset !== this.dataset) {
-        return null;
-      }
-      return createFilterFromHighlight(this.highlight, INCLUDE_FILTER);
+      return createFiltersFromHighlights(this.highlights, INCLUDE_FILTER);
     },
   },
 

@@ -85,8 +85,8 @@ export default Vue.extend({
     },
 
     hasHighlights(): boolean {
-      const highlight = routeGetters.getDecodedHighlight(this.$store);
-      return highlight && highlight.value;
+      const highlights = routeGetters.getDecodedHighlights(this.$store);
+      return highlights.length > 0;
     },
 
     isMultiBandImage(): boolean {

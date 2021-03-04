@@ -23,17 +23,7 @@
       </b-nav-item>
     </view-type-toggle>
 
-    <div class="fake-search-input">
-      <filter-badge v-if="activeFilter" active-filter :filter="activeFilter" />
-      <filter-badge
-        v-for="(filter, index) in filters"
-        :key="index"
-        :filter="filter"
-      />
-    </div>
-
     <search-bar
-      v-show="isPrototype"
       class="mb-3"
       :variables="allVariables"
       :filters="routeFilters"
@@ -49,8 +39,9 @@
           @submit="onDataSizeSubmit"
         />
         <strong class="matching-color">matching</strong> samples of
-        {{ numRows }} to model<template v-if="selectionNumRows > 0"
-          >, {{ selectionNumRows }}
+        {{ numRows }} to model
+        <template v-if="selectionNumRows > 0">
+          , {{ selectionNumRows }}
           <strong class="selected-color">selected</strong>
         </template>
       </p>
@@ -133,8 +124,9 @@ import {
 } from "../util/filters";
 import {
   clearHighlight,
-  createFilterFromHighlight,
+  createFiltersFromHighlights,
   updateHighlight,
+  UPDATE_ALL,
 } from "../util/highlights";
 import { lexQueryToFiltersAndHighlight } from "../util/lex";
 import {
@@ -143,10 +135,7 @@ import {
   getNumExcludedRows,
   createFilterFromRowSelection,
 } from "../util/row";
-import {
-  actions as appActions,
-  getters as appGetters,
-} from "../store/app/module";
+import { actions as appActions } from "../store/app/module";
 import { actions as viewActions } from "../store/view/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 
@@ -161,7 +150,6 @@ export default Vue.extend({
 
   components: {
     DataSize,
-    FilterBadge,
     ImageMosaic,
     LayerSelection,
     SearchBar,
@@ -209,12 +197,8 @@ export default Vue.extend({
       return routeGetters.getRouteInclude(this.$store);
     },
 
-    isPrototype(): boolean {
-      return appGetters.isPrototype(this.$store);
-    },
-
-    highlight(): Highlight {
-      return routeGetters.getDecodedHighlight(this.$store);
+    highlights(): Highlight[] {
+      return routeGetters.getDecodedHighlights(this.$store);
     },
 
     target(): string {
@@ -252,33 +236,36 @@ export default Vue.extend({
         : 0;
     },
 
-    activeFilter(): Filter {
-      if (!this.highlight || !this.highlight.value) {
+    // return as filters for easier comparison in setting include/exclude state options.
+    activeHighlights(): Filter[] {
+      if (!this.highlights || this.highlights.length < 1) {
         return null;
       }
       if (this.includedActive) {
-        return createFilterFromHighlight(this.highlight, INCLUDE_FILTER);
+        return createFiltersFromHighlights(this.highlights, INCLUDE_FILTER);
       }
-      return createFilterFromHighlight(this.highlight, EXCLUDE_FILTER);
+      return createFiltersFromHighlights(this.highlights, EXCLUDE_FILTER);
     },
 
     /* Check if the Active Filter is from an available feature. */
-    isActiveFilterFromAnAvailableFeature(): boolean {
-      if (!this.activeFilter) {
+    areActiveHighlightsFromAnAvailableFeature(): boolean {
+      if (this.activeHighlights.length < 1) {
         return false;
       }
 
-      const activeFilterName = this.activeFilter.key;
+      const activeHighlightNames = this.activeHighlights.map((v) => v.key);
       const availableVariablesNames = this.availableVariables.map((v) => v.key);
-
-      return availableVariablesNames.includes(activeFilterName);
+      return activeHighlightNames.reduce(
+        (acc, afn) => acc || availableVariablesNames.includes(afn),
+        false
+      );
     },
 
     /* Disable the Exclude filter button. */
     isExcludeDisabled(): boolean {
       return (
         (!this.isFilteringHighlights && !this.isFilteringSelection) ||
-        this.isActiveFilterFromAnAvailableFeature
+        this.areActiveHighlightsFromAnAvailableFeature
       );
     },
 
@@ -309,7 +296,11 @@ export default Vue.extend({
     },
 
     isFilteringHighlights(): boolean {
-      return !this.isFilteringSelection && !!this.highlight;
+      return (
+        !this.isFilteringSelection &&
+        this.highlights &&
+        this.highlights.length > 0
+      );
     },
 
     isFilteringSelection(): boolean {
@@ -335,7 +326,7 @@ export default Vue.extend({
     onExcludeClick() {
       let filter = null;
       if (this.isFilteringHighlights) {
-        filter = createFilterFromHighlight(this.highlight, EXCLUDE_FILTER);
+        filter = createFiltersFromHighlights(this.highlights, EXCLUDE_FILTER);
       } else {
         filter = createFilterFromRowSelection(
           this.rowSelection,
@@ -344,12 +335,7 @@ export default Vue.extend({
       }
 
       addFilterToRoute(this.$router, filter);
-
-      if (this.isFilteringHighlights) {
-        clearHighlight(this.$router);
-      } else {
-        clearRowSelection(this.$router);
-      }
+      this.resetHighlightsOrRow();
 
       datasetActions.fetchVariableRankings(this.$store, {
         dataset: this.dataset,
@@ -367,7 +353,7 @@ export default Vue.extend({
     onReincludeClick() {
       let filter = null;
       if (this.isFilteringHighlights) {
-        filter = createFilterFromHighlight(this.highlight, INCLUDE_FILTER);
+        filter = createFiltersFromHighlights(this.highlights, INCLUDE_FILTER);
       } else {
         filter = createFilterFromRowSelection(
           this.rowSelection,
@@ -376,12 +362,7 @@ export default Vue.extend({
       }
 
       addFilterToRoute(this.$router, filter);
-
-      if (this.isFilteringHighlights) {
-        clearHighlight(this.$router);
-      } else {
-        clearRowSelection(this.$router);
-      }
+      this.resetHighlightsOrRow();
 
       datasetActions.fetchVariableRankings(this.$store, {
         dataset: this.dataset,
@@ -421,10 +402,18 @@ export default Vue.extend({
       viewActions.updateSelectTrainingData(this.$store);
     },
 
+    resetHighlightsOrRow() {
+      if (this.isFilteringHighlights) {
+        clearHighlight(this.$router);
+      } else {
+        clearRowSelection(this.$router);
+      }
+    },
+
     updateFilterAndHighlightFromLexQuery(lexQuery) {
       const lqfh = lexQueryToFiltersAndHighlight(lexQuery, this.dataset);
       deepUpdateFiltersInRoute(this.$router, lqfh.filters);
-      updateHighlight(this.$router, lqfh.highlight);
+      updateHighlight(this.$router, lqfh.highlights, UPDATE_ALL);
     },
   },
 });

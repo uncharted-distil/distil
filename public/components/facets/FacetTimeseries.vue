@@ -2,7 +2,7 @@
   <div class="facet-timeseries">
     <facet-sparklines
       :summary="summary"
-      :highlight="highlight"
+      :highlights="highlights"
       :row-selection="rowSelection"
       :enabled-type-changes="enabledTypeChanges"
       :enable-highlighting="
@@ -24,7 +24,7 @@
       :is="facetType"
       v-if="!!timelineSummary && expand"
       :summary="timelineSummary"
-      :highlight="highlight"
+      :highlights="highlights"
       :row-selection="rowSelection"
       :enabled-type-changes="enabledTypeChanges"
       :instance-name="instanceName"
@@ -61,7 +61,7 @@ import { EXPAND_ACTION_TYPE, COLLAPSE_ACTION_TYPE } from "../../util/types";
  * @param {Boolean} [expanded=false] - To display the facet expanded; Collapsed by default.
  */
 export default Vue.extend({
-  name: "facet-timeseries",
+  name: "FacetTimeseries",
 
   components: {
     FacetSparklines,
@@ -71,7 +71,7 @@ export default Vue.extend({
 
   props: {
     summary: Object as () => VariableSummary,
-    highlight: Object as () => Highlight,
+    highlights: Array as () => Highlight[],
     rowSelection: Object as () => RowSelection,
     instanceName: String as () => string,
     enabledTypeChanges: Array as () => string[],

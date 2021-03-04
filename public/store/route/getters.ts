@@ -385,7 +385,7 @@ export const getters = {
     const filters = getters.getDecodedFilters;
     const size = getters.getRouteDataSize;
     const filterParams = _.cloneDeep({
-      highlight: null,
+      highlights: [],
       variables: [],
       filters,
       size,
@@ -406,7 +406,7 @@ export const getters = {
     return filterParams;
   },
 
-  getDecodedHighlight(state: Route): Highlight {
+  getDecodedHighlights(state: Route): Highlight[] {
     return decodeHighlights(state.query.highlights as string);
   },
 

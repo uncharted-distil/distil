@@ -132,8 +132,8 @@ export default Vue.extend({
       return routeGetters.getRouteDataset(this.$store);
     },
 
-    highlight(): Highlight {
-      return routeGetters.getDecodedHighlight(this.$store);
+    highlights(): Highlight[] {
+      return routeGetters.getDecodedHighlights(this.$store);
     },
 
     produceRequestId(): string {
@@ -257,7 +257,7 @@ export default Vue.extend({
     onDataSizeSubmit(dataSize: number) {
       predictionsActions.fetchPredictionTableData(this.$store, {
         dataset: this.dataset,
-        highlight: this.highlight,
+        highlights: this.highlights,
         produceRequestId: this.produceRequestId,
         size: dataSize,
       });

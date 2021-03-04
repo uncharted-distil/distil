@@ -306,12 +306,12 @@ export default Vue.extend({
       const filterParams = routeGetters.getDecodedSolutionRequestFilterParams(
         this.$store
       );
-      const highlight = routeGetters.getDecodedHighlight(this.$store);
+      const highlights = routeGetters.getDecodedHighlights(this.$store);
       for (const [k, v] of varModesMap) {
         datasetActions.fetchVariableSummary(this.$store, {
           dataset: this.dataset,
           variable: k,
-          highlight: highlight,
+          highlights: highlights,
           filterParams: filterParams,
           include: true,
           dataMode: DataMode.Cluster,

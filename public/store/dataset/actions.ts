@@ -224,7 +224,7 @@ export const actions = {
   ) {
     // pull the updated dataset, vars, and summaries
     const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
-    const highlight = context.getters.getDecodedHighlight;
+    const highlights = context.getters.getDecodedHighlights;
 
     return Promise.all([
       actions.fetchDataset(context, {
@@ -236,7 +236,7 @@ export const actions = {
       actions.fetchVariableSummary(context, {
         dataset: args.dataset,
         variable: GEOCODED_LON_PREFIX + args.field,
-        highlight: highlight,
+        highlights: highlights,
         filterParams: filterParams,
         include: true,
         dataMode: DataMode.Default,
@@ -245,7 +245,7 @@ export const actions = {
       actions.fetchVariableSummary(context, {
         dataset: args.dataset,
         variable: GEOCODED_LON_PREFIX + args.field,
-        highlight: highlight,
+        highlights: highlights,
         filterParams: filterParams,
         include: false,
         dataMode: DataMode.Default,
@@ -254,7 +254,7 @@ export const actions = {
       actions.fetchVariableSummary(context, {
         dataset: args.dataset,
         variable: GEOCODED_LAT_PREFIX + args.field,
-        highlight: highlight,
+        highlights: highlights,
         filterParams: filterParams,
         include: true,
         dataMode: DataMode.Default,
@@ -263,7 +263,7 @@ export const actions = {
       actions.fetchVariableSummary(context, {
         dataset: args.dataset,
         variable: GEOCODED_LAT_PREFIX + args.field,
-        highlight: highlight,
+        highlights: highlights,
         filterParams: filterParams,
         include: false,
         dataMode: DataMode.Default,
@@ -626,7 +626,7 @@ export const actions = {
       const variables = context.getters.getVariables as Variable[];
       const filterParams = context.getters
         .getDecodedSolutionRequestFilterParams as FilterParams;
-      const highlight = context.getters.getDecodedHighlight as Highlight;
+      const highlights = context.getters.getDecodedHighlights as Highlight[];
       const dataMode = context.getters.getDataMode as DataMode;
       const varModes = context.getters.getDecodedVarModes as Map<
         string,
@@ -637,7 +637,7 @@ export const actions = {
           dataset: args.dataset,
           variables: variables,
           filterParams: filterParams,
-          highlight: highlight,
+          highlights: highlights,
           dataMode: dataMode,
           varModes: varModes,
         }),
@@ -645,7 +645,7 @@ export const actions = {
           dataset: args.dataset,
           variables: variables,
           filterParams: filterParams,
-          highlight: highlight,
+          highlights: highlights,
           dataMode: dataMode,
           varModes: varModes,
         }),
@@ -712,7 +712,7 @@ export const actions = {
       const variables = context.getters.getVariables as Variable[];
       const filterParams = context.getters
         .getDecodedSolutionRequestFilterParams as FilterParams;
-      const highlight = context.getters.getDecodedHighlight as Highlight;
+      const highlights = context.getters.getDecodedHighlights as Highlight[];
       const dataMode = context.getters.getDataMode as DataMode;
       const varModes = context.getters.getDecodedVarModes as Map<
         string,
@@ -723,7 +723,7 @@ export const actions = {
           dataset: args.dataset,
           variables: variables,
           filterParams: filterParams,
-          highlight: highlight,
+          highlights: highlights,
           dataMode: dataMode,
           varModes: varModes,
         }),
@@ -731,7 +731,7 @@ export const actions = {
           dataset: args.dataset,
           variables: variables,
           filterParams: filterParams,
-          highlight: highlight,
+          highlights: highlights,
           dataMode: dataMode,
           varModes: varModes,
         }),
@@ -765,7 +765,7 @@ export const actions = {
       const variables = context.getters.getVariables as Variable[];
       const filterParams = context.getters
         .getDecodedSolutionRequestFilterParams as FilterParams;
-      const highlight = context.getters.getDecodedHighlight as Highlight;
+      const highlights = context.getters.getDecodedHighlights as Highlight[];
       const dataMode = context.getters.getDataMode as DataMode;
       const varModes = context.getters.getDecodedVarModes as Map<
         string,
@@ -776,7 +776,7 @@ export const actions = {
           dataset: args.dataset,
           variables: variables,
           filterParams: filterParams,
-          highlight: highlight,
+          highlights: highlights,
           dataMode: dataMode,
           varModes: varModes,
         }),
@@ -784,7 +784,7 @@ export const actions = {
           dataset: args.dataset,
           variables: variables,
           filterParams: filterParams,
-          highlight: highlight,
+          highlights: highlights,
           dataMode: dataMode,
           varModes: varModes,
         }),
@@ -838,13 +838,13 @@ export const actions = {
       // update variable summary
       const filterParams =
         context.getters.getDecodedSolutionRequestFilterParams;
-      const highlight = context.getters.getDecodedHighlight;
+      const highlights = context.getters.getDecodedHighlights;
       return Promise.all([
         actions.fetchVariableSummary(context, {
           dataset: args.dataset,
           variable: args.field,
           filterParams: filterParams,
-          highlight: highlight,
+          highlights: highlights,
           include: true,
           dataMode: DataMode.Default,
           mode: SummaryMode.Default,
@@ -853,7 +853,7 @@ export const actions = {
           dataset: args.dataset,
           variable: args.field,
           filterParams: filterParams,
-          highlight: highlight,
+          highlights: highlights,
           include: false,
           dataMode: DataMode.Default,
           mode: SummaryMode.Default,
@@ -880,7 +880,7 @@ export const actions = {
     args: {
       dataset: string;
       variables: Variable[];
-      highlight: Highlight;
+      highlights: Highlight[];
       filterParams: FilterParams;
       dataMode: DataMode;
       varModes: Map<string, SummaryMode>;
@@ -890,7 +890,7 @@ export const actions = {
       dataset: args.dataset,
       variables: args.variables,
       filterParams: args.filterParams,
-      highlight: args.highlight,
+      highlights: args.highlights,
       include: true,
       dataMode: args.dataMode,
       varModes: args.varModes,
@@ -902,7 +902,7 @@ export const actions = {
     args: {
       dataset: string;
       variables: Variable[];
-      highlight: Highlight;
+      highlights: Highlight[];
       filterParams: FilterParams;
       dataMode: DataMode;
       varModes: Map<string, SummaryMode>;
@@ -912,7 +912,7 @@ export const actions = {
       dataset: args.dataset,
       variables: args.variables,
       filterParams: args.filterParams,
-      highlight: args.highlight,
+      highlights: args.highlights,
       include: false,
       dataMode: args.dataMode,
       varModes: args.varModes,
@@ -924,7 +924,7 @@ export const actions = {
     args: {
       dataset: string;
       variables: Variable[];
-      highlight: Highlight;
+      highlights: Highlight[];
       filterParams: FilterParams;
       include: boolean;
       dataMode: DataMode;
@@ -984,7 +984,7 @@ export const actions = {
             dataset: args.dataset,
             variable: variable.key,
             filterParams: args.filterParams,
-            highlight: args.highlight,
+            highlights: args.highlights,
             include: args.include,
             dataMode: args.dataMode,
             mode: mode,
@@ -1001,7 +1001,7 @@ export const actions = {
     args: {
       dataset: string;
       variable: string;
-      highlight?: Highlight;
+      highlights?: Highlight[];
       filterParams: FilterParams;
       include: boolean;
       dataMode: DataMode;
@@ -1013,7 +1013,7 @@ export const actions = {
     }
     const filterParams = addHighlightToFilterParams(
       args.filterParams,
-      args.highlight
+      args.highlights
     );
     const decodedVarModes = routeGetters.getDecodedVarModes(store);
     const mutator = args.include
@@ -1346,7 +1346,7 @@ export const actions = {
     args: {
       datasets: string[];
       filterParams: Dictionary<FilterParams>;
-      highlight: Highlight;
+      highlights: Highlight[];
     }
   ) {
     if (!validateArgs(args, ["datasets", "filterParams"])) {
@@ -1354,13 +1354,13 @@ export const actions = {
     }
     return Promise.all(
       args.datasets.map(async (dataset) => {
-        const highlight =
-          (args.highlight && args.highlight.dataset) === dataset
-            ? args.highlight
+        const highlights =
+          (args.highlights && args.highlights[0].dataset) === dataset
+            ? args.highlights
             : null;
         const filterParams = addHighlightToFilterParams(
           args.filterParams[dataset],
-          highlight
+          highlights
         );
 
         try {
@@ -1388,7 +1388,7 @@ export const actions = {
     args: {
       dataset: string;
       filterParams: FilterParams;
-      highlight: Highlight;
+      highlights: Highlight[];
       dataMode: DataMode;
       orderBy?: string;
     }
@@ -1396,7 +1396,7 @@ export const actions = {
     const data = await actions.fetchTableData(context, {
       dataset: args.dataset,
       filterParams: args.filterParams,
-      highlight: args.highlight,
+      highlights: args.highlights,
       include: true,
       dataMode: args.dataMode,
       orderBy: args.orderBy,
@@ -1409,14 +1409,14 @@ export const actions = {
     args: {
       dataset: string;
       filterParams: FilterParams;
-      highlight: Highlight;
+      highlights: Highlight[];
       dataMode: DataMode;
     }
   ) {
     const data = await actions.fetchTableData(context, {
       dataset: args.dataset,
       filterParams: args.filterParams,
-      highlight: args.highlight,
+      highlights: args.highlights,
       include: false,
       dataMode: args.dataMode,
     });
@@ -1427,12 +1427,12 @@ export const actions = {
     args: {
       dataset: string;
       filterParams: FilterParams;
-      highlight: Highlight;
+      highlights: Highlight[];
       dataMode: DataMode;
       include: boolean;
     }
   ) {
-    if (!args.highlight && !args.filterParams.filters.length) {
+    if (!args.highlights.length && !args.filterParams.filters.length) {
       return;
     }
     const mutator = args.include
@@ -1441,7 +1441,7 @@ export const actions = {
     const data = await actions.fetchTableData(context, {
       dataset: args.dataset,
       filterParams: args.filterParams,
-      highlight: { ...args.highlight, include: EXCLUDE_FILTER },
+      highlights: args.highlights,
       include: args.include,
       dataMode: args.dataMode,
     });
@@ -1452,7 +1452,7 @@ export const actions = {
     args: {
       dataset: string;
       filterParams: FilterParams;
-      highlight: Highlight;
+      highlights: Highlight[];
       dataMode: DataMode;
       include: boolean;
       mutatorIsInclude: boolean;
@@ -1470,14 +1470,14 @@ export const actions = {
         : mutations.setAreaOfInterestExcludeOuter;
     }
     // if is exclude and highlight is null there is nothing to invert
-    if (!args.mutatorIsInclude && args.highlight === null) {
+    if (!args.mutatorIsInclude && !args.highlights.length) {
       mutator(context, { values: [] });
       return;
     }
     const data = await actions.fetchTableData(context, {
       dataset: args.dataset,
       filterParams: args.filterParams,
-      highlight: args.highlight,
+      highlights: args.highlights,
       include: args.include,
       dataMode: args.dataMode,
     });
@@ -1489,7 +1489,7 @@ export const actions = {
     args: {
       dataset: string;
       filterParams: FilterParams;
-      highlight: Highlight;
+      highlights: Highlight[];
       include: boolean;
       dataMode: DataMode;
       orderBy?: string;
@@ -1500,7 +1500,7 @@ export const actions = {
     }
     const filterParams = addHighlightToFilterParams(
       args.filterParams,
-      args.highlight
+      args.highlights
     );
 
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
@@ -1615,7 +1615,7 @@ export const actions = {
       dataset: string;
       datasetNewName: string;
       filterParams: FilterParams;
-      highlight: Highlight;
+      highlights: Highlight[];
       include: boolean;
       dataMode: DataMode;
       mode?: string;
@@ -1626,7 +1626,7 @@ export const actions = {
     }
     const filterParams = addHighlightToFilterParams(
       args.filterParams,
-      args.highlight,
+      args.highlights,
       args.mode
     );
 
@@ -1649,7 +1649,7 @@ export const actions = {
     args: {
       dataset: string;
       filterParams: FilterParams;
-      highlight: Highlight;
+      highlights: Highlight[];
       include: boolean;
       dataMode: DataMode;
       mode?: string;
@@ -1660,7 +1660,7 @@ export const actions = {
     }
     const filterParams = addHighlightToFilterParams(
       args.filterParams,
-      args.highlight,
+      args.highlights,
       args.mode
     );
 

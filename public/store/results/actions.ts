@@ -38,7 +38,7 @@ export const actions = {
       dataset: string;
       training: Variable[];
       solutionId: string;
-      highlight: Highlight;
+      highlights: Highlight[];
       dataMode: DataMode;
       varModes: Map<string, SummaryMode>;
     }
@@ -108,7 +108,7 @@ export const actions = {
             dataset: args.dataset,
             variable: variable,
             resultID: solution.resultId,
-            highlight: args.highlight,
+            highlights: args.highlights,
             dataMode: dataMode,
             varMode: args.varModes.has(variable.key)
               ? args.varModes.get(variable.key)
@@ -126,7 +126,7 @@ export const actions = {
       dataset: string;
       variable: Variable;
       resultID: string;
-      highlight: Highlight;
+      highlights: Highlight[];
       dataMode: DataMode;
       varMode: SummaryMode;
     }
@@ -145,13 +145,13 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlight: null,
+      highlights: [],
       variables: [],
       filters: [],
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
-      args.highlight
+      args.highlights
     );
 
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
@@ -185,7 +185,7 @@ export const actions = {
       dataset: string;
       target: string;
       solutionId: string;
-      highlight: Highlight;
+      highlights: Highlight[];
       dataMode: DataMode;
       varMode: SummaryMode;
     }
@@ -229,13 +229,13 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlight: null,
+      highlights: [],
       variables: [],
       filters: [],
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
-      args.highlight
+      args.highlights
     );
 
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
@@ -263,7 +263,7 @@ export const actions = {
     args: {
       solutionId: string;
       dataset: string;
-      highlight: Highlight;
+      highlights: Highlight[];
       dataMode: DataMode;
       isMapData: boolean;
       size?: number;
@@ -279,13 +279,13 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlight: null,
+      highlights: [],
       variables: [],
       filters: [],
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
-      args.highlight
+      args.highlights
     );
     const mutator = args.isMapData
       ? mutations.setFullIncludedResultTableData
@@ -317,7 +317,7 @@ export const actions = {
     args: {
       solutionId: string;
       dataset: string;
-      highlight: Highlight;
+      highlights: Highlight[];
       dataMode: DataMode;
       isMapData: boolean;
       size?: number;
@@ -333,13 +333,13 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlight: null,
+      highlights: [],
       variables: [],
       filters: [],
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
-      args.highlight,
+      args.highlights,
       EXCLUDE_FILTER
     );
 
@@ -374,7 +374,7 @@ export const actions = {
     args: {
       solutionId: string;
       dataset: string;
-      highlight: Highlight;
+      highlights: Highlight[];
       dataMode: DataMode;
       size?: number;
       filter: Filter; // the area of interest
@@ -390,13 +390,13 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlight: null,
+      highlights: [],
       variables: [],
       filters: [],
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
-      args.highlight
+      args.highlights
     );
 
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
@@ -426,7 +426,7 @@ export const actions = {
     args: {
       solutionId: string;
       dataset: string;
-      highlight: Highlight;
+      highlights: Highlight[];
       dataMode: DataMode;
       size?: number;
       filter: Filter;
@@ -442,13 +442,13 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlight: null,
+      highlights: [],
       variables: [],
       filters: [],
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
-      args.highlight,
+      args.highlights,
       EXCLUDE_FILTER
     );
 
@@ -460,7 +460,10 @@ export const actions = {
     }
     filterParams.filters.push(args.filter);
     // if highlight is null there is nothing to invert so return null
-    if (filterParams.highlight === null) {
+    if (
+      filterParams.highlights === null &&
+      filterParams.highlights.length > 0
+    ) {
       mutations.setAreaOfInterestOuter(context, createEmptyTableData());
       return;
     }
@@ -484,7 +487,7 @@ export const actions = {
     args: {
       solutionId: string;
       dataset: string;
-      highlight: Highlight;
+      highlights: Highlight[];
       dataMode: DataMode;
       isMapData: boolean;
       size?: number;
@@ -535,7 +538,7 @@ export const actions = {
       dataset: string;
       target: string;
       solutionId: string;
-      highlight: Highlight;
+      highlights: Highlight[];
       dataMode: DataMode;
       varMode: SummaryMode;
     }
@@ -567,13 +570,13 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlight: null,
+      highlights: [],
       variables: [],
       filters: [],
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
-      args.highlight
+      args.highlights
     );
 
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
@@ -603,7 +606,7 @@ export const actions = {
       dataset: string;
       target: string;
       requestIds: string[];
-      highlight: Highlight;
+      highlights: Highlight[];
       dataMode: DataMode;
       varModes: Map<string, SummaryMode>;
     }
@@ -622,7 +625,7 @@ export const actions = {
           dataset: args.dataset,
           target: args.target,
           solutionId: solution.solutionId,
-          highlight: args.highlight,
+          highlights: args.highlights,
           dataMode: args.dataMode,
           varMode: args.varModes.has(args.target)
             ? args.varModes.get(args.target)
@@ -639,7 +642,7 @@ export const actions = {
       dataset: string;
       target: string;
       solutionId: string;
-      highlight: Highlight;
+      highlights: Highlight[];
       dataMode: DataMode;
       varMode: SummaryMode;
     }
@@ -671,13 +674,13 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlight: null,
+      highlights: [],
       variables: [],
       filters: [],
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
-      args.highlight
+      args.highlights
     );
 
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
@@ -707,7 +710,7 @@ export const actions = {
       dataset: string;
       target: string;
       requestIds: string[];
-      highlight: Highlight;
+      highlights: Highlight[];
       dataMode: DataMode;
       varModes: Map<string, SummaryMode>;
     }
@@ -726,7 +729,7 @@ export const actions = {
           dataset: args.dataset,
           target: args.target,
           solutionId: solution.solutionId,
-          highlight: args.highlight,
+          highlights: args.highlights,
           dataMode: args.dataMode,
           varMode: args.varModes.has(args.target)
             ? args.varModes.get(args.target)
@@ -742,7 +745,7 @@ export const actions = {
     args: {
       dataset: string;
       solutionId: string;
-      highlight: Highlight;
+      highlights: Highlight[];
       dataMode: DataMode;
       varMode: SummaryMode;
     }
@@ -761,13 +764,13 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlight: null,
+      highlights: [],
       variables: [],
       filters: [],
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
-      args.highlight
+      args.highlights
     );
 
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
@@ -797,7 +800,7 @@ export const actions = {
       dataset: string;
       target: string;
       requestIds: string[];
-      highlight: Highlight;
+      highlights: Highlight[];
       dataMode: DataMode;
       varModes: Map<string, SummaryMode>;
     }
@@ -815,7 +818,7 @@ export const actions = {
         return actions.fetchCorrectnessSummary(context, {
           dataset: args.dataset,
           solutionId: solution.solutionId,
-          highlight: args.highlight,
+          highlights: args.highlights,
           dataMode: args.dataMode,
           varMode: args.varModes.has(args.target)
             ? args.varModes.get(args.target)
@@ -926,7 +929,7 @@ export const actions = {
     args: {
       dataset: string;
       solutionId: string;
-      highlight: Highlight;
+      highlights: Highlight[];
       dataMode: DataMode;
       varMode: SummaryMode;
     }
@@ -954,13 +957,13 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlight: null,
+      highlights: [],
       variables: [],
       filters: [],
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
-      args.highlight
+      args.highlights
     );
 
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
@@ -990,7 +993,7 @@ export const actions = {
       dataset: string;
       target: string;
       requestIds: string[];
-      highlight: Highlight;
+      highlights: Highlight[];
       dataMode: DataMode;
       varModes: Map<string, SummaryMode>;
     }
@@ -1008,7 +1011,7 @@ export const actions = {
         return actions.fetchConfidenceSummary(context, {
           dataset: args.dataset,
           solutionId: solution.solutionId,
-          highlight: args.highlight,
+          highlights: args.highlights,
           dataMode: args.dataMode,
           varMode: args.varModes.has(args.target)
             ? args.varModes.get(args.target)

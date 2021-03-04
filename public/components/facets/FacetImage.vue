@@ -5,18 +5,18 @@
     :selection.prop="selection"
     :subselection.prop="subSelection"
     :disabled.prop="!enableHighlighting"
-    @facet-element-updated="updateSelection"
     class="facet-image"
+    @facet-element-updated="updateSelection"
   >
     <div slot="header-label" :class="headerClass">
-      <i :class="getGroupIcon(summary) + ' facet-header-icon'"></i>
+      <i :class="getGroupIcon(summary) + ' facet-header-icon'" />
       <span>{{ summary.label.toUpperCase() }}</span>
       <type-change-menu
         v-if="facetEnableTypeChanges"
         class="facet-header-dropdown"
         :dataset="summary.dataset"
         :field="summary.key"
-        :expandCollapse="expandCollapse"
+        :expand-collapse="expandCollapse"
       />
     </div>
     <facet-template target="facet-terms-value" class="facet-content-container">
@@ -43,7 +43,7 @@
         v-if="this.html"
         v-child="computeCustomHTML()"
         class="facet-footer-custom-html"
-      ></div>
+      />
     </div>
   </facet-terms>
 </template>
@@ -70,7 +70,7 @@ import _ from "lodash";
 import { IMAGE_TYPE } from "../../util/types";
 
 export default Vue.extend({
-  name: "facet-image",
+  name: "FacetImage",
 
   components: {
     TypeChangeMenu,
@@ -95,7 +95,7 @@ export default Vue.extend({
       Function as () => Function,
     ],
     expandCollapse: Function as () => Function,
-    highlight: Object as () => Highlight,
+    highlights: Array as () => Highlight[],
     enableHighlighting: Boolean as () => boolean,
     instanceName: String as () => string,
     rowSelection: Object as () => RowSelection,
@@ -135,16 +135,14 @@ export default Vue.extend({
       return getSubSelectionValues(this.summary, this.rowSelection, this.max);
     },
     selection(): {} {
-      if (!this.isHighlightedGroup(this.highlight, this.summary.key)) {
+      if (!this.enableHighlighting || !this.isHighlightedGroup()) {
         return null;
       }
-      const highlightValue = this.getHighlightValue(this.highlight);
-      if (!highlightValue) {
-        return null;
-      }
+
+      const highlightValues = this.getHighlightValues();
       const highlightAsSelection = this.summary.baseline.buckets.reduce(
         (acc, val, ind) => {
-          if (val.key === highlightValue) acc[ind] = true;
+          if (highlightValues.includes(val.key)) acc[ind] = true;
           return acc;
         },
         {}
@@ -240,17 +238,21 @@ export default Vue.extend({
         this.facetValueCount
       );
     },
-    getHighlightValue(highlight: Highlight): any {
-      if (highlight && highlight.value) {
-        return highlight.value;
-      }
-      return null;
+    getHighlightValues(): string[] {
+      return this.highlights.reduce(
+        (acc, highlight) =>
+          typeof highlight.value === "string" ? [...acc, highlight.value] : acc,
+        []
+      );
     },
-    isHighlightedInstance(highlight: Highlight): boolean {
-      return highlight && highlight.context === this.instanceName;
-    },
-    isHighlightedGroup(highlight: Highlight, key: string): boolean {
-      return this.isHighlightedInstance(highlight) && highlight.key === key;
+    isHighlightedGroup(): boolean {
+      return this.highlights.reduce(
+        (acc, highlight) =>
+          (highlight.key === this.summary.key &&
+            highlight.context === this.instanceName) ||
+          acc,
+        false
+      );
     },
     updateSelection(event) {
       if (!this.enableHighlighting) return;
@@ -259,25 +261,18 @@ export default Vue.extend({
         event.detail.changedProperties.get("selection") !== undefined &&
         !_.isEqual(facet.selection, this.selection)
       ) {
-        let value = null;
+        const values = [];
         if (facet.selection) {
-          if (this.selection) {
-            const oldKey = Object.keys(this.selection)[0];
-            const incomingKeys = Object.keys(facet.selection);
-            const newKey = incomingKeys.filter(
-              (iKey) => oldKey.indexOf(iKey) < 0
-            )[0];
-            value = this.facetData.values[newKey].label;
-          } else {
-            const newKey = Object.keys(facet.selection)[0];
-            value = this.facetData.values[newKey].label;
-          }
+          const incomingKeys = Object.keys(facet.selection);
+          incomingKeys.forEach((ik) =>
+            values.push(this.facetData.values[ik].label)
+          );
         }
         this.$emit(
           "facet-click",
           this.instanceName,
           this.summary.key,
-          value,
+          values,
           this.summary.dataset
         );
       }

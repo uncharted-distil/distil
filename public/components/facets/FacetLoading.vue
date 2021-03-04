@@ -1,6 +1,6 @@
 <template>
   <facet-bars :data.prop="facetData">
-    <div slot="footer" class="facet-footer"></div>
+    <div slot="footer" class="facet-footer" />
   </facet-bars>
 </template>
 
@@ -13,7 +13,7 @@ import { FacetBarsData } from "@uncharted.software/facets-core/dist/types/facet-
 import { VariableSummary } from "../../store/dataset";
 
 export default Vue.extend({
-  name: "facet-loading",
+  name: "FacetLoading",
 
   props: {
     summary: Object as () => VariableSummary,

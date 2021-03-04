@@ -35,7 +35,7 @@ export const actions = {
     args: {
       dataset: string;
       training: Variable[];
-      highlight: Highlight;
+      highlights: Highlight[];
       varModes: Map<string, SummaryMode>;
       produceRequestId: string;
     }
@@ -104,7 +104,7 @@ export const actions = {
             dataset: args.dataset,
             variable: variable,
             resultID: resultId,
-            highlight: args.highlight,
+            highlights: args.highlights,
             varMode: args.varModes.has(variable.key)
               ? args.varModes.get(variable.key)
               : SummaryMode.Default,
@@ -120,19 +120,19 @@ export const actions = {
     args: {
       produceRequestId: string;
       dataset: string;
-      highlight: Highlight;
+      highlights: Highlight[];
       size?: number;
       filter: Filter; // the area of interest
     }
   ) {
     const filterParamsBlank = {
-      highlight: null,
+      highlights: [],
       variables: [],
       filters: [],
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
-      args.highlight
+      args.highlights
     );
 
     if (_.isInteger(args.size)) {
@@ -160,19 +160,19 @@ export const actions = {
     args: {
       produceRequestId: string;
       dataset: string;
-      highlight: Highlight;
+      highlights: Highlight[];
       size?: number;
       filter: Filter;
     }
   ) {
     const filterParamsBlank = {
-      highlight: null,
+      highlights: [],
       variables: [],
       filters: [],
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
-      args.highlight,
+      args.highlights,
       EXCLUDE_FILTER
     );
     // Add the size limit to results if provided.
@@ -181,7 +181,10 @@ export const actions = {
     }
     filterParams.filters.push(args.filter);
     // if highlight is null there is nothing to invert so return null
-    if (filterParams.highlight === null) {
+    if (
+      filterParams.highlights === null &&
+      filterParams.highlights.length > 0
+    ) {
       mutations.setAreaOfInterestOuter(context, createEmptyTableData());
       return;
     }
@@ -206,7 +209,7 @@ export const actions = {
       dataset: string;
       variable: Variable;
       resultID: string;
-      highlight: Highlight;
+      highlights: Highlight[];
       varMode: SummaryMode;
     }
   ): Promise<void> {
@@ -228,11 +231,11 @@ export const actions = {
     }
 
     let filterParams = {
-      highlight: null,
+      highlights: [],
       variables: [],
       filters: [],
     };
-    filterParams = addHighlightToFilterParams(filterParams, args.highlight);
+    filterParams = addHighlightToFilterParams(filterParams, args.highlights);
     try {
       const response = await axios.post(
         `/distil/training-summary/${args.dataset}/${args.variable.key}/${args.resultID}/${args.varMode}`,
@@ -260,17 +263,17 @@ export const actions = {
     context: PredictionContext,
     args: {
       dataset: string;
-      highlight: Highlight;
+      highlights: Highlight[];
       produceRequestId: string;
       size?: number;
     }
   ) {
     let filterParams: FilterParams = {
-      highlight: null,
+      highlights: [],
       variables: [],
       filters: [],
     };
-    filterParams = addHighlightToFilterParams(filterParams, args.highlight);
+    filterParams = addHighlightToFilterParams(filterParams, args.highlights);
 
     // Add the size limit to results if provided.
     if (_.isInteger(args.size)) {
@@ -297,7 +300,7 @@ export const actions = {
     context: PredictionContext,
     args: {
       dataset: string;
-      highlight: Highlight;
+      highlights: Highlight[];
       produceRequestId: string;
       size?: number;
     }
@@ -311,7 +314,7 @@ export const actions = {
   fetchPredictionSummary(
     context: PredictionContext,
     args: {
-      highlight: Highlight;
+      highlights: Highlight[];
       varMode: SummaryMode;
       produceRequestId: string;
     }
@@ -329,11 +332,11 @@ export const actions = {
     }
 
     let filterParams = {
-      highlight: null,
+      highlights: [],
       variables: [],
       filters: [],
     };
-    filterParams = addHighlightToFilterParams(filterParams, args.highlight);
+    filterParams = addHighlightToFilterParams(filterParams, args.highlights);
 
     const endpoint = `/distil/prediction-result-summary`;
     const key = predictions.predictedKey;
@@ -355,7 +358,7 @@ export const actions = {
   fetchPredictionSummaries(
     context: PredictionContext,
     args: {
-      highlight: Highlight;
+      highlights: Highlight[];
       fittedSolutionId: string;
     }
   ) {
@@ -365,7 +368,7 @@ export const actions = {
     return Promise.all(
       predictions.map((p) =>
         actions.fetchPredictionSummary(context, {
-          highlight: args.highlight,
+          highlights: args.highlights,
           varMode: SummaryMode.Default,
           produceRequestId: p.requestId,
         })

@@ -373,14 +373,23 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, wheres []string, param
 		return wheres, params
 	}
 
-	highlight := filterParams.Highlight
-	if highlight != nil {
+	var highlightWheres []string
+	for _, highlight := range filterParams.Highlights {
 		switch highlight.Mode {
 		case model.IncludeFilter:
-			wheres, params = s.buildIncludeFilter(dataset, wheres, params, alias, highlight)
+			highlightWheres, params = s.buildIncludeFilter(dataset, highlightWheres, params, alias, highlight)
 		case model.ExcludeFilter:
-			wheres, params = s.buildExcludeFilter(dataset, wheres, params, alias, highlight)
+			highlightWheres, params = s.buildExcludeFilter(dataset, highlightWheres, params, alias, highlight)
 		}
+	}
+	if len(highlightWheres) > 0 {
+		where := ""
+		if invert {
+			where = fmt.Sprintf("NOT(%s)", strings.Join(highlightWheres, " OR "))
+		} else {
+			where = strings.Join(highlightWheres, " OR ")
+		}
+		wheres = append(wheres, where)
 	}
 
 	var filterWheres []string
@@ -646,8 +655,7 @@ func splitFilters(filterParams *api.FilterParams) *filters {
 		return &filters{}
 	}
 
-	if filterParams.Highlight != nil {
-		highlight := filterParams.Highlight
+	for _, highlight := range filterParams.Highlights {
 		if api.IsPredictedKey(highlight.Key) {
 			predictedFilter = highlight
 		} else if api.IsErrorKey(highlight.Key) {

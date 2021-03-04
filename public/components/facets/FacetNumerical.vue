@@ -8,47 +8,41 @@
   >
     <div slot="header-label" :class="headerClass">
       <span>{{ summary.label.toUpperCase() }}</span>
-      <importance-bars
-        v-if="importance"
-        :importance="importance"
-      ></importance-bars>
+      <importance-bars v-if="importance" :importance="importance" />
       <type-change-menu
         v-if="facetEnableTypeChanges"
         class="facet-header-dropdown"
         :dataset="summary.dataset"
         :field="summary.key"
-        :expandCollapse="expandCollapse"
-      >
-      </type-change-menu>
+        :expand-collapse="expandCollapse"
+      />
     </div>
 
     <facet-template
+      v-if="facetData.values.length > 0"
       target="facet-bars-value"
       title="${tooltip}"
-      v-if="facetData.values.length > 0"
-    >
-    </facet-template>
+    />
 
-    <div slot="content" v-else></div>
+    <div v-else slot="content" />
 
     <div
+      v-if="facetData.values.length > 0"
       slot="footer"
       class="facet-footer-container"
-      v-if="facetData.values.length > 0"
     >
       <facet-plugin-zoom-bar
         min-bar-width="8"
         auto-hide="true"
         round-caps="true"
-      >
-      </facet-plugin-zoom-bar>
+      />
       <div
         v-if="this.html"
         v-child="computeCustomHTML()"
         class="facet-footer-custom-html"
-      ></div>
+      />
     </div>
-    <div slot="footer" class="facet-footer-container" v-else>
+    <div v-else slot="footer" class="facet-footer-container">
       No Data Avialable
     </div>
   </facet-bars>
@@ -72,7 +66,7 @@ import {
 import _ from "lodash";
 
 export default Vue.extend({
-  name: "facet-numerical",
+  name: "FacetNumerical",
 
   components: {
     TypeChangeMenu,
@@ -97,7 +91,7 @@ export default Vue.extend({
       Function as () => Function,
     ],
     expandCollapse: Function as () => Function,
-    highlight: Object as () => Highlight,
+    highlights: Array as () => Highlight[],
     enableHighlighting: Boolean as () => boolean,
     instanceName: String as () => string,
     rowSelection: Object as () => RowSelection,
@@ -155,22 +149,17 @@ export default Vue.extend({
       return getSubSelectionValues(this.summary, this.rowSelection, this.max);
     },
     selection(): number[] {
-      if (!this.isHighlightedGroup(this.highlight, this.summary.key)) {
+      if (!this.enableHighlighting || !this.isHighlightedGroup()) {
         return null;
       }
-      const highlightValue = this.getHighlightValue(this.highlight);
-      if (!highlightValue) {
-        return null;
-      }
+      const highlightValues = this.getHighlightValues();
       const buckets = this.summary.baseline.buckets;
 
-      // map the values used for the highlight filter back to the buckets
+      // map the values used for the latest highlight filter back to the buckets
+      // so we can show the latest selection made.
       const highlightAsSelection = buckets.reduce((acc, val, ind) => {
         const key = _.toNumber(val.key);
-        if (
-          key === _.toNumber(highlightValue.from) ||
-          key === _.toNumber(highlightValue.to)
-        ) {
+        if (highlightValues[0].from === key || highlightValues[0].to === key) {
           acc.push(ind);
         }
         return acc;
@@ -188,17 +177,23 @@ export default Vue.extend({
   },
 
   methods: {
-    getHighlightValue(highlight: Highlight): any {
-      if (highlight && highlight.value) {
-        return highlight.value;
-      }
-      return null;
+    getHighlightValues(): { from: number; to: number }[] {
+      return this.highlights.reduce(
+        (acc, highlight) =>
+          highlight.value && highlight.value.to && highlight.value.from
+            ? [...acc, highlight.value]
+            : acc,
+        []
+      );
     },
-    isHighlightedInstance(highlight: Highlight): boolean {
-      return highlight && highlight.context === this.instanceName;
-    },
-    isHighlightedGroup(highlight: Highlight, key: string): boolean {
-      return this.isHighlightedInstance(highlight) && highlight.key === key;
+    isHighlightedGroup(): boolean {
+      return this.highlights.reduce(
+        (acc, highlight) =>
+          (highlight.key === this.summary.key &&
+            highlight.context === this.instanceName) ||
+          acc,
+        false
+      );
     },
     getRange(facet): { from: number; to: number; type: string } {
       if (!facet.selection) {

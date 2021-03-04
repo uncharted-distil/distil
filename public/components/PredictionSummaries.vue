@@ -13,7 +13,7 @@
             :summary="summary"
             :key="summary.key"
             :is="getFacetByType(summary.type)"
-            :highlight="highlight"
+            :highlights="highlights"
             :enabled-type-changes="[]"
             :row-selection="rowSelection"
             :instanceName="instanceName"
@@ -75,41 +75,22 @@
 
 <script lang="ts">
 import Vue from "vue";
-import moment from "moment";
-import _ from "lodash";
-import { sum } from "d3";
 import FileUploader from "../components/FileUploader.vue";
 import FacetNumerical from "../components/facets/FacetNumerical.vue";
 import FacetCategorical from "../components/facets/FacetCategorical.vue";
-import { getSolutionById } from "../util/solutions";
-import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
+import { actions as predictionActions } from "../store/predictions/module";
+import { actions as appActions } from "../store/app/module";
+
 import {
-  getters as predictionsGetters,
-  actions as predictionActions,
-} from "../store/predictions/module";
-import {
-  actions as appActions,
-  getters as appGetters,
-} from "../store/app/module";
-import store from "../store/store";
-import {
-  EXPORT_SUCCESS_ROUTE,
-  ROOT_ROUTE,
-  PREDICTION_ROUTE,
-} from "../store/route/index";
-import {
-  Variable,
-  TaskTypes,
   VariableSummary,
   Highlight,
   RowSelection,
 } from "../store/dataset/index";
-import { Solution } from "../store/requests/index";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { getFacetByType } from "../util/facets";
-import { createRouteEntry, overlayRouteEntry } from "../util/routes";
+import { overlayRouteEntry } from "../util/routes";
 import { getPredictionResultSummary, getIDFromKey } from "../util/summaries";
 import { getPredictionsById } from "../util/predictions";
 import { updateHighlight, clearHighlight } from "../util/highlights";
@@ -150,8 +131,8 @@ export default Vue.extend({
         .filter((p) => !!p);
     },
 
-    highlight(): Highlight {
-      return routeGetters.getDecodedHighlight(this.$store);
+    highlights(): Highlight[] {
+      return routeGetters.getDecodedHighlights(this.$store);
     },
 
     rowSelection(): RowSelection {
@@ -207,7 +188,7 @@ export default Vue.extend({
           value: value,
         });
       } else {
-        clearHighlight(this.$router);
+        clearHighlight(this.$router, key);
       }
       appActions.logUserEvent(this.$store, {
         feature: Feature.CHANGE_HIGHLIGHT,
@@ -223,19 +204,27 @@ export default Vue.extend({
       value: { from: number; to: number },
       dataset: string
     ) {
-      if (!this.highlight || this.highlight.key !== key) {
+      const uniqueHighlight = this.highlights.reduce(
+        (acc, highlight) => highlight.key !== key || acc,
+        false
+      );
+      if (uniqueHighlight) {
         // If this isn't the currently selected prediction set, first update it.
         // Note that the key is of the form <requestId>:predicted and so needs to be
         // parsed.
         if (this.summaries && this.produceRequestId !== getIDFromKey(key)) {
           this.onClick(key);
         }
-        updateHighlight(this.$router, {
-          context: context,
-          dataset: dataset,
-          key: key,
-          value: value,
-        });
+        if (key && value) {
+          updateHighlight(this.$router, {
+            context: context,
+            dataset: dataset,
+            key: key,
+            value: value,
+          });
+        } else {
+          clearHighlight(this.$router, key);
+        }
         appActions.logUserEvent(this.$store, {
           feature: Feature.CHANGE_HIGHLIGHT,
           activity: Activity.PREDICTION_ANALYSIS,
@@ -251,12 +240,16 @@ export default Vue.extend({
       value: { from: { label: string[] }; to: { label: string[] } },
       dataset: string
     ) {
-      updateHighlight(this.$router, {
-        context: context,
-        dataset: dataset,
-        key: key,
-        value: value,
-      });
+      if (key && value) {
+        updateHighlight(this.$router, {
+          context: context,
+          dataset: dataset,
+          key: key,
+          value: value,
+        });
+      } else {
+        clearHighlight(this.$router, key);
+      }
       appActions.logUserEvent(this.$store, {
         feature: Feature.CHANGE_HIGHLIGHT,
         activity: Activity.PREDICTION_ANALYSIS,

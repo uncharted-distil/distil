@@ -208,8 +208,8 @@ export default Vue.extend({
       return routeGetters.getDecodedRowSelection(this.$store);
     },
 
-    highlight(): Highlight {
-      return routeGetters.getDecodedHighlight(this.$store);
+    highlights(): Highlight[] {
+      return routeGetters.getDecodedHighlights(this.$store);
     },
 
     timeseriesRowGlobalExtrema(): TimeseriesExtrema {
@@ -244,11 +244,14 @@ export default Vue.extend({
 
     isTimeseriesViewHighlight(): boolean {
       // ignore any highlights unless they are range highlights
-      return (
-        this.highlight &&
-        this.highlight.key === this.timeseriesGrouping.idCol &&
-        this.highlight.value.from !== undefined &&
-        this.highlight.value.to !== undefined
+      return this.highlights.reduce(
+        (res, highlight) =>
+          res ||
+          (highlight &&
+            highlight.key === this.timeseriesGrouping.idCol &&
+            highlight.value.from !== undefined &&
+            highlight.value.to !== undefined),
+        false
       );
     },
 
@@ -257,7 +260,17 @@ export default Vue.extend({
         return this.selectedMicroMin;
       }
       if (this.isTimeseriesViewHighlight) {
-        return this.highlight.value.from;
+        return this.highlights.reduce((res, highlight) => {
+          if (
+            highlight &&
+            highlight.key === this.timeseriesGrouping.idCol &&
+            highlight.value.from &&
+            (res === null || (res !== null && res > highlight.value.from))
+          ) {
+            res = highlight.value.from as number;
+          }
+          return res;
+        }, null as number);
       }
       return this.timeseriesMinX;
     },
@@ -267,7 +280,17 @@ export default Vue.extend({
         return this.selectedMicroMax;
       }
       if (this.isTimeseriesViewHighlight) {
-        return this.highlight.value.to;
+        return this.highlights.reduce((res, highlight) => {
+          if (
+            highlight &&
+            highlight.key === this.timeseriesGrouping.idCol &&
+            highlight.value.to &&
+            (res === null || (res !== null && res < highlight.value.to))
+          ) {
+            res = highlight.value.from as number;
+          }
+          return res;
+        }, null as number);
       }
       return this.timeseriesMaxX;
     },

@@ -7,9 +7,9 @@
         :total="numRows"
         @submit="onDataSizeSubmit"
       />
-      of {{ numRows
-      }}<template v-if="!isForecasting"
-        >, including {{ numErrors }}
+      of {{ numRows }}
+      <template v-if="!isForecasting">
+        , including {{ numErrors }}
         <strong class="erroneous-color">erroneous</strong> predictions
       </template>
     </p>
@@ -109,8 +109,8 @@ export default Vue.extend({
       return routeGetters.getRouteDataset(this.$store);
     },
 
-    highlight(): Highlight {
-      return routeGetters.getDecodedHighlight(this.$store);
+    highlights(): Highlight[] {
+      return routeGetters.getDecodedHighlights(this.$store);
     },
 
     variables(): Variable[] {
@@ -321,7 +321,7 @@ export default Vue.extend({
     onDataSizeSubmit(dataSize: number) {
       const args: any = {
         dataset: this.dataset,
-        highlight: this.highlight,
+        highlights: this.highlights,
         size: dataSize,
         solutionId: this.solutionId,
       };

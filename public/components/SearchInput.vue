@@ -8,9 +8,9 @@
         :filter="filter"
       />
       <filter-badge
-        v-if="highlightAsAFilter"
-        is-highlight
-        :filter="highlightAsAFilter"
+        v-for="(highlight, index) in highlightsAsFilters"
+        :key="index"
+        :filter="highlight"
       />
     </main>
   </div>
@@ -22,7 +22,7 @@ import FilterBadge from "../components/FilterBadge.vue";
 import { Highlight } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
 import { Filter, INCLUDE_FILTER } from "../util/filters";
-import { createFilterFromHighlight } from "../util/highlights";
+import { createFiltersFromHighlights } from "../util/highlights";
 
 export default Vue.extend({
   name: "SearchInput",
@@ -38,13 +38,15 @@ export default Vue.extend({
         .filter((f) => f.type !== "row");
     },
 
-    highlight(): Highlight {
-      return routeGetters.getDecodedHighlight(this.$store);
+    highlights(): Highlight[] {
+      return routeGetters.getDecodedHighlights(this.$store);
     },
 
-    highlightAsAFilter(): Filter {
-      if (!this.highlight || !this.highlight.value) return;
-      return createFilterFromHighlight(this.highlight, INCLUDE_FILTER);
+    highlightsAsFilters(): Filter[] {
+      if (!this.highlights || this.highlights.length < 1) {
+        return null;
+      }
+      return createFiltersFromHighlights(this.highlights, INCLUDE_FILTER);
     },
   },
 });

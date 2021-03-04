@@ -118,7 +118,6 @@ import {
   RowSelection,
   TimeseriesGrouping,
   TableValue,
-  Highlight,
 } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
 import { hasComputedVarPrefix } from "../util/types";
@@ -273,9 +272,6 @@ export default Vue.extend({
 
     filters(): Filter[] {
       return routeGetters.getDecodedFilters(this.$store);
-    },
-    highlight(): Highlight {
-      return routeGetters.getDecodedHighlight(this.$store);
     },
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);

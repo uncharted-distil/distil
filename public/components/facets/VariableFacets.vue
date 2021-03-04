@@ -37,7 +37,7 @@
             <facet-timeseries
               :style="facetColors"
               :summary="summary"
-              :highlight="highlight"
+              :highlights="highlights"
               :row-selection="rowSelection"
               :html="html"
               :enabled-type-changes="enabledTypeChanges"
@@ -71,7 +71,7 @@
             <facet-image
               :style="facetColors"
               :summary="summary"
-              :highlight="highlight"
+              :highlights="highlights"
               :row-selection="rowSelection"
               :ranking="ranking[summary.key]"
               :html="html"
@@ -86,7 +86,7 @@
             <facet-date-time
               :style="facetColors"
               :summary="summary"
-              :highlight="highlight"
+              :highlights="highlights"
               :row-selection="rowSelection"
               :importance="ranking[summary.key]"
               :ranking="ranking[summary.key]"
@@ -103,7 +103,7 @@
             <facet-categorical
               :style="facetColors"
               :summary="summary"
-              :highlight="highlight"
+              :highlights="highlights"
               :row-selection="rowSelection"
               :importance="ranking[summary.key]"
               :html="html"
@@ -118,7 +118,7 @@
             <facet-numerical
               :style="facetColors"
               :summary="summary"
-              :highlight="highlight"
+              :highlights="highlights"
               :row-selection="rowSelection"
               :importance="ranking[summary.key]"
               :html="html"
@@ -198,7 +198,11 @@ import {
 } from "../../util/types";
 import { actions as appActions } from "../../store/app/module";
 import { Feature, Activity, SubActivity } from "../../util/userEvents";
-import { updateHighlight, clearHighlight } from "../../util/highlights";
+import {
+  updateHighlight,
+  clearHighlight,
+  UPDATE_FOR_KEY,
+} from "../../util/highlights";
 import Vue from "vue";
 
 export default Vue.extend({
@@ -277,8 +281,8 @@ export default Vue.extend({
         return checkMap.has(v.key);
       });
     },
-    highlight(): Highlight {
-      return routeGetters.getDecodedHighlight(this.$store);
+    highlights(): Highlight[] {
+      return routeGetters.getDecodedHighlights(this.$store);
     },
 
     rowSelection(): RowSelection {
@@ -394,12 +398,16 @@ export default Vue.extend({
       value: { from: number; to: number },
       dataset: string
     ) {
-      updateHighlight(this.$router, {
-        context: context,
-        dataset: dataset,
-        key: key,
-        value: value,
-      });
+      if (key && value) {
+        updateHighlight(this.$router, {
+          context: context,
+          dataset: dataset,
+          key: key,
+          value: value,
+        });
+      } else {
+        clearHighlight(this.$router, key);
+      }
       this.$emit("range-change", key, value);
       appActions.logUserEvent(this.$store, {
         feature: Feature.CHANGE_HIGHLIGHT,
@@ -409,17 +417,25 @@ export default Vue.extend({
       });
     },
 
-    onFacetClick(context: string, key: string, value: string, dataset: string) {
+    onFacetClick(
+      context: string,
+      key: string,
+      value: string[],
+      dataset: string
+    ) {
       if (this.enableHighlighting) {
-        if (key && value) {
-          updateHighlight(this.$router, {
-            context: context,
-            dataset: dataset,
-            key: key,
-            value: value,
+        if (key && value && Array.isArray(value) && value.length > 0) {
+          const updatedHighlights = value.map((v) => {
+            return {
+              context: context,
+              dataset: dataset,
+              key: key,
+              value: v,
+            };
           });
+          updateHighlight(this.$router, updatedHighlights, UPDATE_FOR_KEY);
         } else {
-          clearHighlight(this.$router);
+          clearHighlight(this.$router, key);
         }
         appActions.logUserEvent(this.$store, {
           feature: Feature.CHANGE_HIGHLIGHT,
@@ -442,13 +458,21 @@ export default Vue.extend({
       dataset: string
     ) {
       if (this.enableHighlighting) {
-        if (!this.highlight || this.highlight.key !== key) {
-          updateHighlight(this.$router, {
-            context: this.instanceName,
-            dataset: dataset,
-            key: key,
-            value: value,
-          });
+        const uniqueHighlight = this.highlights.reduce(
+          (acc, highlight) => highlight.key !== key || acc,
+          false
+        );
+        if (uniqueHighlight) {
+          if (key && value) {
+            updateHighlight(this.$router, {
+              context: context,
+              dataset: dataset,
+              key: key,
+              value: value,
+            });
+          } else {
+            clearHighlight(this.$router, key);
+          }
         }
       }
       this.$emit("numerical-click", key);

@@ -98,14 +98,16 @@
               variant="primary"
               :disabled="includedActive"
               @click="setIncludedActive"
-              >Included</b-button
             >
+              Included
+            </b-button>
             <b-button
               variant="secondary"
               :disabled="!includedActive"
               @click="setExcludedActive"
-              >Excluded</b-button
             >
+              Excluded
+            </b-button>
           </b-button-group>
         </b-button-toolbar>
         <create-solutions-form v-if="isCreateModelPossible" class="ml-2" />
@@ -130,7 +132,6 @@ import FacetListPane from "../components/panel/FacetListPane.vue";
 import LeftSidePanel from "../components/layout/LeftSidePanel.vue";
 import ImageMosaic from "../components/ImageMosaic.vue";
 import SearchBar from "../components/layout/SearchBar.vue";
-import SearchInput from "../components/SearchInput.vue";
 import SelectDataTable from "../components/SelectDataTable.vue";
 import SelectGeoPlot from "../components/SelectGeoPlot.vue";
 import SelectGraphView from "../components/SelectGraphView.vue";
@@ -154,7 +155,6 @@ import { actions as viewActions } from "../store/view/module";
 
 // Util
 import {
-  Filter,
   addFilterToRoute,
   deepUpdateFiltersInRoute,
   EXCLUDE_FILTER,
@@ -162,15 +162,15 @@ import {
 } from "../util/filters";
 import {
   clearHighlight,
-  createFilterFromHighlight,
+  createFiltersFromHighlights,
   updateHighlight,
+  UPDATE_ALL,
 } from "../util/highlights";
 import { lexQueryToFiltersAndHighlight } from "../util/lex";
 import { overlayRouteEntry } from "../util/routes";
 import {
   clearRowSelection,
   getNumIncludedRows,
-  getNumExcludedRows,
   createFilterFromRowSelection,
 } from "../util/row";
 import { spinnerHTML } from "../util/spinner";
@@ -211,7 +211,6 @@ export default Vue.extend({
     LeftSidePanel,
     ImageMosaic,
     SearchBar,
-    SearchInput,
     SelectDataTable,
     SelectGeoPlot,
     SelectGraphView,
@@ -288,8 +287,8 @@ export default Vue.extend({
       return isEmpty(this.activeVariables);
     },
 
-    highlight(): Highlight {
-      return routeGetters.getDecodedHighlight(this.$store);
+    highlights(): Highlight[] {
+      return routeGetters.getDecodedHighlights(this.$store);
     },
 
     isCreateModelPossible(): boolean {
@@ -323,7 +322,7 @@ export default Vue.extend({
     },
 
     isFilteringHighlights(): boolean {
-      return !!this.highlight;
+      return this.highlights && this.highlights.length > 0;
     },
 
     isFilteringSelection(): boolean {
@@ -455,7 +454,7 @@ export default Vue.extend({
     updateFilterAndHighlightFromLexQuery(lexQuery) {
       const lqfh = lexQueryToFiltersAndHighlight(lexQuery, this.dataset);
       deepUpdateFiltersInRoute(this.$router, lqfh.filters);
-      updateHighlight(this.$router, lqfh.highlight);
+      updateHighlight(this.$router, lqfh.highlights, UPDATE_ALL);
     },
 
     /* When the user request to fetch a different size of data. */
@@ -467,7 +466,7 @@ export default Vue.extend({
     onExcludeClick() {
       let filter = null;
       if (this.isFilteringHighlights) {
-        filter = createFilterFromHighlight(this.highlight, EXCLUDE_FILTER);
+        filter = createFiltersFromHighlights(this.highlights, EXCLUDE_FILTER);
       } else {
         filter = createFilterFromRowSelection(
           this.rowSelection,
@@ -476,12 +475,7 @@ export default Vue.extend({
       }
 
       addFilterToRoute(this.$router, filter);
-
-      if (this.isFilteringHighlights) {
-        clearHighlight(this.$router);
-      } else {
-        clearRowSelection(this.$router);
-      }
+      this.resetHighlightsOrRow();
 
       datasetActions.fetchVariableRankings(this.$store, {
         dataset: this.dataset,
@@ -499,7 +493,7 @@ export default Vue.extend({
     onReincludeClick() {
       let filter = null;
       if (this.isFilteringHighlights) {
-        filter = createFilterFromHighlight(this.highlight, INCLUDE_FILTER);
+        filter = createFiltersFromHighlights(this.highlights, INCLUDE_FILTER);
       } else {
         filter = createFilterFromRowSelection(
           this.rowSelection,
@@ -508,12 +502,7 @@ export default Vue.extend({
       }
 
       addFilterToRoute(this.$router, filter);
-
-      if (this.isFilteringHighlights) {
-        clearHighlight(this.$router);
-      } else {
-        clearRowSelection(this.$router);
-      }
+      this.resetHighlightsOrRow();
 
       datasetActions.fetchVariableRankings(this.$store, {
         dataset: this.dataset,
@@ -561,6 +550,14 @@ export default Vue.extend({
     updateRoute(args) {
       const entry = overlayRouteEntry(this.$route, args);
       this.$router.push(entry).catch((err) => console.warn(err));
+    },
+
+    resetHighlightsOrRow() {
+      if (this.isFilteringHighlights) {
+        clearHighlight(this.$router);
+      } else {
+        clearRowSelection(this.$router);
+      }
     },
 
     preSelectTopVariables(number = 5): void {

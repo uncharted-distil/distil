@@ -37,7 +37,7 @@ import {
   ValueStateValue,
   RelationState,
 } from "@uncharted.software/lex";
-import { decodeHighlights, createFilterFromHighlight } from "./highlights";
+import { decodeHighlights, createFiltersFromHighlights } from "./highlights";
 import { Dictionary } from "./dict";
 
 const HIGHLIGHT = "highlight";
@@ -151,23 +151,21 @@ export function filterParamsToLexQuery(
   allVariables: Variable[]
 ) {
   const decodedFilters = decodeFilters(filter).filter((f) => f.type !== "row");
-  const decodedHighlight =
-    highlight &&
-    createFilterFromHighlight(decodeHighlights(highlight), HIGHLIGHT);
+  const decodedHighlights = createFiltersFromHighlights(
+    decodeHighlights(highlight),
+    HIGHLIGHT
+  );
 
   const variableDict = buildVariableDictionary(allVariables);
   const filterVariables = decodedFilters.map((f) => {
     return variableDict[f.key];
   });
-  const highlightVariable = variableDict[decodedHighlight?.key];
-  const hasHighlight = !!highlight && !!highlightVariable;
+  const highlightVariables = decodedHighlights.map((h) => {
+    return variableDict[h.key];
+  });
 
-  const activeVariables = hasHighlight
-    ? [highlightVariable, ...filterVariables]
-    : filterVariables;
-  const lexableElements = hasHighlight
-    ? [decodedHighlight, ...decodedFilters]
-    : decodedFilters;
+  const activeVariables = [...highlightVariables, ...filterVariables];
+  const lexableElements = [...decodedHighlights, ...decodedFilters];
 
   const suggestions = variablesToLexSuggestions(activeVariables);
 
@@ -216,9 +214,9 @@ export function filterParamsToLexQuery(
 export function lexQueryToFiltersAndHighlight(
   lexQuery: any[][],
   dataset: string
-): { filters: Filter[]; highlight: Highlight } {
+): { filters: Filter[]; highlights: Highlight[] } {
   const filters = [];
-  let highlight = null;
+  const highlights = [];
 
   lexQuery[0].forEach((lq) => {
     if (lq.relation.key !== HIGHLIGHT) {
@@ -252,7 +250,7 @@ export function lexQueryToFiltersAndHighlight(
     } else {
       const key = lq.field.key;
       const type = lq.field.meta.type;
-      highlight = {
+      const highlight = {
         dataset,
         context: "lex-bar",
         key,
@@ -276,11 +274,13 @@ export function lexQueryToFiltersAndHighlight(
       } else {
         highlight.value = lq.value.key;
       }
+
+      highlights.push(highlight);
     }
   });
   return {
     filters: filters,
-    highlight: highlight,
+    highlights: highlights,
   };
 }
 

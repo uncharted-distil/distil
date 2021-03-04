@@ -52,11 +52,11 @@ func DataModeFromString(s string) (DataMode, error) {
 // FilterParams defines the set of numeric range and categorical filters. Variables
 // with no range or category filters are also allowed.
 type FilterParams struct {
-	Size      int             `json:"size"`
-	Highlight *model.Filter   `json:"highlight"`
-	Filters   []*model.Filter `json:"filters"`
-	Variables []string        `json:"variables"`
-	DataMode  DataMode        `json:"dataMode"`
+	Size       int             `json:"size"`
+	Highlights []*model.Filter `json:"highlights"`
+	Filters    []*model.Filter `json:"filters"`
+	Variables  []string        `json:"variables"`
+	DataMode   DataMode        `json:"dataMode"`
 }
 
 // GetBaselineFilter returns a filter params that only has the baseline filters.
@@ -85,15 +85,21 @@ func (f *FilterParams) Empty(ignoreBaselineFilters bool) bool {
 			return false
 		}
 	}
-	return f.Highlight == nil
+	for _, highlight := range f.Highlights {
+		if !highlight.IsBaselineFilter || !ignoreBaselineFilters {
+			return false
+		}
+	}
+	return true
 }
 
 // Clone returns a deep copy of the filter params.
 func (f *FilterParams) Clone() *FilterParams {
 	clone := &FilterParams{}
-	if f.Highlight != nil {
-		c := *f.Highlight
-		clone.Highlight = &c
+
+	for _, h := range f.Highlights {
+		c := *h
+		clone.Highlights = append(clone.Highlights, &c)
 	}
 	for _, f := range f.Filters {
 		c := *f
@@ -138,10 +144,19 @@ func (f *FilterParams) Merge(other *FilterParams) {
 	if f.Size < 0 {
 		f.Size = other.Size
 	}
-	if other.Highlight != nil && f.Highlight == nil {
-		f.Highlight = other.Highlight
-	}
 
+	for _, highlight := range other.Highlights {
+		found := false
+		for _, currentHighlight := range f.Highlights {
+			if filtersEqual(highlight, currentHighlight) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			f.Highlights = append(f.Highlights, highlight)
+		}
+	}
 	for _, filter := range other.Filters {
 		found := false
 		for _, currentFilter := range f.Filters {
@@ -413,13 +428,15 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 		return filterParams, nil
 	}
 
-	highlight, ok := json.Get(params, "highlight")
+	highlights, ok := json.Array(params, "highlights")
 	if ok {
-		h, err := parseFilter(highlight)
-		if err != nil {
-			return nil, err
+		for _, highlight := range highlights {
+			h, err := parseFilter(highlight)
+			if err != nil {
+				return nil, err
+			}
+			filterParams.Highlights = append(filterParams.Highlights, h)
 		}
-		filterParams.Highlight = h
 	}
 
 	filters, ok := json.Array(params, "filters")
@@ -437,6 +454,10 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 	if ok {
 		filterParams.Variables = variables
 	}
+
+	sort.SliceStable(filterParams.Highlights, func(i, j int) bool {
+		return filterParams.Highlights[i].Key < filterParams.Highlights[j].Key
+	})
 
 	sort.SliceStable(filterParams.Filters, func(i, j int) bool {
 		return filterParams.Filters[i].Key < filterParams.Filters[j].Key

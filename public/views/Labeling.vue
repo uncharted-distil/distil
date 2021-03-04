@@ -350,12 +350,14 @@ export default Vue.extend({
       this.$router.push(entry).catch((err) => console.warn(err));
     },
     async onExport() {
-      const highlight = {
-        context: this.instance,
-        dataset: this.dataset,
-        key: LOW_SHOT_LABEL_COLUMN_NAME,
-        value: LowShotLabels.unlabeled,
-      }; // exclude unlabeled from data export
+      const highlights = [
+        {
+          context: this.instance,
+          dataset: this.dataset,
+          key: LOW_SHOT_LABEL_COLUMN_NAME,
+          value: LowShotLabels.unlabeled,
+        },
+      ]; // exclude unlabeled from data export
       const filterParams = routeGetters.getDecodedSolutionRequestFilterParams(
         this.$store
       );
@@ -363,7 +365,7 @@ export default Vue.extend({
       const file = await datasetActions.extractDataset(this.$store, {
         dataset: this.dataset,
         filterParams,
-        highlight,
+        highlights,
         include: true,
         mode: EXCLUDE_FILTER,
         dataMode,
@@ -374,12 +376,14 @@ export default Vue.extend({
       this.$bvModal.show("save-model-modal");
     },
     async onSaveValid(saveName: string) {
-      const highlight = {
-        context: this.instance,
-        dataset: this.dataset,
-        key: LOW_SHOT_LABEL_COLUMN_NAME,
-        value: LowShotLabels.unlabeled,
-      }; // exclude unlabeled from data export
+      const highlights = [
+        {
+          context: this.instance,
+          dataset: this.dataset,
+          key: LOW_SHOT_LABEL_COLUMN_NAME,
+          value: LowShotLabels.unlabeled,
+        },
+      ]; // exclude unlabeled from data export
       const filterParams = routeGetters.getDecodedSolutionRequestFilterParams(
         this.$store
       );
@@ -399,7 +403,7 @@ export default Vue.extend({
         dataset: this.dataset,
         datasetNewName: saveName,
         filterParams,
-        highlight,
+        highlights,
         include: true,
         mode: INCLUDE_FILTER,
         dataMode,
@@ -415,7 +419,7 @@ export default Vue.extend({
           value: value,
         });
       } else {
-        clearHighlight(this.$router);
+        clearHighlight(this.$router, key);
       }
       appActions.logUserEvent(this.$store, {
         feature: Feature.CHANGE_HIGHLIGHT,

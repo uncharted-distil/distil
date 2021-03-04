@@ -2,15 +2,14 @@
   <!-- facet-container is undocumented! shhhhh.... -->
   <facet-container>
     <div slot="header" class="facet-header">
-      <i class="fa fa-exclamation-circle"></i>
+      <i class="fa fa-exclamation-circle" />
       <span>{{ summary.label.toUpperCase() }}</span>
       <type-change-menu
         v-if="facetEnableTypeChanges"
         class="facet-header-dropdown"
         :dataset="summary.dataset"
         :field="summary.key"
-      >
-      </type-change-menu>
+      />
     </div>
     <div slot="content" class="facet-content">
       <span>{{ summary.err }}</span>
@@ -27,7 +26,7 @@ import { facetTypeChangeState } from "../../util/facets";
 import TypeChangeMenu from "../TypeChangeMenu";
 
 export default Vue.extend({
-  name: "facet-error",
+  name: "FacetError",
 
   components: {
     TypeChangeMenu,

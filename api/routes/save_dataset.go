@@ -82,16 +82,16 @@ func SaveDatasetHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStora
 
 		// export needs to invert the filters
 		filterModeReverse := map[string]string{model.IncludeFilter: model.ExcludeFilter, model.ExcludeFilter: model.IncludeFilter}
-		if expandedFilterParams != nil && expandedFilterParams.Highlight != nil {
-			expandedFilterParams.Highlight.Mode = filterModeReverse[expandedFilterParams.Highlight.Mode]
+		for _, highlight := range expandedFilterParams.Highlights {
+			highlight.Mode = filterModeReverse[highlight.Mode]
 		}
 		_, _, err = task.ExportDataset(dataset, metaStorage, dataStorage, !invert, expandedFilterParams)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-		if expandedFilterParams != nil && expandedFilterParams.Highlight != nil {
-			expandedFilterParams.Highlight.Mode = filterModeReverse[expandedFilterParams.Highlight.Mode]
+		for _, highlight := range expandedFilterParams.Highlights {
+			highlight.Mode = filterModeReverse[highlight.Mode]
 		}
 
 		// delete rows based on filterParams

@@ -226,8 +226,8 @@ export default Vue.extend({
       );
     },
 
-    highlight(): Highlight {
-      return routeGetters.getDecodedHighlight(this.$store);
+    highlights(): Highlight[] {
+      return routeGetters.getDecodedHighlights(this.$store);
     },
 
     itemCount(): number {
@@ -301,7 +301,7 @@ export default Vue.extend({
   },
 
   watch: {
-    highlight() {
+    highlights() {
       this.initialized = false;
     },
 

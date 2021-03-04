@@ -121,7 +121,7 @@ async function updateCurrentSolutionResults(
   await resultsActions.fetchResultTableData(store, {
     dataset: req.dataset,
     solutionId: res.solutionId,
-    highlight: context.getters.getDecodedHighlight,
+    highlights: context.getters.getDecodedHighlights,
     dataMode: dataMode,
     isMapData: false,
     size,
@@ -130,7 +130,7 @@ async function updateCurrentSolutionResults(
   resultsActions.fetchResultTableData(store, {
     dataset: req.dataset,
     solutionId: res.solutionId,
-    highlight: context.getters.getDecodedHighlight,
+    highlights: context.getters.getDecodedHighlights,
     dataMode: dataMode,
     isMapData: true,
     size: allData,
@@ -142,7 +142,7 @@ async function updateCurrentSolutionResults(
     dataset: req.dataset,
     target: req.target,
     solutionId: res.solutionId,
-    highlight: context.getters.getDecodedHighlight,
+    highlights: context.getters.getDecodedHighlights,
     dataMode: dataMode,
     varMode: varModes.has(req.target)
       ? varModes.get(req.target)
@@ -152,7 +152,7 @@ async function updateCurrentSolutionResults(
     dataset: req.dataset,
     training: context.getters.getActiveSolutionTrainingVariables,
     solutionId: res.solutionId,
-    highlight: context.getters.getDecodedHighlight,
+    highlights: context.getters.getDecodedHighlights,
     dataMode: dataMode,
     varModes: varModes,
   });
@@ -160,7 +160,7 @@ async function updateCurrentSolutionResults(
     dataset: req.dataset,
     target: req.target,
     solutionId: res.solutionId,
-    highlight: context.getters.getDecodedHighlight,
+    highlights: context.getters.getDecodedHighlights,
     dataMode: dataMode,
     varMode: varModes.has(req.target)
       ? varModes.get(req.target)
@@ -177,7 +177,7 @@ async function updateCurrentSolutionResults(
       dataset: req.dataset,
       target: req.target,
       solutionId: res.solutionId,
-      highlight: context.getters.getDecodedHighlight,
+      highlights: context.getters.getDecodedHighlights,
       dataMode: dataMode,
       varMode: varModes.has(req.target)
         ? varModes.get(req.target)
@@ -187,7 +187,7 @@ async function updateCurrentSolutionResults(
     resultsActions.fetchCorrectnessSummary(store, {
       dataset: req.dataset,
       solutionId: res.solutionId,
-      highlight: context.getters.getDecodedHighlight,
+      highlights: context.getters.getDecodedHighlights,
       dataMode: dataMode,
       varMode: varModes.has(req.target)
         ? varModes.get(req.target)
@@ -196,7 +196,7 @@ async function updateCurrentSolutionResults(
     resultsActions.fetchConfidenceSummary(store, {
       dataset: req.dataset,
       solutionId: res.solutionId,
-      highlight: context.getters.getDecodedHighlight,
+      highlights: context.getters.getDecodedHighlights,
       dataMode: dataMode,
       varMode: varModes.has(req.target)
         ? varModes.get(req.target)
@@ -224,12 +224,12 @@ function updateCurrentPredictResults(
 
   predictActions.fetchPredictionTableData(store, {
     dataset: req.datasetId,
-    highlight: context.getters.getDecodedHighlight,
+    highlights: context.getters.getDecodedHighlights,
     produceRequestId: res.produceRequestId,
   });
 
   predictActions.fetchPredictedSummary(store, {
-    highlight: context.getters.getDecodedHighlight,
+    highlights: context.getters.getDecodedHighlights,
     varMode: varModes.has(req.target)
       ? varModes.get(req.target)
       : SummaryMode.Default,
@@ -239,7 +239,7 @@ function updateCurrentPredictResults(
   predictActions.fetchTrainingSummaries(store, {
     dataset: req.datasetId,
     training: context.getters.getActiveSolutionTrainingVariables,
-    highlight: context.getters.getDecodedHighlight,
+    highlights: context.getters.getDecodedHighlights,
     varModes: varModes,
     produceRequestId: res.produceRequestId,
   });
@@ -264,7 +264,7 @@ function updateSolutionResults(
     dataset: req.dataset,
     target: req.target,
     solutionId: res.solutionId,
-    highlight: context.getters.getDecodedHighlight,
+    highlights: context.getters.getDecodedHighlights,
     dataMode: dataMode,
     varMode: varModes.has(req.target)
       ? varModes.get(req.target)
@@ -281,7 +281,7 @@ function updateSolutionResults(
       dataset: req.dataset,
       target: req.target,
       solutionId: res.solutionId,
-      highlight: context.getters.getDecodedHighlight,
+      highlights: context.getters.getDecodedHighlights,
       dataMode: dataMode,
       varMode: varModes.has(req.target)
         ? varModes.get(req.target)
@@ -291,7 +291,7 @@ function updateSolutionResults(
     resultsActions.fetchCorrectnessSummary(store, {
       dataset: req.dataset,
       solutionId: res.solutionId,
-      highlight: context.getters.getDecodedHighlight,
+      highlights: context.getters.getDecodedHighlights,
       dataMode: dataMode,
       varMode: varModes.has(req.target)
         ? varModes.get(req.target)
@@ -300,7 +300,7 @@ function updateSolutionResults(
     resultsActions.fetchConfidenceSummary(store, {
       dataset: req.dataset,
       solutionId: res.solutionId,
-      highlight: context.getters.getDecodedHighlight,
+      highlights: context.getters.getDecodedHighlights,
       dataMode: dataMode,
       varMode: varModes.has(req.target)
         ? varModes.get(req.target)
