@@ -101,6 +101,7 @@ import {
   EXPAND_ACTION_TYPE,
   EXPLODE_ACTION_TYPE,
   isTimeSeriesType,
+  isGeoLocatedType,
 } from "../util/types";
 import { hasFilterInRoute } from "../util/filters";
 import { createRouteEntry } from "../util/routes";
@@ -297,9 +298,12 @@ export default Vue.extend({
         // For timeseries, exploding one variable explodes them all
         const toRemove = datasetGetters
           .getGroupings(this.$store)
-          .filter(
-            (g) => isTimeSeriesType(g.colType) && g.datasetName === this.dataset
-          );
+          .filter((g) => {
+            return (
+              (isTimeSeriesType(g.colType) || isGeoLocatedType(g.colType)) &&
+              g.datasetName === this.dataset
+            );
+          });
 
         for (const g of toRemove) {
           // CDB: This needs to be converted into an API call that can handle removal of

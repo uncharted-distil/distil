@@ -21,6 +21,7 @@ import { D3M_INDEX_FIELD } from "../store/dataset/index";
 import { getters as datasetGetters } from "../store/dataset/module";
 import store from "../store/store";
 import { Dictionary } from "./dict";
+import { BIVARIATE_FILTER } from "./filters";
 
 export enum DISTIL_ROLES {
   Grouping = "grouping",
@@ -103,6 +104,7 @@ export const META_TYPES = {
 };
 
 const TYPES_TO_LABELS: Dictionary<string> = {
+  [BIVARIATE_FILTER]: "Bivariate",
   [INTEGER_TYPE]: "Integer",
   [REAL_TYPE]: "Decimal",
   [REAL_LIST_TYPE]: "List",
@@ -215,7 +217,7 @@ const TEXT_SIMPLE_TYPES = [
   BOOL_TYPE,
 ];
 
-const GEOLOCATED_TYPES = [GEOCOORDINATE_TYPE, GEOBOUNDS_TYPE];
+const GEOLOCATED_TYPES = [GEOCOORDINATE_TYPE, GEOBOUNDS_TYPE, BIVARIATE_FILTER];
 
 const IMAGE_TYPES = [IMAGE_TYPE, MULTIBAND_IMAGE_TYPE];
 

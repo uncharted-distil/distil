@@ -103,6 +103,9 @@ func ExpandFilterParams(dataset string, filterParams *FilterParams, includeHidde
 				} else if model.IsGeoBounds(variable.Type) {
 					gbg := variable.Grouping.(*model.GeoBoundsGrouping)
 					componentVars = append(componentVars, gbg.CoordinatesCol)
+				} else if model.IsBivariate(variable.Type) {
+					gcg := variable.Grouping.(*model.GeoCoordinateGrouping)
+					componentVars = append(componentVars, gcg.XCol, gcg.YCol)
 				}
 
 				// include the grouping ID if present
