@@ -263,11 +263,13 @@ func (d *RawDataset) GetVariableIndices(variableHeaderNames []string) (map[strin
 
 // FilterDataset updates the dataset to only keep the rows that have the specified
 // column in the filter map set to true.
-func (d *RawDataset) FilterDataset(columnIndex int, filter map[string]bool) {
+func (d *RawDataset) FilterDataset(filter map[string]bool) {
+	d3mIndexIndex := d.GetVariableIndex(model.D3MIndexFieldName)
+
 	// start with the header
 	filteredData := [][]string{d.Data[0]}
 	for i := 1; i < len(d.Data); i++ {
-		if filter[d.Data[i][columnIndex]] {
+		if filter[d.Data[i][d3mIndexIndex]] {
 			filteredData = append(filteredData, d.Data[i])
 		}
 	}
@@ -276,12 +278,16 @@ func (d *RawDataset) FilterDataset(columnIndex int, filter map[string]bool) {
 
 // UpdateDataset updates a dataset with the value specified in the updates dictionary.
 // If the specified column value is not found in the dictionary, then it is left unchanged.
-func (d *RawDataset) UpdateDataset(columnIndex int, updates map[string]string) {
-	// start with the header
+// Updates are specified by column index value.
+func (d *RawDataset) UpdateDataset(updates map[int]map[string]string) {
+	d3mIndexIndex := d.GetVariableIndex(model.D3MIndexFieldName)
 	for i := 1; i < len(d.Data); i++ {
-		updateValue, ok := updates[d.Data[i][columnIndex]]
-		if ok {
-			d.Data[i][columnIndex] = updateValue
+		d3mIndexValue := d.Data[i][d3mIndexIndex]
+		for columnIndex, colUpdates := range updates {
+			updateValue, ok := colUpdates[d3mIndexValue]
+			if ok {
+				d.Data[i][columnIndex] = updateValue
+			}
 		}
 	}
 }
