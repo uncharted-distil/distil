@@ -109,6 +109,10 @@ func (d *DiskDataset) addField(variable *model.Variable) error {
 	return nil
 }
 
+func (d *DiskDataset) fieldExists(variable *model.Variable) bool {
+	return d.Dataset.FieldExists(variable)
+}
+
 func (d *DiskDataset) clone(targetFolder string, cloneDatasetID string, cloneStorageName string) (*DiskDataset, error) {
 	// easiest clone is to write the dataset to the new location then read it
 	err := serialization.WriteDataset(targetFolder, d.Dataset)
@@ -152,6 +156,41 @@ func (d *DiskDataset) getLearningFolder() string {
 	}
 
 	return path.Dir(d.schemaPath)
+}
+
+func (d *DiskDataset) updateDataset(updates map[string]map[string]string, filterNotFound bool) error {
+	if filterNotFound {
+		// do an initial filter pass to keep only the rows found in the updates
+		filterMap := map[string]bool{}
+		for _, colUpdates := range updates {
+			for key := range colUpdates {
+				filterMap[key] = true
+			}
+		}
+		d.Dataset.FilterDataset(filterMap)
+	}
+
+	// translate column names to indices
+	updatesMapped := map[int]map[string]string{}
+	for colName, colUpdates := range updates {
+		index := d.Dataset.GetVariableIndex(colName)
+
+		// could add missing columns!
+		if index == -1 {
+			return errors.Errorf("column %s not in dataset for updates", colName)
+		}
+		updatesMapped[index] = colUpdates
+	}
+	d.Dataset.UpdateDataset(updatesMapped)
+
+	if d.FeaturizedDataset != nil {
+		err := d.FeaturizedDataset.updateDataset(updates, filterNotFound)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // CreateDataset structures a raw csv file into a valid D3M dataset.
@@ -263,7 +302,7 @@ func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage 
 			return "", "", err
 		}
 
-		err = updateLearningDataset(dataRaw, metaDataset, parentDS, exportVarMap, metaStorage)
+		err = updateLearningDataset(metaDataset, data)
 		if err != nil {
 			return "", "", err
 		}
@@ -303,87 +342,52 @@ func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage 
 	return dataset, outputFolder, nil
 }
 
-func updateLearningDataset(newDataset *api.RawDataset, metaDataset *api.Dataset, parentDS *api.Dataset, exportVarMap map[string]*model.Variable, metaStorage api.MetadataStorage) error {
-	if parentDS.LearningDataset == "" {
-		return nil
+func updateLearningDataset(ds *api.Dataset, data [][]string) error {
+	// read the dataset from disk
+	dsDisk, err := loadDiskDataset(ds)
+	if err != nil {
+		return err
 	}
+	varMap := apicompute.MapVariables(ds.Variables, func(variable *model.Variable) string { return variable.HeaderName })
 
-	// determine if there are new columns that were not part of the original dataset
-	parentVarMap := apicompute.MapVariables(parentDS.Variables, func(variable *model.Variable) string { return variable.Key })
-	newVars := []*model.Variable{}
-	for _, v := range metaDataset.Variables {
-		if v.DistilRole == model.VarDistilRoleData {
-			if parentVarMap[v.Key] == nil {
-				newVars = append(newVars, v)
+	// use the header row to determine the variables to update
+	d3mIndexIndex := -1
+	updates := map[string]map[string]string{}
+	headerMap := map[string]int{}
+	for i, c := range data[0] {
+		if c == model.D3MIndexFieldName {
+			d3mIndexIndex = i
+		} else {
+			sourceVar := varMap[c]
+			if sourceVar.Immutable {
+				continue
+			}
+			headerMap[sourceVar.HeaderName] = i
+			updates[sourceVar.HeaderName] = map[string]string{}
+
+			// add missing fields
+			if !dsDisk.fieldExists(sourceVar) {
+				err = dsDisk.addField(sourceVar)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
 
-	// copy the learning dataset
-	learningFolder := createFeaturizedDatasetID(newDataset.Metadata.ID)
-	learningFolder = path.Join(path.Dir(parentDS.LearningDataset), learningFolder)
-	err := util.Copy(parentDS.LearningDataset, learningFolder)
-	if err != nil {
-		return err
-	}
-
-	// read the prefeaturized data
-	preFeaturizedDataset, err := serialization.ReadDataset(path.Join(learningFolder, compute.D3MDataSchema))
-	if err != nil {
-		return err
-	}
-	preFeaturizedMainDR := preFeaturizedDataset.Metadata.GetMainDataResource()
-	preFeaturizedVarMap := apicompute.MapVariables(preFeaturizedMainDR.Variables, func(variable *model.Variable) string { return variable.Key })
-	preFeaturizedD3MIndex := preFeaturizedVarMap[model.D3MIndexFieldName].Index
-
-	// add the missing columns row by row and only retain rows in the new dataset
-	// first build up the new variables by d3m index map
-	// then cycle through the featurized rows and append the variables
-	newDSD3MIndex := exportVarMap[model.D3MIndexFieldName].Index
-	newDataMap := map[string][]string{}
-	for _, r := range newDataset.Data[1:] {
-		newVarsData := []string{}
-		for i := 0; i < len(newVars); i++ {
-			newVarsData = append(newVarsData, r[newVars[i].Index])
-		}
-		newDataMap[r[newDSD3MIndex]] = newVarsData
-	}
-
-	// add the new fields to the metadata to generate the proper header
-	for i := 0; i < len(newVars); i++ {
-		newVar := newVars[i]
-		newVar.Index = i + len(preFeaturizedMainDR.Variables)
-		preFeaturizedMainDR.Variables = append(preFeaturizedMainDR.Variables, newVar)
-	}
-
-	preFeaturizedOutput := [][]string{preFeaturizedMainDR.GenerateHeader()}
-	for _, row := range preFeaturizedDataset.Data[1:] {
-		d3mIndexPre := row[preFeaturizedD3MIndex]
-		if newDataMap[d3mIndexPre] != nil {
-			rowComplete := append(row, newDataMap[d3mIndexPre]...)
-			preFeaturizedOutput = append(preFeaturizedOutput, rowComplete)
+	// create the update maps (d3m index -> new value)
+	for _, row := range data[1:] {
+		for headerName, colIndex := range headerMap {
+			updates[headerName][row[d3mIndexIndex]] = row[colIndex]
 		}
 	}
 
-	// prefeaturized metadata needs to match the new dataset
-	preFeaturizedDataset.Metadata.ID = newDataset.Metadata.ID
-	preFeaturizedDataset.Metadata.Name = newDataset.Metadata.Name
-	preFeaturizedDataset.Metadata.StorageName = newDataset.Metadata.StorageName
-
-	// output the new pre featurized data
-	preFeaturizedDataset.Data = preFeaturizedOutput
-	err = serialization.WriteDataset(learningFolder, preFeaturizedDataset)
+	err = dsDisk.updateDataset(updates, true)
 	if err != nil {
 		return err
 	}
 
-	// update the learning dataset for the new dataset
-	metaDataset, err = metaStorage.FetchDataset(metaDataset.ID, true, true, true)
-	if err != nil {
-		return err
-	}
-	metaDataset.LearningDataset = learningFolder
-	err = metaStorage.UpdateDataset(metaDataset)
+	err = dsDisk.saveDataset()
 	if err != nil {
 		return err
 	}

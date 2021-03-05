@@ -449,7 +449,13 @@ func IngestMetadata(originalSchemaFile string, schemaFile string, data api.DataS
 			}
 		}
 	}
+
+	// ingested datasets are immutable
 	meta.Immutable = true
+	for _, v := range meta.GetMainDataResource().Variables {
+		v.Immutable = true
+	}
+
 	// Ingest the dataset info into the metadata storage
 	err = storage.IngestDataset(params.Source, meta)
 	if err != nil {

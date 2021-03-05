@@ -261,6 +261,37 @@ func (d *RawDataset) GetVariableIndices(variableHeaderNames []string) (map[strin
 	return indices, nil
 }
 
+// FilterDataset updates the dataset to only keep the rows that have the specified
+// column in the filter map set to true.
+func (d *RawDataset) FilterDataset(filter map[string]bool) {
+	d3mIndexIndex := d.GetVariableIndex(model.D3MIndexFieldName)
+
+	// start with the header
+	filteredData := [][]string{d.Data[0]}
+	for i := 1; i < len(d.Data); i++ {
+		if filter[d.Data[i][d3mIndexIndex]] {
+			filteredData = append(filteredData, d.Data[i])
+		}
+	}
+	d.Data = filteredData
+}
+
+// UpdateDataset updates a dataset with the value specified in the updates dictionary.
+// If the specified column value is not found in the dictionary, then it is left unchanged.
+// Updates are specified by column index value.
+func (d *RawDataset) UpdateDataset(updates map[int]map[string]string) {
+	d3mIndexIndex := d.GetVariableIndex(model.D3MIndexFieldName)
+	for i := 1; i < len(d.Data); i++ {
+		d3mIndexValue := d.Data[i][d3mIndexIndex]
+		for columnIndex, colUpdates := range updates {
+			updateValue, ok := colUpdates[d3mIndexValue]
+			if ok {
+				d.Data[i][columnIndex] = updateValue
+			}
+		}
+	}
+}
+
 // UpdateExtremas updates the variable extremas based on the data stored.
 func UpdateExtremas(dataset string, varName string, storageMeta MetadataStorage, storageData DataStorage) error {
 	// get the metadata and then query the data storage for the latest values
