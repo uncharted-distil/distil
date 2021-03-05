@@ -1,5 +1,5 @@
 //
-//   Copyright © 2019 Uncharted Software Inc.
+//   Copyright © 2021 Uncharted Software Inc.
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/plog"
+	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil/api/env"
 )

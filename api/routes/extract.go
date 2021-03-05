@@ -1,5 +1,5 @@
 //
-//   Copyright © 2019 Uncharted Software Inc.
+//   Copyright © 2021 Uncharted Software Inc.
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -19,14 +19,15 @@ import (
 	"bytes"
 	"net/http"
 
+	"io/ioutil"
+	"path"
+
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/task"
 	"goji.io/v3/pat"
-	"io/ioutil"
-	"path"
 )
 
 // ExtractHandler extracts a dataset from storage and writes it to disk.
