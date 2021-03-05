@@ -114,7 +114,7 @@
 </template>
 
 <script lang="ts">
-import _ from "lodash";
+import _, { isEmpty } from "lodash";
 import Vue from "vue";
 import IconBase from "./icons/IconBase.vue";
 import IconFork from "./icons/IconFork.vue";
@@ -191,6 +191,7 @@ export default Vue.extend({
       shiftClickInfo: { first: null, second: null },
     };
   },
+
   computed: {
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
@@ -295,7 +296,10 @@ export default Vue.extend({
     },
 
     isTimeseries(): boolean {
-      return routeGetters.isTimeseries(this.$store);
+      return (
+        routeGetters.isTimeseries(this.$store) ||
+        !isEmpty(this.timeseriesGroupings)
+      );
     },
   },
 
