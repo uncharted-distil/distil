@@ -43,7 +43,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 	config *env.Config) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		datasetIDSource := pat.Param(r, "datasetID")
-		source := metadata.DatasetSource(pat.Param(r, "source"))
+		sourceParsed := metadata.DatasetSource(pat.Param(r, "source"))
 		provenance := pat.Param(r, "provenance")
 		isSampling := true // Flag to sample imported dataset
 
@@ -54,13 +54,13 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 			CheckMatch:              true,
 		}
 		ingestParams := &task.IngestParams{
-			Source:   source,
+			Source:   sourceParsed,
 			DataCtor: dataCtor,
 			MetaCtor: esMetaCtor,
 			ID:       datasetIDSource,
 			Type:     api.DatasetTypeModelling,
 		}
-		if (source == metadata.Augmented || source == metadata.Public) && provenance == "local" {
+		if (ingestParams.Source == metadata.Augmented || ingestParams.Source == metadata.Public) && provenance == "local" {
 			// parse POST params
 			params, err := getPostParameters(r)
 			if err != nil {
@@ -155,11 +155,11 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 
 		// If the source is Public, the dataset has been imported in the augmented folder,
 		// from now on, the ES and database ingestion are done from the augmented folder files.
-		if source == metadata.Public {
-			source = metadata.Augmented
+		if ingestParams.Source == metadata.Public {
+			ingestParams.Source = metadata.Augmented
 		}
 
-		meta, err := createMetadataStorageForSource(source, provenance, datamartCtors, fileMetaCtor, esMetaCtor)
+		meta, err := createMetadataStorageForSource(ingestParams.Source, provenance, datamartCtors, fileMetaCtor, esMetaCtor)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -167,7 +167,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 
 		// import the dataset to the local filesystem.
 		if ingestParams.Path == "" {
-			ingestParams.Path = env.ResolvePath(source, ingestParams.ID)
+			ingestParams.Path = env.ResolvePath(ingestParams.Source, ingestParams.ID)
 		}
 		log.Infof("Importing dataset '%s' from '%s'", ingestParams.ID, ingestParams.Path)
 		_, err = meta.ImportDataset(ingestParams.ID, ingestParams.Path)
