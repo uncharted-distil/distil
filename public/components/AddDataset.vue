@@ -183,7 +183,7 @@ export default Vue.extend({
 
       // Notify external listeners that the file upload is starting
       this.$emit("uploadstart", {
-        name: this.name,
+        name: this.availableDatasetSelected.name,
         datasetID: this.deconflictedName,
       });
 
