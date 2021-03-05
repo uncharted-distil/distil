@@ -25,6 +25,7 @@ import {
   TEXT_FILTER,
   GEOBOUNDS_FILTER,
   GEOCOORDINATE_FILTER,
+  BIVARIATE_FILTER,
 } from "./filters";
 import {
   LabelState,
@@ -170,7 +171,7 @@ export function filterParamsToLexQuery(
   const suggestions = variablesToLexSuggestions(activeVariables);
 
   const lexQuery = lexableElements.map((f, i) => {
-    if (f.type === GEOBOUNDS_FILTER) {
+    if (f.type === GEOBOUNDS_FILTER || f.type === BIVARIATE_FILTER) {
       return {
         field: suggestions[i],
         minX: new ValueStateValue(f.minX),
@@ -257,7 +258,11 @@ export function lexQueryToFiltersAndHighlight(
         value: {},
       } as Highlight;
 
-      if (type === GEOBOUNDS_FILTER || type === GEOCOORDINATE_FILTER) {
+      if (
+        type === GEOBOUNDS_FILTER ||
+        type === GEOCOORDINATE_FILTER ||
+        type === BIVARIATE_FILTER
+      ) {
         highlight.key = highlight.key;
         highlight.value.minX = parseFloat(lq.minX.key);
         highlight.value.maxX = parseFloat(lq.maxX.key);

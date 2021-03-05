@@ -75,7 +75,6 @@ import {
 } from "../../store/dataset/module";
 import { getters as routeGetters } from "../../store/route/module";
 import { actions as appActions } from "../../store/app/module";
-import { Dictionary } from "../../util/dict";
 import {
   TableRow,
   VariableSummary,
@@ -112,7 +111,6 @@ const SINGLE_FIELD = 1;
 const SPLIT_FIELD = 2;
 const CLOSE_BUTTON_CLASS = "geo-close-button";
 const CLOSE_ICON_CLASS = "fa-times";
-const LON_LAT_KEY = "longitude:latitude";
 
 interface GeoField {
   type: number;
@@ -130,8 +128,6 @@ interface BucketData {
   extrema: Extrema;
   buckets: Bucket[];
 }
-
-const GEOCOORDINATE_LABEL = "longitude";
 
 /**
  * Geocoordinate Facet.

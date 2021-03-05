@@ -8,6 +8,7 @@ import {
   VECTOR_FILTER,
   INCLUDE_FILTER,
   TEXT_FILTER,
+  BIVARIATE_FILTER,
 } from "../util/filters";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as datasetGetters } from "../store/dataset/module";
@@ -164,7 +165,7 @@ export function createFiltersFromHighlights(
     ) {
       return {
         key: key,
-        type: GEOBOUNDS_FILTER,
+        type: variable.colType,
         mode: mode,
         minX: highlight.value.minX,
         maxX: highlight.value.maxX,

@@ -237,7 +237,7 @@ func createGrouping(dataset string, storageName string, groupingType string, raw
 
 		// No key required in this case.
 		groupingVarName := strings.Join([]string{gcg.XCol, gcg.YCol}, task.DefaultSeparator)
-		err = meta.AddGroupedVariable(dataset, groupingVarName, "Geocoordinate", model.GeoCoordinateType, model.VarDistilRoleGrouping, gcg)
+		err = meta.AddGroupedVariable(dataset, groupingVarName, "Geocoordinate", model.BivariateFilter, model.VarDistilRoleGrouping, gcg)
 		if err != nil {
 			return err
 		}
