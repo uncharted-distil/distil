@@ -259,6 +259,9 @@ export default Vue.extend({
     target(): string {
       return routeGetters.getRouteTargetVariable(this.$store);
     },
+    currentPath(): string {
+      return routeGetters.getRoutePath(this.$store);
+    },
     joinSuggestionRequestData(): JoinSuggestionPendingRequest {
       const request = datasetGetters
         .getPendingRequests(this.$store)
@@ -267,7 +270,7 @@ export default Vue.extend({
             request.dataset === this.dataset &&
             request.type === DatasetPendingRequestType.JOIN_SUGGESTION
         );
-      return <JoinSuggestionPendingRequest>request;
+      return request as JoinSuggestionPendingRequest;
     },
     joinSuggestions(): Dataset[] {
       const joinSuggestions = (
@@ -311,7 +314,7 @@ export default Vue.extend({
         )
       );
       return isInSuggestionList
-        ? <JoinDatasetImportPendingRequest>request
+        ? (request as JoinDatasetImportPendingRequest)
         : undefined;
     },
     isImporting(): boolean {
@@ -363,6 +366,12 @@ export default Vue.extend({
     spinnerHTML(): string {
       return circleSpinnerHTML();
     },
+  },
+  created() {
+    this.initSuggestionItems();
+  },
+  beforeDestroy() {
+    this.reviewImportingRequest();
   },
   methods: {
     addRecentDataset(dataset: string) {
@@ -448,6 +457,7 @@ export default Vue.extend({
       } else {
         const entry = createRouteEntry(JOIN_DATASETS_ROUTE, {
           joinDatasets: this.dataset + "," + selected.key,
+          priorRoute: this.currentPath,
         });
         this.$router.push(entry).catch((err) => console.warn(err));
       }
@@ -541,7 +551,7 @@ export default Vue.extend({
       this.showJoinSuccess = false;
     },
     onJoinCommitSuccess(datasetID: string) {
-      const entry = createRouteEntry(SELECT_TRAINING_ROUTE, {
+      const entry = createRouteEntry(this.currentPath, {
         dataset: datasetID,
         target: this.target,
         task: routeGetters.getRouteTask(this.$store),
@@ -549,12 +559,6 @@ export default Vue.extend({
       this.$router.push(entry).catch((err) => console.warn(err));
       this.addRecentDataset(datasetID);
     },
-  },
-  created() {
-    this.initSuggestionItems();
-  },
-  beforeDestroy() {
-    this.reviewImportingRequest();
   },
 });
 </script>

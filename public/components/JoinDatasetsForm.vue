@@ -138,6 +138,9 @@ export default Vue.extend({
     target(): string {
       return routeGetters.getRouteTargetVariable(this.$store);
     },
+    returnPath(): string {
+      return routeGetters.getPriorPath(this.$store);
+    },
     columnsSelected(): boolean {
       return !!this.datasetAColumn && !!this.datasetBColumn;
     },
@@ -234,7 +237,7 @@ export default Vue.extend({
         });
     },
     onJoinCommitSuccess(datasetID: string) {
-      const entry = createRouteEntry(SELECT_TRAINING_ROUTE, {
+      const entry = createRouteEntry(this.returnPath, {
         dataset: datasetID,
         target: this.target,
         task: routeGetters.getRouteTask(this.$store),
