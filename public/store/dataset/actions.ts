@@ -1372,9 +1372,7 @@ export const actions = {
     return Promise.all(
       args.datasets.map(async (dataset) => {
         const highlights =
-          (args.highlights && args.highlights[0].dataset) === dataset
-            ? args.highlights
-            : null;
+          args.highlights?.[0]?.dataset === dataset ? args.highlights : null;
         const filterParams = addHighlightToFilterParams(
           args.filterParams[dataset],
           highlights

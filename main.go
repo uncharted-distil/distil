@@ -1,5 +1,5 @@
 //
-//   Copyright © 2021 Uncharted Software Inc.
+//   Copyright © 2019 Uncharted Software Inc.
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -293,7 +293,7 @@ func main() {
 	registerRoute(mux, "/distil/datasets/:dataset", routes.DatasetHandler(esMetadataStorageCtor))
 	registerRoute(mux, "/distil/models", routes.ModelsHandler(esExportedModelStorageCtor))
 	registerRoute(mux, "/distil/models/:model", routes.ModelHandler(esExportedModelStorageCtor))
-	registerRoute(mux, "/distil/join-suggestions/:dataset", routes.JoinSuggestionHandler(esMetadataStorageCtor, datamartCtors))
+	registerRoute(mux, "/distil/join-suggestions/:dataset", routes.DatasetsHandler(datamartCtors))
 	registerRoute(mux, "/distil/solution/:solution-id", routes.SolutionHandler(pgSolutionStorageCtor))
 	registerRoute(mux, "/distil/solutions/:dataset/:target", routes.SolutionsHandler(pgSolutionStorageCtor, esMetadataStorageCtor))
 	registerRoute(mux, "/distil/solution-requests/:dataset/:target", routes.SolutionRequestsHandler(pgSolutionStorageCtor))

@@ -347,7 +347,7 @@ export default Vue.extend({
     },
     selectedSuggestion(): JoinSuggestionItem {
       const dataset = this.suggestionDatasets.find(
-        (item) => !!item.suggestionItems.find((js) => js.selected)
+        (item) => !!item.suggestionItems?.find((js) => js.selected)
       );
       if (dataset) {
         return dataset.suggestionItems.find((js) => js.selected);
@@ -358,12 +358,7 @@ export default Vue.extend({
       return this.selectedItem && this.selectedItem.dataset;
     },
     isJoinReady(): boolean {
-      return (
-        this.selectedSuggestion &&
-        this.selectedItem &&
-        this.selectedItem.isAvailable !== undefined &&
-        !this.isImporting
-      );
+      return !!this.selectedItem;
     },
     spinnerHTML(): string {
       return circleSpinnerHTML();
@@ -390,7 +385,7 @@ export default Vue.extend({
           ? this.isImportRequestResolved
           : !isDatamartProvenance(suggestion.provenance);
         const selected = isImporting && isImportingDataset;
-        const joinSuggestions = suggestion.joinSuggestion.map((js) => {
+        const joinSuggestions = suggestion.joinSuggestion?.map((js) => {
           return {
             joinSuggestion: js,
             selected: false,
@@ -444,11 +439,18 @@ export default Vue.extend({
       const currentDataset = _.find(this.datasets, (d) => {
         return d.id === this.dataset;
       });
-      this.previewJoin(
-        currentDataset,
-        selected.dataset,
-        this.selectedSuggestion.joinSuggestion.index
-      );
+      if (this.selectedSuggestion?.joinSuggestion?.index) {
+        this.previewJoin(
+          currentDataset,
+          selected.dataset,
+          this.selectedSuggestion.joinSuggestion.index
+        );
+      } else {
+        const entry = createRouteEntry(JOIN_DATASETS_ROUTE, {
+          joinDatasets: this.dataset + "," + selected.key,
+        });
+        this.$router.push(entry).catch((err) => console.warn(err));
+      }
     },
     previewJoin(datasetA, datasetB, joinSuggestionIndex) {
       this.isAttemptingJoin = true;
