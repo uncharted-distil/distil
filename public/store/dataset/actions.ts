@@ -1449,9 +1449,6 @@ export const actions = {
       include: boolean;
     }
   ) {
-    if (!args.highlights.length && !args.filterParams.filters.length) {
-      return;
-    }
     const mutator = args.include
       ? mutations.setHighlightedIncludeTableData
       : mutations.setHighlightedExcludeTableData;

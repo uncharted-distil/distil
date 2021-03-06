@@ -183,7 +183,7 @@ export function createFiltersFromHighlights(
       return {
         key: key,
         type: variable.colType,
-        mode: mode,
+        mode: highlight.include ?? mode,
         minX: highlight.value.minX,
         maxX: highlight.value.maxX,
         minY: highlight.value.minY,

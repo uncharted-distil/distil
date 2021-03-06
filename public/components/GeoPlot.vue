@@ -712,19 +712,25 @@ export default Vue.extend({
       ) {
         return;
       }
+      const tileMap = new Map<string, Area>();
       const innerArea = this.tableDataToAreas(
         this.areaOfInterestItems.inner
       ) as any[];
       innerArea.forEach((i) => {
         i.gray = 0;
+        tileMap.set(i.imageUrl, i);
       });
       const outerArea = this.tableDataToAreas(
         this.areaOfInterestItems.outer
       ) as any[];
       outerArea.forEach((i) => {
         i.gray = 100;
+        if (!tileMap.has(i.imageUrl)) {
+          tileMap.set(i.imageUrl, i);
+        }
       });
-      this.drillDownState.tiles = innerArea.concat(outerArea);
+      console.log(tileMap);
+      this.drillDownState.tiles = [...tileMap.values()];
       this.isImageDrilldown = true;
     },
   },

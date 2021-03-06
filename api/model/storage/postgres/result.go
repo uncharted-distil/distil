@@ -781,7 +781,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	genericFilterParams := &api.FilterParams{
 		Filters: filters.genericFilters,
 	}
-
+	genericFilterParams.DataMode = filterParams.DataMode
 	// Create the filter portion of the where clause.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)

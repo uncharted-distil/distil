@@ -574,6 +574,12 @@ export const actions = {
       .getDecodedSolutionRequestFilterParams as FilterParams;
     const dataMode = context.getters.getDataMode;
     filterParams.size = datasetGetters.getNumberOfRecords(store);
+    const baseline = {
+      highlights: [],
+      filters: [],
+      variables: filterParams.variables,
+      size: filterParams.size,
+    } as FilterParams;
     return Promise.all([
       datasetActions.fetchHighlightedTableData(store, {
         dataset: dataset,
@@ -584,10 +590,10 @@ export const actions = {
       }), // include
       datasetActions.fetchHighlightedTableData(store, {
         dataset: dataset,
-        filterParams: filterParams,
-        highlights: highlights,
+        filterParams: baseline,
+        highlights: [],
         dataMode: dataMode,
-        include: false,
+        include: true,
       }), // exclude
     ]);
   },
@@ -613,6 +619,17 @@ export const actions = {
     const invertedHighlights = highlights.map((highlight) => {
       return { ...highlight, include: EXCLUDE_FILTER };
     });
+    const baseline = {
+      highlights: [],
+      filters: [
+        filter,
+        ...clonedFilterParams.filters.filter((f) => {
+          return f.mode === EXCLUDE_FILTER;
+        }),
+      ],
+      size: clonedFilterParams.size,
+      variables: clonedFilterParams.variables,
+    } as FilterParams;
     return Promise.all([
       datasetActions.fetchAreaOfInterestData(store, {
         dataset: dataset,
@@ -625,7 +642,7 @@ export const actions = {
       }), // include inner tiles
       datasetActions.fetchAreaOfInterestData(store, {
         dataset: dataset,
-        filterParams: clonedFilterParams,
+        filterParams: baseline,
         highlights: invertedHighlights,
         dataMode: dataMode,
         include: true,
