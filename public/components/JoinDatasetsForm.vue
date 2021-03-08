@@ -237,8 +237,17 @@ export default Vue.extend({
         });
     },
     onJoinCommitSuccess(datasetID: string) {
+      const datasets = datasetGetters.getDatasets(this.$store);
+
+      const targetDatasetID = datasets.reduce((a, d) => {
+        if (d.id.includes(datasetID) && d.id > a) {
+          a = d.id;
+        }
+        return a;
+      }, "");
+
       const entry = createRouteEntry(this.returnPath, {
-        dataset: datasetID,
+        dataset: targetDatasetID,
         target: this.target,
         task: routeGetters.getRouteTask(this.$store),
       });
