@@ -148,11 +148,11 @@ export const getters = {
   hasIncludedTableData(state: DatasetState): boolean {
     return !!state.includedSet.tableData;
   },
-  getHighlightedIncludeSet(state: DatasetState): TableData {
-    return state.highlightedIncludeSet;
+  getBaselineIncludeSet(state: DatasetState): TableData {
+    return state.baselineIncludeSet;
   },
-  getHighlightedExcludeSet(state: DatasetState): TableData {
-    return state.highlightedExcludeSet;
+  getBaselineExcludeSet(state: DatasetState): TableData {
+    return state.baselineExcludeSet;
   },
   getIncludedTableData(state: DatasetState): TableData {
     return state.includedSet.tableData;
@@ -184,11 +184,11 @@ export const getters = {
   getAreaOfInterestExcludeOuterItems(state: DatasetState) {
     return getTableDataItems(state.areaOfInterestExcludeOuter);
   },
-  getHighlightedIncludeTableDataItems(state: DatasetState) {
-    return getTableDataItems(state.highlightedIncludeSet);
+  getBaselineIncludeTableDataItems(state: DatasetState) {
+    return getTableDataItems(state.baselineIncludeSet);
   },
-  getHighlightedExcludeTableDataItems(state: DatasetState) {
-    return getTableDataItems(state.highlightedExcludeSet);
+  getBaselineExcludeTableDataItems(state: DatasetState) {
+    return getTableDataItems(state.baselineExcludeSet);
   },
   getIncludedTableDataItems(state: DatasetState, getters: any): TableRow[] {
     return getTableDataItems(state.includedSet.tableData);

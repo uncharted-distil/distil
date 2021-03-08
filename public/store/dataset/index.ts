@@ -403,8 +403,8 @@ export interface DatasetState {
   joinTableData: Dictionary<TableData>;
   includedSet: WorkingSet;
   excludedSet: WorkingSet;
-  highlightedIncludeSet: TableData;
-  highlightedExcludeSet: TableData;
+  baselineIncludeSet: TableData;
+  baselineExcludeSet: TableData;
   areaOfInterestIncludeInner: TableData;
   areaOfInterestIncludeOuter: TableData;
   areaOfInterestExcludeInner: TableData;
@@ -469,8 +469,8 @@ export const state: DatasetState = {
     rowSelectionData: [],
   },
   // highlight set
-  highlightedIncludeSet: null,
-  highlightedExcludeSet: null,
+  baselineIncludeSet: null,
+  baselineExcludeSet: null,
   // tiles surrounding tile that was clicked
   // include area of interest
   areaOfInterestIncludeInner: null,

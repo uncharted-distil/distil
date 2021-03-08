@@ -578,17 +578,17 @@ export const actions = {
       highlights: [],
       filters: [],
       variables: filterParams.variables,
-      size: filterParams.size,
+      size: Number.MAX_SAFE_INTEGER,
     } as FilterParams;
     return Promise.all([
-      datasetActions.fetchHighlightedTableData(store, {
+      datasetActions.fetchBaselineTableData(store, {
         dataset: dataset,
-        filterParams: filterParams,
-        highlights: highlights,
+        filterParams: baseline,
+        highlights: [],
         dataMode: dataMode,
         include: true,
       }), // include
-      datasetActions.fetchHighlightedTableData(store, {
+      datasetActions.fetchBaselineTableData(store, {
         dataset: dataset,
         filterParams: baseline,
         highlights: [],
@@ -627,7 +627,7 @@ export const actions = {
           return f.mode === EXCLUDE_FILTER;
         }),
       ],
-      size: clonedFilterParams.size,
+      size: Number.MAX_SAFE_INTEGER,
       variables: clonedFilterParams.variables,
     } as FilterParams;
     return Promise.all([
@@ -670,8 +670,8 @@ export const actions = {
     ]);
   },
   clearHighlight(context: ViewContext) {
-    datasetMutations.setHighlightedIncludeTableData(store, null);
-    datasetMutations.setHighlightedExcludeTableData(store, null);
+    datasetMutations.setBaselineIncludeTableData(store, null);
+    datasetMutations.setBaselineExcludeTableData(store, null);
   },
   async fetchResultsData(context: ViewContext) {
     // clear previous state

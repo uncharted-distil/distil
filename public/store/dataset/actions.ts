@@ -1439,7 +1439,7 @@ export const actions = {
     });
     mutations.setExcludedTableData(context, data);
   },
-  async fetchHighlightedTableData(
+  async fetchBaselineTableData(
     context: DatasetContext,
     args: {
       dataset: string;
@@ -1450,8 +1450,8 @@ export const actions = {
     }
   ) {
     const mutator = args.include
-      ? mutations.setHighlightedIncludeTableData
-      : mutations.setHighlightedExcludeTableData;
+      ? mutations.setBaselineIncludeTableData
+      : mutations.setBaselineExcludeTableData;
     const data = await actions.fetchTableData(context, {
       dataset: args.dataset,
       filterParams: args.filterParams,
