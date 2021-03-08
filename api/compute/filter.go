@@ -212,7 +212,7 @@ func preparePrefilteringDataset(outputFolder string, sourceDataset *api.Dataset,
 	}
 
 	// write it out as a dataset
-	dsRaw := &api.RawDataset{
+	dsRaw := &serialization.RawDataset{
 		ID:       sourceDataset.ID,
 		Name:     sourceDataset.Name,
 		Data:     data,

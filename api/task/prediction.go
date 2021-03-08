@@ -104,7 +104,7 @@ func NewPredictionTimeseriesDataset(params *PredictParams, interval float64, cou
 }
 
 // CreateDataset creates a raw dataset based on minimum timeseries parameters.
-func (p *PredictionTimeseriesDataset) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*api.RawDataset, error) {
+func (p *PredictionTimeseriesDataset) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*serialization.RawDataset, error) {
 	// generate timestamps to use for prediction based on type of timestamp
 	var timestampPredictionValues []string
 	if model.IsDateTime(p.timestampVariable.Type) {
@@ -117,7 +117,7 @@ func (p *PredictionTimeseriesDataset) CreateDataset(rootDataPath string, dataset
 
 	timeseriesData := createTimeseriesData(p.idKeys, p.idValues, p.timestampVariable.Key, timestampPredictionValues)
 
-	return &api.RawDataset{
+	return &serialization.RawDataset{
 		ID:       p.params.Dataset,
 		Name:     p.params.Dataset,
 		Data:     timeseriesData,
@@ -125,7 +125,7 @@ func (p *PredictionTimeseriesDataset) CreateDataset(rootDataPath string, dataset
 	}, nil
 }
 
-func (p *predictionDataset) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*api.RawDataset, error) {
+func (p *predictionDataset) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*serialization.RawDataset, error) {
 	// need to do a bit of processing on the usual setup
 	ds, err := p.params.DatasetConstructor.CreateDataset(rootDataPath, datasetName, config)
 	if err != nil {
@@ -150,7 +150,7 @@ func (p *predictionDataset) CreateDataset(rootDataPath string, datasetName strin
 		p.params.Meta.DataResources[i].ResPath = dataResource.ResPath
 	}
 
-	return &api.RawDataset{
+	return &serialization.RawDataset{
 		ID:       p.params.Dataset,
 		Name:     p.params.Dataset,
 		Data:     csvDataAugmented,
@@ -209,11 +209,11 @@ func CloneDataset(sourceDatasetID string, cloneDatasetID string, cloneFolder str
 	}
 
 	// clone dataset on disk
-	dsDisk, err := loadDiskDataset(ds)
+	dsDisk, err := api.LoadDiskDataset(ds)
 	if err != nil {
 		return err
 	}
-	dsDiskCloned, err := dsDisk.clone(cloneFolder, cloneDatasetID, storageNameClone)
+	dsDiskCloned, err := dsDisk.Clone(cloneFolder, cloneDatasetID, storageNameClone)
 	if err != nil {
 		return err
 	}
@@ -223,7 +223,7 @@ func CloneDataset(sourceDatasetID string, cloneDatasetID string, cloneFolder str
 	if err != nil {
 		return err
 	}
-	dsCloned.LearningDataset = dsDiskCloned.getLearningFolder()
+	dsCloned.LearningDataset = dsDiskCloned.GetLearningFolder()
 	err = metaStorage.UpdateDataset(dsCloned)
 	if err != nil {
 		return err
@@ -267,21 +267,21 @@ func PrepExistingPredictionDataset(params *PredictParams) (string, string, error
 
 	// make sure the dataset on disk has the target variable!
 	// (if performance here becomes an issue, only need data if adding target)
-	dsDisk, err := loadDiskDataset(dsCloned)
+	dsDisk, err := api.LoadDiskDataset(dsCloned)
 	if err != nil {
 		return "", "", err
 	}
 
 	// update the learning dataset
-	learningFolder := dsDisk.getLearningFolder()
+	learningFolder := dsDisk.GetLearningFolder()
 
 	foundTarget := dsDisk.Dataset.FieldExists(params.Target)
 	if !foundTarget {
-		err = dsDisk.addField(params.Target)
+		err = dsDisk.AddField(params.Target)
 		if err != nil {
 			return "", "", err
 		}
-		err = dsDisk.saveDataset()
+		err = dsDisk.SaveDataset()
 		if err != nil {
 			return "", "", err
 		}

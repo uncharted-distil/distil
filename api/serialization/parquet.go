@@ -33,7 +33,6 @@ import (
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
-	api "github.com/uncharted-distil/distil/api/model"
 )
 
 // Parquet represents a dataset storage backed with parquet data and json schema doc.
@@ -49,7 +48,7 @@ func NewParquet() *Parquet {
 
 // ReadDataset reads a raw dataset from the file system, loading the parquet
 // data into memory.
-func (d *Parquet) ReadDataset(schemaFile string) (*api.RawDataset, error) {
+func (d *Parquet) ReadDataset(schemaFile string) (*RawDataset, error) {
 	meta, err := d.ReadMetadata(schemaFile)
 	if err != nil {
 		return nil, err
@@ -60,7 +59,7 @@ func (d *Parquet) ReadDataset(schemaFile string) (*api.RawDataset, error) {
 		return nil, err
 	}
 
-	return &api.RawDataset{
+	return &RawDataset{
 		ID:       meta.ID,
 		Name:     meta.Name,
 		Data:     data,
@@ -70,7 +69,7 @@ func (d *Parquet) ReadDataset(schemaFile string) (*api.RawDataset, error) {
 
 // WriteDataset writes the raw dataset to the file system, writing out
 // the data to a parquet file.
-func (d *Parquet) WriteDataset(uri string, data *api.RawDataset) error {
+func (d *Parquet) WriteDataset(uri string, data *RawDataset) error {
 	dataFilename := path.Join(uri, compute.D3MDataFolder, compute.DistilParquetLearningData)
 	err := d.WriteData(dataFilename, data.Data)
 	if err != nil {

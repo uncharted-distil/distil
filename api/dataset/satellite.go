@@ -30,7 +30,7 @@ import (
 	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil/api/env"
-	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/util"
 )
 
@@ -142,7 +142,7 @@ func NewSatelliteDatasetFromExpanded(dataset string, imageType string, rawFilePa
 }
 
 // CreateDataset processes the raw satellite dataset and creates a raw D3M dataset.
-func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*api.RawDataset, error) {
+func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*serialization.RawDataset, error) {
 	if datasetName == "" {
 		datasetName = s.Dataset
 	}
@@ -296,7 +296,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 
 	meta.DataResources = []*model.DataResource{refDR, dr}
 
-	return &api.RawDataset{
+	return &serialization.RawDataset{
 		ID:              datasetID,
 		Name:            datasetName,
 		Data:            csvData,

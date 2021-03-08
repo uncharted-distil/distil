@@ -29,7 +29,6 @@ import (
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil/api/env"
-	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/util"
 )
@@ -349,7 +348,7 @@ func SplitDataset(schemaFile string, splitter datasetSplitter) (string, string, 
 	// output the train and test data
 	outputStore := serialization.GetStorage(mainDR.ResPath)
 	mainDR.ResPath = trainOutput
-	outputTrain := &api.RawDataset{
+	outputTrain := &serialization.RawDataset{
 		ID:       meta.ID,
 		Name:     meta.Name,
 		Metadata: meta,
@@ -361,7 +360,7 @@ func SplitDataset(schemaFile string, splitter datasetSplitter) (string, string, 
 	}
 
 	mainDR.ResPath = testOutput
-	outputTest := &api.RawDataset{
+	outputTest := &serialization.RawDataset{
 		ID:       meta.ID,
 		Name:     meta.Name,
 		Metadata: meta,
