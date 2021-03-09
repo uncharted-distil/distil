@@ -214,7 +214,7 @@ interface StatusPanelJoinState {
 }
 
 export default Vue.extend({
-  name: "status-panel-join",
+  name: "StatusPanelJoin",
   data(): StatusPanelJoinState {
     return {
       showStatusMessage: true,
