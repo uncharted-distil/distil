@@ -146,6 +146,15 @@ export const COLOR_SCALES: Map<
   [ColorScaleNames.turbo, interpolateTurbo],
 ]);
 
+// update datasets in local storage
+export function addRecentDataset(dataset: string) {
+  const datasets = localStorage.get("recent-datasets") || [];
+  if (datasets.indexOf(dataset) === -1) {
+    datasets.unshift(dataset);
+    localStorage.set("recent-datasets", datasets);
+  }
+}
+
 // include the highlight
 export function getAllDataItems(includedActive: boolean): TableRow[] {
   const tableData = includedActive
