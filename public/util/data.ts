@@ -87,6 +87,8 @@ import {
   interpolatePlasma,
 } from "d3-scale-chromatic";
 import router from "../router/router";
+import localStorage from "store";
+
 // Postfixes for special variable names
 export const PREDICTED_SUFFIX = "_predicted";
 export const ERROR_SUFFIX = "_error";
