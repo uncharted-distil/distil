@@ -158,7 +158,7 @@
           :key="summary.key"
           enable-highlighting
           :summary="summary"
-          :highlight="highlight"
+          :highlight="highlights"
           :enabled-type-changes="[]"
           :row-selection="rowSelection"
           :instance-name="rankingInstanceName"

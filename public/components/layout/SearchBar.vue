@@ -43,7 +43,7 @@ export default Vue.extend({
   name: "SearchBar",
 
   props: {
-    highlight: { type: String, default: "" },
+    highlights: { type: String, default: "" },
     filters: { type: String, default: "" },
     variables: { type: Array as () => Variable[], default: [] },
   },
@@ -98,10 +98,10 @@ export default Vue.extend({
     },
 
     setQuery(): void {
-      if (!this.lex || !(this.filters || this.highlight)) return;
+      if (!this.lex || !(this.filters || this.highlights)) return;
       const lexQuery = filterParamsToLexQuery(
         this.filters,
-        this.highlight,
+        this.highlights,
         this.variables
       );
       this.lex.setQuery(lexQuery, false);

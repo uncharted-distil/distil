@@ -38,8 +38,13 @@
         class="layer-button"
       />
     </view-type-toggle>
-
-    <div v-if="hasHighlights && !isGeoView" class="flex-grow-1">
+    <search-bar
+      class="mb-3"
+      :variables="allVariables"
+      :highlights="routeHighlight"
+      @lex-query="updateFilterAndHighlightFromLexQuery"
+    />
+    <div v-if="hasHighlights && !isGeoView" class="h-80">
       <results-data-slot
         instance-name="results-slot-top"
         :view-type="viewType"
@@ -61,6 +66,7 @@
 <script lang="ts">
 import _ from "lodash";
 import Vue from "vue";
+import SearchBar from "../components/layout/SearchBar.vue";
 import LayerSelection from "../components/LayerSelection.vue";
 import LegendWeight from "../components/LegendWeight.vue";
 import ResultsDataSlot from "../components/ResultsDataSlot.vue";
@@ -70,6 +76,8 @@ import { getters as resultsGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
 import { Variable } from "../store/dataset/index";
 import ColorScaleDropDown from "./ColorScaleDropDown.vue";
+import { updateHighlight, UPDATE_ALL } from "../util/highlights";
+import { lexQueryToFiltersAndHighlight } from "../util/lex";
 
 const GEO_VIEW = "geo";
 const TABLE_VIEW = "table";
@@ -83,6 +91,7 @@ export default Vue.extend({
     ResultsDataSlot,
     ViewTypeToggle,
     ColorScaleDropDown,
+    SearchBar,
   },
 
   data() {
@@ -105,12 +114,26 @@ export default Vue.extend({
       const highlights = routeGetters.getDecodedHighlights(this.$store);
       return highlights.length > 0;
     },
-
+    allVariables(): Variable[] {
+      return datasetGetters.getAllVariables(this.$store);
+    },
+    routeHighlight(): string {
+      return routeGetters.getRouteHighlight(this.$store);
+    },
     isMultiBandImage(): boolean {
       return routeGetters.isMultiBandImage(this.$store);
     },
     isGeoView(): boolean {
       return this.viewType === GEO_VIEW;
+    },
+    dataset(): string {
+      return routeGetters.getRouteDataset(this.$store);
+    },
+  },
+  methods: {
+    updateFilterAndHighlightFromLexQuery(lexQuery) {
+      const lqfh = lexQueryToFiltersAndHighlight(lexQuery, this.dataset);
+      updateHighlight(this.$router, lqfh.highlights, UPDATE_ALL);
     },
   },
 });
@@ -135,6 +158,9 @@ export default Vue.extend({
   flex-grow: 0;
   margin-right: 10px;
   margin-left: 10px;
+}
+.h-80 {
+  height: 80vh !important;
 }
 .view-toggle >>> .form-group {
   margin-bottom: 0px;

@@ -636,6 +636,7 @@ func (s *Storage) buildResultQueryFilters(dataset string, storageName string, re
 
 type filters struct {
 	genericFilters    []*model.Filter
+	genericHighlights []*model.Filter
 	predictedFilter   *model.Filter
 	residualFilter    *model.Filter
 	correctnessFilter *model.Filter
@@ -651,6 +652,7 @@ func splitFilters(filterParams *api.FilterParams) *filters {
 	var confidenceFilter *model.Filter
 	var rankFilter *model.Filter
 	var remaining []*model.Filter
+	var remainingHighlights []*model.Filter
 
 	if filterParams == nil {
 		return &filters{}
@@ -670,7 +672,7 @@ func splitFilters(filterParams *api.FilterParams) *filters {
 		} else if api.IsRankKey(highlight.Key) {
 			rankFilter = highlight
 		} else {
-			remaining = append(remaining, highlight)
+			remainingHighlights = append(remainingHighlights, highlight)
 		}
 	}
 
@@ -694,6 +696,7 @@ func splitFilters(filterParams *api.FilterParams) *filters {
 
 	return &filters{
 		genericFilters:    remaining,
+		genericHighlights: remainingHighlights,
 		predictedFilter:   predictedFilter,
 		residualFilter:    residualFilter,
 		correctnessFilter: correctnessFilter,

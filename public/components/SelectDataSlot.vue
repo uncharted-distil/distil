@@ -44,7 +44,7 @@
       class="mb-3"
       :variables="allVariables"
       :filters="routeFilters"
-      :highlight="routeHighlight"
+      :highlights="routeHighlight"
       @lex-query="updateFilterAndHighlightFromLexQuery"
     />
 
