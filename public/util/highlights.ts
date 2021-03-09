@@ -20,12 +20,10 @@ import {
   Filter,
   FilterParams,
   CATEGORICAL_FILTER,
-  GEOBOUNDS_FILTER,
   CLUSTER_FILTER,
   VECTOR_FILTER,
   INCLUDE_FILTER,
   TEXT_FILTER,
-  BIVARIATE_FILTER,
 } from "../util/filters";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as datasetGetters } from "../store/dataset/module";
@@ -117,7 +115,7 @@ export function createFiltersFromHighlights(
       return {
         key: key,
         type: CLUSTER_FILTER,
-        mode: mode,
+        mode: highlight.include ?? mode,
         categories: [highlight.value],
         displayName: displayName,
       };
@@ -127,7 +125,7 @@ export function createFiltersFromHighlights(
       return {
         key: key,
         type: TEXT_FILTER,
-        mode: mode,
+        mode: highlight.include ?? mode,
         categories: [highlight.value],
         displayName: displayName,
       };
@@ -137,7 +135,7 @@ export function createFiltersFromHighlights(
       return {
         key: key,
         type: CATEGORICAL_FILTER,
-        mode: mode,
+        mode: highlight.include ?? mode,
         categories: [highlight.value],
         displayName: displayName,
       };
@@ -158,7 +156,7 @@ export function createFiltersFromHighlights(
           key: key,
           type: VECTOR_FILTER,
           nestedType: highlight.value.type,
-          mode: mode,
+          mode: highlight.include ?? mode,
           min: highlight.value.from,
           max: highlight.value.to,
           displayName: displayName,
@@ -168,7 +166,7 @@ export function createFiltersFromHighlights(
       return {
         key: key,
         type: highlight.value.type,
-        mode: mode,
+        mode: highlight.include ?? mode,
         min: highlight.value.from,
         max: highlight.value.to,
         displayName: displayName,
@@ -195,7 +193,27 @@ export function createFiltersFromHighlights(
 
   return filterHighlights;
 }
-
+export function cloneFilters(filterParams: FilterParams): FilterParams {
+  return _.cloneDeep(filterParams);
+}
+export function setHighlightModes(
+  filterParams: FilterParams,
+  mode: string
+): FilterParams {
+  filterParams.highlights.forEach((highlight) => {
+    highlight.mode = mode;
+  });
+  return filterParams;
+}
+export function setFilterModes(
+  filterParams: FilterParams,
+  mode: string
+): FilterParams {
+  filterParams.filters.forEach((filter) => {
+    filter.mode = mode;
+  });
+  return filterParams;
+}
 export function addHighlightToFilterParams(
   filterParams: FilterParams,
   highlights: Highlight[],
