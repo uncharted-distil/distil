@@ -729,7 +729,6 @@ export default Vue.extend({
           tileMap.set(i.imageUrl, i);
         }
       });
-      console.log(tileMap);
       this.drillDownState.tiles = [...tileMap.values()];
       this.isImageDrilldown = true;
     },
