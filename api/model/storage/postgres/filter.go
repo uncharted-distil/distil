@@ -606,7 +606,7 @@ func (s *Storage) buildResultQueryFilters(dataset string, storageName string, re
 	genericFilterParams := &api.FilterParams{
 		Filters: filters.genericFilters,
 	}
-
+	genericFilterParams.Highlights = filters.genericHighlights
 	// create the filter for the query
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
