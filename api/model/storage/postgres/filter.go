@@ -385,9 +385,10 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, wheres []string, param
 	if len(highlightWheres) > 0 {
 		where := ""
 		if invert {
-			where = fmt.Sprintf("NOT(%s)", strings.Join(highlightWheres, " OR "))
+			// highlights are always treated as or (adding Not(...or...) makes it and)
+			where = fmt.Sprintf("(%s)", strings.Join(highlightWheres, " OR "))
 		} else {
-			where = strings.Join(highlightWheres, " OR ")
+			where = fmt.Sprintf("(%s)", strings.Join(highlightWheres, " OR "))
 		}
 		wheres = append(wheres, where)
 	}
@@ -605,7 +606,7 @@ func (s *Storage) buildResultQueryFilters(dataset string, storageName string, re
 	genericFilterParams := &api.FilterParams{
 		Filters: filters.genericFilters,
 	}
-
+	genericFilterParams.Highlights = filters.genericHighlights
 	// create the filter for the query
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
@@ -635,6 +636,7 @@ func (s *Storage) buildResultQueryFilters(dataset string, storageName string, re
 
 type filters struct {
 	genericFilters    []*model.Filter
+	genericHighlights []*model.Filter
 	predictedFilter   *model.Filter
 	residualFilter    *model.Filter
 	correctnessFilter *model.Filter
@@ -650,6 +652,7 @@ func splitFilters(filterParams *api.FilterParams) *filters {
 	var confidenceFilter *model.Filter
 	var rankFilter *model.Filter
 	var remaining []*model.Filter
+	var remainingHighlights []*model.Filter
 
 	if filterParams == nil {
 		return &filters{}
@@ -669,7 +672,7 @@ func splitFilters(filterParams *api.FilterParams) *filters {
 		} else if api.IsRankKey(highlight.Key) {
 			rankFilter = highlight
 		} else {
-			remaining = append(remaining, highlight)
+			remainingHighlights = append(remainingHighlights, highlight)
 		}
 	}
 
@@ -693,6 +696,7 @@ func splitFilters(filterParams *api.FilterParams) *filters {
 
 	return &filters{
 		genericFilters:    remaining,
+		genericHighlights: remainingHighlights,
 		predictedFilter:   predictedFilter,
 		residualFilter:    residualFilter,
 		correctnessFilter: correctnessFilter,

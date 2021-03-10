@@ -70,11 +70,11 @@ export const getters = {
   // join data
   getJoinDatasetsTableData: read(moduleGetters.getJoinDatasetsTableData),
   // highlighted data
-  getHighlightedIncludeTableDataItems: read(
-    moduleGetters.getHighlightedIncludeTableDataItems
+  getBaselineIncludeTableDataItems: read(
+    moduleGetters.getBaselineIncludeTableDataItems
   ),
-  getHighlightedExcludeTableDataItems: read(
-    moduleGetters.getHighlightedExcludeTableDataItems
+  getBaselineExcludeTableDataItems: read(
+    moduleGetters.getBaselineExcludeTableDataItems
   ),
   getNumberOfRecords: read(moduleGetters.getNumberOfRecords),
   // included data
@@ -180,7 +180,7 @@ export const actions = {
   // included / excluded table data
   fetchIncludedTableData: dispatch(moduleActions.fetchIncludedTableData),
   fetchExcludedTableData: dispatch(moduleActions.fetchExcludedTableData),
-  fetchHighlightedTableData: dispatch(moduleActions.fetchHighlightedTableData),
+  fetchBaselineTableData: dispatch(moduleActions.fetchBaselineTableData),
   fetchAreaOfInterestData: dispatch(moduleActions.fetchAreaOfInterestData),
   // task info
   fetchTask: dispatch(moduleActions.fetchTask),
@@ -229,11 +229,11 @@ export const mutations = {
   clearJoinDatasetsTableData: commit(
     moduleMutations.clearJoinDatasetsTableData
   ),
-  setHighlightedIncludeTableData: commit(
-    moduleMutations.setHighlightedIncludeTableData
+  setBaselineIncludeTableData: commit(
+    moduleMutations.setBaselineIncludeTableData
   ),
-  setHighlightedExcludeTableData: commit(
-    moduleMutations.setHighlightedExcludeTableData
+  setBaselineExcludeTableData: commit(
+    moduleMutations.setBaselineExcludeTableData
   ),
   setAreaOfInterestIncludeInner: commit(
     moduleMutations.setAreaOfInterestIncludeInner

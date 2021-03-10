@@ -404,11 +404,11 @@ export const mutations = {
   clearJoinDatasetsTableData(state: DatasetState) {
     state.joinTableData = {};
   },
-  setHighlightedIncludeTableData(state: DatasetState, tableData: TableData) {
-    state.highlightedIncludeSet = Object.freeze(tableData);
+  setBaselineIncludeTableData(state: DatasetState, tableData: TableData) {
+    state.baselineIncludeSet = Object.freeze(tableData);
   },
-  setHighlightedExcludeTableData(state: DatasetState, tableData: TableData) {
-    state.highlightedExcludeSet = Object.freeze(tableData);
+  setBaselineExcludeTableData(state: DatasetState, tableData: TableData) {
+    state.baselineExcludeSet = Object.freeze(tableData);
   },
   updateAreaOfInterestIncludeInner(
     state: DatasetState,

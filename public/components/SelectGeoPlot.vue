@@ -64,8 +64,8 @@ export default Vue.extend({
 
     items(): TableRow[] {
       const tableData = this.includedActive
-        ? datasetGetters.getHighlightedIncludeTableDataItems(this.$store)
-        : datasetGetters.getHighlightedExcludeTableDataItems(this.$store);
+        ? datasetGetters.getBaselineIncludeTableDataItems(this.$store)
+        : datasetGetters.getBaselineExcludeTableDataItems(this.$store);
       const highlighted = tableData
         ? tableData.map((h) => {
             return { ...h, isExcluded: true };

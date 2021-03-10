@@ -28,8 +28,15 @@ import {
   DatasetUpdate,
 } from "../../util/data";
 import { Dictionary } from "../../util/dict";
-import { EXCLUDE_FILTER, FilterParams } from "../../util/filters";
-import { addHighlightToFilterParams } from "../../util/highlights";
+import {
+  EXCLUDE_FILTER,
+  FilterParams,
+  INCLUDE_FILTER,
+} from "../../util/filters";
+import {
+  addHighlightToFilterParams,
+  highlightsExist,
+} from "../../util/highlights";
 import { loadImage } from "../../util/image";
 import {
   GEOCODED_LAT_PREFIX,
@@ -1437,7 +1444,7 @@ export const actions = {
     });
     mutations.setExcludedTableData(context, data);
   },
-  async fetchHighlightedTableData(
+  async fetchBaselineTableData(
     context: DatasetContext,
     args: {
       dataset: string;
@@ -1447,12 +1454,9 @@ export const actions = {
       include: boolean;
     }
   ) {
-    if (!args.highlights.length && !args.filterParams.filters.length) {
-      return;
-    }
     const mutator = args.include
-      ? mutations.setHighlightedIncludeTableData
-      : mutations.setHighlightedExcludeTableData;
+      ? mutations.setBaselineIncludeTableData
+      : mutations.setBaselineExcludeTableData;
     const data = await actions.fetchTableData(context, {
       dataset: args.dataset,
       filterParams: args.filterParams,
@@ -1507,6 +1511,7 @@ export const actions = {
       highlights: Highlight[];
       include: boolean;
       dataMode: DataMode;
+      mode?: string;
       orderBy?: string;
     }
   ): Promise<TableData> {
@@ -1515,7 +1520,8 @@ export const actions = {
     }
     const filterParams = addHighlightToFilterParams(
       args.filterParams,
-      args.highlights
+      args.highlights,
+      args.mode
     );
 
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;

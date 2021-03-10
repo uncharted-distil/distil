@@ -160,8 +160,8 @@ export function addRecentDataset(dataset: string) {
 // include the highlight
 export function getAllDataItems(includedActive: boolean): TableRow[] {
   const tableData = includedActive
-    ? datasetGetters.getHighlightedIncludeTableDataItems(store)
-    : datasetGetters.getHighlightedExcludeTableDataItems(store);
+    ? datasetGetters.getBaselineIncludeTableDataItems(store)
+    : datasetGetters.getBaselineExcludeTableDataItems(store);
   const highlighted = tableData
     ? tableData.map((h) => {
         return { ...h, isExcluded: true }; // adding isExcluded for the geoplot to color it gray

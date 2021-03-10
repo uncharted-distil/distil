@@ -68,6 +68,7 @@ import { getters as routeGetters } from "../route/module";
 import store, { DistilState } from "../store";
 import { ViewState } from "./index";
 import { getters as viewGetters, mutations as viewMutations } from "./module";
+import { setHighlightModes, cloneFilters } from "../../util/highlights";
 
 enum ParamCacheKey {
   VARIABLES = "VARIABLES",
@@ -572,23 +573,40 @@ export const actions = {
   },
   updateHighlight(context: ViewContext) {
     const dataset = context.getters.getRouteDataset;
-    const highlights = context.getters.getDecodedHighlights as Highlight[];
-    const filterParams = context.getters
-      .getDecodedSolutionRequestFilterParams as FilterParams;
+    let filterParams = cloneFilters(
+      context.getters.getDecodedSolutionRequestFilterParams
+    );
     const dataMode = context.getters.getDataMode;
     filterParams.size = datasetGetters.getNumberOfRecords(store);
+    filterParams = setHighlightModes(filterParams, EXCLUDE_FILTER);
+    const baseline = {
+      highlights: filterParams.highlights,
+      filters: filterParams.filters.filter((f) => {
+        return f.mode === EXCLUDE_FILTER;
+      }),
+      variables: filterParams.variables,
+      size: Number.MAX_SAFE_INTEGER,
+    } as FilterParams;
+    const excludeBaseline = {
+      highlights: filterParams.highlights,
+      filters: filterParams.filters.filter((f) => {
+        return f.mode === EXCLUDE_FILTER;
+      }),
+      variables: filterParams.variables,
+      size: Number.MAX_SAFE_INTEGER,
+    };
     return Promise.all([
-      datasetActions.fetchHighlightedTableData(store, {
+      datasetActions.fetchBaselineTableData(store, {
         dataset: dataset,
-        filterParams: filterParams,
-        highlights: highlights,
+        filterParams: baseline,
+        highlights: [],
         dataMode: dataMode,
         include: true,
       }), // include
-      datasetActions.fetchHighlightedTableData(store, {
+      datasetActions.fetchBaselineTableData(store, {
         dataset: dataset,
-        filterParams: filterParams,
-        highlights: highlights,
+        filterParams: excludeBaseline,
+        highlights: [],
         dataMode: dataMode,
         include: false,
       }), // exclude
@@ -616,6 +634,17 @@ export const actions = {
     const invertedHighlights = highlights.map((highlight) => {
       return { ...highlight, include: EXCLUDE_FILTER };
     });
+    const baseline = {
+      highlights: [],
+      filters: [
+        filter,
+        ...clonedFilterParams.filters.filter((f) => {
+          return f.mode === EXCLUDE_FILTER;
+        }),
+      ],
+      size: Number.MAX_SAFE_INTEGER,
+      variables: clonedFilterParams.variables,
+    } as FilterParams;
     return Promise.all([
       datasetActions.fetchAreaOfInterestData(store, {
         dataset: dataset,
@@ -628,7 +657,7 @@ export const actions = {
       }), // include inner tiles
       datasetActions.fetchAreaOfInterestData(store, {
         dataset: dataset,
-        filterParams: clonedFilterParams,
+        filterParams: baseline,
         highlights: invertedHighlights,
         dataMode: dataMode,
         include: true,
@@ -656,8 +685,8 @@ export const actions = {
     ]);
   },
   clearHighlight(context: ViewContext) {
-    datasetMutations.setHighlightedIncludeTableData(store, null);
-    datasetMutations.setHighlightedExcludeTableData(store, null);
+    datasetMutations.setBaselineIncludeTableData(store, null);
+    datasetMutations.setBaselineExcludeTableData(store, null);
   },
   async fetchResultsData(context: ViewContext) {
     // clear previous state

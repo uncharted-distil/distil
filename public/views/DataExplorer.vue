@@ -38,7 +38,7 @@
       <search-bar
         :variables="allVariables"
         :filters="filters"
-        :highlight="routeHighlight"
+        :highlights="routeHighlight"
         @lex-query="updateFilterAndHighlightFromLexQuery"
       />
 

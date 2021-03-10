@@ -26,7 +26,12 @@
       <color-scale-drop-down v-if="isMultiBandImage" />
       <layer-selection v-if="isMultiBandImage" class="layer-button" />
     </view-type-toggle>
-
+    <search-bar
+      class="mb-3"
+      :variables="allVariables"
+      :highlights="routeHighlight"
+      @lex-query="updateFilterAndHighlightFromLexQuery"
+    />
     <p v-if="hasResults" class="predictions-data-slot-summary">
       <data-size
         :current-size="numItems"
@@ -68,6 +73,7 @@ import PredictionsDataTable from "./PredictionsDataTable.vue";
 import ImageMosaic from "./ImageMosaic.vue";
 import ResultsTimeseriesView from "./ResultsTimeseriesView.vue";
 import GeoPlot, { TileClickData } from "./GeoPlot.vue";
+import SearchBar from "./layout/SearchBar.vue";
 import { spinnerHTML } from "../util/spinner";
 import {
   Highlight,
@@ -95,6 +101,8 @@ import { Filter, INCLUDE_FILTER } from "../util/filters";
 import { actions as viewActions } from "../store/view/module";
 import { isGeoLocatedType } from "../util/types";
 import { getVariableSummariesByState } from "../util/data";
+import { updateHighlight, UPDATE_ALL } from "../util/highlights";
+import { lexQueryToFiltersAndHighlight } from "../util/lex";
 const TABLE_VIEW = "table";
 const IMAGE_VIEW = "image";
 const GRAPH_VIEW = "graph";
@@ -113,6 +121,7 @@ export default Vue.extend({
     ViewTypeToggle,
     ColorScaleDropDown,
     LayerSelection,
+    SearchBar,
   },
 
   data() {
@@ -148,7 +157,12 @@ export default Vue.extend({
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
-
+    allVariables(): Variable[] {
+      return datasetGetters.getAllVariables(this.$store);
+    },
+    routeHighlight(): string {
+      return routeGetters.getRouteHighlight(this.$store);
+    },
     highlights(): Highlight[] {
       return routeGetters.getDecodedHighlights(this.$store);
     },
@@ -255,6 +269,10 @@ export default Vue.extend({
   },
 
   methods: {
+    updateFilterAndHighlightFromLexQuery(lexQuery) {
+      const lqfh = lexQueryToFiltersAndHighlight(lexQuery, this.dataset);
+      updateHighlight(this.$router, lqfh.highlights, UPDATE_ALL);
+    },
     async onTileClick(data: TileClickData) {
       // build filter
       const filter: Filter = {
