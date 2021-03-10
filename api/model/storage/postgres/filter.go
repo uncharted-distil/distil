@@ -388,7 +388,7 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, wheres []string, param
 			// highlights are always treated as or (adding Not(...or...) makes it and)
 			where = fmt.Sprintf("(%s)", strings.Join(highlightWheres, " OR "))
 		} else {
-			where = fmt.Sprintf("(%s)",strings.Join(highlightWheres, " OR "))
+			where = fmt.Sprintf("(%s)", strings.Join(highlightWheres, " OR "))
 		}
 		wheres = append(wheres, where)
 	}
@@ -411,7 +411,7 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, wheres []string, param
 		}
 		wheres = append(wheres, where)
 	}
- 	return wheres, params
+	return wheres, params
 }
 func (s *Storage) buildSelectStatement(variables []*model.Variable, filterVariables []string) (string, error) {
 

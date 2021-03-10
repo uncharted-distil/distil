@@ -205,7 +205,7 @@ func (f *NumericalField) fetchHistogramByResult(resultURI string, filterParams *
 	// need the extrema to calculate the histogram interval
 	if extrema == nil {
 		extrema, err = f.fetchExtremaByURI(resultURI)
-		if extrema == nil{
+		if extrema == nil {
 			return nil, nil
 		}
 		if err != nil {
