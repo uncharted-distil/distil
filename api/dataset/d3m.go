@@ -23,7 +23,6 @@ import (
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil/api/env"
-	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/serialization"
 )
 
@@ -43,7 +42,7 @@ func NewD3MDataset(datasetName string, datasetPath string) (*D3M, error) {
 }
 
 // CreateDataset processes the D3M dataset and updates it as needed to meet distil needs.
-func (d *D3M) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*api.RawDataset, error) {
+func (d *D3M) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*serialization.RawDataset, error) {
 	log.Infof("creating dataset from d3m dataset source")
 	if datasetName == "" {
 		datasetName = d.DatasetName
@@ -74,7 +73,7 @@ func (d *D3M) CreateDataset(rootDataPath string, datasetName string, config *env
 	return ds, nil
 }
 
-func (d *D3M) isFullySpecified(ds *api.RawDataset) bool {
+func (d *D3M) isFullySpecified(ds *serialization.RawDataset) bool {
 	// fully specified means all variables are in the metadata, there are no
 	// unknown types and there is at least one non string, non index type
 	// (to avoid to case where everything was initialized to text)

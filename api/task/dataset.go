@@ -34,163 +34,9 @@ import (
 	"github.com/uncharted-distil/distil/api/util"
 )
 
-// DiskDataset represents a dataset stored on disk.
-type DiskDataset struct {
-	Dataset           *api.RawDataset
-	FeaturizedDataset *DiskDataset
-	schemaPath        string
-}
-
 // DatasetConstructor is used to build a dataset.
 type DatasetConstructor interface {
-	CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*api.RawDataset, error)
-}
-
-func loadDiskDataset(ds *api.Dataset) (*DiskDataset, error) {
-	folder := env.ResolvePath(ds.Source, ds.Folder)
-	output, err := loadDiskDatasetFromFolder(folder)
-	if err != nil {
-		return nil, err
-	}
-
-	if ds.LearningDataset != "" {
-		pre, err := loadDiskDatasetFromFolder(ds.LearningDataset)
-		if err != nil {
-			return nil, err
-		}
-		output.FeaturizedDataset = pre
-	}
-
-	return output, nil
-}
-
-func loadDiskDatasetFromFolder(folder string) (*DiskDataset, error) {
-	schemaPath := path.Join(folder, compute.D3MDataSchema)
-	dsDisk, err := serialization.ReadDataset(schemaPath)
-	if err != nil {
-		return nil, err
-	}
-
-	return &DiskDataset{
-		Dataset:    dsDisk,
-		schemaPath: schemaPath,
-	}, nil
-}
-
-func (d *DiskDataset) saveDataset() error {
-	err := serialization.WriteDataset(path.Dir(d.schemaPath), d.Dataset)
-	if err != nil {
-		return err
-	}
-
-	if d.FeaturizedDataset != nil {
-		err = d.FeaturizedDataset.saveDataset()
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (d *DiskDataset) addField(variable *model.Variable) error {
-	err := d.Dataset.AddField(variable)
-	if err != nil {
-		return err
-	}
-
-	if d.FeaturizedDataset != nil {
-		err = d.FeaturizedDataset.addField(variable)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (d *DiskDataset) fieldExists(variable *model.Variable) bool {
-	return d.Dataset.FieldExists(variable)
-}
-
-func (d *DiskDataset) clone(targetFolder string, cloneDatasetID string, cloneStorageName string) (*DiskDataset, error) {
-	// easiest clone is to write the dataset to the new location then read it
-	err := serialization.WriteDataset(targetFolder, d.Dataset)
-	if err != nil {
-		return nil, err
-	}
-
-	schemaPath := path.Join(targetFolder, compute.D3MDataSchema)
-	cloned, err := serialization.ReadDataset(schemaPath)
-	if err != nil {
-		return nil, err
-	}
-
-	// update the metadata
-	cloned.Metadata.ID = cloneDatasetID
-	cloned.Metadata.StorageName = cloneStorageName
-	err = serialization.WriteMetadata(schemaPath, cloned.Metadata)
-	if err != nil {
-		return nil, err
-	}
-
-	output := &DiskDataset{
-		Dataset:    cloned,
-		schemaPath: schemaPath,
-	}
-
-	if d.FeaturizedDataset != nil {
-		clonedPrefeaturized, err := d.FeaturizedDataset.clone(fmt.Sprintf("%s-featurized", targetFolder), cloneDatasetID, cloneStorageName)
-		if err != nil {
-			return nil, err
-		}
-		output.FeaturizedDataset = clonedPrefeaturized
-	}
-
-	return output, nil
-}
-
-func (d *DiskDataset) getLearningFolder() string {
-	if d.FeaturizedDataset != nil {
-		return d.FeaturizedDataset.getLearningFolder()
-	}
-
-	return path.Dir(d.schemaPath)
-}
-
-func (d *DiskDataset) updateDataset(updates map[string]map[string]string, filterNotFound bool) error {
-	if filterNotFound {
-		// do an initial filter pass to keep only the rows found in the updates
-		filterMap := map[string]bool{}
-		for _, colUpdates := range updates {
-			for key := range colUpdates {
-				filterMap[key] = true
-			}
-		}
-		d.Dataset.FilterDataset(filterMap)
-	}
-
-	// translate column names to indices
-	updatesMapped := map[int]map[string]string{}
-	for colName, colUpdates := range updates {
-		index := d.Dataset.GetVariableIndex(colName)
-
-		// could add missing columns!
-		if index == -1 {
-			return errors.Errorf("column %s not in dataset for updates", colName)
-		}
-		updatesMapped[index] = colUpdates
-	}
-	d.Dataset.UpdateDataset(updatesMapped)
-
-	if d.FeaturizedDataset != nil {
-		err := d.FeaturizedDataset.updateDataset(updates, filterNotFound)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*serialization.RawDataset, error)
 }
 
 // CreateDataset structures a raw csv file into a valid D3M dataset.
@@ -287,7 +133,7 @@ func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage 
 
 	// update the header with the proper variable names
 	data[0] = meta.GetMainDataResource().GenerateHeader()
-	dataRaw := &api.RawDataset{
+	dataRaw := &serialization.RawDataset{
 		Name:     meta.Name,
 		ID:       meta.ID,
 		Data:     data,
@@ -344,7 +190,7 @@ func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage 
 
 func updateLearningDataset(ds *api.Dataset, data [][]string) error {
 	// read the dataset from disk
-	dsDisk, err := loadDiskDataset(ds)
+	dsDisk, err := api.LoadDiskDataset(ds)
 	if err != nil {
 		return err
 	}
@@ -366,8 +212,8 @@ func updateLearningDataset(ds *api.Dataset, data [][]string) error {
 			updates[sourceVar.HeaderName] = map[string]string{}
 
 			// add missing fields
-			if !dsDisk.fieldExists(sourceVar) {
-				err = dsDisk.addField(sourceVar)
+			if !dsDisk.FieldExists(sourceVar) {
+				err = dsDisk.AddField(sourceVar)
 				if err != nil {
 					return err
 				}
@@ -382,12 +228,12 @@ func updateLearningDataset(ds *api.Dataset, data [][]string) error {
 		}
 	}
 
-	err = dsDisk.updateDataset(updates, true)
+	err = dsDisk.UpdateDataset(updates, true)
 	if err != nil {
 		return err
 	}
 
-	err = dsDisk.saveDataset()
+	err = dsDisk.SaveDataset()
 	if err != nil {
 		return err
 	}
@@ -493,7 +339,7 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 	metaDisk.Name = newDatasetName
 	metaDisk.StorageName = newStorageName
 	metaDisk.DatasetFolder = newDatasetName
-	rawDS := &api.RawDataset{
+	rawDS := &serialization.RawDataset{
 		ID:              metaDisk.ID,
 		Name:            metaDisk.Name,
 		Metadata:        metaDisk,
@@ -546,7 +392,6 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 		if err != nil {
 			return "", err
 		}
-		//_, err = apicompute.UpdatePrefeaturizedDataset(targetFolder, predictionDS.GetLearningFolder(), newDS, rawDS.Data, true)
 		err = updatePrefeaturizedDatasetVariable(targetFolder, varsSource[targetName].HeaderName, rawDS)
 		if err != nil {
 			return "", err
@@ -568,7 +413,7 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 	return metaDisk.ID, nil
 }
 
-func updatePrefeaturizedDatasetVariable(prefeaturizedPath string, variableName string, updatedData *api.RawDataset) error {
+func updatePrefeaturizedDatasetVariable(prefeaturizedPath string, variableName string, updatedData *serialization.RawDataset) error {
 	log.Infof("updating variable '%s' in prefeaturized dataset found at '%s'", variableName, prefeaturizedPath)
 	schemaPath := path.Join(prefeaturizedPath, compute.D3MDataSchema)
 	dsDisk, err := serialization.ReadDataset(schemaPath)

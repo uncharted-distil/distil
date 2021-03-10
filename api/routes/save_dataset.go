@@ -19,7 +19,6 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
-	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/task"
@@ -81,21 +80,14 @@ func SaveDatasetHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStora
 		}
 
 		// export needs to invert the filters
-		filterModeReverse := map[string]string{model.IncludeFilter: model.ExcludeFilter, model.ExcludeFilter: model.IncludeFilter}
-		for _, highlight := range expandedFilterParams.Highlights {
-			highlight.Mode = filterModeReverse[highlight.Mode]
-		}
-		_, _, err = task.ExportDataset(dataset, metaStorage, dataStorage, !invert, expandedFilterParams)
+		_, _, err = task.ExportDataset(dataset, metaStorage, dataStorage, invert, expandedFilterParams)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-		for _, highlight := range expandedFilterParams.Highlights {
-			highlight.Mode = filterModeReverse[highlight.Mode]
-		}
 
 		// delete rows based on filterParams
-		err = dataStorage.SaveDataset(dataset, ds.StorageName, invert, expandedFilterParams)
+		err = dataStorage.SaveDataset(dataset, ds.StorageName, !invert, expandedFilterParams)
 		if err != nil {
 			handleError(w, err)
 			return

@@ -75,7 +75,7 @@ func (s *Storage) deleteRows(dataset string, storageName string, invert bool, fi
 	wheres, paramsFilter = s.buildFilteredQueryWhere(dataset, wheres, paramsFilter, "", filterParams, invert)
 	where := ""
 	if len(wheres) > 0 {
-		where = "WHERE" + strings.Join(wheres, " AND ")
+		where = "WHERE " + strings.Join(wheres, " AND ")
 	}
 	sql := fmt.Sprintf("DELETE FROM %s %s;", storageName, where)
 	_, err := s.client.Query(sql, paramsFilter...)
@@ -334,7 +334,7 @@ func (s *Storage) FetchDataset(dataset string, storageName string, includeMetada
 	wheres, paramsFilter = s.buildFilteredQueryWhere(dataset, wheres, paramsFilter, "", filterParams, invert)
 	where := ""
 	if len(wheres) > 0 {
-		where = "WHERE" + strings.Join(wheres, " AND ")
+		where = "WHERE " + strings.Join(wheres, " AND ")
 	}
 	sql := fmt.Sprintf("SELECT %s FROM %s %s;", strings.Join(varNames, ", "), getBaseTableName(storageName), where)
 	res, err := s.client.Query(sql, paramsFilter...)

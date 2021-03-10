@@ -32,7 +32,7 @@ import (
 	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil/api/env"
-	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/util"
 )
 
@@ -91,7 +91,7 @@ func NewMediaDatasetFromExpanded(dataset string, mediaType string, targetMediaTy
 }
 
 // CreateDataset processes the raw media dataset and creates a raw D3M dataset.
-func (m *Media) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*api.RawDataset, error) {
+func (m *Media) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*serialization.RawDataset, error) {
 	if datasetName == "" {
 		datasetName = m.Dataset
 	}
@@ -186,7 +186,7 @@ func (m *Media) CreateDataset(rootDataPath string, datasetName string, config *e
 
 	meta.DataResources = []*model.DataResource{refDR, dr}
 
-	return &api.RawDataset{
+	return &serialization.RawDataset{
 		ID:       datasetID,
 		Name:     datasetName,
 		Data:     csvData,

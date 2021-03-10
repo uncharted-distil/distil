@@ -36,7 +36,7 @@ type explainDataset struct {
 }
 
 // CreateDataset creates the raw dataset structure for the SHAP dataset.
-func (e explainDataset) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*api.RawDataset, error) {
+func (e explainDataset) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*serialization.RawDataset, error) {
 	explainStorage := serialization.GetStorage(e.explainURI)
 	explainedOutput, err := apicomp.ExplainFeatureOutput(e.resultURI, e.explainURI)
 	if err != nil {
@@ -81,7 +81,7 @@ func (e explainDataset) CreateDataset(rootDataPath string, datasetName string, c
 	}
 
 	meta.DataResources = []*model.DataResource{dr}
-	return &api.RawDataset{
+	return &serialization.RawDataset{
 		ID:       e.explainURI,
 		Name:     e.explainURI,
 		Data:     explainedData,
