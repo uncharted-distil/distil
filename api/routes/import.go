@@ -146,9 +146,9 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 					}
 					definitiveVars := append(getVariablesDefault(originalDataset["id"].(string), metaStore), getVariablesDefault(joinedDataset["id"].(string), metaStore)...)
 					ingestParams.DefinitiveTypes = apiCompute.MapVariables(definitiveVars, func(variable *model.Variable) string { return variable.Key })
-
+				} else {
+					ingestParams.DefinitiveTypes = apiCompute.MapVariables(creationResult.definitiveVars, func(variable *model.Variable) string { return variable.Key })
 				}
-
 				log.Infof("Created dataset '%s' from local source '%s'", ingestParams.ID, ingestParams.Path)
 			}
 		}
@@ -244,10 +244,11 @@ func createMetadataStorageForSource(datasetSource metadata.DatasetSource, proven
 }
 
 type datasetCreationResult struct {
-	name        string
-	path        string
-	groups      []map[string]interface{}
-	indexFields []string
+	name           string
+	path           string
+	groups         []map[string]interface{}
+	indexFields    []string
+	definitiveVars []*model.Variable
 }
 
 func createDataset(datasetPath string, datasetName string, config *env.Config) (*datasetCreationResult, error) {
@@ -267,10 +268,11 @@ func createDataset(datasetPath string, datasetName string, config *env.Config) (
 	}
 
 	return &datasetCreationResult{
-		name:        datasetName,
-		path:        formattedPath,
-		groups:      groups,
-		indexFields: indexFields,
+		name:           datasetName,
+		path:           formattedPath,
+		groups:         groups,
+		indexFields:    indexFields,
+		definitiveVars: ds.GetDefinitiveTypes(),
 	}, nil
 }
 

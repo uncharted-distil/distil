@@ -61,6 +61,7 @@ type Media struct {
 	TargetMediaType   string `json:"targetMediaType"`
 	RawFilePath       string `json:"rawFilePath"`
 	ExtractedFilePath string `json:"extractedFilePath"`
+	definitiveTypes   []*model.Variable
 }
 
 // NewMediaDataset creates a new media dataset from raw byte data, assuming json.
@@ -170,12 +171,13 @@ func (m *Media) CreateDataset(rootDataPath string, datasetName string, config *e
 			model.D3MIndexFieldName, model.IntegerType, model.IntegerType, "D3M index",
 			[]string{model.RoleIndex}, model.VarDistilRoleIndex, nil, dr.Variables, false),
 	)
+	// TODO: the image type is currently assumed but the type should be determined based on the type of media.
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(1, "media_file", "media_file", "media_file", "media_file", model.StringType,
+		model.NewVariable(1, "media_file", "media_file", "media_file", "media_file", model.ImageType,
 			model.StringType, "Reference to media file", []string{"attribute"},
 			model.VarDistilRoleData, map[string]interface{}{"resID": "0", "resObject": "item"}, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(2, "label", "label", "label", "label", model.StringType,
+		model.NewVariable(2, "label", "label", "label", "label", model.CategoricalType,
 			model.StringType, "Label of the media", []string{"suggestedTarget"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
 
@@ -186,11 +188,14 @@ func (m *Media) CreateDataset(rootDataPath string, datasetName string, config *e
 
 	meta.DataResources = []*model.DataResource{refDR, dr}
 
+	m.definitiveTypes = dr.Variables
+
 	return &serialization.RawDataset{
-		ID:       datasetID,
-		Name:     datasetName,
-		Data:     csvData,
-		Metadata: meta,
+		ID:              datasetID,
+		Name:            datasetName,
+		Data:            csvData,
+		Metadata:        meta,
+		DefinitiveTypes: true,
 	}, nil
 }
 
@@ -278,4 +283,9 @@ func getLabelFolders(folderPath string) ([]string, error) {
 	}
 
 	return labelFolders, nil
+}
+
+// GetDefinitiveTypes returns an empty list as definitive types.
+func (m *Media) GetDefinitiveTypes() []*model.Variable {
+	return m.definitiveTypes
 }

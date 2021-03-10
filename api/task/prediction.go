@@ -125,6 +125,11 @@ func (p *PredictionTimeseriesDataset) CreateDataset(rootDataPath string, dataset
 	}, nil
 }
 
+// GetDefinitiveTypes returns an empty list as definitive types.
+func (p *PredictionTimeseriesDataset) GetDefinitiveTypes() []*model.Variable {
+	return []*model.Variable{}
+}
+
 func (p *predictionDataset) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*serialization.RawDataset, error) {
 	// need to do a bit of processing on the usual setup
 	ds, err := p.params.DatasetConstructor.CreateDataset(rootDataPath, datasetName, config)
@@ -156,6 +161,11 @@ func (p *predictionDataset) CreateDataset(rootDataPath string, datasetName strin
 		Data:     csvDataAugmented,
 		Metadata: p.params.Meta,
 	}, nil
+}
+
+// GetDefinitiveTypes returns an empty list as definitive types.
+func (p *predictionDataset) GetDefinitiveTypes() []*model.Variable {
+	return []*model.Variable{}
 }
 
 // PredictParams contains all parameters passed to the predict function.

@@ -37,6 +37,7 @@ import (
 // DatasetConstructor is used to build a dataset.
 type DatasetConstructor interface {
 	CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*serialization.RawDataset, error)
+	GetDefinitiveTypes() []*model.Variable
 }
 
 // CreateDataset structures a raw csv file into a valid D3M dataset.
