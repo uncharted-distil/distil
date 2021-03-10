@@ -23,8 +23,7 @@
         :show="showStatusMessage"
         variant="info"
       >
-        Importing <b>{{ importedDataset.name }}</b
-        >...
+        Importing <b>{{ importedDataset.name }}...</b>
       </b-alert>
       <b-alert
         v-else-if="isImportRequestResolved"
@@ -61,7 +60,7 @@
           v-for="item in filteredSuggestedItems"
           :key="item.key"
           href="#"
-          v-bind:class="{ selected: item.selected }"
+          :class="{ selected: item.selected }"
           :disabled="isImporting"
           @click="selectItem(item)"
         >
@@ -76,13 +75,13 @@
               v-for="suggestion in item.suggestionItems"
               :key="suggestion.joinSuggestion.index"
               href="#"
-              v-bind:class="{ selected: suggestion.selected }"
+              :class="{ selected: suggestion.selected }"
               :disabled="isImporting"
               @click="selectSuggestion(suggestion)"
             >
               <div class="suggested-columns">
-                <b>Suggested Join Columns: </b
-                >{{ suggestion.joinSuggestion.joinColumns }}
+                <b>Suggested Join Columns: </b>
+                {{ suggestion.joinSuggestion.joinColumns }}
               </div>
             </b-list-group-item>
           </b-list-group>
@@ -93,12 +92,12 @@
 							<small v-if="item.isAvailable" class="text-success">Ready for join</small>
 						</span> -->
             <span class="float-right">
-              <small class="text-muted"
-                >{{ formatNumber(item.dataset.numRows) }} rows</small
-              >
-              <small class="text-muted">{{
-                formatBytes(item.dataset.numBytes)
-              }}</small>
+              <small class="text-muted">
+                {{ formatNumber(item.dataset.numRows) }} rows
+              </small>
+              <small class="text-muted">
+                {{ formatBytes(item.dataset.numBytes) }}
+              </small>
             </span>
           </div>
         </b-list-group-item>
@@ -110,21 +109,22 @@
         placeholder="Refine Suggestions Via Search"
         @keydown.enter.native="refineSuggestedItems"
       />
-      <b-button variant="" @click="refineSuggestedItems"
-        >Refine Join Suggestions</b-button
-      >
+      <b-button variant="" @click="refineSuggestedItems">
+        Refine Join Suggestions
+      </b-button>
       <b-button
         :disabled="!isJoinReady || isAttemptingJoin"
         variant="primary"
         @click="join"
-        >Join</b-button
       >
+        Join
+      </b-button>
     </div>
     <b-modal
       v-if="selectedDataset"
-      modal-class="join-import-modal"
       id="join-import-modal"
       ref="import-ask-modal"
+      modal-class="join-import-modal"
       title="JoinSuggestionImport"
       @ok="importDataset"
     >
@@ -150,23 +150,20 @@
         @success="onJoinCommitSuccess"
         @failure="onJoinCommitFailure"
         @close="showJoinSuccess = !showJoinSuccess"
-      >
-      </join-datasets-preview>
+      />
     </b-modal>
 
     <error-modal
       :show="showJoinFailure"
       title="Join Failed"
       @close="showJoinFailure = !showJoinFailure"
-    >
-    </error-modal>
+    />
   </div>
 </template>
 
 <script lang="ts">
 import _ from "lodash";
 import Vue from "vue";
-import axios from "axios";
 import {
   Dataset,
   JoinSuggestion,
@@ -174,7 +171,6 @@ import {
   DatasetPendingRequestStatus,
   JoinSuggestionPendingRequest,
   JoinDatasetImportPendingRequest,
-  JOIN_DATASET_MAX_SIZE,
 } from "../store/dataset/index";
 import JoinDatasetsPreview from "../components/JoinDatasetsPreview.vue";
 import ErrorModal from "../components/ErrorModal.vue";
@@ -182,20 +178,11 @@ import {
   actions as datasetActions,
   getters as datasetGetters,
 } from "../store/dataset/module";
-import {
-  actions as appActions,
-  getters as appGetters,
-} from "../store/app/module";
 import { getters as routeGetters } from "../store/route/module";
-import { actions as viewActions } from "../store/view/module";
-import { StatusPanelState, StatusPanelContentType } from "../store/app";
-import { createRouteEntry } from "../util/routes";
 import { formatBytes } from "../util/bytes";
 import { circleSpinnerHTML } from "../util/spinner";
 import { isDatamartProvenance } from "../util/data";
-import { JOIN_DATASETS_ROUTE } from "../store/route/index";
-import { SELECT_TRAINING_ROUTE } from "../store/route";
-import localStorage from "store";
+import { loadJoinedDataset, loadJoinView } from "../util/join";
 
 interface JoinSuggestionDatasetItem {
   dataset: Dataset;
@@ -227,7 +214,7 @@ interface StatusPanelJoinState {
 }
 
 export default Vue.extend({
-  name: "status-panel-join",
+  name: "StatusPanelJoin",
   data(): StatusPanelJoinState {
     return {
       showStatusMessage: true,
@@ -267,18 +254,21 @@ export default Vue.extend({
             request.dataset === this.dataset &&
             request.type === DatasetPendingRequestType.JOIN_SUGGESTION
         );
-      return <JoinSuggestionPendingRequest>request;
+      return request as JoinSuggestionPendingRequest;
     },
     joinSuggestions(): Dataset[] {
-      const joinSuggestions = (
+      const joinSuggestions =
         this.joinSuggestionRequestData &&
-        this.joinSuggestionRequestData.suggestions
-      ).filter((s) => s.numRows <= 100000);
-      return joinSuggestions || [];
+        this.joinSuggestionRequestData.suggestions;
+
+      if (joinSuggestions) {
+        return joinSuggestions.filter((s) => s.numRows <= 100000);
+      } else {
+        return joinSuggestions || [];
+      }
     },
     joinedColumn(): string {
       const a = this.datasetAColumn ? this.datasetAColumn : "";
-      const b = this.datasetBColumn ? this.datasetBColumn : "";
       // Note: It looks like joined column name is set to same as left column (a) name
       return a;
     },
@@ -311,7 +301,7 @@ export default Vue.extend({
         )
       );
       return isInSuggestionList
-        ? <JoinDatasetImportPendingRequest>request
+        ? (request as JoinDatasetImportPendingRequest)
         : undefined;
     },
     isImporting(): boolean {
@@ -347,7 +337,7 @@ export default Vue.extend({
     },
     selectedSuggestion(): JoinSuggestionItem {
       const dataset = this.suggestionDatasets.find(
-        (item) => !!item.suggestionItems.find((js) => js.selected)
+        (item) => !!item.suggestionItems?.find((js) => js.selected)
       );
       if (dataset) {
         return dataset.suggestionItems.find((js) => js.selected);
@@ -358,25 +348,19 @@ export default Vue.extend({
       return this.selectedItem && this.selectedItem.dataset;
     },
     isJoinReady(): boolean {
-      return (
-        this.selectedSuggestion &&
-        this.selectedItem &&
-        this.selectedItem.isAvailable !== undefined &&
-        !this.isImporting
-      );
+      return !!this.selectedItem;
     },
     spinnerHTML(): string {
       return circleSpinnerHTML();
     },
   },
+  created() {
+    this.initSuggestionItems();
+  },
+  beforeDestroy() {
+    this.reviewImportingRequest();
+  },
   methods: {
-    addRecentDataset(dataset: string) {
-      const datasets = localStorage.get("recent-datasets") || [];
-      if (datasets.indexOf(dataset) === -1) {
-        datasets.unshift(dataset);
-        localStorage.set("recent-datasets", datasets);
-      }
-    },
     initSuggestionItems() {
       const items = this.joinSuggestions || [];
       // resolve join availablity of the importing dataset
@@ -390,7 +374,7 @@ export default Vue.extend({
           ? this.isImportRequestResolved
           : !isDatamartProvenance(suggestion.provenance);
         const selected = isImporting && isImportingDataset;
-        const joinSuggestions = suggestion.joinSuggestion.map((js) => {
+        const joinSuggestions = suggestion.joinSuggestion?.map((js) => {
           return {
             joinSuggestion: js,
             selected: false,
@@ -444,11 +428,15 @@ export default Vue.extend({
       const currentDataset = _.find(this.datasets, (d) => {
         return d.id === this.dataset;
       });
-      this.previewJoin(
-        currentDataset,
-        selected.dataset,
-        this.selectedSuggestion.joinSuggestion.index
-      );
+      if (this.selectedSuggestion?.joinSuggestion?.index) {
+        this.previewJoin(
+          currentDataset,
+          selected.dataset,
+          this.selectedSuggestion.joinSuggestion.index
+        );
+      } else {
+        loadJoinView(this.$router, this.dataset, selected.key);
+      }
     },
     previewJoin(datasetA, datasetB, joinSuggestionIndex) {
       this.isAttemptingJoin = true;
@@ -539,20 +527,8 @@ export default Vue.extend({
       this.showJoinSuccess = false;
     },
     onJoinCommitSuccess(datasetID: string) {
-      const entry = createRouteEntry(SELECT_TRAINING_ROUTE, {
-        dataset: datasetID,
-        target: this.target,
-        task: routeGetters.getRouteTask(this.$store),
-      });
-      this.$router.push(entry).catch((err) => console.warn(err));
-      this.addRecentDataset(datasetID);
+      loadJoinedDataset(this.$router, datasetID, this.target);
     },
-  },
-  created() {
-    this.initSuggestionItems();
-  },
-  beforeDestroy() {
-    this.reviewImportingRequest();
   },
 });
 </script>

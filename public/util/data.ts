@@ -87,6 +87,8 @@ import {
   interpolatePlasma,
 } from "d3-scale-chromatic";
 import router from "../router/router";
+import localStorage from "store";
+
 // Postfixes for special variable names
 export const PREDICTED_SUFFIX = "_predicted";
 export const ERROR_SUFFIX = "_error";
@@ -145,6 +147,15 @@ export const COLOR_SCALES: Map<
   [ColorScaleNames.plasma, interpolatePlasma],
   [ColorScaleNames.turbo, interpolateTurbo],
 ]);
+
+// update datasets in local storage
+export function addRecentDataset(dataset: string) {
+  const datasets = localStorage.get("recent-datasets") || [];
+  if (datasets.indexOf(dataset) === -1) {
+    datasets.unshift(dataset);
+    localStorage.set("recent-datasets", datasets);
+  }
+}
 
 // include the highlight
 export function getAllDataItems(includedActive: boolean): TableRow[] {
