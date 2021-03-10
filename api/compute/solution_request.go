@@ -695,6 +695,13 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		}
 	}
 
+	// prefilter dataset if metadata fields are used in filters
+	filteredDatasetPath, updatedFilters, err := filterData(client, datasetInput, s.Filters, dataStorage)
+	if err != nil {
+		return err
+	}
+	s.Filters = updatedFilters
+
 	// add dataset name to path
 	var featurizedVariables []*model.Variable
 	var datasetInputDir string
@@ -705,7 +712,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		targetIndex = targetVariable.Index
 	} else {
 		s.useParquet = true
-		datasetInputDir = datasetInput.LearningDataset
+		datasetInputDir = filteredDatasetPath
 		groupingVariableIndex = -1
 
 		// need to lookup the target variable and the variables in the featurized dataset
@@ -753,13 +760,6 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 			return errors.New("Timestamp value supplied but no dateTime type existing on dataset")
 		}
 	}
-
-	// prefilter dataset if metadata fields are used in filters
-	filteredDatasetPath, updatedFilters, err := filterData(client, datasetInput, s.Filters, dataStorage)
-	if err != nil {
-		return err
-	}
-	s.Filters = updatedFilters
 
 	// when dealing with categorical data we want to stratify
 	stratify := model.IsCategorical(s.TargetFeature.Type)
