@@ -69,6 +69,7 @@ type Satellite struct {
 	ImageType         string `json:"imageType"`
 	RawFilePath       string `json:"rawFilePath"`
 	ExtractedFilePath string `json:"extractedFilePath"`
+	definitiveTypes   []*model.Variable
 }
 
 // BoundingBox is a box delineated by four corners.
@@ -296,6 +297,8 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 
 	meta.DataResources = []*model.DataResource{refDR, dr}
 
+	s.definitiveTypes = dr.Variables
+
 	return &serialization.RawDataset{
 		ID:              datasetID,
 		Name:            datasetName,
@@ -335,7 +338,7 @@ func (s *Satellite) readProperties(imageFolders []string) *RemoteSensingDatasetP
 
 // GetDefinitiveTypes returns an empty list as definitive types.
 func (s *Satellite) GetDefinitiveTypes() []*model.Variable {
-	return []*model.Variable{}
+	return s.definitiveTypes
 }
 
 // removeValues removes values not needed based on supplied headernames
