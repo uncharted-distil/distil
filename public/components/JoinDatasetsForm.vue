@@ -33,34 +33,32 @@
         @success="onJoinCommitSuccess"
         @failure="onJoinCommitFailure"
         @close="showJoinSuccess = !showJoinSuccess"
-      >
-      </join-datasets-preview>
+      />
     </b-modal>
 
     <error-modal
       :show="showJoinFailure"
       title="Join Failed"
       @close="showJoinFailure = !showJoinFailure"
-    >
-    </error-modal>
+    />
 
     <div
       v-if="columnTypesDoNotMatch"
       class="row justify-content-center mt-3 mb-3 warning-text"
     >
-      <i class="fa fa-exclamation-triangle warning-icon mr-2"></i>
-      <span v-html="joinWarning"></span>
+      <i class="fa fa-exclamation-triangle warning-icon mr-2" />
+      <span v-html="joinWarning" />
     </div>
 
     <div class="row justify-content-center">
       <b-button
         class="join-button"
+        :disabled="disableJoin"
         :variant="joinVariant"
         @click="previewJoin"
-        :disabled="disableJoin"
       >
         <div class="row justify-content-center">
-          <i class="fa fa-check-circle fa-2x mr-2"></i>
+          <i class="fa fa-check-circle fa-2x mr-2" />
           <b>Join Datasets</b>
         </div>
       </b-button>
@@ -73,7 +71,7 @@
         variant="outline-secondary"
         striped
         :animated="true"
-      ></b-progress>
+      />
     </div>
   </div>
 </template>
@@ -81,28 +79,21 @@
 <script lang="ts">
 import _ from "lodash";
 import Vue from "vue";
-import localStorage from "store";
 import JoinDatasetsPreview from "../components/JoinDatasetsPreview.vue";
 import ErrorModal from "../components/ErrorModal.vue";
-import { createRouteEntry } from "../util/routes";
-import { Dictionary } from "../util/dict";
 import { getters as routeGetters } from "../store/route/module";
-import {
-  Dataset,
-  TableData,
-  TableColumn,
-  TableRow,
-} from "../store/dataset/index";
+import { Dataset, TableColumn, TableRow } from "../store/dataset/index";
 import {
   getters as datasetGetters,
   actions as datasetActions,
 } from "../store/dataset/module";
+import { Dictionary } from "../util/dict";
 import { getTableDataItems, getTableDataFields } from "../util/data";
-import { SELECT_TRAINING_ROUTE } from "../store/route";
 import { isJoinable } from "../util/types";
+import { loadJoinedDataset } from "../util/join";
 
 export default Vue.extend({
-  name: "join-datasets-form",
+  name: "JoinDatasetsForm",
 
   components: {
     JoinDatasetsPreview,
@@ -137,6 +128,9 @@ export default Vue.extend({
     },
     target(): string {
       return routeGetters.getRouteTargetVariable(this.$store);
+    },
+    returnPath(): string {
+      return routeGetters.getPriorPath(this.$store);
     },
     columnsSelected(): boolean {
       return !!this.datasetAColumn && !!this.datasetBColumn;
@@ -188,13 +182,6 @@ export default Vue.extend({
   },
 
   methods: {
-    addRecentDataset(dataset: string) {
-      const datasets = localStorage.get("recent-datasets") || [];
-      if (datasets.indexOf(dataset) === -1) {
-        datasets.unshift(dataset);
-        localStorage.set("recent-datasets", datasets);
-      }
-    },
     previewJoin() {
       // flag as pending
       this.pending = true;
@@ -231,16 +218,11 @@ export default Vue.extend({
           this.showJoinFailure = true;
           this.previewTableData = null;
           this.joinedPath = "";
+          console.warn(err);
         });
     },
     onJoinCommitSuccess(datasetID: string) {
-      const entry = createRouteEntry(SELECT_TRAINING_ROUTE, {
-        dataset: datasetID,
-        target: this.target,
-        task: routeGetters.getRouteTask(this.$store),
-      });
-      this.$router.push(entry).catch((err) => console.warn(err));
-      this.addRecentDataset(datasetID);
+      loadJoinedDataset(this.$router, datasetID, this.target);
     },
     onJoinCommitFailure() {
       this.showJoinFailure = true;

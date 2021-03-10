@@ -340,7 +340,7 @@ func SampleDataset(schemaFile string, outputFolder string, maxRows int, stratify
 
 	// store the sampled data
 	meta.GetMainDataResource().ResPath = sampledDataFilename
-	outputSampled := &api.RawDataset{
+	outputSampled := &serialization.RawDataset{
 		ID:       meta.ID,
 		Name:     meta.Name,
 		Metadata: meta,

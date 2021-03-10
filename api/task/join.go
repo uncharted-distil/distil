@@ -136,7 +136,7 @@ func createDatasetFromCSV(config *env.Config, csvFile string, datasetName string
 
 	outputPath := env.ResolvePath(ingestMetadata.Augmented, datasetName)
 
-	rawDataset := &apiModel.RawDataset{
+	rawDataset := &serialization.RawDataset{
 		Name:     metadata.Name,
 		ID:       metadata.ID,
 		Metadata: metadata,

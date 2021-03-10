@@ -123,9 +123,8 @@ export default Vue.extend({
         : this.selectedColumn;
     },
     baseColumnSuggestions(): string[] {
-      const columns = routeGetters
-        .getBaseColumnSuggestions(this.$store)
-        .split(",");
+      const columnRoute = routeGetters.getBaseColumnSuggestions(this.$store);
+      const columns = columnRoute ? columnRoute.split(",") : [];
       return columns;
     },
     selectedSuggestedBaseColumn(): string {
@@ -136,9 +135,8 @@ export default Vue.extend({
       return index >= 0 ? this.selectedBaseColumn.key : undefined;
     },
     joinColumnSuggestions(): string[] {
-      const columns = routeGetters
-        .getJoinColumnSuggestions(this.$store)
-        .split(",");
+      const columnRoute = routeGetters.getJoinColumnSuggestions(this.$store);
+      const columns = columnRoute ? columnRoute.split(",") : [];
       return columns;
     },
     selectedSuggestedJoinColumn(): string {

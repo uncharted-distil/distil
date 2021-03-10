@@ -451,6 +451,9 @@ export const actions = {
     await fetchVariableSummaries(context, { dataset, variables });
     fetchClusters(context, { dataset });
     fetchOutliers(context, { dataset });
+    fetchJoinSuggestions(context, {
+      dataset: dataset,
+    });
   },
 
   updateDataExplorerData(context: ViewContext) {

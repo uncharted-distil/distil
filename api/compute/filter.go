@@ -138,6 +138,12 @@ func getPreFiltering(ds *api.Dataset, filterParams *api.FilterParams) (*api.Filt
 				params = preFilters
 			}
 		}
+
+		// Pre-filters rows select by D3MIndex (i.e. row selection.)
+		if variable.Key == model.D3MIndexFieldName {
+			params = preFilters
+		}
+
 		params.Filters = append(params.Filters, f)
 	}
 
@@ -212,7 +218,7 @@ func preparePrefilteringDataset(outputFolder string, sourceDataset *api.Dataset,
 	}
 
 	// write it out as a dataset
-	dsRaw := &api.RawDataset{
+	dsRaw := &serialization.RawDataset{
 		ID:       sourceDataset.ID,
 		Name:     sourceDataset.Name,
 		Data:     data,

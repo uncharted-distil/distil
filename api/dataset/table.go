@@ -27,7 +27,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 
 	"github.com/uncharted-distil/distil/api/env"
-	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/serialization"
 )
 
 // Table represents a basic table dataset.
@@ -60,7 +60,7 @@ func NewTableDataset(dataset string, rawData []byte, flagD3MIndex bool) (*Table,
 }
 
 // CreateDataset structures a raw csv file into a valid D3M dataset.
-func (t *Table) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*api.RawDataset, error) {
+func (t *Table) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*serialization.RawDataset, error) {
 	if datasetName == "" {
 		datasetName = t.Dataset
 	}
@@ -87,7 +87,7 @@ func (t *Table) CreateDataset(rootDataPath string, datasetName string, config *e
 		}
 	}
 
-	return &api.RawDataset{
+	return &serialization.RawDataset{
 		ID:       datasetID,
 		Name:     datasetName,
 		Data:     t.CSVData,

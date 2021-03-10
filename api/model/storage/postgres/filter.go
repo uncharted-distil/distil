@@ -104,7 +104,7 @@ func (s *Storage) parseFilteredData(dataset string, filterVariables []*model.Var
 			// align
 			weightedValues := make([]*api.FilteredDataValue, len(fieldIndexMap))
 			for colIdx, fieldIdx := range fieldIndexMap {
-				parsedValue, err := parsePostgresType(columnValues[fieldIdx], fields[colIdx])
+				parsedValue, err := parsePostgresType(columnValues[fieldIdx], fields[fieldIdx])
 				if err != nil {
 					return nil, err
 				}

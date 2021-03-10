@@ -83,6 +83,10 @@ export const getters = {
     return true;
   },
 
+  getPriorPath(state: Route): string {
+    return state.query.priorRoute as string;
+  },
+
   getRouteJoinDatasets(state: Route): string[] {
     return state.query.joinDatasets
       ? (state.query.joinDatasets as string).split(",")

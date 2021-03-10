@@ -75,6 +75,7 @@ export interface RouteArgs {
   // orderBy contains variable names that will order the dataset
   orderBy?: string;
   outlier?: string;
+  priorRoute?: string;
 }
 
 function validateQueryArgs(args: RouteArgs): RouteArgs {

@@ -133,6 +133,7 @@
 import _ from "lodash";
 import Vue from "vue";
 import ErrorModal from "../components/ErrorModal.vue";
+import { addRecentDataset } from "../util/data";
 import { createRouteEntry } from "../util/routes";
 import { formatBytes } from "../util/bytes";
 import {
@@ -144,7 +145,6 @@ import { getters as routeGetters } from "../store/route/module";
 import { Dataset, Variable } from "../store/dataset/index";
 import { actions as datasetActions } from "../store/dataset/module";
 import { DATA_EXPLORER_ROUTE, SELECT_TARGET_ROUTE } from "../store/route/index";
-import localStorage from "store";
 import {
   actions as appActions,
   getters as appGetters,
@@ -226,7 +226,7 @@ export default Vue.extend({
         dataset: this.dataset.id,
       });
       this.$router.push(entry).catch((err) => console.warn(err));
-      this.addRecentDataset(this.dataset.id);
+      addRecentDataset(this.dataset.id);
       appActions.logUserEvent(this.$store, {
         feature: Feature.SELECT_DATASET,
         activity: Activity.DATA_PREPARATION,
@@ -253,13 +253,6 @@ export default Vue.extend({
       );
     },
 
-    addRecentDataset(dataset: string) {
-      const datasets = localStorage.get("recent-datasets") || [];
-      if (datasets.indexOf(dataset) === -1) {
-        datasets.unshift(dataset);
-        localStorage.set("recent-datasets", datasets);
-      }
-    },
     importDataset() {
       this.importPending = true;
       datasetActions
