@@ -333,6 +333,11 @@ func (s *Satellite) readProperties(imageFolders []string) *RemoteSensingDatasetP
 	return props
 }
 
+// GetDefinitiveTypes returns an empty list as definitive types.
+func (s *Satellite) GetDefinitiveTypes() []*model.Variable {
+	return []*model.Variable{}
+}
+
 // removeValues removes values not needed based on supplied headernames
 func removeMissingValues(indices []int, values []string) []string {
 	result := []string{}

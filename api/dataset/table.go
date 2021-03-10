@@ -94,3 +94,8 @@ func (t *Table) CreateDataset(rootDataPath string, datasetName string, config *e
 		Metadata: meta,
 	}, nil
 }
+
+// GetDefinitiveTypes returns an empty list as definitive types.
+func (t *Table) GetDefinitiveTypes() []*model.Variable {
+	return []*model.Variable{}
+}

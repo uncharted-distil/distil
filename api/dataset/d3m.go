@@ -123,3 +123,8 @@ func (d *D3M) variableIsTyped(variable *model.Variable) bool {
 
 	return variable.RefersTo != nil
 }
+
+// GetDefinitiveTypes returns an empty list as definitive types.
+func (d *D3M) GetDefinitiveTypes() []*model.Variable {
+	return []*model.Variable{}
+}

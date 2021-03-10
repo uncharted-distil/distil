@@ -158,6 +158,11 @@ func (p *predictionDataset) CreateDataset(rootDataPath string, datasetName strin
 	}, nil
 }
 
+// GetDefinitiveTypes returns an empty list as definitive types.
+func (p *predictionDataset) GetDefinitiveTypes() []*model.Variable {
+	return []*model.Variable{}
+}
+
 // PredictParams contains all parameters passed to the predict function.
 type PredictParams struct {
 	Meta               *model.Metadata

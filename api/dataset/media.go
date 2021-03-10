@@ -171,7 +171,7 @@ func (m *Media) CreateDataset(rootDataPath string, datasetName string, config *e
 			[]string{model.RoleIndex}, model.VarDistilRoleIndex, nil, dr.Variables, false),
 	)
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(1, "media_file", "media_file", "media_file", "media_file", model.StringType,
+		model.NewVariable(1, "media_file", "media_file", "media_file", "media_file", model.ImageType,
 			model.StringType, "Reference to media file", []string{"attribute"},
 			model.VarDistilRoleData, map[string]interface{}{"resID": "0", "resObject": "item"}, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
@@ -187,10 +187,11 @@ func (m *Media) CreateDataset(rootDataPath string, datasetName string, config *e
 	meta.DataResources = []*model.DataResource{refDR, dr}
 
 	return &serialization.RawDataset{
-		ID:       datasetID,
-		Name:     datasetName,
-		Data:     csvData,
-		Metadata: meta,
+		ID:              datasetID,
+		Name:            datasetName,
+		Data:            csvData,
+		Metadata:        meta,
+		DefinitiveTypes: true,
 	}, nil
 }
 
@@ -278,4 +279,9 @@ func getLabelFolders(folderPath string) ([]string, error) {
 	}
 
 	return labelFolders, nil
+}
+
+// GetDefinitiveTypes returns an empty list as definitive types.
+func (m *Media) GetDefinitiveTypes() []*model.Variable {
+	return []*model.Variable{}
 }

@@ -89,6 +89,11 @@ func (e explainDataset) CreateDataset(rootDataPath string, datasetName string, c
 	}, nil
 }
 
+// GetDefinitiveTypes returns an empty list as definitive types.
+func (e explainDataset) GetDefinitiveTypes() []*model.Variable {
+	return []*model.Variable{}
+}
+
 // ClusterExplainOutput clusters the explained output from a model.
 func ClusterExplainOutput(variable string, resultURI string, explainURI string, config *env.Config) (bool, []*ClusterPoint, error) {
 	// create the SHAP values dataset
