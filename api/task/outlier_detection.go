@@ -39,20 +39,24 @@ func OutlierDetection(dataset *api.Dataset, variable string) ([]*OutlierPoint, e
 	datasetInputDir := env.ResolvePath(dataset.Source, dataset.Folder)
 	features := dataset.Variables
 
-	// find the particular clustering variable - relevant for images and remote sensing tile sets, not
-	// needed for full set clustering
-	var imageVar *model.Variable
+	// find the particular outlier variable - relevant for images and remote sensing tile sets
+	// if any feature is an image, run the image outlier pipeline regardless of target
+	var targetVar *model.Variable
 	for _, v := range features {
-		if v.Key == variable {
-			imageVar = v
+		if model.IsImage(v.Type) {
+			// IMAGE IS PRIORITIZED AS TARGET!
+			targetVar = v
+			break
+		} else if v.Key == variable {
+			targetVar = v
 		}
 	}
 
 	var step *description.FullySpecifiedPipeline
 	var err error
-	group := getGroup(imageVar.Key, features)
-	if model.IsImage(imageVar.Type) {
-		step, err = description.CreateImageOutlierDetectionPipeline("image_outlier_detection", "normal image outlier detection", []*model.Variable{imageVar})
+	group := getGroup(targetVar.Key, features)
+	if model.IsImage(targetVar.Type) {
+		step, err = description.CreateImageOutlierDetectionPipeline("image_outlier_detection", "normal image outlier detection", []*model.Variable{targetVar})
 	} else if group != nil && model.IsMultiBandImage(group.GetType()) {
 		var envConfig env.Config
 		envConfig, err = env.LoadConfig()
@@ -85,7 +89,7 @@ func OutlierDetection(dataset *api.Dataset, variable string) ([]*OutlierPoint, e
 		}
 		datasetDescription := &description.UserDatasetDescription{
 			AllFeatures:      features,
-			TargetFeature:    imageVar,
+			TargetFeature:    targetVar,
 			SelectedFeatures: selectedFeatures,
 		}
 		step, err = description.CreateTabularOutlierDetectionPipeline("tabular_outlier_detection",

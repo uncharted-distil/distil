@@ -177,7 +177,7 @@ func (m *Media) CreateDataset(rootDataPath string, datasetName string, config *e
 			model.StringType, "Reference to media file", []string{"attribute"},
 			model.VarDistilRoleData, map[string]interface{}{"resID": "0", "resObject": "item"}, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(2, "label", "label", "label", "label", model.StringType,
+		model.NewVariable(2, "label", "label", "label", "label", model.CategoricalType,
 			model.StringType, "Label of the media", []string{"suggestedTarget"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
 
