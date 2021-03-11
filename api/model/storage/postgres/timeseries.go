@@ -598,10 +598,12 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 	joins := make([]*joinDefinition, 0)
 	wheres := []string{}
 	params := []interface{}{}
-	if filtersSplit.residualFilter != nil {
-		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filtersSplit.residualFilter)
-		if err != nil {
-			return nil, err
+	if len(filtersSplit.residualFilters) > 0 {
+		for _, residualFilter := range filtersSplit.residualFilters {
+			wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, residualFilter)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		joins = append(joins, &joinDefinition{
