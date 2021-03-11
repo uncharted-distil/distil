@@ -614,32 +614,26 @@ func (s *Storage) buildResultQueryFilters(dataset string, storageName string, re
 
 	// assemble split filters
 	var err error
-	if len(filters.predictedFilters) < 0 {
-		for _, predictedFilter := range filters.predictedFilters {
-			wheres, params = s.buildPredictedResultWhere(dataset, wheres, params, alias, resultURI, predictedFilter)
+	for _, predictedFilter := range filters.predictedFilters {
+		wheres, params = s.buildPredictedResultWhere(dataset, wheres, params, alias, resultURI, predictedFilter)
+	}
+	for _, correctnessFilter := range filters.correctnessFilters {
+		wheres, params, err = s.buildCorrectnessResultWhere(wheres, params, storageName, resultURI, correctnessFilter)
+		if err != nil {
+			return nil, nil, err
 		}
-	} else if len(filters.correctnessFilters) < 0 {
-		for _, correctnessFilter := range filters.correctnessFilters {
-			wheres, params, err = s.buildCorrectnessResultWhere(wheres, params, storageName, resultURI, correctnessFilter)
-			if err != nil {
-				return nil, nil, err
-			}
+	}
+	for _, residualFilter := range filters.residualFilters {
+		wheres, params, err = s.buildErrorResultWhere(wheres, params, residualFilter)
+		if err != nil {
+			return nil, nil, err
 		}
-	} else if len(filters.residualFilters) < 0 {
-		for _, residualFilter := range filters.residualFilters {
-			wheres, params, err = s.buildErrorResultWhere(wheres, params, residualFilter)
-			if err != nil {
-				return nil, nil, err
-			}
-		}
-	} else if len(filters.confidenceFilters) > 0 {
-		for _, confidenceFilter := range filters.confidenceFilters {
-			wheres, params = s.buildConfidenceResultWhere(wheres, params, confidenceFilter, "result")
-		}
-	} else if len(filters.rankFilters) > 0 {
-		for _, rankFilter := range filters.rankFilters {
-			wheres, params = s.buildRankResultWhere(wheres, params, rankFilter, "result")
-		}
+	}
+	for _, confidenceFilter := range filters.confidenceFilters {
+		wheres, params = s.buildConfidenceResultWhere(wheres, params, confidenceFilter, "result")
+	}
+	for _, rankFilter := range filters.rankFilters {
+		wheres, params = s.buildRankResultWhere(wheres, params, rankFilter, "result")
 	}
 	return wheres, params, nil
 }
