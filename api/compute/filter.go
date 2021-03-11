@@ -191,8 +191,8 @@ func preparePrefilteringDataset(outputFolder string, sourceDataset *api.Dataset,
 		return nil, err
 	}
 	metadataSourceDR := metadataSource.GetMainDataResource()
-	metaVarMap := MapVariables(metadataSourceDR.Variables, func(variable *model.Variable) string { return variable.Key })
-	sourceVarMap := MapVariables(sourceDataset.Variables, func(variable *model.Variable) string { return variable.Key })
+	metaVarMap := api.MapVariables(metadataSourceDR.Variables, func(variable *model.Variable) string { return variable.Key })
+	sourceVarMap := api.MapVariables(sourceDataset.Variables, func(variable *model.Variable) string { return variable.Key })
 
 	// update the metadata to match the data pulled from the data storage
 	// (mostly matching column index and dropping columns not pulled)
@@ -250,10 +250,10 @@ func UpdatePrefeaturizedDataset(outputFolder string, prefeaturizedPath string, s
 	metaDiskMainDR := dsDisk.Metadata.GetMainDataResource()
 
 	// determine if there are new columns that were not part of the original dataset
-	metaDiskVarMap := MapVariables(metaDiskMainDR.Variables, func(variable *model.Variable) string { return variable.Key })
+	metaDiskVarMap := api.MapVariables(metaDiskMainDR.Variables, func(variable *model.Variable) string { return variable.Key })
 
 	// get the index of the new fields in the extracted data
-	storedVarMap := MapVariables(sourceDataset.Variables, func(variable *model.Variable) string { return variable.Key })
+	storedVarMap := api.MapVariables(sourceDataset.Variables, func(variable *model.Variable) string { return variable.Key })
 	storedDataD3MIndex := -1
 	newVars := []*model.Variable{}
 	for i, v := range storedData[0] {
@@ -311,8 +311,8 @@ func UpdatePrefeaturizedDataset(outputFolder string, prefeaturizedPath string, s
 	}
 
 	// capture the final set of variables to use
-	storedVarMap = MapVariables(sourceDataset.Variables, func(variable *model.Variable) string { return variable.HeaderName })
-	metaDiskVarMap = MapVariables(metaDiskMainDR.Variables, func(variable *model.Variable) string { return variable.HeaderName })
+	storedVarMap = api.MapVariables(sourceDataset.Variables, func(variable *model.Variable) string { return variable.HeaderName })
+	metaDiskVarMap = api.MapVariables(metaDiskMainDR.Variables, func(variable *model.Variable) string { return variable.HeaderName })
 	outputVariables := make([]*model.Variable, len(dsDisk.Data[0]))
 	for i, v := range dsDisk.Data[0] {
 		var variable *model.Variable
@@ -326,16 +326,6 @@ func UpdatePrefeaturizedDataset(outputFolder string, prefeaturizedPath string, s
 	}
 
 	return outputVariables, nil
-}
-
-// MapVariables creates a variable map using the mapper function to create the key.
-func MapVariables(variables []*model.Variable, mapper func(variable *model.Variable) string) map[string]*model.Variable {
-	mapped := map[string]*model.Variable{}
-	for _, d := range variables {
-		mapped[mapper(d)] = d
-	}
-
-	return mapped
 }
 
 // HarmonizeDataMetadata updates a dataset on disk to have the schema info

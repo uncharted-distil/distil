@@ -96,6 +96,16 @@ type DiskDataset struct {
 	schemaPath        string
 }
 
+// MapVariables creates a variable map using the mapper function to create the key.
+func MapVariables(variables []*model.Variable, mapper func(variable *model.Variable) string) map[string]*model.Variable {
+	mapped := map[string]*model.Variable{}
+	for _, d := range variables {
+		mapped[mapper(d)] = d
+	}
+
+	return mapped
+}
+
 // LoadDiskDataset loads a dataset from disk.
 func LoadDiskDataset(ds *Dataset) (*DiskDataset, error) {
 	folder := env.ResolvePath(ds.Source, ds.Folder)
@@ -126,6 +136,60 @@ func loadDiskDatasetFromFolder(folder string) (*DiskDataset, error) {
 		Dataset:    dsDisk,
 		schemaPath: schemaPath,
 	}, nil
+}
+
+// UpdateDiskDataset updates a disk dataset to have the new and updated data.
+func UpdateDiskDataset(ds *Dataset, data [][]string) error {
+	// read the dataset from disk
+	dsDisk, err := LoadDiskDataset(ds)
+	if err != nil {
+		return err
+	}
+	varMap := MapVariables(ds.Variables, func(variable *model.Variable) string { return variable.HeaderName })
+
+	// use the header row to determine the variables to update
+	d3mIndexIndex := -1
+	updates := map[string]map[string]string{}
+	headerMap := map[string]int{}
+	for i, c := range data[0] {
+		if c == model.D3MIndexFieldName {
+			d3mIndexIndex = i
+		} else {
+			sourceVar := varMap[c]
+			if sourceVar.Immutable {
+				continue
+			}
+			headerMap[sourceVar.HeaderName] = i
+			updates[sourceVar.HeaderName] = map[string]string{}
+
+			// add missing fields
+			if !dsDisk.FieldExists(sourceVar) {
+				err = dsDisk.AddField(sourceVar)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	// create the update maps (d3m index -> new value)
+	for _, row := range data[1:] {
+		for headerName, colIndex := range headerMap {
+			updates[headerName][row[d3mIndexIndex]] = row[colIndex]
+		}
+	}
+
+	err = dsDisk.Update(updates, true)
+	if err != nil {
+		return err
+	}
+
+	err = dsDisk.SaveDataset()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // SaveDataset saves a dataset to disk.
@@ -214,8 +278,8 @@ func (d *DiskDataset) GetLearningFolder() string {
 	return path.Dir(d.schemaPath)
 }
 
-// UpdateDataset updates a dataset, optionally filtering rows not being updated.
-func (d *DiskDataset) UpdateDataset(updates map[string]map[string]string, filterNotFound bool) error {
+// Update updates a dataset, optionally filtering rows not being updated.
+func (d *DiskDataset) Update(updates map[string]map[string]string, filterNotFound bool) error {
 	if filterNotFound {
 		// do an initial filter pass to keep only the rows found in the updates
 		filterMap := map[string]bool{}
@@ -241,7 +305,7 @@ func (d *DiskDataset) UpdateDataset(updates map[string]map[string]string, filter
 	d.Dataset.UpdateDataset(updatesMapped)
 
 	if d.FeaturizedDataset != nil {
-		err := d.FeaturizedDataset.UpdateDataset(updates, filterNotFound)
+		err := d.FeaturizedDataset.Update(updates, filterNotFound)
 		if err != nil {
 			return err
 		}
