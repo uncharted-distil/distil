@@ -15,13 +15,57 @@
  *    limitations under the License.
  */
 
-import { VariableSummary } from "../store/dataset";
+import { VariableSummary, Variable } from "../store/dataset";
 import store from "../store/store";
 import { getters as resultGetters } from "../store/results/module";
 import { getters as predictionGetters } from "../store/predictions/module";
+import { CATEGORICAL_TYPE } from "./types";
 
 export function getIDFromKey(key: string): string {
   return key ? key.split(":")[0] : "";
+}
+export function getTypeFromKey(key: string): string {
+  return key ? key.split(":")[1] : "";
+}
+export function resultSummariesToVariables(solutionID: string): Variable[] {
+  const summaries = [
+    getSolutionResultSummary(solutionID),
+    getResidualSummary(solutionID),
+    getCorrectnessSummary(solutionID),
+    getPredictionResultSummary(solutionID),
+    getConfidenceSummary(solutionID),
+    getRankingSummary(solutionID),
+  ];
+  const variables = [];
+  summaries.forEach((sum) => {
+    if (sum) {
+      variables.push(summaryToVariable(sum));
+    }
+  });
+  return variables;
+}
+
+export function summaryToVariable(summary: VariableSummary): Variable {
+  return {
+    datasetName: summary.dataset,
+    colDisplayName: summary.label,
+    key: summary.key,
+    colName: summary.label,
+    colType: summary.type,
+    importance: null,
+    colOriginalType: CATEGORICAL_TYPE,
+    colDescription: summary.description,
+    suggestedTypes: [],
+    isColTypeChanged: false,
+    grouping: null,
+    isColTypeReviewed: false,
+    min: summary.baseline?.extrema.min,
+    max: summary.baseline?.extrema.max,
+    values: summary.baseline?.buckets.map((b) => b.key),
+    distilRole: "",
+    role: [],
+    novelty: null,
+  };
 }
 
 export function getSolutionResultSummary(solutionID: string): VariableSummary {
