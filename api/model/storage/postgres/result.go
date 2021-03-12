@@ -789,14 +789,14 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, dataTableAlias, genericFilterParams, false)
 
 	// Add the predicted filter into the where clause if it was included in the filter set
-	if filters.predictedFilter != nil {
-		if filters.predictedFilter.Mode == model.IncludeFilter {
-			wheres, params, err = addIncludePredictedFilterToWhere(wheres, params, filters.predictedFilter, variable)
+	for _, predictedFilter := range filters.predictedFilters {
+		if predictedFilter.Mode == model.IncludeFilter {
+			wheres, params, err = addIncludePredictedFilterToWhere(wheres, params, predictedFilter, variable)
 			if err != nil {
 				return nil, errors.Wrap(err, "Could not add result to where clause")
 			}
 		} else {
-			wheres, params, err = addExcludePredictedFilterToWhere(wheres, params, filters.predictedFilter, variable)
+			wheres, params, err = addExcludePredictedFilterToWhere(wheres, params, predictedFilter, variable)
 			if err != nil {
 				return nil, errors.Wrap(err, "Could not add result to where clause")
 			}
@@ -804,14 +804,14 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	}
 
 	// Add the correctness filter into the where clause if it was included in the filter set
-	if filters.correctnessFilter != nil {
-		if filters.correctnessFilter.Mode == model.IncludeFilter {
-			wheres, params, err = addIncludeCorrectnessFilterToWhere(wheres, params, filters.correctnessFilter, variable)
+	for _, correctnessFilter := range filters.correctnessFilters {
+		if correctnessFilter.Mode == model.IncludeFilter {
+			wheres, params, err = addIncludeCorrectnessFilterToWhere(wheres, params, correctnessFilter, variable)
 			if err != nil {
 				return nil, errors.Wrap(err, "Could not add result to where clause")
 			}
 		} else {
-			wheres, params, err = addExcludeCorrectnessFilterToWhere(wheres, params, filters.correctnessFilter, variable)
+			wheres, params, err = addExcludeCorrectnessFilterToWhere(wheres, params, correctnessFilter, variable)
 			if err != nil {
 				return nil, errors.Wrap(err, "Could not add result to where clause")
 			}
@@ -819,14 +819,14 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	}
 
 	// Add the error filter into the where clause if it was included in the filter set
-	if filters.residualFilter != nil {
-		if filters.residualFilter.Mode == model.IncludeFilter {
-			wheres, params, err = addIncludeErrorFilterToWhere(wheres, params, dataTableAlias, targetName, filters.residualFilter)
+	for _, residualFilter := range filters.residualFilters {
+		if residualFilter.Mode == model.IncludeFilter {
+			wheres, params, err = addIncludeErrorFilterToWhere(wheres, params, dataTableAlias, targetName, residualFilter)
 			if err != nil {
 				return nil, errors.Wrap(err, "Could not add error to where clause")
 			}
 		} else {
-			wheres, params, err = addExcludeErrorFilterToWhere(wheres, params, dataTableAlias, targetName, filters.residualFilter)
+			wheres, params, err = addExcludeErrorFilterToWhere(wheres, params, dataTableAlias, targetName, residualFilter)
 			if err != nil {
 				return nil, errors.Wrap(err, "Could not add error to where clause")
 			}
@@ -834,18 +834,18 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	}
 
 	// Add the error filter into the where clause if it was included in the filter set
-	if filters.confidenceFilter != nil {
-		if filters.confidenceFilter.Mode == model.IncludeFilter {
-			wheres, params = s.buildConfidenceResultWhere(wheres, params, filters.confidenceFilter, "predicted")
+	for _, confidenceFilter := range filters.confidenceFilters {
+		if confidenceFilter.Mode == model.IncludeFilter {
+			wheres, params = s.buildConfidenceResultWhere(wheres, params, confidenceFilter, "predicted")
 		} else {
-			wheres, params = addExcludeConfidenceResultToWhere(wheres, params, filters.confidenceFilter)
+			wheres, params = addExcludeConfidenceResultToWhere(wheres, params, confidenceFilter)
 		}
 	}
-	if filters.rankFilter != nil {
-		if filters.rankFilter.Mode == model.IncludeFilter {
-			wheres, params = s.buildRankResultWhere(wheres, params, filters.rankFilter, "predicted")
+	for _, rankFilter := range filters.rankFilters {
+		if rankFilter.Mode == model.IncludeFilter {
+			wheres, params = s.buildRankResultWhere(wheres, params, rankFilter, "predicted")
 		} else {
-			wheres, params = addExcludeRankResultToWhere(wheres, params, filters.rankFilter)
+			wheres, params = addExcludeRankResultToWhere(wheres, params, rankFilter)
 		}
 	}
 	// If this is a timeseries forecast we don't want to include the target, predicted target or error

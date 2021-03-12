@@ -103,6 +103,7 @@ import { isGeoLocatedType } from "../util/types";
 import { getVariableSummariesByState } from "../util/data";
 import { updateHighlight, UPDATE_ALL } from "../util/highlights";
 import { lexQueryToFiltersAndHighlight } from "../util/lex";
+import { resultSummariesToVariables } from "../util/summaries";
 const TABLE_VIEW = "table";
 const IMAGE_VIEW = "image";
 const GRAPH_VIEW = "graph";
@@ -158,7 +159,18 @@ export default Vue.extend({
       return routeGetters.getRouteDataset(this.$store);
     },
     allVariables(): Variable[] {
-      return datasetGetters.getAllVariables(this.$store);
+      let predictionVariables = [];
+      const requestIds = requestGetters
+        .getRelevantPredictions(this.$store)
+        .map((p) => p.requestId);
+      requestIds.forEach((id) => {
+        predictionVariables = predictionVariables.concat(
+          resultSummariesToVariables(id)
+        );
+      });
+      return datasetGetters
+        .getAllVariables(this.$store)
+        .concat(predictionVariables);
     },
     routeHighlight(): string {
       return routeGetters.getRouteHighlight(this.$store);

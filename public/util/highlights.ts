@@ -27,7 +27,9 @@ import {
 } from "../util/filters";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as datasetGetters } from "../store/dataset/module";
+import { getters as resultGetters } from "../store/results/module";
 import { overlayRouteEntry } from "../util/routes";
+import { getTypeFromKey, getIDFromKey } from "./summaries";
 import {
   TIMESERIES_TYPE,
   IMAGE_TYPE,
@@ -102,15 +104,17 @@ export function createFiltersFromHighlights(
     const key = highlight.key;
 
     const variables = datasetGetters.getVariables(store);
-
     const variable = variables.find((v) => v.key === key);
     let grouping = null;
     if (variable && variable.grouping) {
       grouping = variable.grouping;
     }
 
-    const type = getVarType(key);
+    let type = getVarType(key);
     const displayName = variable?.colDisplayName;
+    if (!type) {
+      type = resultSummaryHighlight(highlight);
+    }
     if (type === IMAGE_TYPE) {
       return {
         key: key,
@@ -140,7 +144,15 @@ export function createFiltersFromHighlights(
         displayName: displayName,
       };
     }
-
+    if (Array.isArray(highlight.value)) {
+      return {
+        key: key,
+        type: CATEGORICAL_FILTER,
+        mode: highlight.include ?? mode,
+        categories: highlight.value,
+        displayName: displayName,
+      };
+    }
     if (
       highlight.value.from !== undefined &&
       highlight.value.to !== undefined
@@ -192,6 +204,59 @@ export function createFiltersFromHighlights(
   });
 
   return filterHighlights;
+}
+export function resultSummaryHighlight(highlight: Highlight) {
+  const key = getTypeFromKey(highlight.key);
+  const solutionID = getIDFromKey(highlight.key);
+  switch (key) {
+    case "predicted":
+      const predictedSummaries = resultGetters.getPredictedSummaries(store);
+      const predictedSummary = predictedSummaries.find((sum) => {
+        return sum.solutionId === solutionID;
+      });
+      if (!predictedSummary) {
+        return null;
+      }
+      return predictedSummary.type;
+    case "correctness":
+      const correctnessSummaries = resultGetters.getPredictedSummaries(store);
+      const correctnessSummary = correctnessSummaries.find((sum) => {
+        return sum.solutionId === solutionID;
+      });
+      if (!correctnessSummary) {
+        return null;
+      }
+      return correctnessSummary.type;
+    case "residual":
+      const residualSummaries = resultGetters.getPredictedSummaries(store);
+      const residualSummary = residualSummaries.find((sum) => {
+        return sum.solutionId === solutionID;
+      });
+      if (!residualSummary) {
+        return null;
+      }
+      return residualSummary.type;
+    case "rank":
+      const rankSummaries = resultGetters.getPredictedSummaries(store);
+      const rankSummary = rankSummaries.find((sum) => {
+        return sum.solutionId === solutionID;
+      });
+      if (!rankSummary) {
+        return null;
+      }
+      return rankSummary.type;
+    case "confidence":
+      const confidenceSummaries = resultGetters.getPredictedSummaries(store);
+      const confidenceSummary = confidenceSummaries.find((sum) => {
+        return sum.solutionId === solutionID;
+      });
+      if (!confidenceSummary) {
+        return null;
+      }
+      return confidenceSummary.type;
+    default:
+      return null;
+  }
 }
 export function cloneFilters(filterParams: FilterParams): FilterParams {
   return _.cloneDeep(filterParams);

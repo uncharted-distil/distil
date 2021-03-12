@@ -71,6 +71,7 @@ import LayerSelection from "../components/LayerSelection.vue";
 import LegendWeight from "../components/LegendWeight.vue";
 import ResultsDataSlot from "../components/ResultsDataSlot.vue";
 import ViewTypeToggle from "../components/ViewTypeToggle.vue";
+import { resultSummariesToVariables } from "../util/summaries";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as resultsGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
@@ -115,7 +116,11 @@ export default Vue.extend({
       return highlights.length > 0;
     },
     allVariables(): Variable[] {
-      return datasetGetters.getAllVariables(this.$store);
+      const solutionID = routeGetters.getRouteSolutionId(this.$store);
+      const resultVariables = resultSummariesToVariables(solutionID);
+      return datasetGetters
+        .getAllVariables(this.$store)
+        .concat(resultVariables);
     },
     routeHighlight(): string {
       return routeGetters.getRouteHighlight(this.$store);
