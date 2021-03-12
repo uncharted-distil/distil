@@ -125,9 +125,14 @@ export interface Filter {
   d3mIndices?: string[];
 }
 
+export interface FilterObject {
+  list: Filter[];
+  invert?: boolean;
+}
+
 export interface FilterParams {
-  highlights: Filter[];
-  filters: Filter[];
+  highlights: FilterObject;
+  filters: FilterObject;
   variables: string[];
   size?: number;
   dataMode?: string;
@@ -141,11 +146,11 @@ export interface FilterParams {
  *
  * @returns {Filter[]} The decoded filter object.
  */
-export function decodeFilters(filters: string): Filter[] {
+export function decodeFilters(filters: string): FilterObject {
   if (_.isEmpty(filters)) {
-    return [];
+    return { list: [] };
   }
-  return JSON.parse(atob(filters)) as Filter[];
+  return { list: JSON.parse(atob(filters)) as Filter[] };
 }
 
 /**
@@ -166,9 +171,11 @@ export function encodeFilters(filters: Filter[]): string {
  * Resolves any redundant row include / excludes such that there are only a
  * maximum of two row filters, one for includes, one for excludes.
  */
-function dedupeRowFilters(filters: Filter[]): Filter[] {
-  const rowFilters = filters.filter((filter) => filter.type === ROW_FILTER);
-  const remaining = filters.filter((filter) => filter.type !== ROW_FILTER);
+function dedupeRowFilters(filters: FilterObject): Filter[] {
+  const rowFilters = filters.list.filter(
+    (filter) => filter.type === ROW_FILTER
+  );
+  const remaining = filters.list.filter((filter) => filter.type !== ROW_FILTER);
 
   const included = {};
   const excluded = {};
@@ -228,11 +235,11 @@ function dedupeRowFilters(filters: Filter[]): Filter[] {
 }
 
 function addFilter(filters: string, filter: Filter | Filter[]): string {
-  let decoded = decodeFilters(filters);
+  const decoded = decodeFilters(filters);
   if (Array.isArray(filter)) {
-    decoded = [...decoded, ...filter];
+    decoded.list = [...decoded.list, ...filter];
   } else {
-    decoded.push(filter as Filter);
+    decoded.list.push(filter as Filter);
   }
   return encodeFilters(dedupeRowFilters(decoded));
 }
@@ -240,14 +247,14 @@ function addFilter(filters: string, filter: Filter | Filter[]): string {
 function removeFilter(filters: string, filter: Filter): string {
   // decode the provided filters
   const decoded = decodeFilters(filters);
-  const index = _.findIndex(decoded, (f) => {
+  const index = _.findIndex(decoded.list, (f) => {
     return _.isEqual(f, filter);
   });
   if (index !== -1) {
-    decoded.splice(index, 1);
+    decoded.list.splice(index, 1);
   }
   // encode the filters back into a url string
-  return encodeFilters(decoded);
+  return encodeFilters(decoded.list);
 }
 
 export function hasFilterInRoute(variable: string): boolean {
@@ -256,7 +263,7 @@ export function hasFilterInRoute(variable: string): boolean {
   const filters = routeGetters.getRouteFilters(store);
   const decoded = decodeFilters(filters);
   return (
-    decoded.filter((filter) => {
+    decoded.list.filter((filter) => {
       return filter.key && filter.key === variable;
     }).length > 0
   );
@@ -287,11 +294,11 @@ export function removeFilterFromRoute(router: VueRouter, filter: Filter) {
 export function removeFiltersByName(router: VueRouter, key: string) {
   // retrieve the filters from the route
   const filters = routeGetters.getRouteFilters(store);
-  let decoded = decodeFilters(filters);
-  decoded = decoded.filter((filter) => {
+  const decoded = decodeFilters(filters);
+  decoded.list = decoded.list.filter((filter) => {
     return filter.key !== key;
   });
-  deepUpdateFiltersInRoute(router, decoded);
+  deepUpdateFiltersInRoute(router, decoded.list);
 }
 
 export function deepUpdateFiltersInRoute(router: VueRouter, filters: Filter[]) {

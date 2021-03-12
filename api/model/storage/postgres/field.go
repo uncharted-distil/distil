@@ -111,12 +111,12 @@ func createJoinStatements(joins []*joinDefinition) string {
 // compound facet, which will display cluster info when available.
 func updateClusterFilters(metadataStorage api.MetadataStorage, dataset string, filterParams *api.FilterParams, mode api.SummaryMode) error {
 	if filterParams != nil && !filterParams.Empty(false) {
-		for _, h := range filterParams.Highlights {
+		for _, h := range filterParams.Highlights.List {
 			if err := updateClusterFilter(metadataStorage, dataset, filterParams.DataMode, h); err != nil {
 				return err
 			}
 		}
-		for _, f := range filterParams.Filters {
+		for _, f := range filterParams.Filters.List {
 			if err := updateClusterFilter(metadataStorage, dataset, filterParams.DataMode, f); err != nil {
 				return err
 			}

@@ -111,7 +111,7 @@ func ConfidenceSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api
 		if hasBand && isGeobounds {
 			boundsFilter := model.NewCategoricalFilter("band", model.IncludeFilter, []string{"01"})
 			boundsFilter.IsBaselineFilter = true
-			filterParams.Filters = append(filterParams.Filters, boundsFilter)
+			filterParams.Filters.List = append(filterParams.Filters.List, boundsFilter)
 		}
 		// fetch summary histogram
 		summary, err := data.FetchConfidenceSummary(dataset, storageName, res.ResultURI, filterParams, api.SummaryMode(mode))

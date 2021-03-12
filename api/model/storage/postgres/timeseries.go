@@ -598,8 +598,8 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 	joins := make([]*joinDefinition, 0)
 	wheres := []string{}
 	params := []interface{}{}
-	if len(filtersSplit.residualFilters) > 0 {
-		for _, residualFilter := range filtersSplit.residualFilters {
+	if len(filtersSplit.residualFilters.List) > 0 {
+		for _, residualFilter := range filtersSplit.residualFilters.List {
 			wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, residualFilter)
 			if err != nil {
 				return nil, err
@@ -619,7 +619,7 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 
 	// reset the filter params since the residual filter has been handled already
 	filterParamsClone := filterParams.Clone()
-	filterParamsClone.Highlights = nil
+	filterParamsClone.Highlights = api.FilterObject{List: []*model.Filter{}, Invert: false}
 	filterParamsClone.Filters = filtersSplit.genericFilters
 
 	// clear filters since they are used in subselect

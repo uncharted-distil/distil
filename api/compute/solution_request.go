@@ -313,7 +313,7 @@ func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.
 			AllFeatures:      featureVariables,
 			TargetFeature:    s.TargetFeature,
 			SelectedFeatures: expandedFilters.Variables,
-			Filters:          s.Filters.Filters,
+			Filters:          s.Filters.Filters.List,
 		}, augments)
 	if err != nil {
 		return nil, err

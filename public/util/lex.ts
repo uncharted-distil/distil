@@ -168,7 +168,9 @@ export function filterParamsToLexQuery(
   highlight: string,
   allVariables: Variable[]
 ) {
-  const decodedFilters = decodeFilters(filter).filter((f) => f.type !== "row");
+  const decodedFilters = decodeFilters(filter).list.filter(
+    (f) => f.type !== "row"
+  );
   const decodedHighlights = createFiltersFromHighlights(
     decodeHighlights(highlight),
     HIGHLIGHT

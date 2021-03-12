@@ -108,7 +108,7 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 
 	// if there are no filters, and we are returning the exclude set, we expect
 	// no results in the filtered set
-	if invert && filterParams.Filters == nil {
+	if invert && filterParams.Filters.List == nil {
 		summary.EmptyFilteredHistogram()
 	}
 

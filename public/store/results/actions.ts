@@ -162,9 +162,9 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlights: [],
+      highlights: { list: [] },
       variables: [],
-      filters: [],
+      filters: { list: [] },
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -246,9 +246,9 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlights: [],
+      highlights: { list: [] },
       variables: [],
-      filters: [],
+      filters: { list: [] },
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -296,9 +296,9 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlights: [],
+      highlights: { list: [] },
       variables: [],
-      filters: [],
+      filters: { list: [] },
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -350,9 +350,9 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlights: [],
+      highlights: { list: [] },
       variables: [],
-      filters: [],
+      filters: { list: [] },
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -407,9 +407,9 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlights: [],
+      highlights: { list: [] },
       variables: [],
-      filters: [],
+      filters: { list: [] },
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -421,7 +421,7 @@ export const actions = {
     if (_.isInteger(args.size)) {
       filterParams.size = args.size;
     }
-    filterParams.filters.push(args.filter);
+    filterParams.filters.list.push(args.filter);
     try {
       const response = await axios.post(
         `/distil/results/${args.dataset}/${encodeURIComponent(
@@ -459,9 +459,9 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlights: [],
+      highlights: { list: [] },
       variables: [],
-      filters: [],
+      filters: { list: [] },
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -475,11 +475,11 @@ export const actions = {
     if (_.isInteger(args.size)) {
       filterParams.size = args.size;
     }
-    filterParams.filters.push(args.filter);
+    filterParams.filters.list.push(args.filter);
     // if highlight is null there is nothing to invert so return null
     if (
       filterParams.highlights === null &&
-      filterParams.highlights.length > 0
+      filterParams.highlights.list.length > 0
     ) {
       mutations.setAreaOfInterestOuter(context, createEmptyTableData());
       return;
@@ -587,9 +587,9 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlights: [],
+      highlights: { list: [] },
       variables: [],
-      filters: [],
+      filters: { list: [] },
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -691,9 +691,9 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlights: [],
+      highlights: { list: [] },
       variables: [],
-      filters: [],
+      filters: { list: [] },
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -781,9 +781,9 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlights: [],
+      highlights: { list: [] },
       variables: [],
-      filters: [],
+      filters: { list: [] },
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -878,9 +878,9 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlights: [],
+      highlights: { list: [] },
       variables: [],
-      filters: [],
+      filters: { list: [] },
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -974,9 +974,9 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlights: [],
+      highlights: { list: [] },
       variables: [],
-      filters: [],
+      filters: { list: [] },
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,

@@ -60,7 +60,7 @@ func (s *Storage) PersistRequestFilters(requestID string, filters *api.FilterPar
 		"INSERT INTO %s (request_id, feature_name, filter_type, filter_mode, filter_min, filter_max, filter_min_x, filter_max_x, filter_min_y, filter_max_y, filter_categories, filter_indices) "+
 			"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12);", postgres.RequestFilterTableName)
 
-	for _, filter := range filters.Filters {
+	for _, filter := range filters.Filters.List {
 		switch filter.Type {
 		case model.NumericalFilter:
 			_, err := s.client.Exec(sql, requestID, filter.Key, model.NumericalFilter, filter.Mode, filter.Min, filter.Max, 0, 0, 0, 0, "", "")
@@ -264,26 +264,26 @@ func (s *Storage) FetchRequestFilters(requestID string, features []*api.Feature)
 
 		switch filterType {
 		case model.CategoricalFilter:
-			filters.Filters = append(filters.Filters, model.NewCategoricalFilter(
+			filters.Filters.List = append(filters.Filters.List, model.NewCategoricalFilter(
 				featureName,
 				filterMode,
 				strings.Split(filterCategories, ","),
 			))
 		case model.TextFilter:
-			filters.Filters = append(filters.Filters, model.NewTextFilter(
+			filters.Filters.List = append(filters.Filters.List, model.NewTextFilter(
 				featureName,
 				filterMode,
 				strings.Split(filterCategories, ","),
 			))
 		case model.NumericalFilter:
-			filters.Filters = append(filters.Filters, model.NewNumericalFilter(
+			filters.Filters.List = append(filters.Filters.List, model.NewNumericalFilter(
 				featureName,
 				filterMode,
 				filterMin,
 				filterMax,
 			))
 		case model.BivariateFilter:
-			filters.Filters = append(filters.Filters, model.NewBivariateFilter(
+			filters.Filters.List = append(filters.Filters.List, model.NewBivariateFilter(
 				featureName,
 				filterMode,
 				filterMinX,
@@ -292,7 +292,7 @@ func (s *Storage) FetchRequestFilters(requestID string, features []*api.Feature)
 				filterMaxY,
 			))
 		case model.GeoBoundsFilter:
-			filters.Filters = append(filters.Filters, model.NewGeoBoundsFilter(
+			filters.Filters.List = append(filters.Filters.List, model.NewGeoBoundsFilter(
 				featureName,
 				filterMode,
 				filterMinX,
@@ -301,7 +301,7 @@ func (s *Storage) FetchRequestFilters(requestID string, features []*api.Feature)
 				filterMaxY,
 			))
 		case model.RowFilter:
-			filters.Filters = append(filters.Filters, model.NewRowFilter(
+			filters.Filters.List = append(filters.Filters.List, model.NewRowFilter(
 				filterMode,
 				strings.Split(filterIndices, ","),
 			))

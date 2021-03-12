@@ -85,7 +85,7 @@ func (s *SolutionRequest) createPreFeaturizedPipeline(learningDataset string,
 			AllFeatures:      featurizedVariables,
 			TargetFeature:    featurizedVariables[targetIndex],
 			SelectedFeatures: expandedFilters.Variables,
-			Filters:          s.Filters.Filters,
+			Filters:          s.Filters.Filters.List,
 		}, nil)
 	if err != nil {
 		return nil, err
