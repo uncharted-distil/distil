@@ -100,7 +100,7 @@ func VariableSummaryHandler(metaCtor api.MetadataStorageCtor, ctorStorage api.Da
 			}
 			boundsFilter := model.NewCategoricalFilter("band", mode, []string{"01"})
 			boundsFilter.IsBaselineFilter = true
-			filterParams.Filters = append(filterParams.Filters, boundsFilter)
+			filterParams.Filters.List = append(filterParams.Filters.List, boundsFilter)
 		}
 
 		// fetch summary histogram

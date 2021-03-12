@@ -141,7 +141,7 @@ func PredictionResultSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCt
 		if hasBand && isGeobounds {
 			boundsFilter := model.NewCategoricalFilter("band", model.IncludeFilter, []string{"01"})
 			boundsFilter.IsBaselineFilter = true
-			filterParams.Filters = append(filterParams.Filters, boundsFilter)
+			filterParams.Filters.List = append(filterParams.Filters.List, boundsFilter)
 		}
 		// fetch summary histogram
 		summary, err := data.FetchPredictedSummary(prediction.Dataset, storageName, res.ResultURI, filterParams, extrema, api.SummaryMode(mode))

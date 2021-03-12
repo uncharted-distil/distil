@@ -580,21 +580,25 @@ export const actions = {
     filterParams.size = datasetGetters.getNumberOfRecords(store);
     filterParams = setHighlightModes(filterParams, EXCLUDE_FILTER);
     const baseline = {
-      highlights: filterParams.highlights,
-      filters: filterParams.filters.filter((f) => {
-        return f.mode === EXCLUDE_FILTER;
-      }),
+      highlights: { list: filterParams.highlights.list },
+      filters: {
+        list: filterParams.filters.list.filter((f) => {
+          return f.mode === EXCLUDE_FILTER;
+        }),
+      },
       variables: filterParams.variables,
       size: Number.MAX_SAFE_INTEGER,
     } as FilterParams;
     const excludeBaseline = {
-      highlights: filterParams.highlights,
-      filters: filterParams.filters.filter((f) => {
-        return f.mode === EXCLUDE_FILTER;
-      }),
+      highlights: { list: filterParams.highlights.list },
+      filters: {
+        list: filterParams.filters.list.filter((f) => {
+          return f.mode === EXCLUDE_FILTER;
+        }),
+      },
       variables: filterParams.variables,
       size: Number.MAX_SAFE_INTEGER,
-    };
+    } as FilterParams;
     return Promise.all([
       datasetActions.fetchBaselineTableData(store, {
         dataset: dataset,
@@ -621,27 +625,29 @@ export const actions = {
     // artificially add filter but dont add it to the url
     // this is a hack to avoid adding an extra field just for the area of interest
     const clonedFilterParams = _.cloneDeep(filterParams);
-    clonedFilterParams.filters.push(filter);
+    clonedFilterParams.filters.list.push(filter);
     const clonedExcludeFilter = _.cloneDeep(filter);
     // the exclude has to invert all the filters -- the route does a collective NOT() and
     // for areaOfInterest we need compounded ands so therefore we invert client side pass in
     // as an include and that removes the collective NOT
     const clonedFilterParamsExclude = _.cloneDeep(filterParams);
-    clonedFilterParamsExclude.filters.forEach((f) => {
+    clonedFilterParamsExclude.filters.list.forEach((f) => {
       f.mode = invertFilter(f.mode);
     });
-    clonedFilterParamsExclude.filters.push(clonedExcludeFilter);
+    clonedFilterParamsExclude.filters.list.push(clonedExcludeFilter);
     const invertedHighlights = highlights.map((highlight) => {
       return { ...highlight, include: EXCLUDE_FILTER };
     });
     const baseline = {
-      highlights: [],
-      filters: [
-        filter,
-        ...clonedFilterParams.filters.filter((f) => {
-          return f.mode === EXCLUDE_FILTER;
-        }),
-      ],
+      highlights: { list: [] },
+      filters: {
+        list: [
+          filter,
+          ...clonedFilterParams.filters.list.filter((f) => {
+            return f.mode === EXCLUDE_FILTER;
+          }),
+        ],
+      },
       size: Number.MAX_SAFE_INTEGER,
       variables: clonedFilterParams.variables,
     } as FilterParams;

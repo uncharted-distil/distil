@@ -125,7 +125,7 @@ func TrainingSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.S
 		if hasBand && isGeobounds {
 			boundsFilter := model.NewCategoricalFilter("band", model.IncludeFilter, []string{"01"})
 			boundsFilter.IsBaselineFilter = true
-			filterParams.Filters = append(filterParams.Filters, boundsFilter)
+			filterParams.Filters.List = append(filterParams.Filters.List, boundsFilter)
 		}
 		// fetch summary histogram
 		summary, err := data.FetchSummaryByResult(dataset, storageName, variable, result.ResultURI, filterParams, nil, api.SummaryMode(mode))

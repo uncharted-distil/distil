@@ -789,7 +789,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, dataTableAlias, genericFilterParams, false)
 
 	// Add the predicted filter into the where clause if it was included in the filter set
-	for _, predictedFilter := range filters.predictedFilters {
+	for _, predictedFilter := range filters.predictedFilters.List {
 		if predictedFilter.Mode == model.IncludeFilter {
 			wheres, params, err = addIncludePredictedFilterToWhere(wheres, params, predictedFilter, variable)
 			if err != nil {
@@ -804,7 +804,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	}
 
 	// Add the correctness filter into the where clause if it was included in the filter set
-	for _, correctnessFilter := range filters.correctnessFilters {
+	for _, correctnessFilter := range filters.correctnessFilters.List {
 		if correctnessFilter.Mode == model.IncludeFilter {
 			wheres, params, err = addIncludeCorrectnessFilterToWhere(wheres, params, correctnessFilter, variable)
 			if err != nil {
@@ -819,7 +819,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	}
 
 	// Add the error filter into the where clause if it was included in the filter set
-	for _, residualFilter := range filters.residualFilters {
+	for _, residualFilter := range filters.residualFilters.List {
 		if residualFilter.Mode == model.IncludeFilter {
 			wheres, params, err = addIncludeErrorFilterToWhere(wheres, params, dataTableAlias, targetName, residualFilter)
 			if err != nil {
@@ -834,14 +834,14 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	}
 
 	// Add the error filter into the where clause if it was included in the filter set
-	for _, confidenceFilter := range filters.confidenceFilters {
+	for _, confidenceFilter := range filters.confidenceFilters.List {
 		if confidenceFilter.Mode == model.IncludeFilter {
 			wheres, params = s.buildConfidenceResultWhere(wheres, params, confidenceFilter, "predicted")
 		} else {
 			wheres, params = addExcludeConfidenceResultToWhere(wheres, params, confidenceFilter)
 		}
 	}
-	for _, rankFilter := range filters.rankFilters {
+	for _, rankFilter := range filters.rankFilters.List {
 		if rankFilter.Mode == model.IncludeFilter {
 			wheres, params = s.buildRankResultWhere(wheres, params, rankFilter, "predicted")
 		} else {

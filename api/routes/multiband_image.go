@@ -162,13 +162,14 @@ func getBandMapping(ds *api.Dataset, groupKey string, dataStorage api.DataStorag
 	}
 
 	filter := &api.FilterParams{}
-	filter.Filters = []*model.Filter{
+	filter.Filters = api.FilterObject{List: []*model.Filter{
 		{
 			Key:        groupingCol.Key,
 			Type:       model.CategoricalFilter,
 			Categories: []string{groupKey},
 			Mode:       model.IncludeFilter,
 		},
+	},
 	}
 	filter.Variables = []string{fileCol.Key, bandCol.Key}
 

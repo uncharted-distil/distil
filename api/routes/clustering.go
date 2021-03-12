@@ -212,12 +212,13 @@ func ClusteringExplainHandler(solutionCtor api.SolutionStorageCtor, metaCtor api
 		// update the batches
 		// TODO: THIS HAS WAY TOO MUCH KNOWLEDGE OF THE DATABASE BAKED INTO IT
 		filters := &api.FilterParams{
-			Filters: []*model.Filter{
+			Filters: api.FilterObject{List: []*model.Filter{
 				{Key: "result_id",
 					Type:       model.CategoricalFilter,
 					Categories: []string{result.ResultURI},
 					Mode:       model.IncludeFilter,
 				},
+			},
 			},
 		}
 		err = dataStorage.UpdateData(result.Dataset, fmt.Sprintf("%s_explain", datasetMeta.StorageName), clusterVarName, clusteredData, filters)

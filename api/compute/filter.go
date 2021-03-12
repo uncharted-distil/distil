@@ -65,7 +65,7 @@ func filterData(client *compute.Client, ds *api.Dataset, filterParams *api.Filte
 	}
 
 	// run the filtering pipeline
-	pipeline, err := description.CreateDataFilterPipeline("Pre Filtering", "pre filter a dataset that has metadata features", resultingVariables, preFilters.Filters)
+	pipeline, err := description.CreateDataFilterPipeline("Pre Filtering", "pre filter a dataset that has metadata features", resultingVariables, preFilters.Filters.List)
 	if err != nil {
 		return "", nil, err
 	}
@@ -124,11 +124,11 @@ func getPreFiltering(ds *api.Dataset, filterParams *api.FilterParams) (*api.Filt
 	// remove pre filters from the rest of the filters since they should not be in the main pipeline
 	// TODO: NEED TO HANDLE OUTLIER FILTERS!
 	preFilters := &api.FilterParams{
-		Filters: []*model.Filter{},
+		Filters: api.FilterObject{List: []*model.Filter{}, Invert: false},
 	}
 	filters := clone.Filters
-	clone.Filters = []*model.Filter{}
-	for _, f := range filters {
+	clone.Filters = api.FilterObject{List: []*model.Filter{}, Invert: false}
+	for _, f := range filters.List {
 		variable := vars[f.Key]
 		params := clone
 		if variable.IsGrouping() {
@@ -144,7 +144,7 @@ func getPreFiltering(ds *api.Dataset, filterParams *api.FilterParams) (*api.Filt
 			params = preFilters
 		}
 
-		params.Filters = append(params.Filters, f)
+		params.Filters.List = append(params.Filters.List, f)
 	}
 
 	return clone, preFilters

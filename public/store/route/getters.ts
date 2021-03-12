@@ -396,7 +396,7 @@ export const getters = {
   },
 
   getDecodedFilters(state: Route, getters: any): Filter[] {
-    return decodeFilters(state.query.filters as string);
+    return decodeFilters(state.query.filters as string).list;
   },
 
   getDecodedSolutionRequestFilterParams(
@@ -406,9 +406,9 @@ export const getters = {
     const filters = getters.getDecodedFilters;
     const size = getters.getRouteDataSize;
     const filterParams = _.cloneDeep({
-      highlights: [],
+      highlights: { list: [] },
       variables: [],
-      filters,
+      filters: { list: filters },
       size,
     });
 
