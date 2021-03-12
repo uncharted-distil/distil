@@ -179,8 +179,31 @@ func preparePrefilteringDataset(outputFolder string, sourceDataset *api.Dataset,
 
 	// if learning dataset, then update that
 	if sourceDataset.LearningDataset != "" {
-		// TODO: Figure out if it matters if that last param is true. Currently set to false due to deadline.
-		return UpdatePrefeaturizedDataset(outputFolder, sourceDataset.LearningDataset, sourceDataset, data, false)
+		// load the dataset from disk
+		dsDisk, err := api.LoadDiskDataset(sourceDataset)
+		if err != nil {
+			return nil, err
+		}
+		dsDisk = dsDisk.FeaturizedDataset
+
+		// clone the feature dataset
+		dsDisk, err = dsDisk.Clone(outputFolder, dsDisk.Dataset.Metadata.ID, dsDisk.Dataset.Metadata.StorageName)
+		if err != nil {
+			return nil, err
+		}
+
+		// update it
+		err = dsDisk.UpdateOnDisk(sourceDataset, data)
+		if err != nil {
+			return nil, err
+		}
+
+		// get the variable list
+		meta, err := serialization.ReadMetadata(path.Join(outputFolder, compute.D3MDataSchema))
+		if err != nil {
+			return nil, err
+		}
+		return meta.GetMainDataResource().Variables, nil
 	}
 
 	// read the metadata from disk to keep the reference data resources

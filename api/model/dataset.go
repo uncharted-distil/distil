@@ -145,9 +145,13 @@ func UpdateDiskDataset(ds *Dataset, data [][]string) error {
 	if err != nil {
 		return err
 	}
-	varMap := MapVariables(ds.Variables, func(variable *model.Variable) string { return variable.HeaderName })
+	return dsDisk.UpdateOnDisk(ds, data)
+}
 
+// UpdateOnDisk updates a disk dataset to have the new and updated data.
+func (d *DiskDataset) UpdateOnDisk(ds *Dataset, data [][]string) error {
 	// use the header row to determine the variables to update
+	varMap := MapVariables(ds.Variables, func(variable *model.Variable) string { return variable.HeaderName })
 	d3mIndexIndex := -1
 	updates := map[string]map[string]string{}
 	headerMap := map[string]int{}
@@ -156,15 +160,18 @@ func UpdateDiskDataset(ds *Dataset, data [][]string) error {
 			d3mIndexIndex = i
 		} else {
 			sourceVar := varMap[c]
-			if sourceVar.Immutable {
+
+			// if source var doesnt exist, then no update possible
+			// (prefeaturized datasets have all the featurized values that dont exist outside of the disk version)
+			if sourceVar == nil || sourceVar.Immutable {
 				continue
 			}
 			headerMap[sourceVar.HeaderName] = i
 			updates[sourceVar.HeaderName] = map[string]string{}
 
 			// add missing fields
-			if !dsDisk.FieldExists(sourceVar) {
-				err = dsDisk.AddField(sourceVar)
+			if !d.FieldExists(sourceVar) {
+				err := d.AddField(sourceVar)
 				if err != nil {
 					return err
 				}
@@ -179,12 +186,12 @@ func UpdateDiskDataset(ds *Dataset, data [][]string) error {
 		}
 	}
 
-	err = dsDisk.Update(updates, true)
+	err := d.Update(updates, true)
 	if err != nil {
 		return err
 	}
 
-	err = dsDisk.SaveDataset()
+	err = d.SaveDataset()
 	if err != nil {
 		return err
 	}
