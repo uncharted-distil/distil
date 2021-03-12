@@ -178,82 +178,35 @@ func preparePrefilteringDataset(outputFolder string, sourceDataset *api.Dataset,
 		return nil, err
 	}
 
+	// load the dataset from disk
+	dsDisk, err := api.LoadDiskDataset(sourceDataset)
+	if err != nil {
+		return nil, err
+	}
+
 	// if learning dataset, then update that
 	if sourceDataset.LearningDataset != "" {
-		// load the dataset from disk
-		dsDisk, err := api.LoadDiskDataset(sourceDataset)
-		if err != nil {
-			return nil, err
-		}
 		dsDisk = dsDisk.FeaturizedDataset
-
-		// clone the feature dataset
-		dsDisk, err = dsDisk.Clone(outputFolder, dsDisk.Dataset.Metadata.ID, dsDisk.Dataset.Metadata.StorageName)
-		if err != nil {
-			return nil, err
-		}
-
-		// update it
-		err = dsDisk.UpdateOnDisk(sourceDataset, data)
-		if err != nil {
-			return nil, err
-		}
-
-		// get the variable list
-		meta, err := serialization.ReadMetadata(path.Join(outputFolder, compute.D3MDataSchema))
-		if err != nil {
-			return nil, err
-		}
-		return meta.GetMainDataResource().Variables, nil
 	}
 
-	// read the metadata from disk to keep the reference data resources
-	// TODO: MAY WANT TO MAKE THIS A FUNCTION SOMEWHERE!
-	metadataSchemaPath := path.Join(env.ResolvePath(sourceDataset.Source, sourceDataset.Folder), compute.D3MDataSchema)
-	metadataSource, err := serialization.ReadMetadata(metadataSchemaPath)
-	if err != nil {
-		return nil, err
-	}
-	metadataSourceDR := metadataSource.GetMainDataResource()
-	metaVarMap := api.MapVariables(metadataSourceDR.Variables, func(variable *model.Variable) string { return variable.Key })
-	sourceVarMap := api.MapVariables(sourceDataset.Variables, func(variable *model.Variable) string { return variable.Key })
-
-	// update the metadata to match the data pulled from the data storage
-	// (mostly matching column index and dropping columns not pulled)
-	variablesData := make([]*model.Variable, len(data[0]))
-	sourceVariables := []*model.Variable{}
-	for i, f := range data[0] {
-		metaVar := metaVarMap[f]
-		if metaVar == nil {
-			// variable does not exist in the disk metadata yet so add it
-			metaVar = sourceVarMap[f]
-			metadataSourceDR.Variables = append(metadataSourceDR.Variables, metaVar)
-		}
-		metaVar.Index = i
-		variablesData[i] = metaVar
-		sourceVariables = append(sourceVariables, sourceVarMap[f])
-	}
-
-	// update all non main data resources to be absolute
-	for _, dr := range metadataSource.DataResources {
-		if dr != metadataSourceDR {
-			dr.ResPath = model.GetResourcePath(metadataSchemaPath, dr)
-		}
-	}
-
-	// write it out as a dataset
-	dsRaw := &serialization.RawDataset{
-		ID:       sourceDataset.ID,
-		Name:     sourceDataset.Name,
-		Data:     data,
-		Metadata: metadataSource,
-	}
-	err = serialization.WriteDataset(outputFolder, dsRaw)
+	// clone the feature dataset
+	dsDisk, err = dsDisk.Clone(outputFolder, dsDisk.Dataset.Metadata.ID, dsDisk.Dataset.Metadata.StorageName)
 	if err != nil {
 		return nil, err
 	}
 
-	return sourceVariables, nil
+	// update it
+	err = dsDisk.UpdateOnDisk(sourceDataset, data)
+	if err != nil {
+		return nil, err
+	}
+
+	// get the variable list
+	meta, err := serialization.ReadMetadata(path.Join(outputFolder, compute.D3MDataSchema))
+	if err != nil {
+		return nil, err
+	}
+	return meta.GetMainDataResource().Variables, nil
 }
 
 // HarmonizeDataMetadata updates a dataset on disk to have the schema info
