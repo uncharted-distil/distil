@@ -70,6 +70,7 @@ func filterData(client *compute.Client, ds *api.Dataset, filterParams *api.Filte
 		return "", nil, err
 	}
 
+	// allowable types are prioritized in order
 	var allowableTypes []string
 	if ds.LearningDataset == "" {
 		allowableTypes = append(allowableTypes, compute.CSVURIValueType)
@@ -253,102 +254,6 @@ func preparePrefilteringDataset(outputFolder string, sourceDataset *api.Dataset,
 	}
 
 	return sourceVariables, nil
-}
-
-// UpdatePrefeaturizedDataset updates a featurized dataset that already exists
-// on disk to have new variables included
-func UpdatePrefeaturizedDataset(outputFolder string, prefeaturizedPath string, sourceDataset *api.Dataset, storedData [][]string, updateMetadata bool) ([]*model.Variable, error) {
-	// copy the prefeaturized dataset to the output folder
-	err := util.Copy(prefeaturizedPath, outputFolder)
-	if err != nil {
-		return nil, err
-	}
-
-	// load the dataset from disk
-	schemaPath := path.Join(outputFolder, compute.D3MDataSchema)
-	dsDisk, err := serialization.ReadDataset(schemaPath)
-	if err != nil {
-		return nil, err
-	}
-	metaDiskMainDR := dsDisk.Metadata.GetMainDataResource()
-
-	// determine if there are new columns that were not part of the original dataset
-	metaDiskVarMap := api.MapVariables(metaDiskMainDR.Variables, func(variable *model.Variable) string { return variable.Key })
-
-	// get the index of the new fields in the extracted data
-	storedVarMap := api.MapVariables(sourceDataset.Variables, func(variable *model.Variable) string { return variable.Key })
-	storedDataD3MIndex := -1
-	newVars := []*model.Variable{}
-	for i, v := range storedData[0] {
-		if v == model.D3MIndexFieldName {
-			storedDataD3MIndex = i
-		} else if storedVarMap[v] != nil && metaDiskVarMap[v] == nil {
-			storedVarMap[v].Index = i
-			newVars = append(newVars, storedVarMap[v])
-		}
-	}
-
-	// add the missing columns row by row and only retain rows in the new dataset
-	// first build up the new variables by d3m index map
-	// then cycle through the featurized rows and append the variables
-	newDataMap := map[string][]string{}
-	for _, r := range storedData[1:] {
-		newVarsData := []string{}
-		for i := 0; i < len(newVars); i++ {
-			newKey := newVars[i].Key
-			newIndex := storedVarMap[newKey].Index
-			newVarsData = append(newVarsData, r[newIndex])
-		}
-		newDataMap[r[storedDataD3MIndex]] = newVarsData
-	}
-
-	// add the new fields to the metadata to generate the proper header
-	for i := 0; i < len(newVars); i++ {
-		newVar := newVars[i]
-		newVar.Index = len(metaDiskMainDR.Variables)
-		metaDiskMainDR.Variables = append(metaDiskMainDR.Variables, newVar)
-	}
-
-	preFeaturizedOutput := [][]string{metaDiskMainDR.GenerateHeader()}
-	metaDiskD3MIndex := metaDiskVarMap[model.D3MIndexFieldName].Index
-	for _, row := range dsDisk.Data[1:] {
-		d3mIndexPre := row[metaDiskD3MIndex]
-		if newDataMap[d3mIndexPre] != nil {
-			rowComplete := append(row, newDataMap[d3mIndexPre]...)
-			preFeaturizedOutput = append(preFeaturizedOutput, rowComplete)
-		}
-	}
-
-	// make sure the ids and names match
-	if updateMetadata {
-		dsDisk.Metadata.ID = sourceDataset.ID
-		dsDisk.Metadata.Name = sourceDataset.Name
-		dsDisk.Metadata.StorageName = sourceDataset.StorageName
-	}
-
-	// output the new pre featurized data
-	dsDisk.Data = preFeaturizedOutput
-	err = serialization.WriteDataset(outputFolder, dsDisk)
-	if err != nil {
-		return nil, err
-	}
-
-	// capture the final set of variables to use
-	storedVarMap = api.MapVariables(sourceDataset.Variables, func(variable *model.Variable) string { return variable.HeaderName })
-	metaDiskVarMap = api.MapVariables(metaDiskMainDR.Variables, func(variable *model.Variable) string { return variable.HeaderName })
-	outputVariables := make([]*model.Variable, len(dsDisk.Data[0]))
-	for i, v := range dsDisk.Data[0] {
-		var variable *model.Variable
-		if storedVarMap[v] != nil {
-			variable = storedVarMap[v]
-		} else {
-			variable = metaDiskVarMap[v]
-		}
-		variable.Index = i
-		outputVariables[i] = variable
-	}
-
-	return outputVariables, nil
 }
 
 // HarmonizeDataMetadata updates a dataset on disk to have the schema info
