@@ -29,12 +29,10 @@ import (
 
 	uuid "github.com/gofrs/uuid"
 	"github.com/pkg/errors"
-	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/pipeline"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
-	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/util/json"
@@ -73,7 +71,6 @@ type PredictionResult struct {
 // SolutionRequest represents a solution search request.
 type SolutionRequest struct {
 	Dataset              string
-	DatasetInput         string
 	DatasetMetadata      *api.Dataset
 	TargetFeature        *model.Variable
 	Task                 []string
@@ -118,7 +115,6 @@ func NewSolutionRequest(variables []*model.Variable, data []byte) (*SolutionRequ
 	if !ok {
 		return nil, fmt.Errorf("no `dataset` in solution request")
 	}
-	req.DatasetInput = req.Dataset
 
 	targetKey, ok := json.String(j, "target")
 	if !ok {
@@ -229,8 +225,8 @@ func (s *SolutionRequest) Cancel() {
 	}
 }
 
-func createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.PipelineDescription,
-	datasetURI string, userAgent string, targetFeature *model.Variable, dataset string, metrics []string, task []string,
+func createSearchSolutionsRequest(preprocessing *pipeline.PipelineDescription, datasetURI string,
+	userAgent string, targetFeature *model.Variable, dataset string, metrics []string, task []string,
 	maxTime int64, maxSolutions int64) (*pipeline.SearchSolutionsRequest, error) {
 
 	return &pipeline.SearchSolutionsRequest{
@@ -242,7 +238,7 @@ func createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.Pipel
 			Inputs: []*pipeline.ProblemInput{
 				{
 					DatasetId: compute.ConvertDatasetTA3ToTA2(dataset),
-					Targets:   compute.ConvertTargetFeaturesTA3ToTA2(targetFeature.HeaderName, columnIndex),
+					Targets:   compute.ConvertTargetFeaturesTA3ToTA2(targetFeature.HeaderName, targetFeature.Index),
 				},
 			},
 		},
@@ -668,13 +664,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	if err != nil {
 		return nil
 	}
-
-	// fetch the input dataset (should only differ on augmented)
-	datasetInput, err := metaStorage.FetchDataset(s.DatasetInput, true, true, false)
-	if err != nil {
-		return err
-	}
-	s.DatasetMetadata = datasetInput
+	s.DatasetMetadata = dataset
 
 	// timeseries specific handling - the target needs to be set to the timeseries Y field, and we need to
 	// save timestamp variable index for data splitting
@@ -696,38 +686,27 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// prefilter dataset if metadata fields are used in filters
-	filteredDatasetPath, updatedFilters, err := filterData(client, datasetInput, s.Filters, dataStorage)
+	filteredDatasetPath, updatedFilters, err := filterData(client, dataset, s.Filters, dataStorage)
 	if err != nil {
 		return err
 	}
 	s.Filters = updatedFilters
 
-	// add dataset name to path
-	var featurizedVariables []*model.Variable
-	var datasetInputDir string
-	targetIndex := -1
-	if datasetInput.LearningDataset == "" {
-		datasetInputDir = datasetInput.Folder
-		datasetInputDir = env.ResolvePath(datasetInput.Source, datasetInputDir)
-		targetIndex = targetVariable.Index
-	} else {
+	// get the target
+	datasetInputDir := filteredDatasetPath
+	meta, err := serialization.ReadMetadata(path.Join(datasetInputDir, compute.D3MDataSchema))
+	if err != nil {
+		return err
+	}
+	metaVars := meta.GetMainDataResource().Variables
+	targetVariable, err = findVariable(targetVariable.Key, metaVars)
+	if err != nil {
+		return err
+	}
+
+	if dataset.LearningDataset != "" {
 		s.useParquet = true
-		datasetInputDir = filteredDatasetPath
 		groupingVariableIndex = -1
-
-		// need to lookup the target variable and the variables in the featurized dataset
-		meta, err := metadata.LoadMetadataFromOriginalSchema(path.Join(datasetInputDir, compute.D3MDataSchema), false)
-		if err != nil {
-			return err
-		}
-		featurizedVariables = meta.GetMainDataResource().Variables
-
-		for _, v := range featurizedVariables {
-			if v.Key == targetVariable.Key {
-				targetIndex = v.Index
-				break
-			}
-		}
 	}
 
 	// compute the task and subtask from the target and dataset
@@ -743,12 +722,9 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	// check if TimestampSplitValue is not 0
 	if s.TimestampSplitValue > 0 {
 		found := false
-		tempVars := variables
-		if len(featurizedVariables) > 0 {
-			tempVars = featurizedVariables
-		}
+
 		// update groupingVariable to the dateTime variable
-		for _, variable := range tempVars {
+		for _, variable := range metaVars {
 			if variable.Type == model.DateTimeType {
 				groupingVariableIndex = variable.Index
 				found = true
@@ -764,7 +740,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	// when dealing with categorical data we want to stratify
 	stratify := model.IsCategorical(s.TargetFeature.Type)
 	// create the splitter to use for the train / test split
-	splitter := createSplitter(s.Task, targetIndex, groupingVariableIndex, stratify, s.Quality, s.TrainTestSplit, s.TimestampSplitValue)
+	splitter := createSplitter(s.Task, targetVariable.Index, groupingVariableIndex, stratify, s.Quality, s.TrainTestSplit, s.TimestampSplitValue)
 	datasetPathTrain, datasetPathTest, err := SplitDataset(path.Join(filteredDatasetPath, compute.D3MDataSchema), splitter)
 	if err != nil {
 		return err
@@ -785,10 +761,10 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	// generate the pre-processing pipeline to enforce feature selection and semantic type changes
 	var preprocessing *pipeline.PipelineDescription
 	if !client.SkipPreprocessing {
-		if datasetInput.LearningDataset == "" {
+		if dataset.LearningDataset == "" {
 			preprocessing, err = s.createPreprocessingPipeline(variables, metaStorage)
 		} else {
-			preprocessing, err = s.createPreFeaturizedPipeline(datasetInput.LearningDataset, variables, featurizedVariables, metaStorage, targetIndex)
+			preprocessing, err = s.createPreFeaturizedPipeline(dataset.LearningDataset, variables, metaVars, metaStorage, targetVariable.Index)
 		}
 		if err != nil {
 			return err
@@ -796,8 +772,8 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// create search solutions request
-	searchRequest, err := createSearchSolutionsRequest(targetIndex, preprocessing, datasetPathTrain, client.UserAgent,
-		targetVariable, s.DatasetInput, s.Metrics, s.Task, int64(s.MaxTime), int64(s.MaxSolutions))
+	searchRequest, err := createSearchSolutionsRequest(preprocessing, datasetPathTrain, client.UserAgent,
+		targetVariable, s.Dataset, s.Metrics, s.Task, int64(s.MaxTime), int64(s.MaxSolutions))
 	if err != nil {
 		return err
 	}
@@ -846,7 +822,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	searchContext := pipelineSearchContext{
 		searchID:          requestID,
 		dataset:           dataset.ID,
-		storageName:       datasetInput.StorageName,
+		storageName:       dataset.StorageName,
 		sourceDatasetURI:  datasetInputDir,
 		trainDatasetURI:   datasetPathTrain,
 		testDatasetURI:    datasetPathTest,

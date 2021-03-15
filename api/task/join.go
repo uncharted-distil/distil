@@ -24,7 +24,6 @@ import (
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
-	apiCompute "github.com/uncharted-distil/distil/api/compute"
 	"github.com/uncharted-distil/distil/api/env"
 	apiModel "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/serialization"
@@ -71,8 +70,8 @@ func JoinDistil(joinLeft *JoinSpec, joinRight *JoinSpec, leftCol string, rightCo
 	if err != nil {
 		return "", nil, err
 	}
-	varsLeftMap := apiCompute.MapVariables(joinLeft.Variables, func(variable *model.Variable) string { return variable.Key })
-	varsRightMap := apiCompute.MapVariables(joinRight.Variables, func(variable *model.Variable) string { return variable.Key })
+	varsLeftMap := apiModel.MapVariables(joinLeft.Variables, func(variable *model.Variable) string { return variable.Key })
+	varsRightMap := apiModel.MapVariables(joinRight.Variables, func(variable *model.Variable) string { return variable.Key })
 	pipelineDesc, err := description.CreateJoinPipeline("Joiner", "Join existing data", varsLeftMap[leftCol], varsRightMap[rightCol], 0.8)
 	if err != nil {
 		return "", nil, err
@@ -244,8 +243,8 @@ func denormVariableName(variable *model.Variable) string {
 func joinMetadataVariables(headerNames []string, leftVariables []*model.Variable, leftMetadata *model.Metadata,
 	rightVariables []*model.Variable, rightMetadata *model.Metadata) ([]*model.Variable, []*model.DataResource) {
 	// map the variables using the header names
-	leftMap := apiCompute.MapVariables(leftVariables, denormVariableName)
-	rightMap := apiCompute.MapVariables(rightVariables, denormVariableName)
+	leftMap := apiModel.MapVariables(leftVariables, denormVariableName)
+	rightMap := apiModel.MapVariables(rightVariables, denormVariableName)
 
 	// left dataset takes priority in case of conflict
 	mergedVariables := make([]*model.Variable, len(headerNames))
