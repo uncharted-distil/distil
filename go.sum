@@ -224,8 +224,8 @@ github.com/stretchr/testify v1.5.1 h1:nOGnQDM7FYENwehXlg/kFVnos3rEvtKTjRvOWSzb6H
 github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5cxcmMvtA=
 github.com/stretchr/testify v1.6.1 h1:hDPOHmpOpP40lSULcqw7IrRb/u7w6RpDC9399XyoNd0=
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
-github.com/uncharted-distil/distil-compute v0.0.0-20210305185005-465699a38ed3 h1:XVDw5TQuT6jKpzRfdJRitX/WsHu/+mFaLzqBWG4kZDQ=
-github.com/uncharted-distil/distil-compute v0.0.0-20210305185005-465699a38ed3/go.mod h1:iFA7B2kb+WJfkzukdwfZJVY3o/ZFEjHPsA8k2N6I+B8=
+github.com/uncharted-distil/distil-compute v0.0.0-20210315130400-e4e4ed71663c h1:3aiY71NmTPhFua41dXwSqPyux8iz2vAz1XQdySVMHFM=
+github.com/uncharted-distil/distil-compute v0.0.0-20210315130400-e4e4ed71663c/go.mod h1:iFA7B2kb+WJfkzukdwfZJVY3o/ZFEjHPsA8k2N6I+B8=
 github.com/uncharted-distil/distil-image-upscale v0.0.0-20210223142454-e2adf2b3dbb6 h1:s0flWfQg2N219KLjBM4cpBKt5Bh9TC2yLhOYCSxUAoM=
 github.com/uncharted-distil/distil-image-upscale v0.0.0-20210223142454-e2adf2b3dbb6/go.mod h1:Xhb77n2q8yDvcVS3Mvw0XlpdNMiFsL+vOlvoe556ivc=
 github.com/uncharted-distil/gdal v0.0.0-20200504224203-25f2e6a0dc2a h1:BPJrlnjdhxMBrJWiU4/Gl3PVdCUlY9JspWFTJ9UVO0Y=
