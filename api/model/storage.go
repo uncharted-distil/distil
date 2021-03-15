@@ -80,10 +80,10 @@ type DataStorageCtor func() (DataStorage, error)
 // DataStorage defines the functions available to query the underlying data storage.
 type DataStorage interface {
 	FetchNumRows(storageName string, variables []*model.Variable) (int, error)
-	FetchData(dataset string, storageName string, filterParams *FilterParams, invert bool, includeGroupingCol bool, orderByVar *model.Variable) (*FilteredData, error)
-	FetchDataset(dataset string, storageName string, includeMetadata bool, invert bool, filterParams *FilterParams) ([][]string, error)
+	FetchData(dataset string, storageName string, filterParams *FilterParams, includeGroupingCol bool, orderByVar *model.Variable) (*FilteredData, error)
+	FetchDataset(dataset string, storageName string, includeMetadata bool, filterParams *FilterParams) ([][]string, error)
 	FetchResultDataset(dataset string, storageName string, predictionName string, features []string, resultURI string) ([][]string, error)
-	FetchSummary(dataset string, storageName string, varName string, filterParams *FilterParams, invert bool, mode SummaryMode) (*VariableSummary, error)
+	FetchSummary(dataset string, storageName string, varName string, filterParams *FilterParams, mode SummaryMode) (*VariableSummary, error)
 	FetchSummaryByResult(dataset string, storageName string, varName string, resultURI string, filterParams *FilterParams, extrema *Extrema, mode SummaryMode) (*VariableSummary, error)
 	PersistResult(dataset string, storageName string, resultURI string, target string) error
 	PersistExplainedResult(dataset string, storageName string, resultURI string, explainResult *SolutionExplainResult) error
@@ -98,7 +98,7 @@ type DataStorage interface {
 	FetchExtrema(dataset string, storageName string, variable *model.Variable) (*Extrema, error)
 	FetchExtremaByURI(dataset string, storageName string, resultURI string, variable string) (*Extrema, error)
 	FetchTimeseries(dataset string, storageName string, variableKey string, seriesIDColName string, xColName string, yColName string,
-		seriesIDs []string, operation TimeseriesOp, filterParams *FilterParams, invert bool) ([]*TimeseriesData, error)
+		seriesIDs []string, operation TimeseriesOp, filterParams *FilterParams) ([]*TimeseriesData, error)
 	FetchTimeseriesForecast(dataset string, storageName string, variableKey string, seriesIDColName string, xColName string, yColName string,
 		seriesIDs []string, operation TimeseriesOp, resultUUID string, filterParams *FilterParams) ([]*TimeseriesData, error)
 	FetchCategoryCounts(storageName string, variable *model.Variable) (map[string]int, error)
@@ -121,7 +121,7 @@ type DataStorage interface {
 	// Property queries
 	GetStorageName(dataset string) (string, error)
 	// SaveDataset is used to drop all the undesired values (only call for save dataset route)
-	SaveDataset(dataset string, storageName string, invert bool, filterParams *FilterParams) error
+	SaveDataset(dataset string, storageName string, filterParams *FilterParams) error
 	// CloneDataset creates a copy of an existing dataset
 	CloneDataset(dataset string, storageName string, datasetNew string, storageNameNew string) error
 	// DeleteDataset drops all tables associated to storageName

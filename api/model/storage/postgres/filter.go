@@ -367,7 +367,7 @@ func (s *Storage) buildExcludeFilter(dataset string, wheres []string, params []i
 	return wheres, params
 }
 
-func (s *Storage) buildFilteredQueryWhere(dataset string, wheres []string, params []interface{}, alias string, filterParams *api.FilterParams, invert bool) ([]string, []interface{}) {
+func (s *Storage) buildFilteredQueryWhere(dataset string, wheres []string, params []interface{}, alias string, filterParams *api.FilterParams) ([]string, []interface{}) {
 
 	if filterParams == nil {
 		return wheres, params
@@ -384,9 +384,9 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, wheres []string, param
 	}
 	if len(highlightWheres) > 0 {
 		where := ""
-		if invert {
+		if filterParams.Highlights.Invert {
 			// highlights are always treated as or (adding Not(...or...) makes it and)
-			where = fmt.Sprintf("(%s)", strings.Join(highlightWheres, " OR "))
+			where = fmt.Sprintf("NOT(%s)", strings.Join(highlightWheres, " OR "))
 		} else {
 			where = fmt.Sprintf("(%s)", strings.Join(highlightWheres, " OR "))
 		}
@@ -404,7 +404,7 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, wheres []string, param
 	}
 	if len(filterWheres) > 0 {
 		where := ""
-		if invert {
+		if filterParams.Filters.Invert {
 			where = fmt.Sprintf("NOT(%s)", strings.Join(filterWheres, " AND "))
 		} else {
 			where = strings.Join(filterWheres, " AND ")
@@ -597,7 +597,7 @@ func (s *Storage) buildPredictedResultWhere(dataset string, wheres []string, par
 		},
 	}
 
-	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, alias, filterParams, false)
+	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, alias, filterParams)
 	return wheres, params
 }
 
@@ -612,7 +612,7 @@ func (s *Storage) buildResultQueryFilters(dataset string, storageName string, re
 	// create the filter for the query
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, alias, genericFilterParams, false)
+	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, alias, genericFilterParams)
 
 	// assemble split filters
 	var err error
@@ -770,7 +770,7 @@ func (s *Storage) fetchNumRowsJoined(storageName string, variables []*model.Vari
 // FetchData creates a postgres query to fetch a set of rows.  Applies filters to restrict the
 // results to a user selected set of fields, with rows further filtered based on allowed ranges and
 // categories.
-func (s *Storage) FetchData(dataset string, storageName string, filterParams *api.FilterParams, invert bool, includeGroupingCol bool, orderByVar *model.Variable) (*api.FilteredData, error) {
+func (s *Storage) FetchData(dataset string, storageName string, filterParams *api.FilterParams, includeGroupingCol bool, orderByVar *model.Variable) (*api.FilteredData, error) {
 	variables, err := s.metadata.FetchVariables(dataset, true, true, true)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
@@ -783,7 +783,7 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 
 	// if there are no filters, and we are returning the exclude set, we expect
 	// no results in the filtered set
-	if invert && filterParams.Filters.List == nil {
+	if filterParams.Filters.Invert && filterParams.Filters.List == nil {
 		return &api.FilteredData{
 			NumRows: numRows,
 			Columns: make([]*api.Column, 0),
@@ -818,7 +818,7 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, "", filterParams, invert)
+	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, "", filterParams)
 
 	if len(wheres) > 0 {
 		query = fmt.Sprintf("%s WHERE %s", query, strings.Join(wheres, " AND "))

@@ -90,6 +90,16 @@ export function decodeHighlights(highlight: string): Highlight[] {
   }
   return JSON.parse(atob(highlight)) as Highlight[];
 }
+// applies the supplied invert if invert is not present on the filter or highlight object (returns clone)
+export function setInvert(
+  filterParams: FilterParams,
+  invert: boolean
+): FilterParams {
+  const fp = cloneFilters(filterParams);
+  fp.highlights.invert = fp.highlights.invert ?? invert;
+  fp.filters.invert = fp.filters.invert ?? invert;
+  return fp;
+}
 
 export function createFiltersFromHighlights(
   highlights: Highlight[],

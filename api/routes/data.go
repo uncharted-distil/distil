@@ -47,8 +47,6 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 		}
 
 		dataset := pat.Param(r, "dataset")
-		invert := pat.Param(r, "invert")
-		invertBool := parseBoolParam(invert)
 		includeGroupingCol := pat.Param(r, "include-grouping-col")
 		includeGroupingColBool := parseBoolParam(includeGroupingCol)
 		var orderByVar *model.Variable = nil
@@ -92,7 +90,7 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 		}
 
 		// fetch filtered data based on the supplied search parameters
-		data, err := storage.FetchData(dataset, storageName, expandedFilterParams, invertBool, includeGroupingColBool, orderByVar)
+		data, err := storage.FetchData(dataset, storageName, expandedFilterParams, includeGroupingColBool, orderByVar)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable fetch filtered data"))
 			return

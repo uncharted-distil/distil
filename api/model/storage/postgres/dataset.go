@@ -49,18 +49,18 @@ func getVariableTableName(storageName string) string {
 }
 
 // SaveDataset is used for dropping the unused values based on filter param. (Only used in save_dataset route)
-func (s *Storage) SaveDataset(dataset string, storageName string, invert bool, filterParams *api.FilterParams) error {
-	err := s.deleteRows(dataset, getBaseTableName(storageName), invert, filterParams)
+func (s *Storage) SaveDataset(dataset string, storageName string, filterParams *api.FilterParams) error {
+	err := s.deleteRows(dataset, getBaseTableName(storageName), filterParams)
 	if err != nil {
 		return err
 	}
 	// due to values being dropped from base table result table is invalid
-	err = s.deleteRows(dataset, s.getResultTable(storageName), false, nil)
+	err = s.deleteRows(dataset, s.getResultTable(storageName), nil)
 	if err != nil {
 		return err
 	}
 	// due to values being dropped from base table explanation table is invalid
-	err = s.deleteRows(dataset, s.getSolutionFeatureWeightTable(storageName), false, nil)
+	err = s.deleteRows(dataset, s.getSolutionFeatureWeightTable(storageName), nil)
 	if err != nil {
 		return err
 	}
@@ -69,10 +69,10 @@ func (s *Storage) SaveDataset(dataset string, storageName string, invert bool, f
 }
 
 // deleteRows deletes rows based on filterParams
-func (s *Storage) deleteRows(dataset string, storageName string, invert bool, filterParams *api.FilterParams) error {
+func (s *Storage) deleteRows(dataset string, storageName string, filterParams *api.FilterParams) error {
 	wheres := []string{}
 	paramsFilter := make([]interface{}, 0)
-	wheres, paramsFilter = s.buildFilteredQueryWhere(dataset, wheres, paramsFilter, "", filterParams, invert)
+	wheres, paramsFilter = s.buildFilteredQueryWhere(dataset, wheres, paramsFilter, "", filterParams)
 	where := ""
 	if len(wheres) > 0 {
 		where = "WHERE " + strings.Join(wheres, " AND ")
@@ -307,7 +307,7 @@ func (s *Storage) parseData(rows pgx.Rows) ([][]string, error) {
 }
 
 // FetchDataset extracts the complete raw data from the database.
-func (s *Storage) FetchDataset(dataset string, storageName string, includeMetadata bool, invert bool, filterParams *api.FilterParams) ([][]string, error) {
+func (s *Storage) FetchDataset(dataset string, storageName string, includeMetadata bool, filterParams *api.FilterParams) ([][]string, error) {
 	// get data variables (to exclude metadata variables)
 	vars, err := s.metadata.FetchVariables(dataset, true, includeMetadata, false)
 	if err != nil {
@@ -331,7 +331,7 @@ func (s *Storage) FetchDataset(dataset string, storageName string, includeMetada
 	}
 	wheres := []string{}
 	paramsFilter := make([]interface{}, 0)
-	wheres, paramsFilter = s.buildFilteredQueryWhere(dataset, wheres, paramsFilter, "", filterParams, invert)
+	wheres, paramsFilter = s.buildFilteredQueryWhere(dataset, wheres, paramsFilter, "", filterParams)
 	where := ""
 	if len(wheres) > 0 {
 		where = "WHERE " + strings.Join(wheres, " AND ")
@@ -796,7 +796,7 @@ func (s *Storage) UpdateData(dataset string, storageName string, varName string,
 	// build the filter structure
 	wheres := []string{fmt.Sprintf("t.\"%s\" = b.\"%s\"::text", model.D3MIndexFieldName, model.D3MIndexFieldName)}
 	paramsFilter := make([]interface{}, 0)
-	wheres, paramsFilter = s.buildFilteredQueryWhere(dataset, wheres, paramsFilter, "b", filterParams, false)
+	wheres, paramsFilter = s.buildFilteredQueryWhere(dataset, wheres, paramsFilter, "b", filterParams)
 
 	// run the update
 	updateSQL := fmt.Sprintf("UPDATE %s.%s.\"%s\" AS b SET \"%s\" = t.\"%s\" FROM \"%s\" AS t WHERE %s",

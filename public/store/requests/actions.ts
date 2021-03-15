@@ -40,6 +40,7 @@ import {
   SolutionRequestStatus,
   SolutionStatus,
 } from "./index";
+import { setInvert, cloneFilters } from "../../util/highlights";
 import { mutations } from "./module";
 
 // Message definitions for the websocket.  These are only for communication with the
@@ -527,7 +528,8 @@ export const actions = {
   createSolutionRequest(context: RequestContext, request: SolutionRequestMsg) {
     return new Promise((resolve, reject) => {
       const conn = getWebSocketConnection();
-
+      const filters = cloneFilters(request.filters);
+      request.filters = setInvert(filters, false);
       let receivedFirstSolution = false;
 
       const stream = conn.stream((response: SolutionStatusMsg) => {

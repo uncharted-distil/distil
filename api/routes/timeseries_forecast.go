@@ -126,7 +126,7 @@ func TimeseriesForecastHandler(metaCtor api.MetadataStorageCtor, dataCtor api.Da
 
 			// fetch timeseries and forecast
 			timeseriesData, err := data.FetchTimeseries(truthDataset, truthStorageName, t.VarKey, variable.Grouping.GetIDCol(),
-				xColName, yColName, []string{t.SeriesID}, operation, filterParams, false)
+				xColName, yColName, []string{t.SeriesID}, operation, filterParams)
 			if err != nil {
 				handleError(w, err)
 				return

@@ -38,8 +38,6 @@ func VariableSummaryHandler(metaCtor api.MetadataStorageCtor, ctorStorage api.Da
 		dataset := pat.Param(r, "dataset")
 		// get variabloe name
 		variable := pat.Param(r, "variable")
-		invert := pat.Param(r, "invert")
-		invertBool := parseBoolParam(invert)
 		// get the facet mode
 		mode, err := api.SummaryModeFromString(pat.Param(r, "mode"))
 		if err != nil {
@@ -95,7 +93,7 @@ func VariableSummaryHandler(metaCtor api.MetadataStorageCtor, ctorStorage api.Da
 		if hasBand && isGeobounds {
 			// if inverting the filter, then invert the mode
 			mode := model.IncludeFilter
-			if invertBool {
+			if filterParams.Filters.Invert {
 				mode = model.ExcludeFilter
 			}
 			boundsFilter := model.NewCategoricalFilter("band", mode, []string{"01"})
@@ -104,7 +102,7 @@ func VariableSummaryHandler(metaCtor api.MetadataStorageCtor, ctorStorage api.Da
 		}
 
 		// fetch summary histogram
-		summary, err := storage.FetchSummary(dataset, storageName, variable, filterParams, invertBool, mode)
+		summary, err := storage.FetchSummary(dataset, storageName, variable, filterParams, mode)
 		if err != nil {
 			handleError(w, err)
 			return

@@ -50,7 +50,7 @@ func NewTextField(storage *Storage, datasetName string, datasetStorageName strin
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *TextField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool, mode api.SummaryMode) (*api.VariableSummary, error) {
+func (f *TextField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.VariableSummary, error) {
 	var baseline *api.Histogram
 	var filtered *api.Histogram
 	var err error
@@ -61,12 +61,12 @@ func (f *TextField) FetchSummaryData(resultURI string, filterParams *api.FilterP
 	}
 
 	if resultURI == "" {
-		baseline, err = f.fetchHistogram(api.GetBaselineFilter(filterParams), invert)
+		baseline, err = f.fetchHistogram(api.GetBaselineFilter(filterParams))
 		if err != nil {
 			return nil, err
 		}
 		if !filterParams.Empty(true) {
-			filtered, err = f.fetchHistogram(filterParams, invert)
+			filtered, err = f.fetchHistogram(filterParams)
 			if err != nil {
 				return nil, err
 			}
@@ -94,11 +94,11 @@ func (f *TextField) FetchSummaryData(resultURI string, filterParams *api.FilterP
 	}, nil
 }
 
-func (f *TextField) fetchHistogram(filterParams *api.FilterParams, invert bool) (*api.Histogram, error) {
+func (f *TextField) fetchHistogram(filterParams *api.FilterParams) (*api.Histogram, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(f.GetDatasetName(), wheres, params, "", filterParams, invert)
+	wheres, params = f.Storage.buildFilteredQueryWhere(f.GetDatasetName(), wheres, params, "", filterParams)
 
 	where := ""
 	if len(wheres) > 0 {

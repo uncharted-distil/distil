@@ -126,7 +126,11 @@ import CreateLabelingForm from "../components/labelingComponents/CreateLabelingF
 import LabelingDataSlot from "../components/labelingComponents/LabelingDataSlot.vue";
 import { EXCLUDE_FILTER, Filter, INCLUDE_FILTER } from "../util/filters";
 import { Dictionary } from "vue-router/types/router";
-import { updateHighlight, clearHighlight } from "../util/highlights";
+import {
+  updateHighlight,
+  clearHighlight,
+  cloneFilters,
+} from "../util/highlights";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { overlayRouteEntry } from "../util/routes";
@@ -401,9 +405,10 @@ export default Vue.extend({
           value: LowShotLabels.unlabeled,
         },
       ]; // exclude unlabeled from data export
-      const filterParams = routeGetters.getDecodedSolutionRequestFilterParams(
+      let filterParams = routeGetters.getDecodedSolutionRequestFilterParams(
         this.$store
       );
+      filterParams = cloneFilters(filterParams);
       if (
         this.variables.some((v) => {
           return v.key === LOW_SHOT_SCORE_COLUMN_NAME;
@@ -421,7 +426,7 @@ export default Vue.extend({
         datasetNewName: saveName,
         filterParams,
         highlights,
-        include: true,
+        include: false,
         mode: INCLUDE_FILTER,
         dataMode,
       });

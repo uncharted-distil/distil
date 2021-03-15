@@ -393,7 +393,7 @@ func GetTimeseriesOperations(operation api.TimeseriesOp) func(float64, float64, 
 
 // FetchTimeseries fetches a timeseries.
 func (s *Storage) FetchTimeseries(dataset string, storageName string, variableKey string, seriesIDColName string, xColName string, yColName string, timeseriesURI []string,
-	duplicateOperation api.TimeseriesOp, filterParams *api.FilterParams, invert bool) ([]*api.TimeseriesData, error) {
+	duplicateOperation api.TimeseriesOp, filterParams *api.FilterParams) ([]*api.TimeseriesData, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
@@ -411,7 +411,7 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, variableKe
 		wheres = append(wheres, fmt.Sprintf("\"%s\" = ANY(ARRAY[%s]::text[])", seriesIDColName, paramString))
 	}
 
-	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, "", filterParams, invert)
+	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, "", filterParams)
 	where := ""
 	if len(wheres) > 0 {
 		where = fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
@@ -493,7 +493,7 @@ func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, va
 	paramString = paramString[:len(paramString)-1]
 	wheres = append(wheres, fmt.Sprintf("\"%s\" = ANY(ARRAY[%s]::text[])", seriesIDColName, paramString))
 
-	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, "", filterParams, false)
+	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, "", filterParams)
 
 	params = append(params, resultURI)
 	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d", len(params)))
@@ -559,7 +559,7 @@ func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, va
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool, mode api.SummaryMode) (*api.VariableSummary, error) {
+func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.VariableSummary, error) {
 	var baseline *api.Histogram
 	var filtered *api.Histogram
 	var err error
@@ -570,12 +570,12 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 	}
 
 	if resultURI == "" {
-		baseline, err = f.fetchHistogram(api.GetBaselineFilter(filterParams), invert, mode)
+		baseline, err = f.fetchHistogram(api.GetBaselineFilter(filterParams), mode)
 		if err != nil {
 			return nil, err
 		}
 		if !filterParams.Empty(true) {
-			filtered, err = f.fetchHistogram(filterParams, invert, mode)
+			filtered, err = f.fetchHistogram(filterParams, mode)
 			if err != nil {
 				return nil, err
 			}
@@ -635,11 +635,11 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 		return nil, errors.Errorf("unsupported timeseries field variable type %s:%s", f.XCol, f.XColType)
 	}
 
-	timelineBaseline, err := timelineField.fetchHistogramWithJoins(nil, invert, api.MaxNumBuckets, joins, wheres, params)
+	timelineBaseline, err := timelineField.fetchHistogramWithJoins(nil, api.MaxNumBuckets, joins, wheres, params)
 	if err != nil {
 		return nil, err
 	}
-	timeline, err := timelineField.fetchHistogramWithJoins(filterParamsClone, invert, api.MaxNumBuckets, joins, wheres, params)
+	timeline, err := timelineField.fetchHistogramWithJoins(filterParamsClone, api.MaxNumBuckets, joins, wheres, params)
 	if err != nil {
 		return nil, err
 	}
@@ -664,7 +664,7 @@ func (f *TimeSeriesField) keyColName(mode api.SummaryMode) string {
 	return f.IDCol
 }
 
-func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert bool, mode api.SummaryMode) (*api.Histogram, error) {
+func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, mode api.SummaryMode) (*api.Histogram, error) {
 
 	// When there's no grouping key we can
 	if f.IDCol == "" {
@@ -675,7 +675,7 @@ func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert 
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(f.GetDatasetName(), wheres, params, "", filterParams, false)
+	wheres, params = f.Storage.buildFilteredQueryWhere(f.GetDatasetName(), wheres, params, "", filterParams)
 
 	where := ""
 	if len(wheres) > 0 {

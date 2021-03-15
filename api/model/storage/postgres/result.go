@@ -786,7 +786,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	// Create the filter portion of the where clause.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, dataTableAlias, genericFilterParams, false)
+	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, dataTableAlias, genericFilterParams)
 
 	// Add the predicted filter into the where clause if it was included in the filter set
 	for _, predictedFilter := range filters.predictedFilters.List {

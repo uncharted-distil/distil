@@ -35,7 +35,6 @@ func ExtractHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCt
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
-		invert := parseBoolParam(pat.Param(r, "invert"))
 		params, err := getPostParameters(r)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
@@ -64,7 +63,7 @@ func ExtractHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCt
 			handleError(w, errors.Wrap(err, "unable to expand filter params"))
 			return
 		}
-		_, datasetPath, err := task.ExportDataset(dataset, metaStorage, dataStorage, invert, expandedFilterParams)
+		_, datasetPath, err := task.ExportDataset(dataset, metaStorage, dataStorage, expandedFilterParams)
 		if err != nil {
 			handleError(w, err)
 			return

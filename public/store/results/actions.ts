@@ -162,9 +162,9 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlights: { list: [] },
+      highlights: { list: [], invert: false },
       variables: [],
-      filters: { list: [] },
+      filters: { list: [], invert: false },
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -246,9 +246,9 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlights: { list: [] },
+      highlights: { list: [], invert: false },
       variables: [],
-      filters: { list: [] },
+      filters: { list: [], invert: false },
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -296,9 +296,9 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlights: { list: [] },
+      highlights: { list: [], invert: false },
       variables: [],
-      filters: { list: [] },
+      filters: { list: [], invert: false },
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -350,9 +350,9 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlights: { list: [] },
+      highlights: { list: [], invert: false },
       variables: [],
-      filters: { list: [] },
+      filters: { list: [], invert: false },
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -407,9 +407,9 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlights: { list: [] },
+      highlights: { list: [], invert: false },
       variables: [],
-      filters: { list: [] },
+      filters: { list: [], invert: false },
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -459,9 +459,9 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlights: { list: [] },
+      highlights: { list: [], invert: false },
       variables: [],
-      filters: { list: [] },
+      filters: { list: [], invert: false },
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -587,9 +587,9 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlights: { list: [] },
+      highlights: { list: [], invert: false },
       variables: [],
-      filters: { list: [] },
+      filters: { list: [], invert: false },
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -691,9 +691,9 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlights: { list: [] },
+      highlights: { list: [], invert: false },
       variables: [],
-      filters: { list: [] },
+      filters: { list: [], invert: false },
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -781,9 +781,9 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlights: { list: [] },
+      highlights: { list: [], invert: false },
       variables: [],
-      filters: { list: [] },
+      filters: { list: [], invert: false },
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -878,9 +878,9 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlights: { list: [] },
+      highlights: { list: [], invert: false },
       variables: [],
-      filters: { list: [] },
+      filters: { list: [], invert: false },
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -974,9 +974,9 @@ export const actions = {
     }
 
     const filterParamsBlank = {
-      highlights: { list: [] },
+      highlights: { list: [], invert: false },
       variables: [],
-      filters: { list: [] },
+      filters: { list: [], invert: false },
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,

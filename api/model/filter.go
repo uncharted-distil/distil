@@ -110,6 +110,8 @@ func (f *FilterParams) Clone() *FilterParams {
 		c := *f
 		clone.Filters.List = append(clone.Filters.List, &c)
 	}
+	clone.Highlights.Invert = f.Highlights.Invert
+	clone.Filters.Invert = f.Filters.Invert
 	clone.Variables = append(clone.Variables, f.Variables...)
 	clone.Size = f.Size
 	clone.DataMode = f.DataMode
@@ -443,7 +445,12 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 			filterParams.Highlights.List = append(filterParams.Highlights.List, h)
 		}
 	}
-
+	invertHighlights, ok := json.Bool(params, "highlights", "invert")
+	if ok {
+		filterParams.Highlights.Invert = invertHighlights
+	} else {
+		return nil, errors.New("Missing required param highlights.Invert")
+	}
 	filters, ok := json.Array(params, "filters", "list")
 	if ok {
 		for _, filter := range filters {
@@ -453,6 +460,13 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 			}
 			filterParams.Filters.List = append(filterParams.Filters.List, f)
 		}
+	}
+
+	invertFilters, ok := json.Bool(params, "filters", "invert")
+	if ok {
+		filterParams.Filters.Invert = invertFilters
+	} else {
+		return nil, errors.New("Missing required param filters.Invert")
 	}
 
 	variables, ok := json.StringArray(params, "variables")

@@ -82,7 +82,7 @@ func (s *Storage) FetchExtremaByURI(dataset string, storageName string, resultUR
 	return field.fetchExtremaByURI(resultURI)
 }
 
-func (s *Storage) fetchSummaryData(dataset string, storageName string, varName string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool, mode api.SummaryMode) (*api.VariableSummary, error) {
+func (s *Storage) fetchSummaryData(dataset string, storageName string, varName string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.VariableSummary, error) {
 	// need description of the variables to request aggregation against.
 	variable, err := s.metadata.FetchVariable(dataset, varName)
 	if err != nil {
@@ -95,7 +95,7 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 		return nil, err
 	}
 
-	summary, err := field.FetchSummaryData(resultURI, filterParams, extrema, invert, mode)
+	summary, err := field.FetchSummaryData(resultURI, filterParams, extrema, mode)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch summary data")
 	}
@@ -108,7 +108,7 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 
 	// if there are no filters, and we are returning the exclude set, we expect
 	// no results in the filtered set
-	if invert && filterParams.Filters.List == nil {
+	if filterParams.Filters.Invert && filterParams.Filters.List == nil {
 		summary.EmptyFilteredHistogram()
 	}
 
@@ -116,14 +116,14 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 }
 
 // FetchSummary returns the summary for the provided dataset and variable.
-func (s *Storage) FetchSummary(dataset string, storageName string, varName string, filterParams *api.FilterParams, invert bool, mode api.SummaryMode) (*api.VariableSummary, error) {
-	return s.fetchSummaryData(dataset, storageName, varName, "", filterParams, nil, invert, mode)
+func (s *Storage) FetchSummary(dataset string, storageName string, varName string, filterParams *api.FilterParams, mode api.SummaryMode) (*api.VariableSummary, error) {
+	return s.fetchSummaryData(dataset, storageName, varName, "", filterParams, nil, mode)
 }
 
 // FetchSummaryByResult returns the summary for the provided dataset
 // and variable for data that is part of the result set.
 func (s *Storage) FetchSummaryByResult(dataset string, storageName string, varName string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.VariableSummary, error) {
-	return s.fetchSummaryData(dataset, storageName, varName, resultURI, filterParams, extrema, false, mode)
+	return s.fetchSummaryData(dataset, storageName, varName, resultURI, filterParams, extrema, mode)
 }
 
 // FetchCategoryCounts fetches the count of each label that occurs for the supplied categorical variable.

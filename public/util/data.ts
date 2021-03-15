@@ -632,7 +632,9 @@ export async function fetchSolutionResultSummary(
   try {
     const response = await axios.post(
       completeEndpoint,
-      filterParams ? filterParams : {}
+      filterParams
+        ? filterParams
+        : { highlights: { invert: false }, filters: { invert: false } }
     );
     // save the histogram data if this is summary data
     const summary = response.data[resultProperty];
