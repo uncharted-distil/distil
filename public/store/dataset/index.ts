@@ -93,25 +93,25 @@ export interface MultiBandImageGrouping extends ClusteredGrouping {
 }
 
 export interface Variable {
-  datasetName: string;
+  colDescription: string;
   colDisplayName: string;
   colName: string;
-  key: string;
-  colType: string;
-  importance: number;
-  ranking?: number;
-  novelty: number;
   colOriginalType: string;
-  colDescription: string;
-  suggestedTypes: SuggestedType[];
-  isColTypeChanged: boolean;
-  grouping: Grouping;
-  isColTypeReviewed: boolean;
-  min: number;
-  max: number;
-  values: string[];
-  role: string[];
+  colType: string;
+  datasetName: string;
   distilRole: string;
+  grouping: Grouping;
+  importance: number;
+  isColTypeChanged: boolean;
+  isColTypeReviewed: boolean;
+  key: string;
+  max: number;
+  min: number;
+  novelty: number;
+  ranking?: number;
+  role: string[];
+  suggestedTypes: SuggestedType[];
+  values: string[];
 }
 
 export interface Dataset {

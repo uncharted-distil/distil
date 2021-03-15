@@ -159,7 +159,7 @@ export const actions = {
   // clusters variables in a dataset for which the operation is meaningful (ie. timeseries)
   fetchClusters: dispatch(moduleActions.fetchClusters),
 
-  // outliers
+  // Outliers detection
   fetchOutliers: dispatch(moduleActions.fetchOutliers),
   applyOutliers: dispatch(moduleActions.applyOutliers),
 

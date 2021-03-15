@@ -89,7 +89,7 @@ async function getVariables(dataset: string): Promise<Variable[]> {
   }));
 }
 
-// Return the best variable name of a dataset for outlier detection
+/** Return the best variable name of a dataset needed for the outlier detection. */
 function getOutlierVariableName(): string {
   const variables = getters.getVariables(store) ?? [];
   const target = routeGetters.getTargetVariable(store) ?? ({} as Variable);
@@ -393,6 +393,7 @@ export const actions = {
       });
   },
 
+  /** Request the outlier detection results for a specific dataset. */
   async fetchOutliers(context: DatasetContext, args: { dataset: string }) {
     // Check if the outlier detection has already been applied.
     if (routeGetters.isOutlierApplied(store)) return;
@@ -401,7 +402,7 @@ export const actions = {
     const variableName = getOutlierVariableName();
 
     // Create the request.
-    let status;
+    let status: DatasetPendingRequestStatus;
     const request: OutlierPendingRequest = {
       id: _.uniqueId(),
       dataset,
@@ -426,6 +427,7 @@ export const actions = {
     mutations.updatePendingRequests(context, { ...request, status });
   },
 
+  /** Add the outliers data has an unselectable variable to a dataset. */
   async applyOutliers(context: DatasetContext, dataset: string) {
     const variableName = getOutlierVariableName();
 

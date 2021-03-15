@@ -248,16 +248,12 @@ export default Vue.extend({
 
     applyVariableRankingChange() {
       const variableRequest = <VariableRankingPendingRequest>this.requestData;
-      datasetActions.updateVariableRankings(this.$store, {
-        dataset: variableRequest.dataset,
-        rankings: variableRequest.rankings,
-      });
+      const { dataset, rankings } = variableRequest;
+      datasetActions.updateVariableRankings(this.$store, { dataset, rankings });
 
       // Update the route to know that the training variables have been ranked.
-      const varRankedEntry = overlayRouteEntry(this.$route, {
-        varRanked: "1",
-      });
-      this.$router.push(varRankedEntry).catch((err) => console.warn(err));
+      const entry = overlayRouteEntry(this.$route, { varRanked: "1" });
+      this.$router.push(entry).catch((err) => console.warn(err));
 
       this.clearData();
     },
