@@ -17,6 +17,7 @@
 
 import axios, { AxiosResponse } from "axios";
 import _ from "lodash";
+import { filter } from "vue/types/umd";
 import { ActionContext } from "vuex";
 import {
   createEmptyTableData,
@@ -35,7 +36,9 @@ import {
 } from "../../util/filters";
 import {
   addHighlightToFilterParams,
+  cloneFilters,
   highlightsExist,
+  setInvert,
 } from "../../util/highlights";
 import { loadImage } from "../../util/image";
 import {
@@ -1035,10 +1038,11 @@ export const actions = {
     if (!validateArgs(args, ["dataset", "variable"])) {
       return null;
     }
-    const filterParams = addHighlightToFilterParams(
+    let filterParams = addHighlightToFilterParams(
       args.filterParams,
       args.highlights
     );
+    filterParams = setInvert(filterParams, !args.include);
     const decodedVarModes = routeGetters.getDecodedVarModes(store);
     const mutator = args.include
       ? mutations.updateIncludedVariableSummaries
@@ -1051,9 +1055,7 @@ export const actions = {
 
     try {
       const response = await axios.post(
-        `/distil/variable-summary/${args.dataset}/${
-          args.variable
-        }/${!args.include}/${varMode}`,
+        `/distil/variable-summary/${args.dataset}/${args.variable}/${varMode}`,
         filterParams
       );
       const summary = response.data.summary;
@@ -1380,14 +1382,14 @@ export const actions = {
       args.datasets.map(async (dataset) => {
         const highlights =
           args.highlights?.[0]?.dataset === dataset ? args.highlights : null;
-        const filterParams = addHighlightToFilterParams(
+        let filterParams = addHighlightToFilterParams(
           args.filterParams[dataset],
           highlights
         );
-
+        filterParams = setInvert(filterParams, false);
         try {
           const response = await axios.post(
-            `distil/data/${dataset}/false/true`,
+            `distil/data/${dataset}/true`,
             filterParams
           );
           mutations.setJoinDatasetsTableData(context, {
@@ -1435,9 +1437,11 @@ export const actions = {
       dataMode: DataMode;
     }
   ) {
+    const filterParams = cloneFilters(args.filterParams);
+    filterParams.highlights.invert = false;
     const data = await actions.fetchTableData(context, {
       dataset: args.dataset,
-      filterParams: args.filterParams,
+      filterParams: filterParams,
       highlights: args.highlights,
       include: false,
       dataMode: args.dataMode,
@@ -1518,20 +1522,20 @@ export const actions = {
     if (!validateArgs(args, ["dataset", "filterParams"])) {
       return null;
     }
-    const filterParams = addHighlightToFilterParams(
+    let filterParams = addHighlightToFilterParams(
       args.filterParams,
       args.highlights,
       args.mode
     );
-
+    filterParams = setInvert(filterParams, !args.include);
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
     filterParams.dataMode = dataModeDefault;
 
     try {
-      const response = await axios.post(
-        `distil/data/${args.dataset}/${!args.include}/false`,
-        { ...filterParams, orderBy: args.orderBy }
-      );
+      const response = await axios.post(`distil/data/${args.dataset}/false`, {
+        ...filterParams,
+        orderBy: args.orderBy,
+      });
       return response.data;
     } catch (error) {
       console.error(error);
@@ -1645,20 +1649,20 @@ export const actions = {
     if (!validateArgs(args, ["dataset", "filterParams"])) {
       return null;
     }
-    const filterParams = addHighlightToFilterParams(
+    let filterParams = addHighlightToFilterParams(
       args.filterParams,
       args.highlights,
       args.mode
     );
-
+    filterParams = setInvert(filterParams, args.include);
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
     filterParams.dataMode = dataModeDefault;
 
     try {
-      const response = await axios.post(
-        `distil/save-dataset/${args.dataset}/${args.include}`,
-        { datasetName: args.datasetNewName, ...filterParams }
-      );
+      const response = await axios.post(`distil/save-dataset/${args.dataset}`, {
+        datasetName: args.datasetNewName,
+        ...filterParams,
+      });
       return response.data;
     } catch (error) {
       console.error(error);
@@ -1679,18 +1683,18 @@ export const actions = {
     if (!validateArgs(args, ["dataset", "filterParams"])) {
       return null;
     }
-    const filterParams = addHighlightToFilterParams(
+    let filterParams = addHighlightToFilterParams(
       args.filterParams,
       args.highlights,
       args.mode
     );
-
+    filterParams = setInvert(filterParams, !args.include);
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
     filterParams.dataMode = dataModeDefault;
 
     try {
       const response = await axios.post(
-        `distil/extract/${args.dataset}/${!args.include}`,
+        `distil/extract/${args.dataset}`,
         filterParams
       );
       return response.data;

@@ -30,7 +30,6 @@ func SaveDatasetHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStora
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
-		invert := parseBoolParam(pat.Param(r, "invert"))
 		params, err := getPostParameters(r)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
@@ -80,14 +79,14 @@ func SaveDatasetHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStora
 		}
 
 		// export needs to invert the filters
-		_, _, err = task.ExportDataset(dataset, metaStorage, dataStorage, invert, expandedFilterParams)
+		_, _, err = task.ExportDataset(dataset, metaStorage, dataStorage, expandedFilterParams)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
 		// delete rows based on filterParams
-		err = dataStorage.SaveDataset(dataset, ds.StorageName, !invert, expandedFilterParams)
+		err = dataStorage.SaveDataset(dataset, ds.StorageName, expandedFilterParams)
 		if err != nil {
 			handleError(w, err)
 			return

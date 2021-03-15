@@ -28,7 +28,7 @@ const (
 
 // Field defines behaviour for a database field type.
 type Field interface {
-	FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool, mode api.SummaryMode) (*api.VariableSummary, error)
+	FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.VariableSummary, error)
 	FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.VariableSummary, error)
 	GetStorage() *Storage
 	GetDatasetStorageName() string
@@ -43,8 +43,8 @@ type Field interface {
 // TimelineField defines the behaviour of a field which can be used as a timeline.
 type TimelineField interface {
 	Field
-	fetchHistogram(filterParams *api.FilterParams, invert bool, numBuckets int) (*api.Histogram, error)
-	fetchHistogramWithJoins(filterParams *api.FilterParams, invert bool, numBuckets int, joins []*joinDefinition, wheres []string, params []interface{}) (*api.Histogram, error)
+	fetchHistogram(filterParams *api.FilterParams, numBuckets int) (*api.Histogram, error)
+	fetchHistogramWithJoins(filterParams *api.FilterParams, numBuckets int, joins []*joinDefinition, wheres []string, params []interface{}) (*api.Histogram, error)
 }
 
 // BasicField provides access to baseline field data

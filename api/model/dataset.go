@@ -289,7 +289,7 @@ func FetchDataset(dataset string, includeIndex bool, includeMeta bool, filterPar
 		return nil, err
 	}
 
-	data, err := storageData.FetchData(dataset, metadata.StorageName, filterParams, false, false, nil)
+	data, err := storageData.FetchData(dataset, metadata.StorageName, filterParams, false, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to fetch data")
 	}

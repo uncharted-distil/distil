@@ -174,7 +174,7 @@ func getBandMapping(ds *api.Dataset, groupKey string, dataStorage api.DataStorag
 	filter.Variables = []string{fileCol.Key, bandCol.Key}
 
 	// pull back all rows for a group id
-	data, err := dataStorage.FetchData(ds.ID, ds.StorageName, filter, false, false, nil)
+	data, err := dataStorage.FetchData(ds.ID, ds.StorageName, filter, false, nil)
 	if err != nil {
 		return nil, err
 	}

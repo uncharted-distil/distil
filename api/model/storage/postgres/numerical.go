@@ -81,7 +81,7 @@ func NewNumericalFieldSubSelect(storage *Storage, datasetName string, datasetSto
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *NumericalField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool, mode api.SummaryMode) (*api.VariableSummary, error) {
+func (f *NumericalField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.VariableSummary, error) {
 
 	var baseline *api.Histogram
 	var filtered *api.Histogram
@@ -93,12 +93,12 @@ func (f *NumericalField) FetchSummaryData(resultURI string, filterParams *api.Fi
 	}
 
 	if resultURI == "" {
-		baseline, err = f.fetchHistogram(api.GetBaselineFilter(filterParams), invert, api.MaxNumBuckets)
+		baseline, err = f.fetchHistogram(api.GetBaselineFilter(filterParams), api.MaxNumBuckets)
 		if err != nil {
 			return nil, err
 		}
 		if !filterParams.Empty(true) {
-			filtered, err = f.fetchHistogram(filterParams, invert, api.MaxNumBuckets)
+			filtered, err = f.fetchHistogram(filterParams, api.MaxNumBuckets)
 			if err != nil {
 				return nil, err
 			}
@@ -125,15 +125,15 @@ func (f *NumericalField) FetchSummaryData(resultURI string, filterParams *api.Fi
 	}, nil
 }
 
-func (f *NumericalField) fetchHistogram(filterParams *api.FilterParams, invert bool, numBuckets int) (*api.Histogram, error) {
-	return f.fetchHistogramWithJoins(filterParams, invert, numBuckets, nil, []string{}, []interface{}{})
+func (f *NumericalField) fetchHistogram(filterParams *api.FilterParams, numBuckets int) (*api.Histogram, error) {
+	return f.fetchHistogramWithJoins(filterParams, numBuckets, nil, []string{}, []interface{}{})
 }
 
-func (f *NumericalField) fetchHistogramWithJoins(filterParams *api.FilterParams, invert bool, numBuckets int, joins []*joinDefinition, wheres []string, params []interface{}) (*api.Histogram, error) {
+func (f *NumericalField) fetchHistogramWithJoins(filterParams *api.FilterParams, numBuckets int, joins []*joinDefinition, wheres []string, params []interface{}) (*api.Histogram, error) {
 	fromClause := f.getFromClause(true)
 
 	// create the filter for the query.
-	wheres, params = f.Storage.buildFilteredQueryWhere(f.GetDatasetName(), wheres, params, "", filterParams, invert)
+	wheres, params = f.Storage.buildFilteredQueryWhere(f.GetDatasetName(), wheres, params, "", filterParams)
 	wheres = append(wheres, f.getNaNFilter())
 
 	// need the extrema to calculate the histogram interval
@@ -175,7 +175,7 @@ func (f *NumericalField) fetchHistogramWithJoins(filterParams *api.FilterParams,
 		return nil, err
 	}
 
-	stats, err := f.FetchNumericalStats(filterParams, invert)
+	stats, err := f.FetchNumericalStats(filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -566,13 +566,13 @@ func (f *NumericalField) fetchResultsExtrema(resultURI string, dataset string, r
 }
 
 // FetchNumericalStats gets the variable's numerical summary info (mean, stddev).
-func (f *NumericalField) FetchNumericalStats(filterParams *api.FilterParams, invert bool) (*NumericalStats, error) {
+func (f *NumericalField) FetchNumericalStats(filterParams *api.FilterParams) (*NumericalStats, error) {
 	fromClause := f.getFromClause(true)
 
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(f.GetDatasetName(), wheres, params, "", filterParams, invert)
+	wheres, params = f.Storage.buildFilteredQueryWhere(f.GetDatasetName(), wheres, params, "", filterParams)
 	wheres = append(wheres, f.getNaNFilter())
 
 	where := ""

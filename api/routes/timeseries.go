@@ -33,8 +33,6 @@ func TimeseriesHandler(metaCtor api.MetadataStorageCtor, ctorStorage api.DataSto
 		dataset := pat.Param(r, "dataset")
 		xColName := pat.Param(r, "xColName")
 		yColName := pat.Param(r, "yColName")
-		invert := pat.Param(r, "invert")
-		invertBool := parseBoolParam(invert)
 
 		// parse POST params
 		params, err := parsePostParms(r)
@@ -91,7 +89,7 @@ func TimeseriesHandler(metaCtor api.MetadataStorageCtor, ctorStorage api.DataSto
 
 			// fetch timeseries
 			timeseriesData, err := storage.FetchTimeseries(dataset, storageName, t.VarKey, variable.Grouping.GetIDCol(),
-				xColName, yColName, []string{t.SeriesID}, operation, filterParams, invertBool)
+				xColName, yColName, []string{t.SeriesID}, operation, filterParams)
 			if err != nil {
 				handleError(w, err)
 				return

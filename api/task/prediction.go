@@ -688,7 +688,7 @@ func CreateComposedVariable(metaStorage api.MetadataStorage, dataStorage api.Dat
 	}
 	// Fetch data using the source names as the filter
 	filter.Variables = append(filter.Variables, sourceVarNames...)
-	rawData, err := dataStorage.FetchData(dataset, storageName, filter, false, false, nil)
+	rawData, err := dataStorage.FetchData(dataset, storageName, filter, false, nil)
 	if err != nil {
 		return err
 	}

@@ -62,7 +62,7 @@ func Query(params QueryParams) (map[string]interface{}, error) {
 	}
 
 	// extract the dataset from the database
-	data, err := params.DataStorage.FetchDataset(params.Dataset, ds.StorageName, false, false, params.Filters)
+	data, err := params.DataStorage.FetchDataset(params.Dataset, ds.StorageName, false, params.Filters)
 	if err != nil {
 		return nil, err
 	}

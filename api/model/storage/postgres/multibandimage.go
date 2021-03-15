@@ -56,7 +56,7 @@ func NewMultiBandImageField(storage *Storage, datasetName string, datasetStorage
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *MultiBandImageField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool, mode api.SummaryMode) (*api.VariableSummary, error) {
+func (f *MultiBandImageField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.VariableSummary, error) {
 	var baseline *api.Histogram
 	var filtered *api.Histogram
 	var err error
@@ -67,12 +67,12 @@ func (f *MultiBandImageField) FetchSummaryData(resultURI string, filterParams *a
 	}
 
 	if resultURI == "" {
-		baseline, err = f.fetchHistogram(nil, invert, mode)
+		baseline, err = f.fetchHistogram(nil, mode)
 		if err != nil {
 			return nil, err
 		}
 		if !filterParams.Empty(true) {
-			filtered, err = f.fetchHistogram(filterParams, invert, mode)
+			filtered, err = f.fetchHistogram(filterParams, mode)
 			if err != nil {
 				return nil, err
 			}
@@ -143,11 +143,11 @@ func (f *MultiBandImageField) fetchRepresentationGroups(categoryBuckets []*api.B
 	return imageFiles, nil
 }
 
-func (f *MultiBandImageField) fetchHistogram(filterParams *api.FilterParams, invert bool, mode api.SummaryMode) (*api.Histogram, error) {
+func (f *MultiBandImageField) fetchHistogram(filterParams *api.FilterParams, mode api.SummaryMode) (*api.Histogram, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(f.GetDatasetName(), wheres, params, "", filterParams, invert)
+	wheres, params = f.Storage.buildFilteredQueryWhere(f.GetDatasetName(), wheres, params, "", filterParams)
 
 	prefixedVarName := f.featureVarName(mode)
 

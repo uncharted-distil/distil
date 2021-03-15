@@ -143,9 +143,9 @@ export const actions = {
     }
   ) {
     const filterParamsBlank = {
-      highlights: { list: [] },
+      highlights: { list: [], invert: false },
       variables: [],
-      filters: { list: [] },
+      filters: { list: [], invert: false },
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -183,9 +183,9 @@ export const actions = {
     }
   ) {
     const filterParamsBlank = {
-      highlights: { list: [] },
+      highlights: { list: [], invert: false },
       variables: [],
-      filters: { list: [] },
+      filters: { list: [], invert: false },
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -248,10 +248,10 @@ export const actions = {
     }
 
     let filterParams = {
-      highlights: { list: [] },
+      highlights: { list: [], invert: false },
       variables: [],
-      filters: { list: [] },
-    };
+      filters: { list: [], invert: false },
+    } as FilterParams;
     filterParams = addHighlightToFilterParams(filterParams, args.highlights);
     try {
       const response = await axios.post(
@@ -285,11 +285,11 @@ export const actions = {
       size?: number;
     }
   ) {
-    let filterParams: FilterParams = {
-      highlights: { list: [] },
+    let filterParams = {
+      highlights: { list: [], invert: false },
       variables: [],
-      filters: { list: [] },
-    };
+      filters: { list: [], invert: false },
+    } as FilterParams;
     filterParams = addHighlightToFilterParams(filterParams, args.highlights);
 
     // Add the size limit to results if provided.
@@ -349,10 +349,10 @@ export const actions = {
     }
 
     let filterParams = {
-      highlights: { list: [] },
+      highlights: { list: [], invert: false },
       variables: [],
-      filters: { list: [] },
-    };
+      filters: { list: [], invert: false },
+    } as FilterParams;
     filterParams = addHighlightToFilterParams(filterParams, args.highlights);
 
     const endpoint = `/distil/prediction-result-summary`;

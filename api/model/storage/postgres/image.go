@@ -51,7 +51,7 @@ func NewImageField(storage *Storage, datasetName string, datasetStorageName stri
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *ImageField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool, mode api.SummaryMode) (*api.VariableSummary, error) {
+func (f *ImageField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.VariableSummary, error) {
 	var baseline *api.Histogram
 	var filtered *api.Histogram
 	var err error
@@ -62,12 +62,12 @@ func (f *ImageField) FetchSummaryData(resultURI string, filterParams *api.Filter
 	}
 
 	if resultURI == "" {
-		baseline, err = f.fetchHistogram(nil, invert, mode)
+		baseline, err = f.fetchHistogram(nil, mode)
 		if err != nil {
 			return nil, err
 		}
 		if !filterParams.Empty(true) {
-			filtered, err = f.fetchHistogram(filterParams, invert, mode)
+			filtered, err = f.fetchHistogram(filterParams, mode)
 			if err != nil {
 				return nil, err
 			}
@@ -139,11 +139,11 @@ func (f *ImageField) fetchRepresentationImages(categoryBuckets []*api.Bucket, mo
 	return imageFiles, nil
 }
 
-func (f *ImageField) fetchHistogram(filterParams *api.FilterParams, invert bool, mode api.SummaryMode) (*api.Histogram, error) {
+func (f *ImageField) fetchHistogram(filterParams *api.FilterParams, mode api.SummaryMode) (*api.Histogram, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(f.GetDatasetName(), wheres, params, "", filterParams, invert)
+	wheres, params = f.Storage.buildFilteredQueryWhere(f.GetDatasetName(), wheres, params, "", filterParams)
 
 	prefixedVarName := f.featureVarName(mode)
 

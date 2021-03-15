@@ -56,7 +56,7 @@ func NewCoordinateField(key string, storage *Storage, datasetName string, datase
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *CoordinateField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool, mode api.SummaryMode) (*api.VariableSummary, error) {
+func (f *CoordinateField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.VariableSummary, error) {
 	var baseline *api.Histogram
 	var filtered *api.Histogram
 	var err error
@@ -67,12 +67,12 @@ func (f *CoordinateField) FetchSummaryData(resultURI string, filterParams *api.F
 	}
 
 	if resultURI == "" {
-		baseline, err = f.fetchHistogram(nil, invert, coordinateBuckets)
+		baseline, err = f.fetchHistogram(nil, coordinateBuckets)
 		if err != nil {
 			return nil, err
 		}
 		if !filterParams.Empty(true) {
-			filtered, err = f.fetchHistogram(filterParams, invert, coordinateBuckets)
+			filtered, err = f.fetchHistogram(filterParams, coordinateBuckets)
 			if err != nil {
 				return nil, err
 			}
@@ -101,11 +101,11 @@ func (f *CoordinateField) FetchSummaryData(resultURI string, filterParams *api.F
 	}, nil
 }
 
-func (f *CoordinateField) fetchHistogram(filterParams *api.FilterParams, invert bool, numBuckets int) (*api.Histogram, error) {
+func (f *CoordinateField) fetchHistogram(filterParams *api.FilterParams, numBuckets int) (*api.Histogram, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(f.GetDatasetName(), wheres, params, "", filterParams, invert)
+	wheres, params = f.Storage.buildFilteredQueryWhere(f.GetDatasetName(), wheres, params, "", filterParams)
 
 	where := ""
 	if len(wheres) > 0 {
