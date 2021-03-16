@@ -38,7 +38,9 @@ export function resultSummariesToVariables(solutionID: string): Variable[] {
   ];
   const variables = [];
   summaries.forEach((sum) => {
-    if (sum) {
+    // make sure to exclude pending summaries since they
+    // won't have all of their information available
+    if (sum && !sum.pending) {
       variables.push(summaryToVariable(sum));
     }
   });
