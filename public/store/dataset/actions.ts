@@ -394,11 +394,10 @@ export const actions = {
   },
 
   /** Request the outlier detection results for a specific dataset. */
-  async fetchOutliers(context: DatasetContext, args: { dataset: string }) {
+  async fetchOutliers(context: DatasetContext, dataset: string) {
     // Check if the outlier detection has already been applied.
     if (routeGetters.isOutlierApplied(store)) return;
 
-    const { dataset } = args;
     const variableName = getOutlierVariableName();
 
     // Create the request.
@@ -416,7 +415,14 @@ export const actions = {
 
     // Run the outlier detection
     try {
-      await axios.get(`/distil/outlier-detection/${dataset}/${variableName}`);
+      const url = `/distil/outlier-detection/${dataset}/${variableName}`;
+      const response = await axios.get(url);
+
+      // If we received no data, or the outlier has no results.
+      if (!response.data || !response.data.success) {
+        throw "The outlier detection has no results";
+      }
+
       status = DatasetPendingRequestStatus.RESOLVED;
     } catch (error) {
       console.error(error);
@@ -428,14 +434,28 @@ export const actions = {
   },
 
   /** Add the outliers data has an unselectable variable to a dataset. */
-  async applyOutliers(context: DatasetContext, dataset: string) {
+  async applyOutliers(
+    context: DatasetContext,
+    dataset: string
+  ): Promise<boolean> {
+    let result = false;
     const variableName = getOutlierVariableName();
 
     try {
-      await axios.get(`/distil/outlier-results/${dataset}/${variableName}`);
+      const url = `/distil/outlier-results/${dataset}/${variableName}`;
+      const response = await axios.get(url);
+
+      // If we received no data, or the outlier has no results.
+      if (!response.data || !response.data.success) {
+        throw "The outlier detection has no results";
+      }
+
+      result = response.data.success;
     } catch (error) {
       console.error(error);
     }
+
+    return result;
   },
 
   async uploadDataFile(

@@ -270,9 +270,7 @@ const fetchClusters = createCacheable(
 const fetchOutliers = createCacheable(
   ParamCacheKey.OUTLIERS,
   (context, args) => {
-    datasetActions.fetchOutliers(store, {
-      dataset: args.dataset,
-    });
+    datasetActions.fetchOutliers(store, args.dataset);
   }
 );
 

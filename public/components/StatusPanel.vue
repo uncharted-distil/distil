@@ -272,7 +272,11 @@ export default Vue.extend({
 
     async applyOutlierChange() {
       this.clearData();
-      await datasetActions.applyOutliers(this.$store, this.dataset);
+      const success = await datasetActions.applyOutliers(
+        this.$store,
+        this.dataset
+      );
+      if (!success) return;
 
       // Update the variables, which should now include the outlier variable.
       datasetActions.fetchVariables(this.$store, { dataset: this.dataset });
