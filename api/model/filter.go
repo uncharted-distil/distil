@@ -59,6 +59,7 @@ type FilterParams struct {
 	DataMode   DataMode     `json:"dataMode"`
 }
 
+// FilterObject captures a collection of invertable filters.
 type FilterObject struct {
 	List   []*model.Filter `json:"list"`
 	Invert bool            `json:"invert"`

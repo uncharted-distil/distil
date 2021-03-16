@@ -183,7 +183,7 @@ func (m *Media) CreateDataset(rootDataPath string, datasetName string, config *e
 
 	// create the data resource for the referenced media
 	refDR := model.NewDataResource("0", mediaTypeMap[m.TargetMediaType], map[string][]string{mediaFormatMap[m.TargetMediaType]: mediaTypeContentMap[m.TargetMediaType]})
-	refDR.ResPath = path.Base(mediaFolder)
+	refDR.ResPath = mediaFolder
 	refDR.IsCollection = true
 
 	meta.DataResources = []*model.DataResource{refDR, dr}
