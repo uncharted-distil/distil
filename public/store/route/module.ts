@@ -46,9 +46,6 @@ export const getters = {
   getAnnotationHasChanged: read(moduleGetters.getAnnotationHasChanged),
   getRouteJoinDatasetsHash: read(moduleGetters.getRouteJoinDatasetsHash),
   getJoinDatasetsVariables: read(moduleGetters.getJoinDatasetsVariables),
-  getJoinDatasetsVariableSummaries: read(
-    moduleGetters.getJoinDatasetsVariableSummaries
-  ),
   getExploreVariables: read(moduleGetters.getExploreVariables),
   getRouteTrainingVariables: read(moduleGetters.getRouteTrainingVariables),
   getRouteIsTrainingVariablesRanked: read(

@@ -19,9 +19,10 @@ import { JOIN_DATASETS_ROUTE } from "../store/route/index";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { createRouteEntry } from "./routes";
-import { addRecentDataset } from "./data";
+import { addRecentDataset, minimumRouteKey } from "./data";
 import store from "../store/store";
 import VueRouter from "vue-router";
+import { VariableSummary } from "../store/dataset";
 
 export function loadJoinedDataset(
   router: VueRouter,
@@ -59,4 +60,15 @@ export function loadJoinView(
     target: target,
   });
   router.push(entry).catch((err) => console.warn(err));
+}
+
+export function getVariableSummaries(context): VariableSummary[] {
+  const variables = routeGetters.getJoinDatasetsVariables(context);
+  const summaries = datasetGetters.getVariableSummariesDictionary(context);
+  const routeKey = minimumRouteKey();
+  const result = [];
+  variables.forEach((v) => {
+    if (summaries[v.key]) result.push(summaries[v.key][routeKey]);
+  });
+  return result;
 }

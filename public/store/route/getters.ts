@@ -130,23 +130,6 @@ export const getters = {
       !state.query.annotationHasChanged;
     return hasChanged;
   },
-  getJoinDatasetsVariableSummaries(
-    state: Route,
-    getters: any
-  ): VariableSummary[] {
-    function hashSummary(datasetName: string, key: string) {
-      return `${datasetName}:${key}`.toLowerCase();
-    }
-
-    const variables = getters.getJoinDatasetsVariables;
-    const lookup = buildLookup(
-      variables.map((v) => hashSummary(v.datasetName, v.key))
-    );
-    const summaries = getters.getVariableSummaries ?? ([] as VariableSummary[]);
-    return summaries.filter(
-      (summary) => lookup[hashSummary(summary.dataset, summary.key)]
-    );
-  },
 
   getJoinDatasetColumnA(state: Route, getters: any): string {
     return state.query.joinColumnA as string;
@@ -195,8 +178,9 @@ export const getters = {
         });
 
         const filterParams = _.cloneDeep({
-          filters: filtersForDataset,
+          filters: { list: filtersForDataset },
           variables: dataset.variables.map((v) => v.key),
+          highlights: { list: [] },
         });
         res[datasetID] = filterParams;
       }

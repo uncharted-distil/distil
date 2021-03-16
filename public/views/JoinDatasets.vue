@@ -30,15 +30,14 @@
 
     <div class="row flex-1 pb-3 h-100">
       <variable-facets
-        class="col-12 col-md-3 d-flex h-100 pt-2"
+        class="col-12 col-md-3 d-flex h-50 pt-2"
         enable-search
         enable-type-change
         enable-highlighting
         :instance-name="instanceName"
         :rows-per-page="numRowsPerPage"
         :summaries="variableSummaries"
-      >
-      </variable-facets>
+      />
       <div class="col-12 col-md-9 d-flex flex-column h-100">
         <div class="row flex-1 pb-3">
           <join-data-slot
@@ -128,6 +127,7 @@ import { JOINED_VARS_INSTANCE } from "../store/route/index";
 import { actions as viewActions } from "../store/view/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as datasetGetters } from "../store/dataset/module";
+import { getVariableSummaries } from "../util/join";
 
 export default Vue.extend({
   name: "join-datasets",
@@ -144,7 +144,7 @@ export default Vue.extend({
       return routeGetters.getRouteJoinDatasets(this.$store);
     },
     variableSummaries(): VariableSummary[] {
-      return routeGetters.getJoinDatasetsVariableSummaries(this.$store);
+      return getVariableSummaries(this.$store);
     },
     numRowsPerPage(): number {
       return NUM_PER_PAGE;
