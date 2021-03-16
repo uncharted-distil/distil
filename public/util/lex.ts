@@ -15,12 +15,7 @@
  *    limitations under the License.
  */
 
-import {
-  GeoCoordinateGrouping,
-  Highlight,
-  TimeseriesGrouping,
-  Variable,
-} from "../store/dataset";
+import { Highlight, Variable } from "../store/dataset";
 import {
   isNumericType,
   dateToNum,
@@ -29,8 +24,6 @@ import {
   TIMESERIES_TYPE,
   GEOCOORDINATE_TYPE,
   GEOBOUNDS_TYPE,
-  MULTIBAND_IMAGE_TYPE,
-  NUMERIC_TYPE,
 } from "./types";
 import {
   decodeFilters,
@@ -60,7 +53,7 @@ import { Dictionary } from "./dict";
 
 const HIGHLIGHT = "highlight";
 
-/* 
+/*
   These are the custom relation options for our distil lex grammar that map our
   filter and highlight actions to lex bar style relation options. Should we
   ever want even more complex filter relations, we can extend these options.
@@ -227,7 +220,7 @@ export function filterParamsToLexQuery(
 }
 
 /*
-  This translates a lex query's relation and value states to generate a new 
+  This translates a lex query's relation and value states to generate a new
   highlight and filter state so that it can be used to update the route and so
   update the filter and highlight state of the application.
 */
@@ -319,11 +312,11 @@ function modeToRelation(mode: string): ValueStateValue {
   }
 }
 
-/* 
+/*
   Formats distil variables to Lex Suggestions AKA ValueStateValues so they can
   be used in the Lex Language and in translating filter/highlight state into a
-  lex query. Also ungroups some variables such that we can use them in lex 
-  queries as that reflects the current filter/highlight behavior. 
+  lex query. Also ungroups some variables such that we can use them in lex
+  queries as that reflects the current filter/highlight behavior.
 */
 function variablesToLexSuggestions(variables: Variable[]): ValueStateValue[] {
   if (!variables) return;
@@ -373,8 +366,8 @@ function colTypeToOptionType(colType: string): string {
 }
 
 /*
-  Convert Distil Variable Array To a Dictionary For O(1) look up. Used when 
-  converting a filter/highlight from the distil format to a lex query. 
+  Convert Distil Variable Array To a Dictionary For O(1) look up. Used when
+  converting a filter/highlight from the distil format to a lex query.
 */
 function buildVariableDictionary(variables: Variable[]) {
   return variables.reduce((a, v) => {

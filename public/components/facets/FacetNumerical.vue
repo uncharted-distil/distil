@@ -72,8 +72,8 @@ import "@uncharted.software/facets-core";
 import "@uncharted.software/facets-plugins";
 import { FacetBarsData } from "@uncharted.software/facets-core/dist/types/facet-bars/FacetBars";
 
-import TypeChangeMenu from "../TypeChangeMenu";
-import ImportanceBars from "../ImportanceBars";
+import TypeChangeMenu from "../TypeChangeMenu.vue";
+import ImportanceBars from "../ImportanceBars.vue";
 import { Highlight, RowSelection, VariableSummary } from "../../store/dataset";
 import {
   getSubSelectionValues,
@@ -108,7 +108,10 @@ export default Vue.extend({
       Function as () => Function,
     ],
     expandCollapse: Function as () => Function,
-    highlights: Array as () => Highlight[],
+    highlights: {
+      type: Array as () => Highlight[],
+      default: () => [] as Highlight[],
+    },
     enableHighlighting: Boolean as () => boolean,
     instanceName: String as () => string,
     rowSelection: Object as () => RowSelection,

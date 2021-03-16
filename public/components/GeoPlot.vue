@@ -272,7 +272,6 @@ export default Vue.extend({
 
   data() {
     return {
-      poiLayer: null,
       map: null,
       tileRenderer: null,
       overlay: null,
@@ -280,7 +279,6 @@ export default Vue.extend({
       markers: null,
       areasMeanLng: 0,
       closeButton: null,
-      startingLatLng: null,
       currentRect: null,
       selectedRect: null,
       isSelectionMode: false,
@@ -317,6 +315,7 @@ export default Vue.extend({
       confidenceIconClass: "confidence-icon",
       isSatelliteView: false,
       tileAreaThreshold: 170, // area in pixels
+      boundsInitialized: false,
     };
   },
 
@@ -1299,6 +1298,12 @@ export default Vue.extend({
         quads,
         this.currentState.drawMode()
       );
+
+      if (!this.boundsInitialized) {
+        const mapBounds = this.getBounds(quads);
+        this.map.fitToBounds(mapBounds);
+        this.boundsInitialized = true;
+      }
     },
   },
 });
