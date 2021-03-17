@@ -402,7 +402,7 @@ export const actions = {
       datasetActions.fetchIncludedVariableSummaries(store, {
         dataset: datasetA.id,
         variables: datasetA.variables,
-        filterParams: filterParams,
+        filterParams: filterParams[datasetA.id],
         highlights: highlights,
         dataMode: dataMode,
         varModes: varModes,
@@ -410,7 +410,7 @@ export const actions = {
       datasetActions.fetchIncludedVariableSummaries(store, {
         dataset: datasetB.id,
         variables: datasetB.variables,
-        filterParams: filterParams,
+        filterParams: filterParams[datasetB.id],
         highlights: highlights,
         dataMode: dataMode,
         varModes: varModes,

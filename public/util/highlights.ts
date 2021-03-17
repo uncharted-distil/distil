@@ -19,6 +19,7 @@ import { Highlight } from "../store/dataset/index";
 import {
   Filter,
   FilterParams,
+  FilterObject,
   CATEGORICAL_FILTER,
   CLUSTER_FILTER,
   VECTOR_FILTER,
@@ -96,6 +97,12 @@ export function setInvert(
   invert: boolean
 ): FilterParams {
   const fp = cloneFilters(filterParams);
+  if (!fp.highlights) {
+    fp.highlights = { list: [], invert } as FilterObject;
+  }
+  if (!fp.filters) {
+    fp.filters = { list: [], invert } as FilterObject;
+  }
   fp.highlights.invert = fp.highlights.invert ?? invert;
   fp.filters.invert = fp.filters.invert ?? invert;
   return fp;
