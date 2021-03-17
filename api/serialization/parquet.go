@@ -33,6 +33,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
+	"github.com/uncharted-distil/distil/api/util"
 )
 
 // Parquet represents a dataset storage backed with parquet data and json schema doc.
@@ -100,9 +101,25 @@ func (d *Parquet) ReadData(uri string) ([][]string, error) {
 
 	colCount := pr.SchemaHandler.GetColumnNum()
 	rowCount := pr.GetNumRows()
-	dataByCol := make([][]string, colCount)
-	for i := int64(0); i < colCount; i++ {
-		colRaw, err := d.readColumn(pr, i, rowCount)
+	headerRowCount := rowCount + 1
+
+	// Allocate output memory for rows + header
+	output := make([][]string, headerRowCount)
+	for i := int64(0); i < headerRowCount; i++ {
+		output[i] = make([]string, colCount)
+	}
+
+	// Save the header
+	header, err := d.ReadRawVariables(uri)
+	if err != nil {
+		return nil, err
+	}
+	output[0] = header
+
+	util.StartMemLogging(5000)
+	for colIdx := int64(0); colIdx < colCount; colIdx++ {
+		// Read in column data
+		colRaw, err := d.readColumn(pr, colIdx, rowCount)
 		if err != nil {
 			fr.Close()
 			pr.ReadStop()
@@ -116,31 +133,20 @@ func (d *Parquet) ReadData(uri string) ([][]string, error) {
 				pr.ReadStop()
 				return nil, errors.Wrap(err, "unable to open parquet file reader")
 			}
-			colRaw, err = d.readColumn(pr, i, rowCount)
+			colRaw, err = d.readColumn(pr, colIdx, rowCount)
 			if err != nil {
 				return nil, err
 			}
 		}
-		dataByCol[i] = d.columnToString(colRaw, *pr.SchemaHandler.SchemaElements[i+1].Type)
+
+		// Write column data into each row
+		colStrings := d.columnToString(colRaw, *pr.SchemaHandler.SchemaElements[colIdx+1].Type)
+		for rowIdx := int64(0); rowIdx < rowCount; rowIdx++ {
+			output[rowIdx+1][colIdx] = colStrings[rowIdx] // offset by to account for header
+		}
 	}
 	fr.Close()
 	pr.ReadStop()
-
-	// header is the expected first row of the output
-	header, err := d.ReadRawVariables(uri)
-	if err != nil {
-		return nil, err
-	}
-
-	output := make([][]string, rowCount+1)
-	output[0] = header
-	for rowIndex := 0; rowIndex < int(rowCount); rowIndex++ {
-		outputRowIndex := rowIndex + 1
-		output[outputRowIndex] = make([]string, colCount)
-		for colIndex := 0; colIndex < int(colCount); colIndex++ {
-			output[outputRowIndex][colIndex] = dataByCol[colIndex][rowIndex]
-		}
-	}
 
 	return output, nil
 }
