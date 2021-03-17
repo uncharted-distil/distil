@@ -20,9 +20,10 @@ import { getters as routeGetters } from "../store/route/module";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { createRouteEntry } from "./routes";
 import { addRecentDataset, minimumRouteKey } from "./data";
-import store from "../store/store";
+import store, { DistilState } from "../store/store";
 import VueRouter from "vue-router";
 import { VariableSummary } from "../store/dataset";
+import { Store } from "vuex";
 
 export function loadJoinedDataset(
   router: VueRouter,
@@ -62,11 +63,13 @@ export function loadJoinView(
   router.push(entry).catch((err) => console.warn(err));
 }
 
-export function getVariableSummaries(context): VariableSummary[] {
+export function getVariableSummaries(
+  context: Store<DistilState>
+): VariableSummary[] {
   const variables = routeGetters.getJoinDatasetsVariables(context);
   const summaries = datasetGetters.getVariableSummariesDictionary(context);
   const routeKey = minimumRouteKey();
-  const result = [];
+  const result = [] as VariableSummary[];
   variables.forEach((v) => {
     if (summaries[v.key]) result.push(summaries[v.key][routeKey]);
   });
