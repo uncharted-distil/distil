@@ -29,7 +29,6 @@ import (
 	goji "goji.io/v3"
 	"goji.io/v3/pat"
 
-	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	c_util "github.com/uncharted-distil/distil-image-upscale/c_util"
 	api "github.com/uncharted-distil/distil/api/compute"
@@ -51,11 +50,9 @@ import (
 )
 
 var (
-	version        = "unset"
-	timestamp      = "unset"
-	problemPath    = ""
-	datasetDocPath = ""
-	ta2Version     = ""
+	version    = "unset"
+	timestamp  = "unset"
+	ta2Version = ""
 )
 
 func registerRoute(mux *goji.Mux, pattern string, handler func(http.ResponseWriter, *http.Request)) {
@@ -202,9 +199,6 @@ func main() {
 		}
 	}
 
-	// NOTE: EVAL ONLY OVERRIDE SETUP FOR METRICS!
-	problemPath = path.Join(config.D3MInputDir, "TRAIN", "problem_TRAIN", api.D3MProblem)
-
 	// set the postgres random seed for data table reading
 	pg.SetRandomSeed(config.PostgresRandomSeed)
 
@@ -226,53 +220,6 @@ func main() {
 	}
 	datamartCtors[es.Provenance] = esMetadataStorageCtor
 
-	// set extremas
-	//esStorage, err := esMetadataStorageCtor()
-	//if err != nil {
-	//	log.Errorf("%+v", err)
-	//	os.Exit(1)
-	//}
-
-	//pgStorage, err := pgDataStorageCtor()
-	//if err != nil {
-	//	log.Errorf("%+v", err)
-	//	os.Exit(1)
-	//}
-
-	//err = updateExtremas(esStorage, pgStorage)
-	//if err != nil {
-	//	log.Errorf("%+v", err)
-	//	os.Exit(1)
-	//}
-
-	// Ingest the data specified by the environment
-	if config.InitialDataset != "" && !config.SkipIngest {
-
-		log.Infof("Loading initial dataset '%s'", config.InitialDataset)
-		err = util.Copy(path.Join(config.InitialDataset, "TRAIN", "dataset_TRAIN"), path.Join(config.DatamartImportFolder, "initial"))
-		if err != nil {
-			log.Errorf("%+v", err)
-			os.Exit(1)
-		}
-		ingestParams := &task.IngestParams{
-			Source:   metadata.Contrib,
-			DataCtor: pgDataStorageCtor,
-			MetaCtor: esMetadataStorageCtor,
-			ID:       "initial",
-			Origins:  nil,
-			Type:     model.DatasetTypeModelling,
-		}
-		steps := &task.IngestSteps{
-			ClassificationOverwrite: true,
-			VerifyMetadata:          true,
-			FallbackMerged:          true,
-		}
-		_, err = task.IngestDataset(ingestParams, ingestConfig, steps)
-		if err != nil {
-			log.Errorf("%+v", err)
-			os.Exit(1)
-		}
-	}
 	// Loads image enhancement library
 	if config.ShouldScaleImages {
 		err = c_util.LoadImageUpscaleLibrary(c_util.GetModelType(config.ModelType))
@@ -304,7 +251,7 @@ func main() {
 	registerRoute(mux, "/distil/variable-rankings/:dataset/:target", routes.VariableRankingHandler(esMetadataStorageCtor))
 	registerRoute(mux, "/distil/residuals-extrema/:dataset/:target", routes.ResidualsExtremaHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/export/:solution-id", routes.ExportHandler(solutionClient, config.D3MOutputDir, discoveryLogger))
-	registerRoute(mux, "/distil/config", routes.ConfigHandler(config, version, timestamp, problemPath, datasetDocPath, ta2Version))
+	registerRoute(mux, "/distil/config", routes.ConfigHandler(config, version, timestamp, ta2Version))
 	registerRoute(mux, "/distil/task/:dataset/:target/:variables", routes.TaskHandler(pgDataStorageCtor, esMetadataStorageCtor))
 	registerRoute(mux, "/distil/multiband-image/:dataset/:image-id/:band-combination/:is-thumbnail/*", routes.MultiBandImageHandler(esMetadataStorageCtor, pgDataStorageCtor, config))
 	registerRoute(mux, "/distil/multiband-combinations/:dataset", routes.MultiBandCombinationsHandler(esMetadataStorageCtor))
@@ -371,28 +318,6 @@ func main() {
 	graceful.Wait()
 }
 
-//nolint
-func updateExtremas(metaStorage model.MetadataStorage, dataStorage model.DataStorage) error {
-	log.Infof("updating extremas on startup")
-	datasets, err := metaStorage.FetchDatasets(false, false, false)
-	if err != nil {
-		return err
-	}
-
-	for _, d := range datasets {
-		log.Infof("updating extremas for dataset %s", d.Name)
-		err = task.UpdateExtremas(d.ID, metaStorage, dataStorage)
-		if err != nil {
-			return err
-		}
-		log.Infof("done updating extremas for %s", d.Name)
-	}
-
-	log.Infof("done updating all extremas")
-
-	return nil
-}
-
 func createOutputFolders(config *env.Config) {
 	// create the augmented data folder
 	augmentPath := env.GetAugmentedPath()
@@ -404,5 +329,11 @@ func createOutputFolders(config *env.Config) {
 	publicPath := env.GetPublicPath()
 	if err := os.MkdirAll(publicPath, os.ModePerm); err != nil {
 		log.Error(errors.Wrap(err, "failed to created public folder"))
+	}
+
+	// create the public data folder
+	batchPath := env.GetBatchPath()
+	if err := os.MkdirAll(batchPath, os.ModePerm); err != nil {
+		log.Error(errors.Wrap(err, "failed to created batch folder"))
 	}
 }
