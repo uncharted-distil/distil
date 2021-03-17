@@ -174,7 +174,10 @@ var (
 		"float":   true,
 		"real":    true,
 	}
-	wordRegex = regexp.MustCompile("[^a-zA-Z]")
+	wordRegex     = regexp.MustCompile("[^a-zA-Z]")
+	resultIndices = []string{
+		"result_id",
+	}
 )
 
 // Database is a struct representing a full logical database.
@@ -429,6 +432,15 @@ func (d *Database) CreateResultTable(tableName string) error {
 	_, err = d.Client.Exec(createStatement)
 	if err != nil {
 		return err
+	}
+
+	log.Infof("creating indices on result table %s", resultTableName)
+	for i, index := range resultIndices {
+		indexStatement := fmt.Sprintf("CREATE INDEX idx%d_%s ON %s (%s)", i+1, resultTableName, resultTableName, index)
+		_, err = d.Client.Exec(indexStatement)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
