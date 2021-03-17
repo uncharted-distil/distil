@@ -17,7 +17,7 @@
 
 <template>
   <div
-    v-observe-visibility="{ callback: visibilityChanged }"
+    v-observe-visibility="visibilityChanged"
     :class="{ 'is-hidden': !isVisible && !preventHiding }"
     :style="{
       width: `${width}px`, // + 2 for boarder
@@ -26,9 +26,7 @@
     }"
   >
     <div class="image-container" :class="{ selected: isSelected && isLoaded }">
-      <template v-if="!isLoaded">
-        <div v-html="spinnerHTML"></div>
-      </template>
+      <div v-if="!isLoaded" v-html="spinnerHTML" />
       <template v-else-if="!stopSpinner">
         <div
           ref="imageElem"
@@ -44,19 +42,18 @@
         />
         <i class="fa fa-search-plus zoom-icon" @click.stop="showZoomedImage" />
       </template>
+      <img v-else alt="image unavailable" />
     </div>
 
     <image-drilldown
-      :url="imageUrl"
-      :type="type"
+      :image-urls="overlappedUrls"
       :info="imageDrilldown"
+      :initial-position="imageDrilldownPosition"
       :items="[row]"
+      :type="type"
+      :url="imageUrl"
       :visible="!!zoomImage"
       @hide="hideZoomImage"
-      :imageUrls="overlappedUrls"
-      :initialPosition="
-        overlappedUrls.length ? overlappedUrls.indexOf(imageUrl) : 0
-      "
     />
   </div>
 </template>
@@ -71,7 +68,7 @@ import {
   mutations as datasetMutations,
 } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
-import { circleSpinnerHTML } from "../util/spinner";
+import { circleSpinnerHTML as spinnerHTML } from "../util/spinner";
 import {
   D3M_INDEX_FIELD,
   TableRow,
@@ -90,29 +87,143 @@ export default Vue.extend({
   },
 
   props: {
-    row: Object as () => TableRow,
-    imageUrl: String as () => string,
+    row: { type: Object as () => TableRow, default: null as TableRow },
+    imageUrl: { type: String as () => string, default: null },
     overlappedUrls: {
       type: Array as () => string[],
       default: () => [] as string[],
     },
     uniqueTrail: { type: String as () => string, default: "" },
-    type: String as () => string,
-    width: {
-      default: 64,
-      type: Number as () => number,
-    },
-    height: {
-      default: 64,
-      type: Number as () => number,
-    },
-    preventHiding: {
-      default: false,
-      type: Boolean as () => boolean,
-    },
+    type: { type: String as () => string, default: IMAGE_TYPE },
+    width: { type: Number as () => number, default: 64 },
+    height: { type: Number as () => number, default: 64 },
+    preventHiding: { type: Boolean as () => boolean, default: false },
     gray: { type: Number, default: 0 }, // support for graying images.
     debounce: { type: Boolean as () => boolean, default: false },
     debounceWaitTime: { type: Number as () => number, default: 500 },
+  },
+
+  data() {
+    return {
+      debouncedRequestImage: null,
+      getImage: null,
+      hasRendered: false,
+      hasRequested: false,
+      imageAttentionHasRendered: false,
+      isVisible: false,
+      stopSpinner: false,
+      zoomedHeight: 400,
+      zoomImage: false,
+      zoomedWidth: 400,
+    };
+  },
+
+  computed: {
+    colorScale(): ColorScaleNames {
+      return routeGetters.getColorScale(this.$store);
+    },
+
+    imageId(): string {
+      return this.imageUrl?.split(/_B[0-9][0-9a-zA-Z][.]/)[0];
+    },
+
+    imageDrilldown(): DrillDownInfo {
+      return {
+        band: this.band,
+        title: this.imageUrl,
+      };
+    },
+
+    imageDrilldownPosition(): number {
+      return this.overlappedUrls.length
+        ? this.overlappedUrls.indexOf(this.imageUrl)
+        : 0;
+    },
+
+    files(): Dictionary<any> {
+      return datasetGetters.getFiles(this.$store);
+    },
+
+    imageParamUrl(): string {
+      return this.uniqueTrail.length
+        ? `${this.imageUrl}/${this.uniqueTrail}`
+        : this.imageUrl;
+    },
+
+    imageParamId(): string {
+      return this.uniqueTrail.length
+        ? `${this.imageId}/${this.uniqueTrail}`
+        : this.imageId;
+    },
+
+    isLoaded(): boolean {
+      if (this.type === IMAGE_TYPE) {
+        return !!this.files[this.imageUrl] || this.stopSpinner;
+      }
+
+      return (
+        (!!this.files[this.imageParamUrl] && !!this.files[this.imageParamId]) ||
+        this.stopSpinner
+      );
+    },
+
+    imageAttentionIsLoaded(): boolean {
+      return (
+        !!this.solutionId &&
+        !!this.row &&
+        !!this.files[this.solutionId + this.row.d3mIndex]
+      );
+    },
+
+    image(): HTMLImageElement {
+      if (this.type === IMAGE_TYPE) {
+        return this.files[this.imageUrl] ?? null;
+      }
+      return (
+        this.files[this.imageParamUrl] ?? this.files[this.imageParamId] ?? null
+      );
+    },
+
+    imageAttentionId(): string {
+      return this.solutionId + this.row.d3mIndex;
+    },
+
+    imageAttention(): HTMLImageElement {
+      return this.files[this.solutionId + this.row?.d3mIndex] ?? null;
+    },
+
+    dataset(): string {
+      const dataset = routeGetters.getRoutePredictionsDataset(this.$store);
+      if (dataset) {
+        return dataset;
+      }
+      return routeGetters.getRouteDataset(this.$store);
+    },
+
+    rowSelection(): RowSelection {
+      return routeGetters.getDecodedRowSelection(this.$store);
+    },
+
+    isSelected(): boolean {
+      if (this.row) {
+        return isRowSelected(this.rowSelection, this.row[D3M_INDEX_FIELD]);
+      }
+      return false;
+    },
+
+    band(): string {
+      return routeGetters.getBandCombinationId(this.$store);
+    },
+
+    hasImageAttention(): boolean {
+      return routeGetters.getImageAttention(this.$store);
+    },
+
+    solutionId(): string {
+      return routeGetters.getRouteSolutionId(this.$store);
+    },
+
+    spinnerHTML,
   },
 
   watch: {
@@ -125,9 +236,7 @@ export default Vue.extend({
       });
     },
     imageUrl(newUrl: string, oldUrl: string) {
-      if (newUrl === null) {
-        return;
-      }
+      if (newUrl === null) return;
       if (newUrl !== oldUrl) {
         this.cleanUp();
         this.hasRendered = false;
@@ -139,7 +248,7 @@ export default Vue.extend({
     async hasImageAttention() {
       await this.handleImageAttention();
     },
-    async row(newRow: TableRow, oldRow: TableRow) {
+    async row() {
       await this.handleImageAttention();
     },
     async colorScale() {
@@ -173,111 +282,42 @@ export default Vue.extend({
     },
   },
 
-  data() {
-    return {
-      debouncedRequestImage: null,
-      entry: null,
-      getImage: null,
-      hasRendered: false,
-      hasRequested: false,
-      imageAttentionHasRendered: false,
-      isVisible: false,
-      stopSpinner: false,
-      zoomedHeight: 400,
-      zoomImage: false,
-      zoomedWidth: 400,
-    };
+  async beforeMount() {
+    // lazy fetch available band types
+    if (
+      this.type === MULTIBAND_IMAGE_TYPE &&
+      _.isEmpty(datasetGetters.getMultiBandCombinations(this.$store))
+    ) {
+      await datasetActions.fetchMultiBandCombinations(this.$store, {
+        dataset: this.dataset,
+      });
+    }
   },
 
-  computed: {
-    colorScale(): ColorScaleNames {
-      return routeGetters.getColorScale(this.$store);
-    },
+  created() {
+    this.debouncedRequestImage = _.debounce(
+      this.requestImage.bind(this),
+      this.debounceWaitTime
+    );
+    if (this.debounce) {
+      this.getImage = this.debouncedRequestImage;
+    } else {
+      this.getImage = this.requestImage;
+    }
+  },
 
-    imageId(): string {
-      return this.imageUrl?.split(/_B[0-9][0-9a-zA-Z][.]/)[0];
-    },
-
-    imageDrilldown(): DrillDownInfo {
-      return {
-        band: this.band,
-        title: this.imageUrl,
-      };
-    },
-
-    files(): Dictionary<any> {
-      return datasetGetters.getFiles(this.$store);
-    },
-    imageParamUrl(): string {
-      return this.uniqueTrail.length
-        ? `${this.imageUrl}/${this.uniqueTrail}`
-        : this.imageUrl;
-    },
-    imageParamId(): string {
-      return this.uniqueTrail.length
-        ? `${this.imageId}/${this.uniqueTrail}`
-        : this.imageId;
-    },
-    isLoaded(): boolean {
-      return (
-        (!!this.files[this.imageParamUrl] && !!this.files[this.imageParamId]) ||
-        this.stopSpinner
-      );
-    },
-    imageAttentionIsLoaded(): boolean {
-      return (
-        !!this.solutionId &&
-        !!this.row &&
-        !!this.files[this.solutionId + this.row.d3mIndex]
-      );
-    },
-    image(): HTMLImageElement {
-      return (
-        this.files[this.imageParamUrl] ?? this.files[this.imageParamId] ?? null
-      );
-    },
-    imageAttentionId(): string {
-      return this.solutionId + this.row.d3mIndex;
-    },
-    imageAttention(): HTMLImageElement {
-      return this.files[this.solutionId + this.row?.d3mIndex] ?? null;
-    },
-    spinnerHTML(): string {
-      return circleSpinnerHTML();
-    },
-    dataset(): string {
-      const dataset = routeGetters.getRoutePredictionsDataset(this.$store);
-      if (dataset) {
-        return dataset;
-      }
-      return routeGetters.getRouteDataset(this.$store);
-    },
-    rowSelection(): RowSelection {
-      return routeGetters.getDecodedRowSelection(this.$store);
-    },
-    isSelected(): boolean {
-      if (this.row) {
-        return isRowSelected(this.rowSelection, this.row[D3M_INDEX_FIELD]);
-      }
-      return false;
-    },
-
-    band(): string {
-      return routeGetters.getBandCombinationId(this.$store);
-    },
-
-    hasImageAttention(): boolean {
-      return routeGetters.getImageAttention(this.$store);
-    },
-    solutionId(): string {
-      return routeGetters.getRouteSolutionId(this.$store);
-    },
+  destroyed() {
+    this.cleanUp();
+    if (this.debounce) {
+      this.getImage.cancel();
+    }
   },
 
   methods: {
     handleShiftClick() {
       this.$emit("shift-click", this.row);
     },
+
     async visibilityChanged(isVisible: boolean) {
       this.isVisible = isVisible;
       if (this.isVisible && !this.hasRequested) {
@@ -289,6 +329,7 @@ export default Vue.extend({
         this.injectImage();
       }
     },
+
     async handleImageAttention() {
       this.hasRendered = false;
       this.clearImage(this.$refs.imageAttentionElem as any);
@@ -311,6 +352,7 @@ export default Vue.extend({
         this.imageAttentionHasRendered = false;
       }
     },
+
     handleClick() {
       this.$emit("click", {
         row: this.row,
@@ -322,6 +364,7 @@ export default Vue.extend({
     showZoomedImage() {
       this.zoomImage = true;
     },
+
     hideZoomImage() {
       this.zoomImage = false;
     },
@@ -334,9 +377,7 @@ export default Vue.extend({
     },
 
     injectImage() {
-      if (!this.image) {
-        return;
-      }
+      if (!this.image) return;
 
       const elem = this.$refs.imageElem as any;
       if (elem) {
@@ -354,6 +395,7 @@ export default Vue.extend({
         this.hasRendered = true;
       }
     },
+
     injectFilter() {
       if (!this.imageAttention) {
         return;
@@ -405,6 +447,7 @@ export default Vue.extend({
         console.warn(`Image Data Type ${this.type} is not supported`);
       }
     },
+
     cleanUp() {
       const empty = "";
       if (this.uniqueTrail !== empty) {
@@ -414,35 +457,6 @@ export default Vue.extend({
         }
       }
     },
-  },
-
-  async beforeMount() {
-    // lazy fetch available band types
-    if (
-      this.type === MULTIBAND_IMAGE_TYPE &&
-      _.isEmpty(datasetGetters.getMultiBandCombinations(this.$store))
-    ) {
-      await datasetActions.fetchMultiBandCombinations(this.$store, {
-        dataset: this.dataset,
-      });
-    }
-  },
-  created() {
-    this.debouncedRequestImage = _.debounce(
-      this.requestImage.bind(this),
-      this.debounceWaitTime
-    );
-    if (this.debounce) {
-      this.getImage = this.debouncedRequestImage;
-    } else {
-      this.getImage = this.requestImage;
-    }
-  },
-  destroyed() {
-    this.cleanUp();
-    if (this.debounce) {
-      this.getImage.cancel();
-    }
   },
 });
 </script>
