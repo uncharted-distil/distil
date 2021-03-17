@@ -24,7 +24,7 @@ import (
 )
 
 // ConfigHandler returns the compiled version number, timestamp and initial config.
-func ConfigHandler(config env.Config, version string, timestamp string, problemPath string, datasetDocPath string, ta2Version string) func(http.ResponseWriter, *http.Request) {
+func ConfigHandler(config env.Config, version string, timestamp string, ta2Version string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		target := "unknown"

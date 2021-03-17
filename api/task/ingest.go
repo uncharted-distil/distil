@@ -40,33 +40,29 @@ const (
 
 // IngestTaskConfig captures the necessary configuration for an data ingest.
 type IngestTaskConfig struct {
-	DatasetBatchSize                   int
-	HasHeader                          bool
-	ClusteringEnabled                  bool
-	ClusteringKMeans                   bool
-	FeaturizationEnabled               bool
-	GeocodingEnabled                   bool
-	ClassificationOutputPathRelative   string
-	ClassificationProbabilityThreshold float64
-	ClassificationEnabled              bool
-	RankingOutputPathRelative          string
-	RankingRowLimit                    int
-	DatabasePassword                   string
-	DatabaseUser                       string
-	Database                           string
-	DatabaseHost                       string
-	DatabasePort                       int
-	DatabaseBatchSize                  int
-	DatabaseLogLevel                   string
-	SummaryOutputPathRelative          string
-	SummaryMachineOutputPathRelative   string
-	SummaryEnabled                     bool
-	ESEndpoint                         string
-	ESTimeout                          int
-	ESDatasetPrefix                    string
-	HardFail                           bool
-	IngestOverwrite                    bool
-	SampleRowLimit                     int
+	DatasetBatchSize                 int
+	HasHeader                        bool
+	ClusteringEnabled                bool
+	ClusteringKMeans                 bool
+	FeaturizationEnabled             bool
+	GeocodingEnabled                 bool
+	ClassificationOutputPathRelative string
+	ClassificationEnabled            bool
+	RankingOutputPathRelative        string
+	DatabasePassword                 string
+	DatabaseUser                     string
+	Database                         string
+	DatabaseHost                     string
+	DatabasePort                     int
+	DatabaseBatchSize                int
+	DatabaseLogLevel                 string
+	SummaryOutputPathRelative        string
+	SummaryMachineOutputPathRelative string
+	SummaryEnabled                   bool
+	ESEndpoint                       string
+	HardFail                         bool
+	IngestOverwrite                  bool
+	SampleRowLimit                   int
 }
 
 // IngestSteps is a collection of parameters that specify ingest behaviour.
@@ -94,33 +90,29 @@ func NewDefaultClient(config env.Config, userAgent string, discoveryLogger middl
 // NewConfig creates an ingest config based on a distil config.
 func NewConfig(config env.Config) *IngestTaskConfig {
 	return &IngestTaskConfig{
-		DatasetBatchSize:                   config.DatasetBatchSize,
-		HasHeader:                          true,
-		ClusteringEnabled:                  config.ClusteringEnabled,
-		ClusteringKMeans:                   config.ClusteringKMeans,
-		FeaturizationEnabled:               config.FeaturizationEnabled,
-		GeocodingEnabled:                   config.GeocodingEnabled,
-		ClassificationOutputPathRelative:   config.ClassificationOutputPath,
-		ClassificationProbabilityThreshold: config.ClassificationProbabilityThreshold,
-		ClassificationEnabled:              config.ClassificationEnabled,
-		RankingOutputPathRelative:          config.RankingOutputPath,
-		RankingRowLimit:                    config.RankingRowLimit,
-		DatabasePassword:                   config.PostgresPassword,
-		DatabaseUser:                       config.PostgresUser,
-		Database:                           config.PostgresDatabase,
-		DatabaseHost:                       config.PostgresHost,
-		DatabasePort:                       config.PostgresPort,
-		DatabaseBatchSize:                  config.PostgresBatchSize,
-		DatabaseLogLevel:                   config.PostgresLogLevel,
-		SummaryOutputPathRelative:          config.SummaryPath,
-		SummaryMachineOutputPathRelative:   config.SummaryMachinePath,
-		SummaryEnabled:                     config.SummaryEnabled,
-		ESEndpoint:                         config.ElasticEndpoint,
-		ESTimeout:                          config.ElasticTimeout,
-		ESDatasetPrefix:                    config.ElasticDatasetPrefix,
-		HardFail:                           config.IngestHardFail,
-		IngestOverwrite:                    config.IngestOverwrite,
-		SampleRowLimit:                     config.IngestSampleRowLimit,
+		DatasetBatchSize:                 config.DatasetBatchSize,
+		HasHeader:                        true,
+		ClusteringEnabled:                config.ClusteringEnabled,
+		ClusteringKMeans:                 config.ClusteringKMeans,
+		FeaturizationEnabled:             config.FeaturizationEnabled,
+		GeocodingEnabled:                 config.GeocodingEnabled,
+		ClassificationOutputPathRelative: config.ClassificationOutputPath,
+		ClassificationEnabled:            config.ClassificationEnabled,
+		RankingOutputPathRelative:        config.RankingOutputPath,
+		DatabasePassword:                 config.PostgresPassword,
+		DatabaseUser:                     config.PostgresUser,
+		Database:                         config.PostgresDatabase,
+		DatabaseHost:                     config.PostgresHost,
+		DatabasePort:                     config.PostgresPort,
+		DatabaseBatchSize:                config.PostgresBatchSize,
+		DatabaseLogLevel:                 config.PostgresLogLevel,
+		SummaryOutputPathRelative:        config.SummaryPath,
+		SummaryMachineOutputPathRelative: config.SummaryMachinePath,
+		SummaryEnabled:                   config.SummaryEnabled,
+		ESEndpoint:                       config.ElasticEndpoint,
+		HardFail:                         config.IngestHardFail,
+		IngestOverwrite:                  config.IngestOverwrite,
+		SampleRowLimit:                   config.IngestSampleRowLimit,
 	}
 }
 
