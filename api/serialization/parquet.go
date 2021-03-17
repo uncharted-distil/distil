@@ -24,6 +24,7 @@ import (
 	"strconv"
 	"strings"
 
+	log "github.com/unchartedsoftware/plog"
 	"github.com/xitongsys/parquet-go-source/local"
 	"github.com/xitongsys/parquet-go/parquet"
 	"github.com/xitongsys/parquet-go/reader"
@@ -33,7 +34,6 @@ import (
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
-	"github.com/uncharted-distil/distil/api/util"
 )
 
 // Parquet represents a dataset storage backed with parquet data and json schema doc.
@@ -71,6 +71,8 @@ func (d *Parquet) ReadDataset(schemaFile string) (*RawDataset, error) {
 // WriteDataset writes the raw dataset to the file system, writing out
 // the data to a parquet file.
 func (d *Parquet) WriteDataset(uri string, data *RawDataset) error {
+	log.Infof("writing parquet data to %s", uri)
+
 	dataFilename := path.Join(uri, compute.D3MDataFolder, compute.DistilParquetLearningData)
 	err := d.WriteData(dataFilename, data.Data)
 	if err != nil {
@@ -88,6 +90,7 @@ func (d *Parquet) WriteDataset(uri string, data *RawDataset) error {
 
 // ReadData reads the data from a parquet file.
 func (d *Parquet) ReadData(uri string) ([][]string, error) {
+	log.Infof("reading parquet data from %s", uri)
 	fr, err := local.NewLocalFileReader(uri)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to open parquet file")
@@ -116,7 +119,6 @@ func (d *Parquet) ReadData(uri string) ([][]string, error) {
 	}
 	output[0] = header
 
-	util.StartMemLogging(5000)
 	for colIdx := int64(0); colIdx < colCount; colIdx++ {
 		// Read in column data
 		colRaw, err := d.readColumn(pr, colIdx, rowCount)
@@ -143,6 +145,10 @@ func (d *Parquet) ReadData(uri string) ([][]string, error) {
 		colStrings := d.columnToString(colRaw, *pr.SchemaHandler.SchemaElements[colIdx+1].Type)
 		for rowIdx := int64(0); rowIdx < rowCount; rowIdx++ {
 			output[rowIdx+1][colIdx] = colStrings[rowIdx] // offset by to account for header
+		}
+
+		if colIdx%1000 == 0 {
+			log.Infof("%d/%d columns read", colIdx, colCount)
 		}
 	}
 	fr.Close()
