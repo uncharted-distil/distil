@@ -184,12 +184,16 @@ export function filterParamsToLexQuery(
   });
 
   const activeVariables = [...highlightVariables, ...filterVariables];
-  const lexableElements = [...decodedHighlights, ...decodedFilters];
-
+  let lexableElements = [...decodedHighlights, ...decodedFilters];
+  const activeVariablesMap = new Map(
+    activeVariables.map((v) => {
+      return [v.key, true];
+    })
+  );
   const suggestions = variablesToLexSuggestions(activeVariables);
-  if (!suggestions.length) {
-    return [];
-  }
+  lexableElements = lexableElements.filter((el) => {
+    return activeVariablesMap.has(el.key);
+  });
   const lexQuery = lexableElements.map((f, i) => {
     if (f.type === GEOBOUNDS_FILTER || f.type === BIVARIATE_FILTER) {
       return {
