@@ -25,16 +25,24 @@
       :instance-name="instanceName"
       :log-activity="logActivity"
     />
+
+    <form v-if="labels">
+      <label for="positive-label">Positive Label</label>
+      <select id="positive-label">
+        <option v-for="(label, index) in labels" :key="index" :value="label">
+          {{ label }}
+        </option>
+      </select>
+    </form>
   </div>
 </template>
 
 <script lang="ts">
-import _ from "lodash";
 import Vue from "vue";
 import VariableFacets from "./facets/VariableFacets.vue";
 import { getters as routeGetters } from "../store/route/module";
 import { TARGET_VAR_INSTANCE } from "../store/route/index";
-import { VariableSummary } from "../store/dataset/index";
+import { Bucket, VariableSummary } from "../store/dataset/index";
 import { Activity } from "../util/userEvents";
 
 export default Vue.extend({
@@ -48,26 +56,28 @@ export default Vue.extend({
     return {
       hasDefaultedAlready: false,
       logActivity: Activity.DATA_PREPARATION,
+      instanceName: TARGET_VAR_INSTANCE,
     };
   },
 
   computed: {
+    isBinaryClassification(): boolean {
+      return routeGetters.isBinaryClassification(this.$store);
+    },
+
     targetSummaries(): VariableSummary[] {
       return routeGetters.getTargetVariableSummaries(this.$store);
     },
-    instanceName(): string {
-      return TARGET_VAR_INSTANCE;
+
+    labels(): string[] {
+      if (!this.isBinaryClassification) return;
+
+      const buckets = this.targetSummaries?.[0]?.baseline?.buckets as Bucket[];
+      if (!buckets) return;
+
+      const labels = buckets.map((bucket) => bucket.key);
+      return labels;
     },
   },
 });
 </script>
-
-<style>
-.target-summary
-  .variable-facets-container
-  .facets-root-container
-  .facets-group-container
-  .facets-group {
-  box-shadow: none;
-}
-</style>

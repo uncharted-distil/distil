@@ -147,4 +147,6 @@ export const getters = {
   getRoutePane: read(moduleGetters.getRoutePane),
   hasOrderBy: read(moduleGetters.hasOrderBy),
   getOrderBy: read(moduleGetters.getOrderBy),
+  isBinaryClassification: read(moduleGetters.isBinaryClassification),
+  getPositiveLabel: read(moduleGetters.getPositiveLabel),
 };
