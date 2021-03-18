@@ -15,7 +15,6 @@
  *    limitations under the License.
  */
 
-import { Highlight, Variable } from "../store/dataset";
 import {
   DateTimeEntryState,
   LabelState,
