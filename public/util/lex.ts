@@ -17,39 +17,40 @@
 
 import { Highlight, Variable } from "../store/dataset";
 import {
-  isNumericType,
-  dateToNum,
-  DATE_TIME_LOWER_TYPE,
-  CATEGORICAL_TYPE,
-  TIMESERIES_TYPE,
-  GEOCOORDINATE_TYPE,
-  GEOBOUNDS_TYPE,
-} from "./types";
-import {
-  decodeFilters,
-  Filter,
-  EXCLUDE_FILTER,
-  CATEGORICAL_FILTER,
-  DATETIME_FILTER,
-  NUMERICAL_FILTER,
-  TEXT_FILTER,
-  GEOBOUNDS_FILTER,
-  GEOCOORDINATE_FILTER,
-  BIVARIATE_FILTER,
-} from "./filters";
-import {
+  DateTimeEntryState,
   LabelState,
   Lex,
   NumericEntryState,
+  RelationState,
   TextEntryState,
-  DateTimeEntryState,
   TransitionFactory,
   ValueState,
   ValueStateValue,
-  RelationState,
 } from "@uncharted.software/lex";
-import { decodeHighlights, createFiltersFromHighlights } from "./highlights";
+import { Highlight, Variable } from "../store/dataset";
 import { Dictionary } from "./dict";
+import {
+  BIVARIATE_FILTER,
+  CATEGORICAL_FILTER,
+  DATETIME_FILTER,
+  decodeFilters,
+  EXCLUDE_FILTER,
+  Filter,
+  GEOBOUNDS_FILTER,
+  GEOCOORDINATE_FILTER,
+  NUMERICAL_FILTER,
+  TEXT_FILTER,
+} from "./filters";
+import { createFiltersFromHighlights, decodeHighlights } from "./highlights";
+import {
+  CATEGORICAL_TYPE,
+  dateToNum,
+  DATE_TIME_LOWER_TYPE,
+  GEOBOUNDS_TYPE,
+  GEOCOORDINATE_TYPE,
+  isNumericType,
+  TIMESERIES_TYPE,
+} from "./types";
 
 const HIGHLIGHT = "highlight";
 
@@ -170,18 +171,26 @@ export function filterParamsToLexQuery(
   );
 
   const variableDict = buildVariableDictionary(allVariables);
-  const filterVariables = decodedFilters.map((f) => {
-    return variableDict[f.key];
+  const filterVariables = [];
+  decodedFilters.forEach((f) => {
+    if (variableDict[f.key]) {
+      filterVariables.push(variableDict[f.key]);
+    }
   });
-  const highlightVariables = decodedHighlights.map((h) => {
-    return variableDict[h.key];
+  const highlightVariables = [];
+  decodedHighlights.forEach((h) => {
+    if (variableDict[h.key]) {
+      highlightVariables.push(variableDict[h.key]);
+    }
   });
 
   const activeVariables = [...highlightVariables, ...filterVariables];
   const lexableElements = [...decodedHighlights, ...decodedFilters];
 
   const suggestions = variablesToLexSuggestions(activeVariables);
-
+  if (!suggestions.length) {
+    return [];
+  }
   const lexQuery = lexableElements.map((f, i) => {
     if (f.type === GEOBOUNDS_FILTER || f.type === BIVARIATE_FILTER) {
       return {

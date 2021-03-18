@@ -17,27 +17,21 @@
 
 import axios, { AxiosResponse } from "axios";
 import _ from "lodash";
-import { filter } from "vue/types/umd";
 import { ActionContext } from "vuex";
 import {
   createEmptyTableData,
   createErrorSummary,
   createPendingSummary,
+  DatasetUpdate,
   fetchSummaryExemplars,
   minimumRouteKey,
   validateArgs,
-  DatasetUpdate,
 } from "../../util/data";
 import { Dictionary } from "../../util/dict";
-import {
-  EXCLUDE_FILTER,
-  FilterParams,
-  INCLUDE_FILTER,
-} from "../../util/filters";
+import { FilterParams } from "../../util/filters";
 import {
   addHighlightToFilterParams,
   cloneFilters,
-  highlightsExist,
   setInvert,
 } from "../../util/highlights";
 import { loadImage } from "../../util/image";
@@ -47,8 +41,8 @@ import {
   getVarType,
   IMAGE_TYPE,
   isImageType,
-  isRankableVariableType,
   isMultibandImageType,
+  isRankableVariableType,
   MULTIBAND_IMAGE_TYPE,
   UNKNOWN_TYPE,
 } from "../../util/types";
@@ -1369,7 +1363,7 @@ export const actions = {
     args: {
       datasets: string[];
       filterParams: Dictionary<FilterParams>;
-      highlights: Highlight[];
+      highlights: Dictionary<Highlight[]>;
     }
   ) {
     if (!validateArgs(args, ["datasets", "filterParams"])) {
@@ -1377,8 +1371,7 @@ export const actions = {
     }
     return Promise.all(
       args.datasets.map(async (dataset) => {
-        const highlights =
-          args.highlights?.[0]?.dataset === dataset ? args.highlights : null;
+        const highlights = args.highlights[dataset];
         let filterParams = addHighlightToFilterParams(
           args.filterParams[dataset],
           highlights

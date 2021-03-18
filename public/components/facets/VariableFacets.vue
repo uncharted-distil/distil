@@ -17,7 +17,7 @@
 
 <template>
   <div class="d-flex flex-column align-items-stretch h-100 w-100">
-    <div v-if="enableSearch" class="py-1">
+    <div v-if="enableSearch" class="py-1 mb-3">
       <b-form-input v-model="search" size="sm" placeholder="Search" />
     </div>
     <!-- TODO: this should be passed in as title HTML -->

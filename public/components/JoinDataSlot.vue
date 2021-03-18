@@ -17,15 +17,12 @@
 
 <template>
   <div class="join-data-slot d-flex flex-column">
-    <div class="fake-search-input">
-      <div class="filter-badges">
-        <filter-badge
-          v-for="(highlight, index) in activeHighlights"
-          :key="index"
-          :filter="highlight"
-        />
-      </div>
-    </div>
+    <search-bar
+      class="mb-3"
+      :variables="variables"
+      :highlights="routeHighlight"
+      @lex-query="updateFilterAndHighlightFromLexQuery"
+    />
 
     <div class="join-data-container flex-1">
       <div v-if="!hasData" class="join-data-no-results">
@@ -52,19 +49,28 @@
 import Vue from "vue";
 import { spinnerHTML } from "../util/spinner";
 import { Dictionary } from "../util/dict";
-import JoinDataTable from "./JoinDataTable";
 import { getters as routeGetters } from "../store/route/module";
-import FilterBadge from "./FilterBadge";
-import { TableRow, TableColumn, Highlight } from "../store/dataset/index";
+import {
+  TableRow,
+  TableColumn,
+  Highlight,
+  Variable,
+} from "../store/dataset/index";
 import { createFiltersFromHighlights } from "../util/highlights";
 import { Filter, INCLUDE_FILTER } from "../util/filters";
+import { getVariableSummaries } from "../util/join";
+import { updateHighlight, UPDATE_ALL } from "../util/highlights";
+import { lexQueryToFiltersAndHighlight } from "../util/lex";
+// components
+import JoinDataTable from "./JoinDataTable.vue";
+import SearchBar from "./layout/SearchBar.vue";
 
 export default Vue.extend({
   name: "join-data-slot",
 
   components: {
-    FilterBadge,
     JoinDataTable,
+    SearchBar,
   },
 
   props: {
@@ -99,11 +105,23 @@ export default Vue.extend({
       }
       return createFiltersFromHighlights(this.highlights, INCLUDE_FILTER);
     },
+    variables(): Variable[] {
+      return routeGetters.getJoinDatasetsVariables(this.$store).filter((v) => {
+        return v.datasetName === this.dataset;
+      });
+    },
+    routeHighlight(): string {
+      return routeGetters.getRouteHighlight(this.$store);
+    },
   },
 
   methods: {
     onColumnClicked(field) {
       this.$emit("col-clicked", field);
+    },
+    updateFilterAndHighlightFromLexQuery(lexQuery) {
+      const lqfh = lexQueryToFiltersAndHighlight(lexQuery, this.dataset);
+      updateHighlight(this.$router, lqfh.highlights, UPDATE_ALL);
     },
   },
 });
