@@ -1209,13 +1209,10 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string; url: string }
   ) {
-    if (!validateArgs(args, ["dataset", "url"])) {
-      return null;
-    }
+    if (!validateArgs(args, ["dataset", "url"])) return;
     try {
-      const response = await loadImage(
-        `distil/image/${args.dataset}/${args.url}`
-      );
+      const urlRequest = `distil/image/${args.dataset}/${args.url}`;
+      const response = await loadImage(urlRequest);
       mutations.updateFile(context, { url: args.url, file: response });
     } catch (error) {
       console.error(error);
