@@ -15,15 +15,14 @@
  *    limitations under the License.
  */
 
-import { JOIN_DATASETS_ROUTE } from "../store/route/index";
-import { getters as routeGetters } from "../store/route/module";
-import { getters as datasetGetters } from "../store/dataset/module";
-import { createRouteEntry } from "./routes";
-import { addRecentDataset, minimumRouteKey } from "./data";
-import store, { DistilState } from "../store/store";
 import VueRouter from "vue-router";
 import { VariableSummary } from "../store/dataset";
-import { Store } from "vuex";
+import { getters as datasetGetters } from "../store/dataset/module";
+import { JOIN_DATASETS_ROUTE } from "../store/route/index";
+import { getters as routeGetters } from "../store/route/module";
+import store from "../store/store";
+import { addRecentDataset, minimumRouteKey } from "./data";
+import { createRouteEntry } from "./routes";
 
 export function loadJoinedDataset(
   router: VueRouter,
@@ -64,14 +63,21 @@ export function loadJoinView(
 }
 
 export function getVariableSummaries(
-  context: Store<DistilState>
+  context,
+  dataset?: string
 ): VariableSummary[] {
-  const variables = routeGetters.getJoinDatasetsVariables(context);
+  let variables = routeGetters.getJoinDatasetsVariables(context);
+  if (dataset) {
+    variables = variables.filter((v) => {
+      return v.datasetName === dataset;
+    });
+  }
   const summaries = datasetGetters.getVariableSummariesDictionary(context);
   const routeKey = minimumRouteKey();
   const result = [] as VariableSummary[];
   variables.forEach((v) => {
-    if (summaries[v.key]) result.push(summaries[v.key][routeKey]);
+    if (summaries[v.key])
+      if (summaries[v.key][routeKey]) result.push(summaries[v.key][routeKey]);
   });
   return result;
 }

@@ -81,12 +81,9 @@ func (s *SolutionRequest) dispatchSolutionExplainPipeline(client *compute.Client
 	for _, eo := range explainOutputs {
 		exposedOutputs = append(exposedOutputs, eo.output)
 	}
-
-	exposeType := []string{}
-	if s.useParquet {
-		exposeType = append(exposeType, compute.ParquetURIValueType)
-	}
-	produceSolutionRequest := createProduceSolutionRequest(explainDatasetURI, searchResult.fittedSolutionID, exposedOutputs, exposeType)
+	// create the produce request that will generate the explanations - we force the use of CSV for output since the
+	// go parquet library doesn't handle nested lists well
+	produceSolutionRequest := createProduceSolutionRequest(explainDatasetURI, searchResult.fittedSolutionID, exposedOutputs, []string{compute.CSVURIValueType})
 
 	// generate predictions
 	_, predictionResponses, err := client.GeneratePredictions(context.Background(), produceSolutionRequest)

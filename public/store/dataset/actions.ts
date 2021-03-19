@@ -17,27 +17,21 @@
 
 import axios, { AxiosResponse } from "axios";
 import _ from "lodash";
-import { filter } from "vue/types/umd";
 import { ActionContext } from "vuex";
 import {
   createEmptyTableData,
   createErrorSummary,
   createPendingSummary,
+  DatasetUpdate,
   fetchSummaryExemplars,
   minimumRouteKey,
   validateArgs,
-  DatasetUpdate,
 } from "../../util/data";
 import { Dictionary } from "../../util/dict";
-import {
-  EXCLUDE_FILTER,
-  FilterParams,
-  INCLUDE_FILTER,
-} from "../../util/filters";
+import { FilterParams } from "../../util/filters";
 import {
   addHighlightToFilterParams,
   cloneFilters,
-  highlightsExist,
   setInvert,
 } from "../../util/highlights";
 import { loadImage } from "../../util/image";
@@ -47,8 +41,8 @@ import {
   getVarType,
   IMAGE_TYPE,
   isImageType,
-  isRankableVariableType,
   isMultibandImageType,
+  isRankableVariableType,
   MULTIBAND_IMAGE_TYPE,
   UNKNOWN_TYPE,
 } from "../../util/types";
@@ -1209,13 +1203,10 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string; url: string }
   ) {
-    if (!validateArgs(args, ["dataset", "url"])) {
-      return null;
-    }
+    if (!validateArgs(args, ["dataset", "url"])) return;
     try {
-      const response = await loadImage(
-        `distil/image/${args.dataset}/${args.url}`
-      );
+      const urlRequest = `distil/image/${args.dataset}/${args.url}`;
+      const response = await loadImage(urlRequest);
       mutations.updateFile(context, { url: args.url, file: response });
     } catch (error) {
       console.error(error);
@@ -1372,7 +1363,7 @@ export const actions = {
     args: {
       datasets: string[];
       filterParams: Dictionary<FilterParams>;
-      highlights: Highlight[];
+      highlights: Dictionary<Highlight[]>;
     }
   ) {
     if (!validateArgs(args, ["datasets", "filterParams"])) {
@@ -1380,8 +1371,7 @@ export const actions = {
     }
     return Promise.all(
       args.datasets.map(async (dataset) => {
-        const highlights =
-          args.highlights?.[0]?.dataset === dataset ? args.highlights : null;
+        const highlights = args.highlights[dataset];
         let filterParams = addHighlightToFilterParams(
           args.filterParams[dataset],
           highlights

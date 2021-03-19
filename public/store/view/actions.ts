@@ -29,9 +29,10 @@ import { Dictionary } from "../../util/dict";
 import {
   EXCLUDE_FILTER,
   Filter,
-  invertFilter,
   FilterParams,
+  invertFilter,
 } from "../../util/filters";
+import { cloneFilters, setHighlightModes } from "../../util/highlights";
 import { getPredictionsById } from "../../util/predictions";
 import {
   DataMode,
@@ -42,8 +43,8 @@ import {
 } from "../dataset";
 import {
   actions as datasetActions,
-  mutations as datasetMutations,
   getters as datasetGetters,
+  mutations as datasetMutations,
 } from "../dataset/module";
 import {
   actions as modelActions,
@@ -60,15 +61,14 @@ import {
 } from "../requests/module";
 import {
   actions as resultActions,
-  mutations as resultMutations,
   getters as resultGetters,
+  mutations as resultMutations,
 } from "../results/module";
-import { DATA_EXPLORER_ROUTE, SELECT_TARGET_ROUTE } from "../route";
+import { SELECT_TARGET_ROUTE } from "../route";
 import { getters as routeGetters } from "../route/module";
 import store, { DistilState } from "../store";
 import { ViewState } from "./index";
 import { getters as viewGetters, mutations as viewMutations } from "./module";
-import { setHighlightModes, cloneFilters } from "../../util/highlights";
 
 enum ParamCacheKey {
   VARIABLES = "VARIABLES",
@@ -382,7 +382,7 @@ export const actions = {
     datasetMutations.clearJoinDatasetsTableData(store);
 
     const datasetIDs = context.getters.getRouteJoinDatasets;
-    const highlights = context.getters.getDecodedHighlights as Highlight[];
+    const highlights = context.getters.getDecodedJoinDatasetsHighlight;
     const filterParams = context.getters.getDecodedJoinDatasetsFilterParams;
     const datasets = context.getters.getDatasets;
     const dataMode = context.getters.getDataMode as DataMode;
@@ -403,7 +403,7 @@ export const actions = {
         dataset: datasetA.id,
         variables: datasetA.variables,
         filterParams: filterParams[datasetA.id],
-        highlights: highlights,
+        highlights: highlights[datasetA.id],
         dataMode: dataMode,
         varModes: varModes,
       }),
@@ -411,7 +411,7 @@ export const actions = {
         dataset: datasetB.id,
         variables: datasetB.variables,
         filterParams: filterParams[datasetB.id],
-        highlights: highlights,
+        highlights: highlights[datasetB.id],
         dataMode: dataMode,
         varModes: varModes,
       }),
