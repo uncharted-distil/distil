@@ -91,8 +91,14 @@ class DistilRelationState extends RelationState {
   functions it depends on to support it in the Lex Bar language.
 */
 export function variablesToLexLanguage(variables: Variable[]): Lex {
-  const suggestions = variablesToLexSuggestions(variables);
-  const catVarLexSuggestions = perCategoricalVariableLexSuggestions(variables);
+  // remove timeseries
+  const filteredVariables = variables.filter((v) => {
+    return v.colType !== TIMESERIES_TYPE;
+  });
+  const suggestions = variablesToLexSuggestions(filteredVariables);
+  const catVarLexSuggestions = perCategoricalVariableLexSuggestions(
+    filteredVariables
+  );
   return Lex.from("field", ValueState, {
     name: "Choose a variable to search on",
     icon: '<i class="fa fa-filter" />',
@@ -183,13 +189,20 @@ export function filterParamsToLexQuery(
     }
   });
 
-  const activeVariables = [...highlightVariables, ...filterVariables];
-
+  let activeVariables = [
+    ...highlightVariables,
+    ...filterVariables,
+  ] as Variable[];
+  // remove timeseries
+  activeVariables = activeVariables.filter((v) => {
+    return v.colType !== TIMESERIES_TYPE;
+  });
   const activeVariablesMap = new Map(
     activeVariables.map((v) => {
       return [v.key, true];
     })
   );
+  // remove highlight if variable does not exist
   const lexableElements = [
     ...decodedHighlights.filter((el) => {
       return activeVariablesMap.has(el.key);
@@ -338,7 +351,7 @@ function modeToRelation(mode: string): ValueStateValue {
 function variablesToLexSuggestions(variables: Variable[]): ValueStateValue[] {
   if (!variables) return;
   return variables.reduce((a, v) => {
-    const name = v.key;
+    const name = v.colDisplayName;
     const options = {
       type: colTypeToOptionType(v.colType.toLowerCase()),
     };
@@ -369,7 +382,11 @@ function perCategoricalVariableLexSuggestions(
 }
 
 function colTypeToOptionType(colType: string): string {
-  if (colType === GEOBOUNDS_TYPE || colType === GEOCOORDINATE_TYPE) {
+  if (
+    colType === GEOBOUNDS_TYPE ||
+    colType === GEOCOORDINATE_TYPE ||
+    colType === BIVARIATE_FILTER
+  ) {
     return GEOBOUNDS_FILTER;
   } else if (colType === DATE_TIME_LOWER_TYPE) {
     return DATETIME_FILTER;
