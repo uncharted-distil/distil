@@ -351,7 +351,7 @@ function modeToRelation(mode: string): ValueStateValue {
 function variablesToLexSuggestions(variables: Variable[]): ValueStateValue[] {
   if (!variables) return;
   return variables.reduce((a, v) => {
-    const name = v.key;
+    const name = v.colDisplayName;
     const options = {
       type: colTypeToOptionType(v.colType.toLowerCase()),
     };
