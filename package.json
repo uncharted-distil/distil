@@ -41,6 +41,7 @@
     "preact": "8.5.3",
     "sigma": "^1.2.1",
     "store": "^2.0.12",
+    "string-similarity": "^4.0.4",
     "ts-enum-util": "^4.0.1",
     "vue": "^2.6.6",
     "vue-observe-visibility": "^0.4.4",
