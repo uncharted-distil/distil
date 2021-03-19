@@ -25,6 +25,7 @@ import {
   TransitionFactory,
   ValueState,
   ValueStateValue,
+  StateTemplate,
 } from "@uncharted.software/lex";
 import { Highlight, Variable } from "../store/dataset";
 import { Dictionary } from "./dict";
@@ -131,22 +132,7 @@ export function variablesToLexLanguage(variables: Variable[]): Lex {
         .to(LabelState, { label: "To" })
         .to("max", NumericEntryState, { name: "Enter upper bound" })
     ),
-    Lex.from("relation", DistilRelationState, {
-      ...TransitionFactory.valueMetaCompare({ type: DATETIME_FILTER }),
-    }).branch(
-      Lex.from(LabelState, { label: "From" })
-        .to("min", DateTimeEntryState, {
-          enableTime: true,
-          enableCalendar: true,
-          timezone: "Greenwich",
-        })
-        .to(LabelState, { label: "To" })
-        .to("max", DateTimeEntryState, {
-          enableTime: true,
-          enableCalendar: true,
-          timezone: "Greenwich",
-        })
-    ),
+    ...distilDateTimeEntryBuilder(suggestions),
     Lex.from("relation", DistilRelationState, {
       ...TransitionFactory.valueMetaCompare({ type: GEOBOUNDS_FILTER }),
     }).branch(
@@ -161,7 +147,42 @@ export function variablesToLexLanguage(variables: Variable[]): Lex {
     )
   );
 }
-
+// distilDateTimeEntryBuilder creates an array of DateTimeEntry based on the supplied variables
+// this allows us to specify min and max dates
+export function distilDateTimeEntryBuilder(
+  suggestions: ValueStateValue[]
+): StateTemplate[] {
+  const dateTimeEntries = [];
+  const dateSuggestions = suggestions.filter((suggestion) => {
+    return suggestion.meta.type === DATETIME_FILTER;
+  });
+  dateSuggestions.forEach((suggestion) => {
+    dateTimeEntries.push(
+      Lex.from("relation", DistilRelationState, {
+        ...TransitionFactory.valueMetaCompare({
+          type: DATETIME_FILTER,
+          name: suggestion.meta.variable.colDisplayName,
+        }),
+      }).branch(
+        Lex.from(LabelState, { label: "From" })
+          .to("min", DateTimeEntryState, {
+            enableTime: true,
+            enableCalendar: true,
+            timezone: "Greenwich",
+            hilightedDate: new Date(suggestion.meta.variable.min * 1000),
+          })
+          .to(LabelState, { label: "To" })
+          .to("max", DateTimeEntryState, {
+            enableTime: true,
+            enableCalendar: true,
+            timezone: "Greenwich",
+            hilightedDate: new Date(suggestion.meta.variable.max * 1000),
+          })
+      )
+    );
+  });
+  return dateTimeEntries;
+}
 export function filterParamsToLexQuery(
   filter: string,
   highlight: string,
@@ -354,6 +375,8 @@ function variablesToLexSuggestions(variables: Variable[]): ValueStateValue[] {
     const name = v.colDisplayName;
     const options = {
       type: colTypeToOptionType(v.colType.toLowerCase()),
+      variable: v,
+      name,
     };
     const config = {
       displayKey: v.colDisplayName,
