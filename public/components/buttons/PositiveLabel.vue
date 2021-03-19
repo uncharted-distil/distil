@@ -20,6 +20,7 @@
     label="Positive Label:"
     label-class="font-weight-bold"
     label-cols="auto"
+    label-for="positive-label"
     label-size="sm"
   >
     <b-form-select
@@ -90,17 +91,13 @@ export default Vue.extend({
     // otherwise, find the label that's most likely to be a positive one.
     this.positiveLabel = !!this.routePositiveLabel
       ? this.routePositiveLabel
-      : this.findAPositiveLabel();
+      : this.findAPositiveLabel(this.labels);
   },
 
   methods: {
     // Find which labels is most suited to be the positive one
-    findAPositiveLabel(): string {
-      // Do not find a new label if the positive label is already set
-      if (!!this.positiveLabel) return;
-
-      // Calculate the string simularity ratings of each labels
-      const ratings = this.labels.map((label) => {
+    findAPositiveLabel(labels: string[]): string {
+      const ratings = labels.map((label) => {
         return {
           positive: findBestRating(label, positives),
           negative: findBestRating(label, negatives),
@@ -108,7 +105,7 @@ export default Vue.extend({
       });
 
       // Default to the first label
-      let positiveLabel = this.labels[0];
+      let positiveLabel = labels[0];
 
       // Select the second label, if the first label...
       if (
@@ -117,7 +114,7 @@ export default Vue.extend({
         // has a higher negative rating
         ratings[0].negative > ratings[1].negative
       ) {
-        positiveLabel = this.labels[1];
+        positiveLabel = labels[1];
       }
 
       return positiveLabel;
