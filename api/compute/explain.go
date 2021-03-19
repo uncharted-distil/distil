@@ -190,7 +190,7 @@ func (s *SolutionRequest) createExplainPipeline(desc *pipeline.DescribeSolutionR
 	//
 	// TODO: we may want to look into folding this filtering functionality into
 	// the function that builds the explainable pipeline (explainablePipeline).
-	if s.DatasetMetadata != nil && s.DatasetMetadata.LearningDataset != "" && !pooled {
+	if s.DatasetMetadata != nil && s.DatasetMetadata.LearningDataset != "" && pooled {
 		return nil, nil
 	}
 
