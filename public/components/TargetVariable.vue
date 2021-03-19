@@ -26,10 +26,8 @@
       :log-activity="logActivity"
     />
 
-    <positive-label
-      v-if="isBinaryClassification"
-      :target-summary="targetSummaries[0]"
-    />
+    <!-- Dropdown to select a positive label for Binary Classification task -->
+    <positive-label v-if="labels" :labels="labels" />
   </div>
 </template>
 
@@ -58,12 +56,20 @@ export default Vue.extend({
   },
 
   computed: {
-    isBinaryClassification(): boolean {
-      return routeGetters.isBinaryClassification(this.$store);
-    },
-
     targetSummaries(): VariableSummary[] {
       return routeGetters.getTargetVariableSummaries(this.$store);
+    },
+
+    labels(): string[] {
+      // make sure we are only on a binary classification task
+      if (!routeGetters.isBinaryClassification(this.$store)) return;
+
+      // retreive the target variable buckets
+      const buckets = this.targetSummaries?.[0]?.baseline?.buckets;
+      if (!buckets) return;
+
+      // use the buckets keys as labels
+      return buckets.map((bucket) => bucket.key);
     },
   },
 });

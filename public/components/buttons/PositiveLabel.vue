@@ -15,7 +15,6 @@
     limitations under the License.
 -->
 
-<!-- Dropdown to select a positive label for Binary Classification task -->
 <template>
   <b-form-group
     label="Positive Label:"
@@ -26,7 +25,7 @@
     <b-form-select
       id="positive-label"
       v-model="positiveLabel"
-      :options="options"
+      :options="labels"
       size="sm"
     />
   </b-form-group>
@@ -34,17 +33,32 @@
 
 <script lang="ts">
 import Vue from "vue";
-import { findBestMatch } from "string-similarity";
-import { VariableSummary } from "../../store/dataset/index";
 import { getters as routeGetters } from "../../store/route/module";
-import { overlayRouteEntry, RouteArgs } from "../../util/routes";
+import { overlayRouteEntry } from "../../util/routes";
 
+/**
+ * Library to find best available positive label
+ * https://github.com/aceakash/string-similarity#findbestmatchmainstring-targetstrings
+ */
+import { findBestMatch } from "string-similarity";
+const findBestRating = (
+  mainString: string,
+  targetStrings: string[]
+): number => {
+  return findBestMatch(mainString, targetStrings)?.bestMatch.rating ?? 0;
+};
+
+// List of positives and negatives words that could be used in labels
+const positives = ["true", "positive", "aff", "1", "yes", "good", "high"];
+const negatives = ["false", "negative", "not", "0", "no", "bad", "low"];
+
+/** Dropdown to select a positive label for Binary Classification task */
 export default Vue.extend({
   name: "PositiveLabel",
 
   props: {
-    targetSummary: {
-      type: Object as () => VariableSummary,
+    labels: {
+      type: Array as () => string[],
       default: null,
     },
   },
@@ -56,56 +70,57 @@ export default Vue.extend({
   },
 
   computed: {
-    // Define the posible options for the positive label <select>.
-    options(): string[] {
-      // retreive the target variable buckets
-      const buckets = this.targetSummary?.baseline?.buckets;
-      if (!buckets) return;
-
-      // Use the buckets key as <options>
-      const options = buckets.map((bucket) => bucket.key);
-
-      // Pre-select the label that's most likely to be a positive label
-      this.findPositiveLabel(options);
-
-      return options;
-    },
-
     routePositiveLabel(): string {
       return routeGetters.getPositiveLabel(this.$store);
     },
   },
 
   watch: {
-    positiveLabel(label: string, oldLabel: string): void {
-      if (label === oldLabel) return;
-      if (label === this.routePositiveLabel) return;
-      this.updateRoute({ positiveLabel: label });
+    // update the route on positive label changes
+    positiveLabel(value: string, oldValue: string): void {
+      if (value === oldValue) return;
+      if (value === this.routePositiveLabel) return;
+      const entry = overlayRouteEntry(this.$route, { positiveLabel: value });
+      this.$router.push(entry).catch((err) => console.warn(err));
     },
   },
 
   beforeMount() {
-    // If the positive label is already set in the route, pre-select it.
-    if (!!this.routePositiveLabel && !this.positiveLabel) {
-      this.positiveLabel = this.routePositiveLabel;
-    }
+    // If the positive label is already set in the route, pre-select it,
+    // otherwise, find the label that's most likely to be a positive one.
+    this.positiveLabel = !!this.routePositiveLabel
+      ? this.routePositiveLabel
+      : this.findAPositiveLabel();
   },
 
   methods: {
-    // Find which options is most suited to be the positive label
-    findPositiveLabel(options: string[]): void {
-      // Do not find a new label if the positiveLabel is already set
+    // Find which labels is most suited to be the positive one
+    findAPositiveLabel(): string {
+      // Do not find a new label if the positive label is already set
       if (!!this.positiveLabel) return;
 
-      // findBestMatch();
+      // Calculate the string simularity ratings of each labels
+      const ratings = this.labels.map((label) => {
+        return {
+          positive: findBestRating(label, positives),
+          negative: findBestRating(label, negatives),
+        };
+      });
 
-      const label = options[0];
-      this.positiveLabel = label;
-    },
+      // Default to the first label
+      let positiveLabel = this.labels[0];
 
-    updateRoute(args: RouteArgs): void {
-      const entry = overlayRouteEntry(this.$route, args);
-      this.$router.push(entry).catch((err) => console.warn(err));
+      // Select the second label, if the first label...
+      if (
+        // has a lower or identical positive rating and
+        ratings[0].positive <= ratings[1].positive &&
+        // has a higher negative rating
+        ratings[0].negative > ratings[1].negative
+      ) {
+        positiveLabel = this.labels[1];
+      }
+
+      return positiveLabel;
     },
   },
 });
