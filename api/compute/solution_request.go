@@ -758,6 +758,9 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 	datasetPathTest = fmt.Sprintf("file://%s", datasetPathTest)
 
+	// get filters that map filters on groupings to the underlying field
+	s.Filters = mapFilterKeys(s.Dataset, s.Filters, dataset.Variables)
+
 	// generate the pre-processing pipeline to enforce feature selection and semantic type changes
 	var preprocessing *pipeline.PipelineDescription
 	if !client.SkipPreprocessing {
