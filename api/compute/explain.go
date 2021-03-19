@@ -28,6 +28,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/primitive/compute/result"
 	log "github.com/unchartedsoftware/plog"
 
+	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/util"
@@ -176,10 +177,20 @@ func parseConfidencesWrapper(params []int) func([]string) (*api.SolutionExplainV
 }
 
 func (s *SolutionRequest) createExplainPipeline(desc *pipeline.DescribeSolutionResponse) (*pipeline.PipelineDescription, map[string]*pipelineOutput) {
-	// pre featurized datasets are not explainable
+	// *POOLED* pre featurized datasets are not explainable.  Pooling is currently controlled by
+	// an env var, although it could be added to the metadata for a dataset.
+	pooled := true
+	config, err := env.LoadConfig()
+	if err == nil {
+		log.Warnf("failed to load environment variables")
+	} else {
+		pooled = config.PoolFeatures
+	}
+
+	//
 	// TODO: we may want to look into folding this filtering functionality into
 	// the function that builds the explainable pipeline (explainablePipeline).
-	if s.DatasetMetadata != nil && s.DatasetMetadata.LearningDataset != "" {
+	if s.DatasetMetadata != nil && s.DatasetMetadata.LearningDataset != "" && !pooled {
 		return nil, nil
 	}
 
