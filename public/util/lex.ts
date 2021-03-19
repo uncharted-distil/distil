@@ -184,16 +184,21 @@ export function filterParamsToLexQuery(
   });
 
   const activeVariables = [...highlightVariables, ...filterVariables];
-  let lexableElements = [...decodedHighlights, ...decodedFilters];
+
   const activeVariablesMap = new Map(
     activeVariables.map((v) => {
       return [v.key, true];
     })
   );
+  const lexableElements = [
+    ...decodedHighlights.filter((el) => {
+      return activeVariablesMap.has(el.key);
+    }),
+    ...decodedFilters.filter((el) => {
+      return activeVariablesMap.has(el.key);
+    }),
+  ];
   const suggestions = variablesToLexSuggestions(activeVariables);
-  lexableElements = lexableElements.filter((el) => {
-    return activeVariablesMap.has(el.key);
-  });
   const lexQuery = lexableElements.map((f, i) => {
     if (f.type === GEOBOUNDS_FILTER || f.type === BIVARIATE_FILTER) {
       return {

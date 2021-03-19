@@ -56,10 +56,9 @@ import {
   Highlight,
   Variable,
 } from "../store/dataset/index";
-import { createFiltersFromHighlights } from "../util/highlights";
+import { createFiltersFromHighlights, UPDATE_ALL } from "../util/highlights";
 import { Filter, INCLUDE_FILTER } from "../util/filters";
-import { getVariableSummaries } from "../util/join";
-import { updateHighlight, UPDATE_ALL } from "../util/highlights";
+import { updateHighlight } from "../util/highlights";
 import { lexQueryToFiltersAndHighlight } from "../util/lex";
 // components
 import JoinDataTable from "./JoinDataTable.vue";
@@ -121,6 +120,12 @@ export default Vue.extend({
     },
     updateFilterAndHighlightFromLexQuery(lexQuery) {
       const lqfh = lexQueryToFiltersAndHighlight(lexQuery, this.dataset);
+      const highlights = routeGetters.getDecodedHighlights(this.$store);
+      lqfh.highlights = lqfh.highlights.concat(
+        highlights.filter((highlight) => {
+          return highlight.dataset !== this.dataset;
+        })
+      );
       updateHighlight(this.$router, lqfh.highlights, UPDATE_ALL);
     },
   },
