@@ -26,14 +26,21 @@
       :log-activity="logActivity"
     />
 
-    <form v-if="labels">
-      <label for="positive-label">Positive Label</label>
-      <select id="positive-label">
-        <option v-for="(label, index) in labels" :key="index" :value="label">
-          {{ label }}
-        </option>
-      </select>
-    </form>
+    <!-- Dropdown to select a positive label for Binary Classification task -->
+    <b-form-group
+      v-if="options"
+      label="Positive Label:"
+      label-class="font-weight-bold"
+      label-cols="auto"
+      label-size="sm"
+    >
+      <b-form-select
+        id="positive-label"
+        v-model="positiveLabel"
+        :options="options"
+        size="sm"
+      />
+    </b-form-group>
   </div>
 </template>
 
@@ -42,8 +49,9 @@ import Vue from "vue";
 import VariableFacets from "./facets/VariableFacets.vue";
 import { getters as routeGetters } from "../store/route/module";
 import { TARGET_VAR_INSTANCE } from "../store/route/index";
-import { Bucket, VariableSummary } from "../store/dataset/index";
+import { VariableSummary } from "../store/dataset/index";
 import { Activity } from "../util/userEvents";
+import { overlayRouteEntry, RouteArgs } from "../util/routes";
 
 export default Vue.extend({
   name: "TargetVariable",
@@ -54,29 +62,67 @@ export default Vue.extend({
 
   data() {
     return {
-      hasDefaultedAlready: false,
-      logActivity: Activity.DATA_PREPARATION,
       instanceName: TARGET_VAR_INSTANCE,
+      logActivity: Activity.DATA_PREPARATION,
+      positiveLabel: null as string,
     };
   },
 
   computed: {
-    isBinaryClassification(): boolean {
-      return routeGetters.isBinaryClassification(this.$store);
-    },
-
     targetSummaries(): VariableSummary[] {
       return routeGetters.getTargetVariableSummaries(this.$store);
     },
 
-    labels(): string[] {
-      if (!this.isBinaryClassification) return;
+    // Define the posible options for the positive label <select>.
+    options(): string[] {
+      // Check that we are on a binary classification task
+      if (!routeGetters.isBinaryClassification(this.$store)) return;
 
-      const buckets = this.targetSummaries?.[0]?.baseline?.buckets as Bucket[];
+      // retreive the target variable buckets
+      const buckets = this.targetSummaries?.[0]?.baseline?.buckets;
       if (!buckets) return;
 
-      const labels = buckets.map((bucket) => bucket.key);
-      return labels;
+      // Use the buckets key as <options>
+      const options = buckets.map((bucket) => bucket.key);
+
+      // Pre-select the label that's most likely to be a positive label
+      this.findPositiveLabel(options);
+
+      return options;
+    },
+
+    routePositiveLabel(): string {
+      return routeGetters.getPositiveLabel(this.$store);
+    },
+  },
+
+  watch: {
+    positiveLabel(label: string, oldLabel: string): void {
+      if (label === oldLabel) return;
+      if (label === this.routePositiveLabel) return;
+      this.updateRoute({ positiveLabel: label });
+    },
+  },
+
+  beforeMount() {
+    // If the positive label is already set in the route, pre-select it.
+    if (!!this.routePositiveLabel && !this.positiveLabel) {
+      this.positiveLabel = this.routePositiveLabel;
+    }
+  },
+
+  methods: {
+    // Find which options is most suited to be the positive label
+    findPositiveLabel(options: string[]): void {
+      // Do not find a new label if the positiveLabel is already set
+      if (!!this.positiveLabel) return;
+      const label = options[0];
+      this.positiveLabel = label;
+    },
+
+    updateRoute(args: RouteArgs): void {
+      const entry = overlayRouteEntry(this.$route, args);
+      this.$router.push(entry).catch((err) => console.warn(err));
     },
   },
 });

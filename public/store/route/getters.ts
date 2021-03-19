@@ -710,7 +710,7 @@ export const getters = {
     return isBinary && isClassification;
   },
 
-  /* Get the Binary Classification Positive Lable */
+  /* Get the Binary Classification Positive Label */
   getPositiveLabel(state: Route): string {
     return (state.query?.positiveLabel as string) ?? null;
   },
