@@ -284,7 +284,7 @@ export function lexQueryToFiltersAndHighlight(
 
   lexQuery[0].forEach((lq) => {
     if (lq.relation.key !== HIGHLIGHT) {
-      const key = lq.field.key;
+      const key = lq.field.meta.variable.key;
       const displayKey = lq.field.displayKey;
       const type = lq.field.meta.type;
       const filter: Filter = {
@@ -312,7 +312,7 @@ export function lexQueryToFiltersAndHighlight(
 
       filters.push(filter);
     } else {
-      const key = lq.field.key;
+      const key = lq.field.meta.variable.key;
       const type = lq.field.meta.type;
       const highlight = {
         dataset,
