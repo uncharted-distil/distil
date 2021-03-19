@@ -181,7 +181,7 @@ func (s *SolutionRequest) createExplainPipeline(desc *pipeline.DescribeSolutionR
 	// an env var, although it could be added to the metadata for a dataset.
 	pooled := true
 	config, err := env.LoadConfig()
-	if err == nil {
+	if err != nil {
 		log.Warnf("failed to load environment variables")
 	} else {
 		pooled = config.PoolFeatures
