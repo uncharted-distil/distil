@@ -37,6 +37,7 @@ import {
   TEXT_TYPE,
   getVarType,
   isCollectionType,
+  GEOBOUNDS_TYPE,
 } from "../util/types";
 import _ from "lodash";
 import store from "../store/store";
@@ -209,7 +210,7 @@ export function createFiltersFromHighlights(
     ) {
       return {
         key: key,
-        type: variable.colType,
+        type: variable?.colType ?? GEOBOUNDS_TYPE,
         mode: highlight.include ?? mode,
         minX: highlight.value.minX,
         maxX: highlight.value.maxX,
