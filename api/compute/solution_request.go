@@ -85,7 +85,7 @@ type SolutionRequest struct {
 	DatasetAugmentations []*model.DatasetOrigin
 	TrainTestSplit       float64
 	CancelFuncs          map[string]context.CancelFunc
-
+	PosLabel			 string
 	mu               *sync.Mutex
 	wg               *sync.WaitGroup
 	requestChannel   chan SolutionStatus
@@ -134,7 +134,10 @@ func NewSolutionRequest(variables []*model.Variable, data []byte) (*SolutionRequ
 	req.Metrics, _ = json.StringArray(j, "metrics")
 	req.TrainTestSplit = json.FloatDefault(j, 0.9, "trainTestSplit")
 	req.TimestampSplitValue = json.FloatDefault(j, 0.0, "timestampSplitValue")
-
+	posLabel, ok := json.String(j, "positiveLabel")
+	if ok {
+		req.PosLabel = posLabel
+	}
 	filters, ok := json.Get(j, "filters")
 	if ok {
 		req.Filters, err = api.ParseFilterParamsFromJSON(filters)
@@ -227,13 +230,13 @@ func (s *SolutionRequest) Cancel() {
 
 func createSearchSolutionsRequest(preprocessing *pipeline.PipelineDescription, datasetURI string,
 	userAgent string, targetFeature *model.Variable, dataset string, metrics []string, task []string,
-	maxTime int64, maxSolutions int64) (*pipeline.SearchSolutionsRequest, error) {
+	maxTime int64, maxSolutions int64, posLabel string) (*pipeline.SearchSolutionsRequest, error) {
 
 	return &pipeline.SearchSolutionsRequest{
 		Problem: &pipeline.ProblemDescription{
 			Problem: &pipeline.Problem{
 				TaskKeywords:       compute.ConvertTaskKeywordsFromTA3ToTA2(task),
-				PerformanceMetrics: compute.ConvertMetricsFromTA3ToTA2(metrics),
+				PerformanceMetrics: compute.ConvertMetricsFromTA3ToTA2(metrics, posLabel),
 			},
 			Inputs: []*pipeline.ProblemInput{
 				{
@@ -773,7 +776,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 
 	// create search solutions request
 	searchRequest, err := createSearchSolutionsRequest(preprocessing, datasetPathTrain, client.UserAgent,
-		targetVariable, s.Dataset, s.Metrics, s.Task, int64(s.MaxTime), int64(s.MaxSolutions))
+		targetVariable, s.Dataset, s.Metrics, s.Task, int64(s.MaxTime), int64(s.MaxSolutions), s.PosLabel)
 	if err != nil {
 		return err
 	}
