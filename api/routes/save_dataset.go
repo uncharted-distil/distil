@@ -79,11 +79,13 @@ func SaveDatasetHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStora
 		}
 
 		// export needs to invert the filters
+		expandedFilterParams.Invert()
 		_, _, err = task.ExportDataset(dataset, metaStorage, dataStorage, expandedFilterParams)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
+		expandedFilterParams.Invert()
 
 		// delete rows based on filterParams
 		err = dataStorage.SaveDataset(dataset, ds.StorageName, expandedFilterParams)

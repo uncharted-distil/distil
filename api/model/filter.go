@@ -119,6 +119,12 @@ func (f *FilterParams) Clone() *FilterParams {
 	return clone
 }
 
+// Invert inverts filters and highlights.
+func (f *FilterParams) Invert() {
+	f.Filters.Invert = !f.Filters.Invert
+	f.Highlights.Invert = !f.Highlights.Invert
+}
+
 // AddVariable adds a variable, preventing duplicates
 func (f *FilterParams) AddVariable(nv string) {
 	for _, v := range f.Variables {
