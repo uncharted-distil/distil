@@ -15,6 +15,7 @@ Gopkg.lock
 package-lock.json
 public/static
 api/compute/test/tmp_data
+api/serialization/test
 api/task/test_data/augmented
 /datasets/*
 !datasets/196_autoMpg_MIN_METADATA

@@ -295,9 +295,7 @@ func (d *DiskDataset) Update(updates map[string]map[string]string, filterNotFoun
 				filterMap[key] = true
 			}
 		}
-		if len(filterMap) < 0 {
-			d.Dataset.FilterDataset(filterMap)
-		}
+		d.Dataset.FilterDataset(filterMap)
 	}
 
 	// translate column names to indices

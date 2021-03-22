@@ -71,7 +71,7 @@ func (d *Parquet) ReadDataset(schemaFile string) (*RawDataset, error) {
 // WriteDataset writes the raw dataset to the file system, writing out
 // the data to a parquet file.
 func (d *Parquet) WriteDataset(uri string, data *RawDataset) error {
-	log.Infof("writing parquet data to %s", uri)
+	log.Infof("writing parquet dataset to '%s'", uri)
 
 	dataFilename := path.Join(uri, compute.D3MDataFolder, compute.DistilParquetLearningData)
 	err := d.WriteData(dataFilename, data.Data)
@@ -169,7 +169,6 @@ func (d *Parquet) readColumn(pr *reader.ParquetReader, index int64, rows int64) 
 // WriteData writes data to a parquet file.
 func (d *Parquet) WriteData(uri string, data [][]string) error {
 	// create the containing folder
-	// (ignore the error since the write failure will pick it up regardless)
 	folder := path.Dir(uri)
 	err := os.MkdirAll(folder, os.ModePerm)
 	if err != nil {
