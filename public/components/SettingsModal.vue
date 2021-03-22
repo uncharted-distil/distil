@@ -136,7 +136,7 @@ import {
   getters as datasetGetters,
   actions as datasetActions,
 } from "../store/dataset/module";
-import { overlayRouteEntry, RouteArgs } from "../util/routes";
+import { overlayRouteEntry } from "../util/routes";
 import { MetricDropdownItem, TaskTypes } from "../store/dataset";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as appGetters } from "../store/app/module";
