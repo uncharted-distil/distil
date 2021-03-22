@@ -99,6 +99,23 @@ func filterData(client *compute.Client, ds *api.Dataset, filterParams *api.Filte
 	return outputFolder, updatedParams, nil
 }
 
+func mapFilterKeys(dataset string, filters *api.FilterParams, variables []*model.Variable) *api.FilterParams {
+	filtersUpdated := filters.Clone()
+
+	varsMapped := api.MapVariables(variables, func(variable *model.Variable) string { return variable.Key })
+	for _, f := range filtersUpdated.Filters.List {
+		variable := varsMapped[f.Key]
+		if variable.Key == f.Key && variable.IsGrouping() {
+			if _, ok := variable.Grouping.(*model.GeoBoundsGrouping); ok {
+				grouping := variable.Grouping.(*model.GeoBoundsGrouping)
+				f.Key = grouping.CoordinatesCol
+			}
+		}
+	}
+
+	return filtersUpdated
+}
+
 func hashFilter(schemaFile string, filterParams *api.FilterParams) (uint64, error) {
 	// generate the hash from the params
 	hashStruct := struct {

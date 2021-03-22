@@ -43,6 +43,9 @@ export const getters = {
   getDecodedJoinDatasetsFilterParams: read(
     moduleGetters.getDecodedJoinDatasetsFilterParams
   ),
+  getDecodedJoinDatasetsHighlight: read(
+    moduleGetters.getDecodedJoinDatasetsHighlight
+  ),
   getAnnotationHasChanged: read(moduleGetters.getAnnotationHasChanged),
   getRouteJoinDatasetsHash: read(moduleGetters.getRouteJoinDatasetsHash),
   getJoinDatasetsVariables: read(moduleGetters.getJoinDatasetsVariables),

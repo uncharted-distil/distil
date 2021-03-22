@@ -15,41 +15,42 @@
  *    limitations under the License.
  */
 
-import { Highlight, Variable } from "../store/dataset";
 import {
-  isNumericType,
-  dateToNum,
-  DATE_TIME_LOWER_TYPE,
-  CATEGORICAL_TYPE,
-  TIMESERIES_TYPE,
-  GEOCOORDINATE_TYPE,
-  GEOBOUNDS_TYPE,
-} from "./types";
-import {
-  decodeFilters,
-  Filter,
-  EXCLUDE_FILTER,
-  CATEGORICAL_FILTER,
-  DATETIME_FILTER,
-  NUMERICAL_FILTER,
-  TEXT_FILTER,
-  GEOBOUNDS_FILTER,
-  GEOCOORDINATE_FILTER,
-  BIVARIATE_FILTER,
-} from "./filters";
-import {
+  DateTimeEntryState,
   LabelState,
   Lex,
   NumericEntryState,
+  RelationState,
   TextEntryState,
-  DateTimeEntryState,
   TransitionFactory,
   ValueState,
   ValueStateValue,
-  RelationState,
+  StateTemplate,
 } from "@uncharted.software/lex";
-import { decodeHighlights, createFiltersFromHighlights } from "./highlights";
+import { Highlight, Variable } from "../store/dataset";
 import { Dictionary } from "./dict";
+import {
+  BIVARIATE_FILTER,
+  CATEGORICAL_FILTER,
+  DATETIME_FILTER,
+  decodeFilters,
+  EXCLUDE_FILTER,
+  Filter,
+  GEOBOUNDS_FILTER,
+  GEOCOORDINATE_FILTER,
+  NUMERICAL_FILTER,
+  TEXT_FILTER,
+} from "./filters";
+import { createFiltersFromHighlights, decodeHighlights } from "./highlights";
+import {
+  CATEGORICAL_TYPE,
+  dateToNum,
+  DATE_TIME_LOWER_TYPE,
+  GEOBOUNDS_TYPE,
+  GEOCOORDINATE_TYPE,
+  isNumericType,
+  TIMESERIES_TYPE,
+} from "./types";
 
 const HIGHLIGHT = "highlight";
 
@@ -91,8 +92,14 @@ class DistilRelationState extends RelationState {
   functions it depends on to support it in the Lex Bar language.
 */
 export function variablesToLexLanguage(variables: Variable[]): Lex {
-  const suggestions = variablesToLexSuggestions(variables);
-  const catVarLexSuggestions = perCategoricalVariableLexSuggestions(variables);
+  // remove timeseries
+  const filteredVariables = variables.filter((v) => {
+    return v.colType !== TIMESERIES_TYPE;
+  });
+  const suggestions = variablesToLexSuggestions(filteredVariables);
+  const catVarLexSuggestions = perCategoricalVariableLexSuggestions(
+    filteredVariables
+  );
   return Lex.from("field", ValueState, {
     name: "Choose a variable to search on",
     icon: '<i class="fa fa-filter" />',
@@ -125,22 +132,7 @@ export function variablesToLexLanguage(variables: Variable[]): Lex {
         .to(LabelState, { label: "To" })
         .to("max", NumericEntryState, { name: "Enter upper bound" })
     ),
-    Lex.from("relation", DistilRelationState, {
-      ...TransitionFactory.valueMetaCompare({ type: DATETIME_FILTER }),
-    }).branch(
-      Lex.from(LabelState, { label: "From" })
-        .to("min", DateTimeEntryState, {
-          enableTime: true,
-          enableCalendar: true,
-          timezone: "Greenwich",
-        })
-        .to(LabelState, { label: "To" })
-        .to("max", DateTimeEntryState, {
-          enableTime: true,
-          enableCalendar: true,
-          timezone: "Greenwich",
-        })
-    ),
+    ...distilDateTimeEntryBuilder(suggestions),
     Lex.from("relation", DistilRelationState, {
       ...TransitionFactory.valueMetaCompare({ type: GEOBOUNDS_FILTER }),
     }).branch(
@@ -155,7 +147,42 @@ export function variablesToLexLanguage(variables: Variable[]): Lex {
     )
   );
 }
-
+// distilDateTimeEntryBuilder creates an array of DateTimeEntry based on the supplied variables
+// this allows us to specify min and max dates
+export function distilDateTimeEntryBuilder(
+  suggestions: ValueStateValue[]
+): StateTemplate[] {
+  const dateTimeEntries = [];
+  const dateSuggestions = suggestions.filter((suggestion) => {
+    return suggestion.meta.type === DATETIME_FILTER;
+  });
+  dateSuggestions.forEach((suggestion) => {
+    dateTimeEntries.push(
+      Lex.from("relation", DistilRelationState, {
+        ...TransitionFactory.valueMetaCompare({
+          type: DATETIME_FILTER,
+          name: suggestion.meta.variable.colDisplayName,
+        }),
+      }).branch(
+        Lex.from(LabelState, { label: "From" })
+          .to("min", DateTimeEntryState, {
+            enableTime: true,
+            enableCalendar: true,
+            timezone: "Greenwich",
+            hilightedDate: new Date(suggestion.meta.variable.min * 1000),
+          })
+          .to(LabelState, { label: "To" })
+          .to("max", DateTimeEntryState, {
+            enableTime: true,
+            enableCalendar: true,
+            timezone: "Greenwich",
+            hilightedDate: new Date(suggestion.meta.variable.max * 1000),
+          })
+      )
+    );
+  });
+  return dateTimeEntries;
+}
 export function filterParamsToLexQuery(
   filter: string,
   highlight: string,
@@ -170,18 +197,42 @@ export function filterParamsToLexQuery(
   );
 
   const variableDict = buildVariableDictionary(allVariables);
-  const filterVariables = decodedFilters.map((f) => {
-    return variableDict[f.key];
+  const filterVariables = [];
+  decodedFilters.forEach((f) => {
+    if (variableDict[f.key]) {
+      filterVariables.push(variableDict[f.key]);
+    }
   });
-  const highlightVariables = decodedHighlights.map((h) => {
-    return variableDict[h.key];
+  const highlightVariables = [];
+  decodedHighlights.forEach((h) => {
+    if (variableDict[h.key]) {
+      highlightVariables.push(variableDict[h.key]);
+    }
   });
 
-  const activeVariables = [...highlightVariables, ...filterVariables];
-  const lexableElements = [...decodedHighlights, ...decodedFilters];
-
+  let activeVariables = [
+    ...highlightVariables,
+    ...filterVariables,
+  ] as Variable[];
+  // remove timeseries
+  activeVariables = activeVariables.filter((v) => {
+    return v.colType !== TIMESERIES_TYPE;
+  });
+  const activeVariablesMap = new Map(
+    activeVariables.map((v) => {
+      return [v.key, true];
+    })
+  );
+  // remove highlight if variable does not exist
+  const lexableElements = [
+    ...decodedHighlights.filter((el) => {
+      return activeVariablesMap.has(el.key);
+    }),
+    ...decodedFilters.filter((el) => {
+      return activeVariablesMap.has(el.key);
+    }),
+  ];
   const suggestions = variablesToLexSuggestions(activeVariables);
-
   const lexQuery = lexableElements.map((f, i) => {
     if (f.type === GEOBOUNDS_FILTER || f.type === BIVARIATE_FILTER) {
       return {
@@ -233,7 +284,7 @@ export function lexQueryToFiltersAndHighlight(
 
   lexQuery[0].forEach((lq) => {
     if (lq.relation.key !== HIGHLIGHT) {
-      const key = lq.field.key;
+      const key = lq.field.meta.variable.key;
       const displayKey = lq.field.displayKey;
       const type = lq.field.meta.type;
       const filter: Filter = {
@@ -261,7 +312,7 @@ export function lexQueryToFiltersAndHighlight(
 
       filters.push(filter);
     } else {
-      const key = lq.field.key;
+      const key = lq.field.meta.variable.key;
       const type = lq.field.meta.type;
       const highlight = {
         dataset,
@@ -321,9 +372,11 @@ function modeToRelation(mode: string): ValueStateValue {
 function variablesToLexSuggestions(variables: Variable[]): ValueStateValue[] {
   if (!variables) return;
   return variables.reduce((a, v) => {
-    const name = v.key;
+    const name = v.colDisplayName;
     const options = {
       type: colTypeToOptionType(v.colType.toLowerCase()),
+      variable: v,
+      name,
     };
     const config = {
       displayKey: v.colDisplayName,
@@ -352,7 +405,11 @@ function perCategoricalVariableLexSuggestions(
 }
 
 function colTypeToOptionType(colType: string): string {
-  if (colType === GEOBOUNDS_TYPE || colType === GEOCOORDINATE_TYPE) {
+  if (
+    colType === GEOBOUNDS_TYPE ||
+    colType === GEOCOORDINATE_TYPE ||
+    colType === BIVARIATE_FILTER
+  ) {
     return GEOBOUNDS_FILTER;
   } else if (colType === DATE_TIME_LOWER_TYPE) {
     return DATETIME_FILTER;

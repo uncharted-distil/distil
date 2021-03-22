@@ -1241,7 +1241,7 @@ export default Vue.extend({
       if (fieldSpec.type === SINGLE_FIELD) {
         return fieldSpec.field;
       }
-      return fieldSpec.lngField + ":" + fieldSpec.latField;
+      return fieldSpec.lngField + "_" + fieldSpec.latField;
     },
 
     showImageDrilldown(imageUrl: string, item: TableRow) {

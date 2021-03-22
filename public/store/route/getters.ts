@@ -151,7 +151,26 @@ export const getters = {
     const accuracy = state.query.joinAccuracy;
     return accuracy ? _.toNumber(accuracy) : 1;
   },
-
+  getDecodedJoinDatasetsHighlight(
+    state: Route,
+    getters: any
+  ): Dictionary<Highlight[]> {
+    const datasetIDs = getters.getRouteJoinDatasets as string[];
+    if (datasetIDs.length !== 2) {
+      return {};
+    }
+    const highlights = getters.getDecodedHighlights as Highlight[];
+    const result = {};
+    datasetIDs.forEach((id) => {
+      result[id] = [];
+    });
+    highlights.forEach((highlight) => {
+      if (result[highlight.dataset]) {
+        result[highlight.dataset].push(highlight);
+      }
+    });
+    return result;
+  },
   getDecodedJoinDatasetsFilterParams(
     state: Route,
     getters: any

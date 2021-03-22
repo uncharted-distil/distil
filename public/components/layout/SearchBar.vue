@@ -31,7 +31,6 @@ import { Variable } from "../../store/dataset/index";
 import { variablesToLexLanguage, filterParamsToLexQuery } from "../../util/lex";
 import "../../../node_modules/@uncharted.software/lex/dist/lex.css";
 import "../../../node_modules/flatpickr/dist/flatpickr.min.css";
-import { FilterParams } from "../../util/filters";
 
 /** SearchBar component to display LexBar utility
  *
