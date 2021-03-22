@@ -231,10 +231,6 @@ export default Vue.extend({
         ? this.trainTestSplit
         : this.trainTestSplitTimeSeries;
     },
-
-    routeTimestampSplit(): number {
-      return routeGetters.getRouteTimestampSplit(this.$store);
-    },
   },
 
   watch: {
