@@ -123,6 +123,12 @@ func (d *RawDataset) GetVariableIndices(variableHeaderNames []string) (map[strin
 // FilterDataset updates the dataset to only keep the rows that have the specified
 // column in the filter map set to true.
 func (d *RawDataset) FilterDataset(filter map[string]bool) {
+	if len(filter) == 0 {
+		// clear the dataset since nothing is in filter set
+		d.Data = [][]string{d.Data[0]}
+		return
+	}
+
 	d3mIndexIndex := d.GetVariableIndex(model.D3MIndexFieldName)
 
 	// start with the header
