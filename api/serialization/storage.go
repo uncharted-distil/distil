@@ -124,6 +124,8 @@ func (d *RawDataset) GetVariableIndices(variableHeaderNames []string) (map[strin
 // column in the filter map set to true.
 func (d *RawDataset) FilterDataset(filter map[string]bool) {
 	if len(filter) == 0 {
+		// clear the dataset since nothing is in filter set
+		d.Data = [][]string{d.Data[0]}
 		return
 	}
 
