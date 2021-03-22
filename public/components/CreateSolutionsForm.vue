@@ -66,6 +66,7 @@ import { getters as routeGetters } from "../store/route/module";
 import { RESULTS_ROUTE } from "../store/route/index";
 import { actions as requestActions } from "../store/requests/module";
 import { Solution } from "../store/requests/index";
+import { SolutionRequestMsg } from "../store/requests/actions";
 import { Variable, DataMode } from "../store/dataset/index";
 import { DATE_TIME_TYPE } from "../util/types";
 import { FilterParams } from "../util/filters";
@@ -161,18 +162,25 @@ export default Vue.extend({
       const routeSplit = routeGetters.getRouteTrainTestSplit(this.$store);
       const defaultSplit = appGetters.getTrainTestSplit(this.$store);
       const timestampSplit = routeGetters.getRouteTimestampSplit(this.$store);
+
+      const solutionRequestMsg = {
+        dataset: this.dataset,
+        filters: this.filterParams,
+        target: routeGetters.getRouteTargetVariable(this.$store),
+        metrics: this.metrics,
+        maxSolutions: routeGetters.getModelLimit(this.$store),
+        maxTime: routeGetters.getModelTimeLimit(this.$store),
+        quality: routeGetters.getModelQuality(this.$store),
+        trainTestSplit: !!routeSplit ? routeSplit : defaultSplit,
+        timestampSplitValue: timestampSplit,
+      } as SolutionRequestMsg;
+
+      // Add optional values to the request
+      const positiveLabel = routeGetters.getPositiveLabel(this.$store);
+      if (positiveLabel) solutionRequestMsg.positiveLabel = positiveLabel;
+
       requestActions
-        .createSolutionRequest(this.$store, {
-          dataset: this.dataset,
-          filters: this.filterParams,
-          target: routeGetters.getRouteTargetVariable(this.$store),
-          metrics: this.metrics,
-          maxSolutions: routeGetters.getModelLimit(this.$store),
-          maxTime: routeGetters.getModelTimeLimit(this.$store),
-          quality: routeGetters.getModelQuality(this.$store),
-          trainTestSplit: !!routeSplit ? routeSplit : defaultSplit,
-          timestampSplitValue: timestampSplit,
-        })
+        .createSolutionRequest(this.$store, solutionRequestMsg)
         .then((res: Solution) => {
           this.pending = false;
           const dataMode = routeGetters.getDataMode(this.$store);

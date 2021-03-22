@@ -76,6 +76,7 @@ export interface RouteArgs {
   orderBy?: string;
   outlier?: string;
   priorRoute?: string;
+  positiveLabel?: string;
 }
 
 function validateQueryArgs(args: RouteArgs): RouteArgs {

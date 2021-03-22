@@ -616,6 +616,7 @@ export const getters = {
     const orderBy = state.query.orderBy as string;
     return !!orderBy;
   },
+
   /* Check if the current task includes Remote Sensing. */
   isMultiBandImage(state: Route): boolean {
     // Get the list of task of the route.
@@ -713,5 +714,23 @@ export const getters = {
   /* Get the active pane on the route */
   getRoutePane(state: Route): string {
     return state.query.pane as string;
+  },
+
+  /* Check if the current task includes a Binary classification. */
+  isBinaryClassification(state: Route): boolean {
+    // Get the list of task of the route.
+    const task = state.query.task as string;
+    if (!task) return false;
+
+    // Check if BINARY and CLASSIFICATION are part of it.
+    const isBinary = task.includes(TaskTypes.BINARY);
+    const isClassification = task.includes(TaskTypes.CLASSIFICATION);
+
+    return isBinary && isClassification;
+  },
+
+  /* Get the Binary Classification Positive Label */
+  getPositiveLabel(state: Route): string {
+    return (state.query?.positiveLabel as string) ?? null;
   },
 };

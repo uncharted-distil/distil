@@ -63,16 +63,17 @@ interface StatusMessage {
 }
 
 // Search request message used in web socket context
-interface SolutionRequestMsg {
+export interface SolutionRequestMsg {
   dataset: string;
-  target: string;
+  filters: FilterParams;
   metrics: string[];
   maxSolutions: number;
   maxTime: number;
+  positiveLabel?: string;
   quality: ModelQuality;
-  filters: FilterParams;
-  trainTestSplit: number;
+  target: string;
   timestampSplitValue?: number;
+  trainTestSplit: number;
 }
 
 // Solution status message used in web socket context
@@ -571,6 +572,7 @@ export const actions = {
       stream.send(MessageType.CREATE_SOLUTIONS, {
         dataset: request.dataset,
         target: request.target,
+        positiveLabel: request.positiveLabel,
         metrics: request.metrics,
         maxSolutions: request.maxSolutions,
         maxTime: request.maxTime,

@@ -209,7 +209,7 @@ func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan Solutio
 	s.persistSolutionStatus(statusChan, solutionStorage, searchContext.searchID, searchSolutionID, compute.SolutionScoringStatus)
 
 	// score solution
-	solutionScoreResponses, err := client.GenerateSolutionScores(cancelContext, searchSolutionID, searchContext.testDatasetURI, s.Metrics)
+	solutionScoreResponses, err := client.GenerateSolutionScores(cancelContext, searchSolutionID, searchContext.testDatasetURI, s.Metrics, s.PosLabel)
 	if err != nil {
 		return nil, err
 	}
@@ -221,7 +221,7 @@ func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan Solutio
 			for _, score := range response.Scores {
 				metric := ""
 				if score.GetMetric() == nil {
-					metric = compute.ConvertMetricsFromTA3ToTA2(s.Metrics)[0].GetMetric()
+					metric = compute.ConvertMetricsFromTA3ToTA2(s.Metrics, s.PosLabel)[0].GetMetric()
 				} else {
 					metric = score.Metric.Metric
 				}
