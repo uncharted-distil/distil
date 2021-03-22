@@ -124,12 +124,10 @@ export default Vue.extend({
       });
     },
     dateTimeExtrema(): { min: number; max: number } {
-      const dateTimeVar = this.variables.find((v) => {
-        return v.colType === DATE_TIME_TYPE;
-      });
-      if (!dateTimeVar) {
-        return null;
-      }
+      const dateTimeVar = this.variables.find(
+        (variable) => variable.colType === DATE_TIME_TYPE
+      );
+      if (!dateTimeVar) return;
       return { min: dateTimeVar.min, max: dateTimeVar.max };
     },
     isPending(): boolean {
