@@ -49,15 +49,11 @@ func SaveFittedSolution(fittedSolutionID string, modelName string, modelDescript
 		ranks[fw.FeatureName] = fw.Weight
 	}
 
+	// use target ranking if we do not have feature weights
+	// ignore errors in this part because they are secondary to saving the model
 	if len(ranks) == 0 {
-		summaryVariables, err := api.FetchSummaryVariables(dataset.ID, metadataStorage)
-		if err != nil {
-			return nil, err
-		}
-		ranks, err = TargetRank(dataset.Folder, request.TargetFeature(), summaryVariables, dataset.Source)
-		if err != nil {
-			return nil, err
-		}
+		summaryVariables, _ := api.FetchSummaryVariables(dataset.ID, metadataStorage)
+		ranks, _ = TargetRank(dataset.Folder, request.TargetFeature(), summaryVariables, dataset.Source)
 	}
 
 	varMap := make(map[string]*model.Variable)

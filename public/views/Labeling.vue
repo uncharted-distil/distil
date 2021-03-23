@@ -108,7 +108,6 @@ import {
   NUM_PER_TARGET_PAGE,
   cloneDatasetUpdateRoute,
   LowShotLabels,
-  LOW_SHOT_LABEL_COLUMN_NAME,
   LOW_SHOT_SCORE_COLUMN_NAME,
   minimumRouteKey,
   addOrderBy,
@@ -157,7 +156,7 @@ export default Vue.extend({
   },
   data() {
     return {
-      labelName: LOW_SHOT_LABEL_COLUMN_NAME,
+      labelName: "",
       modalId: "label-input-form",
       isLoadingData: false,
       scorePopUpId: "modal-score-pop-up",
@@ -213,9 +212,7 @@ export default Vue.extend({
       const summaryDictionary = datasetGetters.getVariableSummariesDictionary(
         this.$store
       );
-      return summaryDictionary
-        ? summaryDictionary[LOW_SHOT_LABEL_COLUMN_NAME]
-        : null;
+      return summaryDictionary ? summaryDictionary[this.labelName] : null;
     },
     dataItems(): TableRow[] {
       return datasetGetters.getIncludedTableDataItems(this.$store);
@@ -238,10 +235,7 @@ export default Vue.extend({
     // filters out the low shot labels
     featureSummaries(): VariableSummary[] {
       return this.summaries.filter((s) => {
-        return (
-          s.key !== LOW_SHOT_LABEL_COLUMN_NAME &&
-          s.key !== LOW_SHOT_SCORE_COLUMN_NAME
-        );
+        return s.key !== this.labelName && s.key !== LOW_SHOT_SCORE_COLUMN_NAME;
       });
     },
     scoreSummary(): VariableSummary[] {
@@ -349,7 +343,7 @@ export default Vue.extend({
       this.isLoadingData = true;
       const res = (await requestActions.createQueryRequest(this.$store, {
         datasetId: this.dataset,
-        target: LOW_SHOT_LABEL_COLUMN_NAME,
+        target: this.labelName,
         filters: null,
       })) as { success: boolean; error: string };
       if (!res.success) {
@@ -375,7 +369,7 @@ export default Vue.extend({
         {
           context: this.instance,
           dataset: this.dataset,
-          key: LOW_SHOT_LABEL_COLUMN_NAME,
+          key: this.labelName,
           value: LowShotLabels.unlabeled,
         },
       ]; // exclude unlabeled from data export
@@ -401,7 +395,7 @@ export default Vue.extend({
         {
           context: this.instance,
           dataset: this.dataset,
-          key: LOW_SHOT_LABEL_COLUMN_NAME,
+          key: this.labelName,
           value: LowShotLabels.unlabeled,
         },
       ]; // exclude unlabeled from data export
@@ -454,7 +448,7 @@ export default Vue.extend({
       // add new field
       await datasetActions.addField<string>(this.$store, {
         dataset: this.dataset,
-        name: LOW_SHOT_LABEL_COLUMN_NAME,
+        name: this.labelName,
         fieldType: CATEGORICAL_TYPE,
         defaultValue: LowShotLabels.unlabeled,
         displayName: this.labelName,
@@ -477,7 +471,7 @@ export default Vue.extend({
         innerData.set(i, { LowShotLabel: label });
         return {
           index: i.toString(),
-          name: LOW_SHOT_LABEL_COLUMN_NAME,
+          name: this.labelName,
           value: label,
         };
       });
@@ -499,7 +493,7 @@ export default Vue.extend({
     async updateRoute() {
       const taskResponse = await datasetActions.fetchTask(this.$store, {
         dataset: this.dataset,
-        targetName: LOW_SHOT_LABEL_COLUMN_NAME,
+        targetName: this.labelName,
         variableNames: this.variables.map((v) => v.key),
       });
       const training = routeGetters.getDecodedTrainingVariableNames(

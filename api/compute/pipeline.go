@@ -272,6 +272,7 @@ func SubmitPipeline(client *compute.Client, datasets []string, datasetsProduce [
 	}
 
 	resultChan := queue.Enqueue(hashedPipelineEquivKey, queueTask)
+	defer queue.Done()
 
 	result := <-resultChan
 	if result.Error != nil {
@@ -280,7 +281,6 @@ func SubmitPipeline(client *compute.Client, datasets []string, datasetsProduce [
 
 	datasetURI := result.Output.(string)
 	cache.cache.Set(hashedPipelineUniqueKey, datasetURI, gc.DefaultExpiration)
-	queue.Done()
 	err = cache.PersistCache()
 	if err != nil {
 		log.Warnf("error persisting cache: %v", err)
