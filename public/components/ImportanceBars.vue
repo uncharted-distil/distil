@@ -16,29 +16,24 @@
 -->
 
 <template>
-  <div
-    class="d-inline-flex flex-row align-items-baseline"
-    :title="`${importanceLabel} estimated importance`"
+  <aside
+    v-if="isRanked"
+    class="importance d-inline-flex align-items-baseline ml-1"
+    :class="{ 'not-available': !importance }"
+    :title="importanceTitle"
   >
     <div
-      v-for="bar of bars"
-      class="importance-bar"
-      :class="bar.colorClass"
-      :key="bar.height"
-      :style="{ height: bar.height + 'px', background: bar.colorClass }"
-    ></div>
-  </div>
+      v-for="index in numBars"
+      :key="index"
+      :class="{ active: index <= numActive }"
+      :style="{ '--index': index }"
+    />
+  </aside>
 </template>
 
 <script lang="ts">
 import Vue from "vue";
-import * as d3 from "d3";
-
-// Rendering description for bar
-interface Bar {
-  colorClass: string;
-  height: number;
-}
+import { getters as routeGetters } from "../store/route/module";
 
 // Labels associated with confidences for tooltips
 const TOOLTIP_LABELS = ["LOW", "MEDIUM", "HIGH"];
@@ -47,54 +42,39 @@ const TOOLTIP_LABELS = ["LOW", "MEDIUM", "HIGH"];
 const IMPORTANCE_EXPONENT = 0.3;
 
 export default Vue.extend({
-  name: "importance-bars",
+  name: "ImportanceBars",
 
   props: {
     // Feature importance value, assumed to be [0,1]
     importance: {
       type: Number as () => number,
-      required: true,
+      default: null,
     },
+
     // Number of bars in the display
     numBars: {
       type: Number as () => number,
       default: 5,
-    },
-    // Width of bars in pixels
-    barWidth: {
-      type: Number as () => number,
-      default: 3,
-    },
-    // Bar height step in pixels
-    barHeightIncrement: {
-      type: Number as () => number,
-      default: 3,
     },
   },
 
   computed: {
     // biased bar
     biasedImportance(): number {
+      if (!this.importance) return;
       return Math.pow(this.importance, IMPORTANCE_EXPONENT);
     },
 
-    // Render descriptions of bars
-    bars(): Bar[] {
-      const entries: Bar[] = [];
-      const numActive = Math.round(this.biasedImportance * this.numBars);
-      for (let i = 0; i < this.numBars; i++) {
-        const entry = {
-          height: i * this.barHeightIncrement,
-          colorClass:
-            i <= numActive ? "importance-active" : "importance-inactive",
-        };
-        entries.push(entry);
-      }
-      return entries;
+    // Threshold to display a bar active
+    numActive(): number {
+      if (!this.importance) return -1;
+      return Math.round(this.biasedImportance * this.numBars);
     },
 
     // Generate the title tooltip
-    importanceLabel(): string {
+    importanceTitle(): string {
+      if (!this.importance) return "Importance not available";
+
       const label =
         TOOLTIP_LABELS[
           Math.min(
@@ -102,22 +82,38 @@ export default Vue.extend({
             TOOLTIP_LABELS.length - 1
           )
         ];
-      return label;
+      return `${label} estimated importance`;
+    },
+
+    // Check that the variables have been ranked
+    isRanked(): boolean {
+      return routeGetters.getRouteIsTrainingVariablesRanked(this.$store);
     },
   },
 });
 </script>
 
 <style scoped>
-.importance-bar {
-  width: 3px;
-  margin-left: 1px;
+.importance {
+  position: relative;
+}
+.importance div {
+  background-color: lightgray;
   border-radius: 2px;
+  height: calc(3px * var(--index));
+  margin-left: 1px;
+  width: 3px;
 }
-.importance-active {
-  background: #000000;
+.importance div.active {
+  background-color: black;
 }
-.importance-inactive {
-  background: lightgray;
+.importance.not-available::after {
+  background-color: lightgray;
+  border-top: 2px solid white;
+  content: "\0A";
+  height: 4px;
+  position: absolute;
+  transform: rotate(45deg) translate(10%, 100%);
+  width: 100%;
 }
 </style>

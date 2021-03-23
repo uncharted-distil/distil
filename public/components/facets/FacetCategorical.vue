@@ -27,7 +27,7 @@
     <div slot="header-label" :class="headerClass">
       <i :class="getGroupIcon(summary) + ' facet-header-icon'" />
       <span>{{ summary.label.toUpperCase() }}</span>
-      <importance-bars v-if="importance" :importance="importance" />
+      <importance-bars :importance="importance" />
       <type-change-menu
         v-if="facetEnableTypeChanges"
         class="facet-header-dropdown"
@@ -77,7 +77,6 @@ import {
   facetTypeChangeState,
 } from "../../util/facets";
 import _ from "lodash";
-import { getVariableImportance } from "../../util/data";
 
 export default Vue.extend({
   name: "FacetCategorical",
