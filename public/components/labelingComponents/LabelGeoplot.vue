@@ -45,9 +45,7 @@ import { getters as routeGetters } from "../../store/route/module";
 import {
   getVariableSummariesByState,
   getAllDataItems,
-  LOW_SHOT_LABEL_COLUMN_NAME,
   LowShotLabels,
-  LOW_SHOT_SCORE_COLUMN_NAME,
 } from "../../util/data";
 import { isGeoLocatedType } from "../../util/types";
 import { actions as viewActions } from "../../store/view/module";
@@ -67,6 +65,8 @@ export default Vue.extend({
     includedActive: Boolean as () => boolean,
     dataItems: { type: Array as () => TableRow[], default: null },
     hasConfidence: { type: Boolean as () => boolean, default: false },
+    labelFeatureName: { type: String, default: "" },
+    labelScoreName: { type: String, default: "" },
   },
 
   computed: {
@@ -127,14 +127,14 @@ export default Vue.extend({
   },
   methods: {
     getConfidenceRank(item: TableRow, idx: number): number {
-      if (item[LOW_SHOT_LABEL_COLUMN_NAME] === LowShotLabels.positive) {
+      if (item[this.labelFeatureName] === LowShotLabels.positive) {
         return 1.0;
       }
-      if (item[LOW_SHOT_LABEL_COLUMN_NAME] === LowShotLabels.negative) {
+      if (item[this.labelFeatureName] === LowShotLabels.negative) {
         return 0;
       }
       // comes back order by confidence so the rank is already engrained in the array
-      if (item[LOW_SHOT_SCORE_COLUMN_NAME]) {
+      if (item[this.labelScoreName]) {
         return 1.0 - idx / this.dataItems.length;
       }
       return undefined;

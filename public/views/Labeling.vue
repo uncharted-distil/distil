@@ -48,6 +48,8 @@
           :summaries="summaries"
           :variables="variables"
           :has-confidence="hasConfidence"
+          :label-feature-name="labelName"
+          :label-score-name="labelScoreName"
           @DataChanged="onAnnotationChanged"
         />
         <create-labeling-form
@@ -108,7 +110,7 @@ import {
   NUM_PER_TARGET_PAGE,
   cloneDatasetUpdateRoute,
   LowShotLabels,
-  LOW_SHOT_SCORE_COLUMN_NAME,
+  LOW_SHOT_SCORE_COLUMN_PREFIX,
   minimumRouteKey,
   addOrderBy,
   downloadFile,
@@ -169,17 +171,20 @@ export default Vue.extend({
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
+    labelScoreName(): string {
+      return LOW_SHOT_SCORE_COLUMN_PREFIX + this.labelName;
+    },
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store).filter((v) => {
         return (
           v.distilRole !== DISTIL_ROLES.SystemData ||
-          v.key !== LOW_SHOT_SCORE_COLUMN_NAME
+          v.key !== this.labelScoreName
         );
       });
     },
     scores(): Variable {
       return datasetGetters.getVariables(this.$store).find((v) => {
-        return v.key === LOW_SHOT_SCORE_COLUMN_NAME;
+        return v.key === this.labelScoreName;
       });
     },
     availableTargetVarsSearch(): string {
@@ -235,12 +240,12 @@ export default Vue.extend({
     // filters out the low shot labels
     featureSummaries(): VariableSummary[] {
       return this.summaries.filter((s) => {
-        return s.key !== this.labelName && s.key !== LOW_SHOT_SCORE_COLUMN_NAME;
+        return s.key !== this.labelName && s.key !== this.labelScoreName;
       });
     },
     scoreSummary(): VariableSummary[] {
       const score = this.summaries.find((s) => {
-        return s.key === LOW_SHOT_SCORE_COLUMN_NAME;
+        return s.key === this.labelScoreName;
       });
       return !score ? [] : [score];
     },
@@ -355,7 +360,7 @@ export default Vue.extend({
           toaster: "b-toaster-bottom-right",
         });
       }
-      addOrderBy(LOW_SHOT_SCORE_COLUMN_NAME);
+      addOrderBy(this.labelScoreName);
       this.isLoadingData = false;
       await this.fetchData();
       this.hasConfidence = true;
@@ -405,13 +410,13 @@ export default Vue.extend({
       filterParams = cloneFilters(filterParams);
       if (
         this.variables.some((v) => {
-          return v.key === LOW_SHOT_SCORE_COLUMN_NAME;
+          return v.key === this.labelScoreName;
         })
       ) {
         // delete confidence variable when saving
         await datasetActions.deleteVariable(this.$store, {
           dataset: this.dataset,
-          key: LOW_SHOT_SCORE_COLUMN_NAME,
+          key: this.labelScoreName,
         });
       }
       const dataMode = routeGetters.getDataMode(this.$store);

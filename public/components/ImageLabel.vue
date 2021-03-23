@@ -27,7 +27,11 @@
     >
       {{ label.value }}
     </li>
-    <label-annotation v-if="containsUserAnnotation" :item="item" />
+    <label-annotation
+      v-if="containsUserAnnotation"
+      :item="item"
+      :labelFeatureName="labelFeatureName"
+    />
   </ol>
 </template>
 
@@ -41,7 +45,7 @@ import { getters as routeGetters } from "../store/route/module";
 import { getters as resultGetters } from "../store/results/module";
 import LabelAnnotation from "./labelingComponents/LabelAnnotation.vue";
 import _ from "lodash";
-import { minimumRouteKey, LOW_SHOT_LABEL_COLUMN_NAME } from "../util/data";
+import { minimumRouteKey } from "../util/data";
 
 interface Label {
   status: string;
@@ -75,6 +79,7 @@ export default Vue.extend({
       default: false,
     },
     isResult: { type: Boolean as () => boolean, default: false },
+    labelFeatureName: { type: String, default: "" },
   },
 
   computed: {
@@ -206,7 +211,7 @@ export default Vue.extend({
       if (!this.item) {
         return false;
       }
-      return this.item[LOW_SHOT_LABEL_COLUMN_NAME] !== undefined;
+      return this.item[this.labelFeatureName] !== undefined;
     },
   },
 
