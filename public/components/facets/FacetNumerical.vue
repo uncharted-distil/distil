@@ -25,7 +25,7 @@
   >
     <div slot="header-label" :class="headerClass">
       <span>{{ summary.label.toUpperCase() }}</span>
-      <importance-bars v-if="importance" :importance="importance" />
+      <importance-bars :importance="importance" />
       <type-change-menu
         v-if="facetEnableTypeChanges"
         class="facet-header-dropdown"

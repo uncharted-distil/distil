@@ -85,14 +85,14 @@ type SolutionRequest struct {
 	DatasetAugmentations []*model.DatasetOrigin
 	TrainTestSplit       float64
 	CancelFuncs          map[string]context.CancelFunc
-	PosLabel			 string
-	mu               *sync.Mutex
-	wg               *sync.WaitGroup
-	requestChannel   chan SolutionStatus
-	solutionChannels []chan SolutionStatus
-	listener         SolutionStatusListener
-	finished         chan error
-	useParquet       bool
+	PosLabel             string
+	mu                   *sync.Mutex
+	wg                   *sync.WaitGroup
+	requestChannel       chan SolutionStatus
+	solutionChannels     []chan SolutionStatus
+	listener             SolutionStatusListener
+	finished             chan error
+	useParquet           bool
 }
 
 // NewSolutionRequest instantiates a new SolutionRequest.
