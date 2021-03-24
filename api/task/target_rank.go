@@ -64,7 +64,7 @@ func TargetRank(dataset string, target string, features []*model.Variable, sourc
 	if len(filteredFeatures) <= 2 || excludedTypes[targetFeature.Type] {
 		return map[string]float64{}, nil
 	}
-	filteredFeatures[target] = true
+	filteredFeatures[strings.ToLower(target)] = true
 
 	// create & submit the solution request - we send the list of filtered features to ensure that
 	pip, err := description.CreateTargetRankingPipeline("target_rank", "feature ranking relative to the target", targetFeature, features, filteredFeatures)
