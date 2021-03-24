@@ -56,6 +56,8 @@
         :instance-name="instanceName"
         :summaries="summaries"
         :has-confidence="hasConfidence"
+        :label-feature-name="labelFeatureName"
+        :label-score-name="labelScoreName"
         pagination
         includedActive
       />

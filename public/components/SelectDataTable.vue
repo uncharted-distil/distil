@@ -61,7 +61,7 @@
             shorten-labels
             align-horizontal
             :item="data.item"
-            :labelFeatureName="labelFeatureName"
+            :label-feature-name="labelFeatureName"
           />
         </div>
       </template>

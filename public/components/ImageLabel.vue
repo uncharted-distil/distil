@@ -30,7 +30,7 @@
     <label-annotation
       v-if="containsUserAnnotation"
       :item="item"
-      :labelFeatureName="labelFeatureName"
+      :label-feature-name="labelFeatureName"
     />
   </ol>
 </template>

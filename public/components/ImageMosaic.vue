@@ -45,7 +45,7 @@
               alignHorizontal
               :item="item"
               :is-result="isResult"
-              :labelFeatureName="labelFeatureName"
+              :label-feature-name="labelFeatureName"
             />
           </div>
         </template>
