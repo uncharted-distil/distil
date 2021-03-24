@@ -94,6 +94,12 @@ func SaveDatasetHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStora
 			return
 		}
 
+		rowCount, err := dataStorage.FetchNumRows(ds.StorageName, nil)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
 		// update properties on the dataset (pull latest from store to pick up any other changes)
 		ds, err = metaStorage.FetchDataset(dataset, true, true, true)
 		if err != nil {
@@ -106,6 +112,7 @@ func SaveDatasetHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStora
 		if shouldRename {
 			ds.Name = datasetName
 		}
+		ds.NumRows = int64(rowCount)
 		err = metaStorage.UpdateDataset(ds)
 		if err != nil {
 			handleError(w, err)

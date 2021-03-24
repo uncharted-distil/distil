@@ -78,7 +78,7 @@ func (s *Storage) deleteRows(dataset string, storageName string, filterParams *a
 		where = "WHERE " + strings.Join(wheres, " AND ")
 	}
 	sql := fmt.Sprintf("DELETE FROM %s %s;", storageName, where)
-	_, err := s.client.Query(sql, paramsFilter...)
+	_, err := s.client.Exec(sql, paramsFilter...)
 	if err != nil {
 		return errors.Wrapf(err, "unable execute query to delete rows")
 	}
