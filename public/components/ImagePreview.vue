@@ -29,17 +29,19 @@
       <div v-if="!isLoaded" v-html="spinnerHTML" />
       <template v-else-if="!stopSpinner">
         <div
-          ref="imageElem"
           class="image-elem clickable"
           @click.stop.exact="handleClick"
           @click.shift.exact.stop="handleShiftClick"
-        />
+        >
+          <img ref="imageElem" />
+        </div>
         <div
-          ref="imageAttentionElem"
           class="filter-elem clickable"
           @click.stop.exact="handleClick"
           @click.shift.exact.stop="handleShiftClick"
-        />
+        >
+          <img ref="imageAttentionElem" />
+        </div>
         <i class="fa fa-search-plus zoom-icon" @click.stop="showZoomedImage" />
       </template>
       <img v-else alt="image unavailable" />
@@ -99,8 +101,6 @@ export default Vue.extend({
     height: { type: Number as () => number, default: 64 },
     preventHiding: { type: Boolean as () => boolean, default: false },
     gray: { type: Number, default: 0 }, // support for graying images.
-    debounce: { type: Boolean as () => boolean, default: false },
-    debounceWaitTime: { type: Number as () => number, default: 500 },
   },
 
   data() {
@@ -232,6 +232,7 @@ export default Vue.extend({
         if (!this.isLoaded) {
           return;
         }
+        this.injectImage();
         await this.handleImageAttention();
       });
     },
@@ -295,22 +296,11 @@ export default Vue.extend({
   },
 
   created() {
-    this.debouncedRequestImage = _.debounce(
-      this.requestImage.bind(this),
-      this.debounceWaitTime
-    );
-    if (this.debounce) {
-      this.getImage = this.debouncedRequestImage;
-    } else {
-      this.getImage = this.requestImage;
-    }
+    this.getImage = this.requestImage;
   },
 
   destroyed() {
     this.cleanUp();
-    if (this.debounce) {
-      this.getImage.cancel();
-    }
   },
 
   methods: {
@@ -378,20 +368,9 @@ export default Vue.extend({
 
     injectImage() {
       if (!this.image) return;
-
-      const elem = this.$refs.imageElem as any;
+      const elem = this.$refs.imageElem as HTMLImageElement;
       if (elem) {
-        this.clearImage(elem);
-        const image = this.image.cloneNode() as HTMLImageElement;
-        elem.appendChild(image);
-
-        // fit image preview to available area with no overflows
-        if (
-          this.width === this.height &&
-          elem.children[0].height > elem.children[0].width
-        ) {
-          elem.children[0].style.height = elem.children[0].width + "px";
-        }
+        elem.src = ("data:image/jpeg;base64," + this.image) as any;
         this.hasRendered = true;
       }
     },
@@ -401,19 +380,17 @@ export default Vue.extend({
         return;
       }
 
-      const elem = this.$refs.imageAttentionElem as any;
+      const elem = this.$refs.imageAttentionElem as HTMLImageElement;
       if (elem) {
-        this.clearImage(elem);
-        const image = this.imageAttention.cloneNode() as HTMLImageElement;
-        elem.appendChild(image);
+        elem.src = this.imageAttention.src;
 
         // fit image preview to available area with no overflows
-        if (
-          this.width === this.height &&
-          elem.children[0].height > elem.children[0].width
-        ) {
-          elem.children[0].style.height = elem.children[0].width + "px";
-        }
+        //if (
+        //  this.width === this.height &&
+        //  elem.children[0].height > elem.children[0].width
+        //) {
+        //  elem.children[0].style.height = elem.children[0].width + "px";
+        //}
         this.imageAttentionHasRendered = true;
       }
     },

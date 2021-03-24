@@ -303,6 +303,9 @@ export default Vue.extend({
         !isEmpty(this.timeseriesGroupings)
       );
     },
+    band(): string {
+      return routeGetters.getBandCombinationId(this.$store);
+    },
   },
 
   watch: {
@@ -356,6 +359,22 @@ export default Vue.extend({
         });
       });
     },
+    fetchImagePack() {
+      if (!this.imageFields.length) {
+        return;
+      }
+      const imageKey = this.imageFields[0].key;
+      datasetActions.fetchImagePack(this.$store, {
+        multiBandImagePackRequest: {
+          imageIds: this.pageItems.map((item) => {
+            return item[imageKey].value as string;
+          }),
+          dataset: this.dataset,
+          band: this.band,
+        },
+        uniqueTrail: this.uniqueTrail,
+      });
+    },
     onPagination(page: number) {
       // remove old data from store
       removeTimeseries(
@@ -366,6 +385,7 @@ export default Vue.extend({
       this.currentPage = page;
       // fetch new data
       this.fetchTimeSeries();
+      this.fetchImagePack();
     },
     selectAll() {
       bulkRowSelectionUpdate(

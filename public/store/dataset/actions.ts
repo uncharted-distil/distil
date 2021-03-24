@@ -45,6 +45,7 @@ import {
   isRankableVariableType,
   MULTIBAND_IMAGE_TYPE,
   UNKNOWN_TYPE,
+  MultiBandImagePackRequest,
 } from "../../util/types";
 import { getters as routeGetters } from "../route/module";
 import store, { DistilState } from "../store";
@@ -1263,6 +1264,7 @@ export const actions = {
     if (!validateArgs(args, ["dataset", "imageId", "bandCombination"])) {
       return null;
     }
+    return;
     const options = !!args.options ? `${JSON.stringify(args.options)}` : "";
     try {
       const response = await loadImage(
@@ -1272,6 +1274,33 @@ export const actions = {
         ? `${args.imageId}/${args.uniqueTrail}`
         : args.imageId;
       mutations.updateFile(context, { url: imageUrl, file: response });
+    } catch (error) {
+      console.error(error);
+    }
+  },
+
+  async fetchImagePack(
+    context: DatasetContext,
+    args: {
+      multiBandImagePackRequest: MultiBandImagePackRequest;
+      uniqueTrail?: string;
+    }
+  ) {
+    try {
+      const response = await axios.post(
+        "distil/image-pack",
+        args.multiBandImagePackRequest
+      );
+      let urls = response.data.imageIds;
+      if (args.uniqueTrail) {
+        urls = response.data.imageIds.map((id) => {
+          return `${id}/${args.uniqueTrail}`;
+        });
+      }
+      mutations.bulkUpdateFiles(context, {
+        urls: urls,
+        files: response.data.images,
+      });
     } catch (error) {
       console.error(error);
     }

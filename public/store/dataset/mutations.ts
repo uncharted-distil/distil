@@ -288,7 +288,11 @@ export const mutations = {
   updateFile(state: DatasetState, args: { url: string; file: any }) {
     Vue.set(state.files, args.url, args.file);
   },
-
+  bulkUpdateFiles(state: DatasetState, args: { urls: string[]; files: any[] }) {
+    for (let i = 0; i < args.urls.length; ++i) {
+      Vue.set(state.files, args.urls[i], args.files[i]);
+    }
+  },
   removeFile(state: DatasetState, url: string) {
     Vue.delete(state.files, url);
   },
