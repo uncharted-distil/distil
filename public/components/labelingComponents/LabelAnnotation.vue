@@ -24,15 +24,16 @@
 
 <script lang="ts">
 import Vue from "vue";
-import { LowShotLabels, LOW_SHOT_LABEL_COLUMN_NAME } from "../../util/data";
+import { LowShotLabels } from "../../util/data";
 export default Vue.extend({
   name: "label-annotation",
   props: {
     item: Object as () => any,
+    labelFeatureName: { type: String, default: "" },
   },
   computed: {
     getLabel(): string {
-      switch (this.item[LOW_SHOT_LABEL_COLUMN_NAME].value) {
+      switch (this.item[this.labelFeatureName].value) {
         case LowShotLabels.positive:
           return "fa fa-plus-circle text-success p-1 fa-stack-1x";
           break;

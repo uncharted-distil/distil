@@ -48,6 +48,8 @@
           :summaries="summaries"
           :variables="variables"
           :has-confidence="hasConfidence"
+          :label-feature-name="labelName"
+          :label-score-name="labelScoreName"
           @DataChanged="onAnnotationChanged"
         />
         <create-labeling-form
@@ -108,8 +110,7 @@ import {
   NUM_PER_TARGET_PAGE,
   cloneDatasetUpdateRoute,
   LowShotLabels,
-  LOW_SHOT_LABEL_COLUMN_NAME,
-  LOW_SHOT_SCORE_COLUMN_NAME,
+  LOW_SHOT_SCORE_COLUMN_PREFIX,
   minimumRouteKey,
   addOrderBy,
   downloadFile,
@@ -157,7 +158,7 @@ export default Vue.extend({
   },
   data() {
     return {
-      labelName: LOW_SHOT_LABEL_COLUMN_NAME,
+      labelName: "",
       modalId: "label-input-form",
       isLoadingData: false,
       scorePopUpId: "modal-score-pop-up",
@@ -170,17 +171,20 @@ export default Vue.extend({
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
+    labelScoreName(): string {
+      return LOW_SHOT_SCORE_COLUMN_PREFIX + this.labelName;
+    },
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store).filter((v) => {
         return (
           v.distilRole !== DISTIL_ROLES.SystemData ||
-          v.key !== LOW_SHOT_SCORE_COLUMN_NAME
+          v.key !== this.labelScoreName
         );
       });
     },
     scores(): Variable {
       return datasetGetters.getVariables(this.$store).find((v) => {
-        return v.key === LOW_SHOT_SCORE_COLUMN_NAME;
+        return v.key === this.labelScoreName;
       });
     },
     availableTargetVarsSearch(): string {
@@ -213,9 +217,7 @@ export default Vue.extend({
       const summaryDictionary = datasetGetters.getVariableSummariesDictionary(
         this.$store
       );
-      return summaryDictionary
-        ? summaryDictionary[LOW_SHOT_LABEL_COLUMN_NAME]
-        : null;
+      return summaryDictionary ? summaryDictionary[this.labelName] : null;
     },
     dataItems(): TableRow[] {
       return datasetGetters.getIncludedTableDataItems(this.$store);
@@ -238,15 +240,12 @@ export default Vue.extend({
     // filters out the low shot labels
     featureSummaries(): VariableSummary[] {
       return this.summaries.filter((s) => {
-        return (
-          s.key !== LOW_SHOT_LABEL_COLUMN_NAME &&
-          s.key !== LOW_SHOT_SCORE_COLUMN_NAME
-        );
+        return s.key !== this.labelName && s.key !== this.labelScoreName;
       });
     },
     scoreSummary(): VariableSummary[] {
       const score = this.summaries.find((s) => {
-        return s.key === LOW_SHOT_SCORE_COLUMN_NAME;
+        return s.key === this.labelScoreName;
       });
       return !score ? [] : [score];
     },
@@ -349,7 +348,7 @@ export default Vue.extend({
       this.isLoadingData = true;
       const res = (await requestActions.createQueryRequest(this.$store, {
         datasetId: this.dataset,
-        target: LOW_SHOT_LABEL_COLUMN_NAME,
+        target: this.labelName,
         filters: null,
       })) as { success: boolean; error: string };
       if (!res.success) {
@@ -361,7 +360,7 @@ export default Vue.extend({
           toaster: "b-toaster-bottom-right",
         });
       }
-      addOrderBy(LOW_SHOT_SCORE_COLUMN_NAME);
+      addOrderBy(this.labelScoreName);
       this.isLoadingData = false;
       await this.fetchData();
       this.hasConfidence = true;
@@ -375,7 +374,7 @@ export default Vue.extend({
         {
           context: this.instance,
           dataset: this.dataset,
-          key: LOW_SHOT_LABEL_COLUMN_NAME,
+          key: this.labelName,
           value: LowShotLabels.unlabeled,
         },
       ]; // exclude unlabeled from data export
@@ -401,7 +400,7 @@ export default Vue.extend({
         {
           context: this.instance,
           dataset: this.dataset,
-          key: LOW_SHOT_LABEL_COLUMN_NAME,
+          key: this.labelName,
           value: LowShotLabels.unlabeled,
         },
       ]; // exclude unlabeled from data export
@@ -411,13 +410,13 @@ export default Vue.extend({
       filterParams = cloneFilters(filterParams);
       if (
         this.variables.some((v) => {
-          return v.key === LOW_SHOT_SCORE_COLUMN_NAME;
+          return v.key === this.labelScoreName;
         })
       ) {
         // delete confidence variable when saving
         await datasetActions.deleteVariable(this.$store, {
           dataset: this.dataset,
-          key: LOW_SHOT_SCORE_COLUMN_NAME,
+          key: this.labelScoreName,
         });
       }
       const dataMode = routeGetters.getDataMode(this.$store);
@@ -454,7 +453,7 @@ export default Vue.extend({
       // add new field
       await datasetActions.addField<string>(this.$store, {
         dataset: this.dataset,
-        name: LOW_SHOT_LABEL_COLUMN_NAME,
+        name: this.labelName,
         fieldType: CATEGORICAL_TYPE,
         defaultValue: LowShotLabels.unlabeled,
         displayName: this.labelName,
@@ -477,7 +476,7 @@ export default Vue.extend({
         innerData.set(i, { LowShotLabel: label });
         return {
           index: i.toString(),
-          name: LOW_SHOT_LABEL_COLUMN_NAME,
+          name: this.labelName,
           value: label,
         };
       });
@@ -499,7 +498,7 @@ export default Vue.extend({
     async updateRoute() {
       const taskResponse = await datasetActions.fetchTask(this.$store, {
         dataset: this.dataset,
-        targetName: LOW_SHOT_LABEL_COLUMN_NAME,
+        targetName: this.labelName,
         variableNames: this.variables.map((v) => v.key),
       });
       const training = routeGetters.getDecodedTrainingVariableNames(

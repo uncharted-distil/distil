@@ -61,6 +61,7 @@
             shorten-labels
             align-horizontal
             :item="data.item"
+            :label-feature-name="labelFeatureName"
           />
         </div>
       </template>
@@ -180,6 +181,7 @@ export default Vue.extend({
     instanceName: { type: String as () => string, default: "" },
     dataItems: { type: Array as () => TableRow[], default: null },
     includedActive: { type: Boolean, default: true },
+    labelFeatureName: { type: String, default: "" },
   },
 
   data() {

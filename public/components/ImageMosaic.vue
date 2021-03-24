@@ -45,6 +45,7 @@
               alignHorizontal
               :item="item"
               :is-result="isResult"
+              :label-feature-name="labelFeatureName"
             />
           </div>
         </template>
@@ -98,6 +99,7 @@ export default Vue.extend({
     dataItems: Array as () => any[],
     dataFields: Object as () => Dictionary<TableColumn>,
     isResult: { type: Boolean as () => boolean, default: false },
+    labelFeatureName: { type: String, default: "" },
   },
 
   data() {
