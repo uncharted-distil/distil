@@ -16,7 +16,7 @@
 -->
 
 <template>
-  <div class="status-panel" v-if="isOpen">
+  <div v-if="isOpen" class="status-panel" :class="{ wider: isWider }">
     <div class="d-flex flex-column h-100">
       <div class="heading">
         <h4 class="title">{{ contentData.title }}</h4>
@@ -112,6 +112,12 @@ export default Vue.extend({
     isOpen(): boolean {
       return this.statusPanelState.isOpen;
     },
+
+    /* Display the status-panel wider. */
+    isWider(): boolean {
+      return this.isResolved && this.statusType === "JOIN_SUGGESTION";
+    },
+
     statusType(): StatusPanelContentType {
       return this.statusPanelState.contentType;
     },
@@ -355,6 +361,11 @@ export default Vue.extend({
   width: 300px;
   height: 100%;
   background: #fff;
+}
+
+.status-panel.wider {
+  width: 40vw;
+  max-width: 450px;
 }
 
 .status-panel .heading {
