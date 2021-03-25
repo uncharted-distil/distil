@@ -29,17 +29,19 @@
       <div v-if="!isLoaded" v-html="spinnerHTML" />
       <template v-else-if="!stopSpinner">
         <div
-          ref="imageElem"
           class="image-elem clickable"
           @click.stop.exact="handleClick"
           @click.shift.exact.stop="handleShiftClick"
-        />
+        >
+          <img ref="imageElem" />
+        </div>
         <div
-          ref="imageAttentionElem"
           class="filter-elem clickable"
           @click.stop.exact="handleClick"
           @click.shift.exact.stop="handleShiftClick"
-        />
+        >
+          <img ref="imageAttentionElem" />
+        </div>
         <i class="fa fa-search-plus zoom-icon" @click.stop="showZoomedImage" />
       </template>
       <img v-else alt="image unavailable" />
@@ -99,13 +101,12 @@ export default Vue.extend({
     height: { type: Number as () => number, default: 64 },
     preventHiding: { type: Boolean as () => boolean, default: false },
     gray: { type: Number, default: 0 }, // support for graying images.
-    debounce: { type: Boolean as () => boolean, default: false },
-    debounceWaitTime: { type: Number as () => number, default: 500 },
+    shouldCleanUp: { type: Boolean as () => boolean, default: true },
+    shouldFetchImage: { type: Boolean as () => boolean, default: true },
   },
 
   data() {
     return {
-      debouncedRequestImage: null,
       getImage: null,
       hasRendered: false,
       hasRequested: false,
@@ -158,7 +159,7 @@ export default Vue.extend({
 
     isLoaded(): boolean {
       if (this.type === IMAGE_TYPE) {
-        return !!this.files[this.imageUrl] || this.stopSpinner;
+        return !!this.files[this.imageParamUrl] || this.stopSpinner;
       }
 
       return (
@@ -177,7 +178,7 @@ export default Vue.extend({
 
     image(): HTMLImageElement {
       if (this.type === IMAGE_TYPE) {
-        return this.files[this.imageUrl] ?? null;
+        return this.files[this.imageParamUrl] ?? null;
       }
       return (
         this.files[this.imageParamUrl] ?? this.files[this.imageParamId] ?? null
@@ -232,6 +233,7 @@ export default Vue.extend({
         if (!this.isLoaded) {
           return;
         }
+        this.injectImage();
         await this.handleImageAttention();
       });
     },
@@ -241,7 +243,6 @@ export default Vue.extend({
         this.cleanUp();
         this.hasRendered = false;
         this.hasRequested = false;
-        this.clearImage();
         this.getImage();
       }
     },
@@ -268,17 +269,9 @@ export default Vue.extend({
         this.hasRendered = false;
         this.hasRequested = false;
         if (this.isVisible) {
-          this.clearImage();
           this.getImage();
         }
       }
-    },
-    debounce(newVal: boolean) {
-      if (newVal) {
-        this.getImage = this.debouncedRequestImage;
-        return;
-      }
-      this.getImage = this.requestImage;
     },
   },
 
@@ -295,22 +288,11 @@ export default Vue.extend({
   },
 
   created() {
-    this.debouncedRequestImage = _.debounce(
-      this.requestImage.bind(this),
-      this.debounceWaitTime
-    );
-    if (this.debounce) {
-      this.getImage = this.debouncedRequestImage;
-    } else {
-      this.getImage = this.requestImage;
-    }
+    this.getImage = this.requestImage;
   },
 
   destroyed() {
     this.cleanUp();
-    if (this.debounce) {
-      this.getImage.cancel();
-    }
   },
 
   methods: {
@@ -332,7 +314,6 @@ export default Vue.extend({
 
     async handleImageAttention() {
       this.hasRendered = false;
-      this.clearImage(this.$refs.imageAttentionElem as any);
       if (
         this.hasImageAttention &&
         !this.imageAttentionIsLoaded &&
@@ -348,7 +329,6 @@ export default Vue.extend({
         this.injectFilter();
       }
       if (!this.hasImageAttention && this.imageAttentionHasRendered) {
-        this.clearImage(this.$refs.imageAttentionElem as any);
         this.imageAttentionHasRendered = false;
       }
     },
@@ -369,28 +349,16 @@ export default Vue.extend({
       this.zoomImage = false;
     },
 
-    clearImage(elem?: any) {
-      const $elem = elem || (this.$refs.imageElem as any);
-      if ($elem) {
-        $elem.innerHTML = "";
-      }
-    },
-
     injectImage() {
       if (!this.image) return;
-
-      const elem = this.$refs.imageElem as any;
+      const elem = this.$refs.imageElem as HTMLImageElement;
       if (elem) {
-        this.clearImage(elem);
-        const image = this.image.cloneNode() as HTMLImageElement;
-        elem.appendChild(image);
-
-        // fit image preview to available area with no overflows
-        if (
-          this.width === this.height &&
-          elem.children[0].height > elem.children[0].width
-        ) {
-          elem.children[0].style.height = elem.children[0].width + "px";
+        // this.image can be an HTMLImageElement or Binary data
+        if (typeof this.image === "object") {
+          elem.src = this.image.src;
+        } else {
+          // in this instance this.image is binary data
+          elem.src = ("data:image/jpeg;base64," + this.image) as string;
         }
         this.hasRendered = true;
       }
@@ -401,24 +369,17 @@ export default Vue.extend({
         return;
       }
 
-      const elem = this.$refs.imageAttentionElem as any;
+      const elem = this.$refs.imageAttentionElem as HTMLImageElement;
       if (elem) {
-        this.clearImage(elem);
-        const image = this.imageAttention.cloneNode() as HTMLImageElement;
-        elem.appendChild(image);
-
-        // fit image preview to available area with no overflows
-        if (
-          this.width === this.height &&
-          elem.children[0].height > elem.children[0].width
-        ) {
-          elem.children[0].style.height = elem.children[0].width + "px";
-        }
+        elem.src = this.imageAttention.src;
         this.imageAttentionHasRendered = true;
       }
     },
 
     async requestImage() {
+      if (!this.shouldFetchImage) {
+        return;
+      }
       if (this.imageUrl === null) {
         this.stopSpinner = true; // imageUrl is null stop spinner
         return;
@@ -449,6 +410,9 @@ export default Vue.extend({
     },
 
     cleanUp() {
+      if (!this.shouldCleanUp) {
+        return;
+      }
       const empty = "";
       if (this.uniqueTrail !== empty) {
         datasetMutations.removeFile(this.$store, this.imageParamId);

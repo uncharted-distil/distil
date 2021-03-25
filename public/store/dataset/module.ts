@@ -166,6 +166,7 @@ export const actions = {
   // files
   fetchFiles: dispatch(moduleActions.fetchFiles),
   fetchImage: dispatch(moduleActions.fetchImage),
+  fetchImagePack: dispatch(moduleActions.fetchImagePack),
   fetchMultiBandImage: dispatch(moduleActions.fetchMultiBandImage),
   fetchImageAttention: dispatch(moduleActions.fetchImageAttention),
   fetchTimeseries: dispatch(moduleActions.fetchTimeseries),
@@ -223,6 +224,8 @@ export const mutations = {
   // files
   updateFile: commit(moduleMutations.updateFile),
   removeFile: commit(moduleMutations.removeFile),
+  bulkRemoveFiles: commit(moduleMutations.bulkRemoveFiles),
+  bulkUpdateFiles: commit(moduleMutations.bulkUpdateFiles),
   bulkUpdateTimeseries: commit(moduleMutations.bulkUpdateTimeseries),
   // included / excluded table data
   setJoinDatasetsTableData: commit(moduleMutations.setJoinDatasetsTableData),
