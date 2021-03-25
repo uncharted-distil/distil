@@ -726,6 +726,13 @@ export function searchVariables(
     );
   });
 }
+
+export function topVariablesNames(variables: Variable[], max = 5): string[] {
+  return sortVariablesByPCARanking(filterVariablesByFeature(variables))
+    .slice(0, max)
+    .map((variable) => variable.colDisplayName);
+}
+
 export function sortVariablesByPCARanking(variables: Variable[]): Variable[] {
   variables.sort((a, b) => {
     return b.importance - a.importance;

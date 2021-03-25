@@ -365,7 +365,7 @@ export default Vue.extend({
 
 .status-panel.wider {
   width: 40vw;
-  max-width: 600px;
+  max-width: 450px;
 }
 
 .status-panel .heading {
