@@ -53,7 +53,6 @@
             :type="imageField.type"
             :row="data.item"
             :image-url="data.item[imageField.key].value"
-            :debounce="true"
             :unique-trail="uniqueTrail"
             :should-clean-up="false"
             :should-fetch-image="false"
