@@ -186,19 +186,19 @@ func getMultiBandImages(multiBandPackRequest *ImagePackRequest, threadID int, nu
 		log.Error(err)
 		return
 	}
+			// need to read the dataset doc to determine the path to the data resource
 	for _, dr := range metaDisk.DataResources {
 		if dr.IsCollection && dr.ResType == model.ResTypeImage {
 			sourcePath = model.GetResourcePathFromFolder(sourcePath, dr)
 			break
 		}
 	}
+	options := util.Options{Gain: 2.5, Gamma: 2.2, GainL: 1.0, Scale: 0} // default options for color correction
+
+	imageScale := util.ImageScale{Width: ThumbnailDimensions, Height: ThumbnailDimensions}
 	// loop through image info
 	for i := threadID; i < len(multiBandPackRequest.ImageIDs); i += numThreads {
 		imageID := multiBandPackRequest.ImageIDs[i]
-		// need to read the dataset doc to determine the path to the data resource
-		options := util.Options{Gain: 2.5, Gamma: 2.2, GainL: 1.0, Scale: 0} // default options for color correction
-
-		imageScale := util.ImageScale{Width: ThumbnailDimensions, Height: ThumbnailDimensions}
 
 		// need to get the band -> filename from the data
 		bandMapping, err := getBandMapping(res, imageID, dataStorage)
