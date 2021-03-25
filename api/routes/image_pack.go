@@ -186,7 +186,7 @@ func getMultiBandImages(multiBandPackRequest *ImagePackRequest, threadID int, nu
 		log.Error(err)
 		return
 	}
-			// need to read the dataset doc to determine the path to the data resource
+	// need to read the dataset doc to determine the path to the data resource
 	for _, dr := range metaDisk.DataResources {
 		if dr.IsCollection && dr.ResType == model.ResTypeImage {
 			sourcePath = model.GetResourcePathFromFolder(sourcePath, dr)
