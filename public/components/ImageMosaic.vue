@@ -122,7 +122,11 @@ export default Vue.extend({
       this.removeImages();
       this.fetchImagePack(this.paginatedItems);
     },
-    paginatedItems() {
+    paginatedItems(prev, cur) {
+      // check if all the indices are in the same order and prev == cur
+      if (this.sameData(prev, cur)) {
+        return;
+      }
       this.removeImages();
       this.fetchImagePack(this.paginatedItems);
     },
@@ -146,6 +150,7 @@ export default Vue.extend({
       const items = this.includedActive
         ? datasetGetters.getIncludedTableDataItems(this.$store)
         : datasetGetters.getExcludedTableDataItems(this.$store);
+
       return updateTableRowSelection(
         items,
         this.rowSelection,
@@ -188,6 +193,20 @@ export default Vue.extend({
     },
   },
   methods: {
+    sameData(old: [], cur: []): boolean {
+      if (old === null || cur === null) {
+        return false;
+      }
+      if (old.length !== cur.length) {
+        return false;
+      }
+      for (let i = 0; i < old.length; ++i) {
+        if (old[i][D3M_INDEX_FIELD] !== cur[i][D3M_INDEX_FIELD]) {
+          return false;
+        }
+      }
+      return true;
+    },
     selectAll() {
       bulkRowSelectionUpdate(
         this.$router,
