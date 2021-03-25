@@ -1296,6 +1296,9 @@ export const actions = {
           return `${id}/${args.uniqueTrail}`;
         });
       }
+      response.data.errorIds.forEach((id) => {
+        console.error(`Error fetching image with ${id}`);
+      });
       mutations.bulkUpdateFiles(context, {
         urls: urls,
         files: response.data.images,

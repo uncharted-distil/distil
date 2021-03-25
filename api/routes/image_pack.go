@@ -32,6 +32,7 @@ import (
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util"
+	log "github.com/unchartedsoftware/plog"
 )
 
 // ImagePackRequest is the expected request format for the route (Band can be an empty string)
@@ -45,10 +46,13 @@ type ImagePackRequest struct {
 type ImagePackResult struct {
 	ImagesBuffer [][]byte `json:"images"`
 	ImageIDs     []string `json:"imageIds"`
+	ErrorIDs     []string `json:"errorIds"`
 }
+
 type chanStruct struct {
-	data [][]byte
-	IDs  []string
+	data     [][]byte
+	IDs      []string
+	errorIDs []string
 }
 
 func postParamsToImagePackRequest(r *http.Request) (*ImagePackRequest, error) {
@@ -84,15 +88,24 @@ func MultiBandImagePackHandler(ctor api.MetadataStorageCtor, dataCtor api.DataSt
 		}
 		imagesBuffer := [][]byte{}
 		IDs := []string{}
+		errorIDs := []string{}
 		for i := 0; i < config.ImageThreadPool; i++ {
 			// no guaruntee of threads finishing in order so we supply the IDs back as well
 			r := <-result
 			imagesBuffer = append(imagesBuffer, r.data...)
 			IDs = append(IDs, r.IDs...)
+			errorIDs = append(errorIDs, r.errorIDs...)
+		}
+		// close channel
+		close(result)
+		if len(imagesBuffer) == 0 {
+			handleError(w, errors.New("Server error"))
+			return
 		}
 		err = handleJSON(w, ImagePackResult{
 			ImagesBuffer: imagesBuffer,
 			ImageIDs:     IDs,
+			ErrorIDs:     errorIDs,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal dataset result into JSON"))
@@ -103,27 +116,34 @@ func MultiBandImagePackHandler(ctor api.MetadataStorageCtor, dataCtor api.DataSt
 func getImages(imagePackRequest *ImagePackRequest, threadID int, numThreads int, result chan chanStruct, ctor api.MetadataStorageCtor, dataCtor api.DataStorageCtor) {
 	temp := [][]byte{}
 	IDs := []string{}
+	errorIDs := []string{}
+
+	// get common storage
+	storage, err := ctor()
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
+	res, err := storage.FetchDataset(imagePackRequest.Dataset, false, false, false)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
+	sourcePath := env.ResolvePath(res.Source, res.Folder)
+	// loop through image info
 	for i := threadID; i < len(imagePackRequest.ImageIDs); i += numThreads {
 		imageID := imagePackRequest.ImageIDs[i]
-		// get metadata client
-		storage, err := ctor()
-		if err != nil {
-			continue
-		}
-
-		res, err := storage.FetchDataset(imagePackRequest.Dataset, false, false, false)
-		if err != nil {
-			continue
-		}
-
-		sourcePath := env.ResolvePath(res.Source, res.Folder)
 
 		data, err := ioutil.ReadFile(path.Join(sourcePath, imageFolder, imageID))
 		if err != nil {
+			handleThreadError(&errorIDs, &imageID, &err)
 			continue
 		}
 		img, _, err := image.Decode(bytes.NewReader(data))
 		if err != nil {
+			handleThreadError(&errorIDs, &imageID, &err)
 			continue
 		}
 		img = resize.Resize(ThumbnailDimensions, ThumbnailDimensions, img, resize.Lanczos3)
@@ -131,45 +151,51 @@ func getImages(imagePackRequest *ImagePackRequest, threadID int, numThreads int,
 		draw.Draw(rgbaImg, image.Rect(0, 0, ThumbnailDimensions, ThumbnailDimensions), img, img.Bounds().Min, draw.Src)
 		imageBytes, err := util.ImageToJPEG(rgbaImg)
 		if err != nil {
+			handleThreadError(&errorIDs, &imageID, &err)
 			continue
 		}
 		temp = append(temp, imageBytes)
 		IDs = append(IDs, imageID)
 	}
-	result <- chanStruct{data: temp, IDs: IDs}
+	result <- chanStruct{data: temp, IDs: IDs, errorIDs: errorIDs}
 }
 func getMultiBandImages(multiBandPackRequest *ImagePackRequest, threadID int, numThreads int, result chan chanStruct, ctor api.MetadataStorageCtor, dataCtor api.DataStorageCtor) {
 	temp := [][]byte{}
 	IDs := []string{}
+	errorIDs := []string{}
+	// get common storage
+	storage, err := ctor()
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	dataStorage, err := dataCtor()
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
+	res, err := storage.FetchDataset(multiBandPackRequest.Dataset, false, false, false)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	sourcePath := env.ResolvePath(res.Source, res.Folder)
+	metaDisk, err := metadata.LoadMetadataFromOriginalSchema(path.Join(sourcePath, compute.D3MDataSchema), false)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	for _, dr := range metaDisk.DataResources {
+		if dr.IsCollection && dr.ResType == model.ResTypeImage {
+			sourcePath = model.GetResourcePathFromFolder(sourcePath, dr)
+			break
+		}
+	}
+	// loop through image info
 	for i := threadID; i < len(multiBandPackRequest.ImageIDs); i += numThreads {
 		imageID := multiBandPackRequest.ImageIDs[i]
-		// get metadata client
-		storage, err := ctor()
-		if err != nil {
-			continue
-		}
-		dataStorage, err := dataCtor()
-		if err != nil {
-			continue
-		}
-
-		res, err := storage.FetchDataset(multiBandPackRequest.Dataset, false, false, false)
-		if err != nil {
-			continue
-		}
-		sourcePath := env.ResolvePath(res.Source, res.Folder)
-
 		// need to read the dataset doc to determine the path to the data resource
-		metaDisk, err := metadata.LoadMetadataFromOriginalSchema(path.Join(sourcePath, compute.D3MDataSchema), false)
-		if err != nil {
-			continue
-		}
-		for _, dr := range metaDisk.DataResources {
-			if dr.IsCollection && dr.ResType == model.ResTypeImage {
-				sourcePath = model.GetResourcePathFromFolder(sourcePath, dr)
-				break
-			}
-		}
 		options := util.Options{Gain: 2.5, Gamma: 2.2, GainL: 1.0, Scale: 0} // default options for color correction
 
 		imageScale := util.ImageScale{Width: ThumbnailDimensions, Height: ThumbnailDimensions}
@@ -177,21 +203,29 @@ func getMultiBandImages(multiBandPackRequest *ImagePackRequest, threadID int, nu
 		// need to get the band -> filename from the data
 		bandMapping, err := getBandMapping(res, imageID, dataStorage)
 		if err != nil {
+			handleThreadError(&errorIDs, &imageID, &err)
 			continue
 		}
 
 		img, err := util.ImageFromCombination(sourcePath, bandMapping, multiBandPackRequest.Band, imageScale, options)
 		if err != nil {
+			handleThreadError(&errorIDs, &imageID, &err)
 			continue
 		}
 
 		imageBytes, err := util.ImageToJPEG(img)
 		if err != nil {
+			handleThreadError(&errorIDs, &imageID, &err)
 			continue
 		}
 		temp = append(temp, imageBytes)
 		IDs = append(IDs, imageID)
 	}
 
-	result <- chanStruct{data: temp, IDs: IDs}
+	result <- chanStruct{data: temp, IDs: IDs, errorIDs: errorIDs}
+}
+
+func handleThreadError(errorIDs *[]string, imageID *string, err *error) {
+	*errorIDs = append(*errorIDs, *imageID)
+	log.Error(*err)
 }
