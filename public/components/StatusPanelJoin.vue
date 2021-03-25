@@ -46,7 +46,9 @@
       </b-alert>
     </div>
 
-    <h5 class="suggestion-heading">Select a dataset to join with:</h5>
+    <h5 class="suggestion-heading flex-shrink-0">
+      Select a dataset to join with:
+    </h5>
 
     <div class="suggestion-list">
       <div v-if="filteredSuggestedItems.length === 0">
@@ -571,10 +573,6 @@ export default Vue.extend({
   flex-direction: column;
 }
 
-.status-panel-join .suggestion-heading {
-  flex-shrink: 0;
-}
-
 .status-panel-join .suggestion-list {
   overflow: auto;
   overflow-wrap: break-word;
@@ -617,7 +615,6 @@ export default Vue.extend({
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
-  max-width: 12em;
 }
 
 .status-panel-join .suggestion-search {
