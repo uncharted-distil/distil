@@ -104,7 +104,7 @@ export const META_TYPES = {
 };
 
 const TYPES_TO_LABELS: Dictionary<string> = {
-  [BIVARIATE_FILTER]: "Bivariate",
+  [BIVARIATE_FILTER]: "Geocoordinate",
   [INTEGER_TYPE]: "Integer",
   [REAL_TYPE]: "Decimal",
   [REAL_LIST_TYPE]: "List",
