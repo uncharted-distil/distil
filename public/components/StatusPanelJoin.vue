@@ -45,16 +45,18 @@
         <b>{{ importedDataset.name }}</b>
       </b-alert>
     </div>
-    <div class="suggestion-heading">
-      <h6>Select a dataset to join with:</h6>
-    </div>
+
+    <h5 class="suggestion-heading">Select a dataset to join with:</h5>
+
     <div class="suggestion-list">
       <div v-if="filteredSuggestedItems.length === 0">
         No datasets are found
       </div>
+
       <div v-if="isAttemptingJoin || (isImporting && importedDataset)">
-        <div v-html="spinnerHTML"></div>
+        <div v-html="spinnerHTML" />
       </div>
+
       <b-list-group v-else>
         <b-list-group-item
           v-for="item in filteredSuggestedItems"
@@ -64,12 +66,11 @@
           :disabled="isImporting"
           @click="selectItem(item)"
         >
-          <p>
-            <b>{{ item.dataset.name }}</b>
-          </p>
+          <h6>{{ item.dataset.name }}</h6>
           <div class="description" v-html="item.dataset.description">
             {{ item.dataset.description }}
           </div>
+
           <b-list-group>
             <b-list-group-item
               v-for="suggestion in item.suggestionItems"
@@ -85,7 +86,8 @@
               </div>
             </b-list-group-item>
           </b-list-group>
-          <div>
+
+          <footer>
             <!-- Skip import step for now -->
             <!-- <span>
 							<small v-if="!item.isAvailable" class="text-info">Requires import</small>
@@ -99,10 +101,11 @@
                 {{ formatBytes(item.dataset.numBytes) }}
               </small>
             </span>
-          </div>
+          </footer>
         </b-list-group-item>
       </b-list-group>
     </div>
+
     <div class="join-button-container">
       <b-input
         v-model="searchQuery"
@@ -120,6 +123,7 @@
         Join
       </b-button>
     </div>
+
     <b-modal
       v-if="selectedDataset"
       id="join-import-modal"
@@ -128,7 +132,7 @@
       title="JoinSuggestionImport"
       @ok="importDataset"
     >
-      <p class="">
+      <p>
         Dataset, <b>{{ selectedDataset.name }}</b> is not available in the
         system. Would you like to import the dataset?
       </p>
@@ -215,27 +219,30 @@ interface StatusPanelJoinState {
 
 export default Vue.extend({
   name: "StatusPanelJoin",
+
+  components: {
+    ErrorModal,
+    JoinDatasetsPreview,
+  },
+
   data(): StatusPanelJoinState {
     return {
-      showStatusMessage: true,
-      suggestionDatasets: [],
+      datasetA: null,
+      datasetAColumn: "",
+      datasetB: null,
+      datasetBColumn: "",
       filterString: "",
       isAttemptingJoin: false,
+      previewTableData: null,
+      searchResultIndex: null,
+      searchQuery: "",
       showJoinFailure: false,
       showJoinSuccess: false,
-      previewTableData: null,
-      datasetA: null,
-      datasetB: null,
-      datasetAColumn: "",
-      datasetBColumn: "",
-      searchQuery: "",
-      searchResultIndex: null,
+      showStatusMessage: true,
+      suggestionDatasets: [],
     };
   },
-  components: {
-    JoinDatasetsPreview,
-    ErrorModal,
-  },
+
   computed: {
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
@@ -354,12 +361,15 @@ export default Vue.extend({
       return circleSpinnerHTML();
     },
   },
+
   created() {
     this.initSuggestionItems();
   },
+
   beforeDestroy() {
     this.reviewImportingRequest();
   },
+
   methods: {
     initSuggestionItems() {
       const items = this.joinSuggestions || [];
@@ -541,12 +551,9 @@ export default Vue.extend({
 }
 
 .status-panel-join .suggestion-heading {
-  height: 2em;
   flex-shrink: 0;
 }
-.status-panel-join .suggestion-heading h6 {
-  margin: 0;
-}
+
 .status-panel-join .suggestion-list {
   overflow: auto;
   overflow-wrap: break-word;
