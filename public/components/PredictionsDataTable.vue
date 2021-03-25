@@ -18,6 +18,7 @@
 <template>
   <div class="distil-table-container">
     <b-table
+      v-model="visibleRows"
       bordered
       hover
       small
@@ -54,8 +55,9 @@
           :key="imageField.key"
           :type="imageField.type"
           :image-url="data.item[imageField.key].value"
-          :debounce="true"
           :unique-trail="uniqueTrail"
+          :should-clean-up="false"
+          :should-fetch-image="false"
         />
       </template>
 
@@ -136,14 +138,18 @@ import {
   getters as predictionsGetters,
   actions as predictionsActions,
 } from "../store/predictions/module";
-import { getters as datasetGetters } from "../store/dataset/module";
+import {
+  getters as datasetGetters,
+  actions as datasetActions,
+  mutations as datasetMutations,
+} from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { Predictions } from "../store/requests/index";
 import { Dictionary } from "../util/dict";
-import { hasComputedVarPrefix } from "../util/types";
+import { hasComputedVarPrefix, MULTIBAND_IMAGE_TYPE } from "../util/types";
 import {
   addRowSelection,
   removeRowSelection,
@@ -188,6 +194,8 @@ export default Vue.extend({
       perPage: 100,
       initialized: false,
       uniqueTrail: "predictions-table",
+      // visibleRows contains the data being displayed on b-table
+      visibleRows: [],
     };
   },
 
@@ -203,7 +211,9 @@ export default Vue.extend({
     fittedSolutionId(): string {
       return predictionsGetters.getFittedSolutionIdFromPrediction(this.$store);
     },
-
+    dataset(): string {
+      return routeGetters.getRoutePredictionsDataset(this.$store);
+    },
     truthDataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
@@ -315,9 +325,20 @@ export default Vue.extend({
     isTimeseries(): boolean {
       return routeGetters.isTimeseries(this.$store);
     },
+    band(): string {
+      return routeGetters.getBandCombinationId(this.$store);
+    },
   },
 
   watch: {
+    band() {
+      this.removeImages();
+      this.fetchImagePack(this.visibleRows);
+    },
+    visibleRows() {
+      this.removeImages();
+      this.fetchImagePack(this.visibleRows);
+    },
     highlights() {
       this.initialized = false;
     },
@@ -336,6 +357,35 @@ export default Vue.extend({
   },
 
   methods: {
+    removeImages() {
+      if (!this.imageFields.length) {
+        return;
+      }
+      const imageKey = this.imageFields[0].key;
+      datasetMutations.bulkRemoveFiles(this.$store, {
+        urls: this.visibleRows.map((item) => {
+          return `${item[imageKey].value}/${this.uniqueTrail}`;
+        }),
+      });
+    },
+    fetchImagePack(items) {
+      if (!this.imageFields.length) {
+        return;
+      }
+      const key = this.imageFields[0].key;
+      const type = this.imageFields[0].type;
+      // if band is "" the route assumes it is an image not a multi-band image
+      datasetActions.fetchImagePack(this.$store, {
+        multiBandImagePackRequest: {
+          imageIds: items.map((item) => {
+            return item[key].value;
+          }),
+          dataset: this.dataset,
+          band: type === MULTIBAND_IMAGE_TYPE ? this.band : "",
+        },
+        uniqueTrail: this.uniqueTrail,
+      });
+    },
     timeserieInfo(id: string): Extrema {
       const timeseries = predictionsGetters.getPredictedTimeseries(this.$store);
       return timeseries?.[this.predictions.requestId]?.info?.[id];

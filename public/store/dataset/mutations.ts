@@ -293,6 +293,11 @@ export const mutations = {
       Vue.set(state.files, args.urls[i], args.files[i]);
     }
   },
+  bulkRemoveFiles(state: DatasetState, args: { urls: string[] }) {
+    args.urls.forEach((url) => {
+      Vue.delete(state.files, url);
+    });
+  },
   removeFile(state: DatasetState, url: string) {
     Vue.delete(state.files, url);
   },

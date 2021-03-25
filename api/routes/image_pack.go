@@ -16,11 +16,15 @@
 package routes
 
 import (
+	"bytes"
 	"encoding/json"
+	"image"
+	"image/draw"
 	"io/ioutil"
 	"net/http"
 	"path"
 
+	"github.com/nfnt/resize"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
@@ -30,53 +34,65 @@ import (
 	"github.com/uncharted-distil/distil/api/util"
 )
 
-// MultiBandPackRequest is the expected post struct for MultiBandImagePackHandler
-type MultiBandPackRequest struct {
-	Dataset string 				`json:"dataset"`
-	BandCombination string		`json:"band"`
-	ImageIDs []string			`json:"imageIds"`
+// ImagePackRequest is the expected request format for the route (Band can be an empty string)
+type ImagePackRequest struct {
+	Dataset  string   `json:"dataset"`
+	ImageIDs []string `json:"imageIds"`
+	Band     string   `json:"band,omitempty"`
 }
-// MultiBandPackResult is the expected post result for MultiBandImagePackHandler
-type MultiBandPackResult struct {
-	ImagesBuffer  [][]byte 		`json:"images"`
-	ImageIDs []string			`json:"imageIds"`
+
+// ImagePackResult is the expected post result for MultiBandImagePackHandler
+type ImagePackResult struct {
+	ImagesBuffer [][]byte `json:"images"`
+	ImageIDs     []string `json:"imageIds"`
 }
 type chanStruct struct {
-	data     [][]byte
-	IDs 	 []string
+	data [][]byte
+	IDs  []string
 }
-func postParamsToMultiBandPackRequest(r *http.Request)(*MultiBandPackRequest, error){
+
+func postParamsToImagePackRequest(r *http.Request) (*ImagePackRequest, error) {
 	body, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to parse POST request")
 	}
-	result := &MultiBandPackRequest{}
+	result := &ImagePackRequest{}
 	err = json.Unmarshal(body, result)
 	return result, err
 }
+
 // MultiBandImagePackHandler fetches individual band images and combines them into a single RGB image using the supplied mapping.
 func MultiBandImagePackHandler(ctor api.MetadataStorageCtor, dataCtor api.DataStorageCtor, config env.Config) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		params, err := postParamsToMultiBandPackRequest(r)
+		params, err := postParamsToImagePackRequest(r)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
+		// default to getImages
+		funcPointer := getImages
+		if params.Band != "" {
+			// if band is not empty then get multiBandImages
+			funcPointer = getMultiBandImages
+		}
+		// channel for threads to communicate
 		result := make(chan chanStruct)
-		for i:=0; i < config.ImageThreadPool; i++{
-			go getMultiBandImages(params, i, config.ImageThreadPool, result, ctor, dataCtor)
+		// ImageThreadPool is an environment variable defaults to 2 (works great with 6)
+		for i := 0; i < config.ImageThreadPool; i++ {
+			go funcPointer(params, i, config.ImageThreadPool, result, ctor, dataCtor)
 		}
 		imagesBuffer := [][]byte{}
 		IDs := []string{}
-		for i:=0; i < config.ImageThreadPool; i++{
+		for i := 0; i < config.ImageThreadPool; i++ {
+			// no guaruntee of threads finishing in order so we supply the IDs back as well
 			r := <-result
 			imagesBuffer = append(imagesBuffer, r.data...)
 			IDs = append(IDs, r.IDs...)
 		}
-		err = handleJSON(w, MultiBandPackResult{
+		err = handleJSON(w, ImagePackResult{
 			ImagesBuffer: imagesBuffer,
-			ImageIDs: IDs,
+			ImageIDs:     IDs,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal dataset result into JSON"))
@@ -84,8 +100,45 @@ func MultiBandImagePackHandler(ctor api.MetadataStorageCtor, dataCtor api.DataSt
 		}
 	}
 }
+func getImages(imagePackRequest *ImagePackRequest, threadID int, numThreads int, result chan chanStruct, ctor api.MetadataStorageCtor, dataCtor api.DataStorageCtor) {
+	temp := [][]byte{}
+	IDs := []string{}
+	for i := threadID; i < len(imagePackRequest.ImageIDs); i += numThreads {
+		imageID := imagePackRequest.ImageIDs[i]
+		// get metadata client
+		storage, err := ctor()
+		if err != nil {
+			continue
+		}
 
-func getMultiBandImages(multiBandPackRequest *MultiBandPackRequest, threadID int, numThreads int, result chan chanStruct, ctor api.MetadataStorageCtor, dataCtor api.DataStorageCtor) {
+		res, err := storage.FetchDataset(imagePackRequest.Dataset, false, false, false)
+		if err != nil {
+			continue
+		}
+
+		sourcePath := env.ResolvePath(res.Source, res.Folder)
+
+		data, err := ioutil.ReadFile(path.Join(sourcePath, imageFolder, imageID))
+		if err != nil {
+			continue
+		}
+		img, _, err := image.Decode(bytes.NewReader(data))
+		if err != nil {
+			continue
+		}
+		img = resize.Resize(ThumbnailDimensions, ThumbnailDimensions, img, resize.Lanczos3)
+		rgbaImg := image.NewRGBA(image.Rect(0, 0, ThumbnailDimensions, ThumbnailDimensions))
+		draw.Draw(rgbaImg, image.Rect(0, 0, ThumbnailDimensions, ThumbnailDimensions), img, img.Bounds().Min, draw.Src)
+		imageBytes, err := util.ImageToJPEG(rgbaImg)
+		if err != nil {
+			continue
+		}
+		temp = append(temp, imageBytes)
+		IDs = append(IDs, imageID)
+	}
+	result <- chanStruct{data: temp, IDs: IDs}
+}
+func getMultiBandImages(multiBandPackRequest *ImagePackRequest, threadID int, numThreads int, result chan chanStruct, ctor api.MetadataStorageCtor, dataCtor api.DataStorageCtor) {
 	temp := [][]byte{}
 	IDs := []string{}
 	for i := threadID; i < len(multiBandPackRequest.ImageIDs); i += numThreads {
@@ -118,7 +171,7 @@ func getMultiBandImages(multiBandPackRequest *MultiBandPackRequest, threadID int
 			}
 		}
 		options := util.Options{Gain: 2.5, Gamma: 2.2, GainL: 1.0, Scale: 0} // default options for color correction
-		
+
 		imageScale := util.ImageScale{Width: ThumbnailDimensions, Height: ThumbnailDimensions}
 
 		// need to get the band -> filename from the data
@@ -127,7 +180,7 @@ func getMultiBandImages(multiBandPackRequest *MultiBandPackRequest, threadID int
 			continue
 		}
 
-		img, err := util.ImageFromCombination(sourcePath, bandMapping, multiBandPackRequest.BandCombination, imageScale, options)
+		img, err := util.ImageFromCombination(sourcePath, bandMapping, multiBandPackRequest.Band, imageScale, options)
 		if err != nil {
 			continue
 		}
@@ -140,5 +193,5 @@ func getMultiBandImages(multiBandPackRequest *MultiBandPackRequest, threadID int
 		IDs = append(IDs, imageID)
 	}
 
-	result <- chanStruct{data:temp,IDs:IDs}
+	result <- chanStruct{data: temp, IDs: IDs}
 }

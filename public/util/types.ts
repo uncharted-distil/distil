@@ -279,7 +279,7 @@ export const RANKABLE_VARIABLE_TYPES = new Set([
 ]);
 export interface MultiBandImagePackRequest {
   dataset: string;
-  band: string;
+  band?: string;
   imageIds: string[];
 }
 export function isEquivalentType(a: string, b: string): boolean {

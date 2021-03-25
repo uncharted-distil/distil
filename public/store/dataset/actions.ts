@@ -1264,7 +1264,6 @@ export const actions = {
     if (!validateArgs(args, ["dataset", "imageId", "bandCombination"])) {
       return null;
     }
-    return;
     const options = !!args.options ? `${JSON.stringify(args.options)}` : "";
     try {
       const response = await loadImage(

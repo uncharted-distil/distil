@@ -224,6 +224,7 @@ export const mutations = {
   // files
   updateFile: commit(moduleMutations.updateFile),
   removeFile: commit(moduleMutations.removeFile),
+  bulkRemoveFiles: commit(moduleMutations.bulkRemoveFiles),
   bulkUpdateFiles: commit(moduleMutations.bulkUpdateFiles),
   bulkUpdateTimeseries: commit(moduleMutations.bulkUpdateTimeseries),
   // included / excluded table data

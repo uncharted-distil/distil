@@ -18,6 +18,7 @@
 <template>
   <div class="distil-table-container">
     <b-table
+      v-model="visibleRows"
       bordered
       hover
       small
@@ -54,6 +55,8 @@
             :image-url="data.item[imageField.key].value"
             :debounce="true"
             :unique-trail="uniqueTrail"
+            :should-clean-up="false"
+            :should-fetch-image="false"
           />
           <image-label
             class="image-label"
@@ -124,6 +127,7 @@ import ImagePreview from "./ImagePreview.vue";
 import {
   getters as datasetGetters,
   actions as datasetActions,
+  mutations as datasetMutations,
 } from "../store/dataset/module";
 import { Dictionary } from "../util/dict";
 import { Filter } from "../util/filters";
@@ -138,7 +142,7 @@ import {
   TableValue,
 } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
-import { hasComputedVarPrefix } from "../util/types";
+import { hasComputedVarPrefix, MULTIBAND_IMAGE_TYPE } from "../util/types";
 import {
   addRowSelection,
   removeRowSelection,
@@ -191,6 +195,8 @@ export default Vue.extend({
       uniqueTrail: "selected-table",
       initialized: false,
       shiftClickInfo: { first: null, second: null },
+      // this is v-model with b-table (it contains what is on the page in the sorted order)
+      visibleRows: [],
     };
   },
 
@@ -309,6 +315,10 @@ export default Vue.extend({
   },
 
   watch: {
+    visibleRows() {
+      this.removeImages();
+      this.fetchImagePack(this.visibleRows);
+    },
     includedActive() {
       if (this.items.length) {
         this.fetchTimeSeries();
@@ -322,16 +332,22 @@ export default Vue.extend({
       // checks to see if items exist and if the timeseries has been queried for the new data
       if (!this.initialized && this.items.length) {
         this.fetchTimeSeries();
+        this.fetchImagePack(this.visibleRows);
         this.initialized = true;
       }
       if (prev?.length !== this.items.length) {
         this.fetchTimeSeries();
+        this.fetchImagePack(this.visibleRows);
       }
       // if the itemCount changes such that it's less than page
       // we were on, reset to page 1.
       if (this.itemCount < this.perPage * this.currentPage) {
         this.currentPage = 1;
       }
+    },
+    band() {
+      this.removeImages();
+      this.fetchImagePack(this.visibleRows);
     },
   },
   destroyed() {
@@ -359,18 +375,31 @@ export default Vue.extend({
         });
       });
     },
-    fetchImagePack() {
+    removeImages() {
       if (!this.imageFields.length) {
         return;
       }
       const imageKey = this.imageFields[0].key;
+      datasetMutations.bulkRemoveFiles(this.$store, {
+        urls: this.visibleRows.map((item) => {
+          return `${item[imageKey].value}/${this.uniqueTrail}`;
+        }),
+      });
+    },
+    fetchImagePack(items) {
+      if (!this.imageFields.length) {
+        return;
+      }
+      const key = this.imageFields[0].key;
+      const type = this.imageFields[0].type;
+      // if band is "" the route assumes it is an image not a multi-band image
       datasetActions.fetchImagePack(this.$store, {
         multiBandImagePackRequest: {
-          imageIds: this.pageItems.map((item) => {
-            return item[imageKey].value as string;
+          imageIds: items.map((item) => {
+            return item[key].value;
           }),
           dataset: this.dataset,
-          band: this.band,
+          band: type === MULTIBAND_IMAGE_TYPE ? this.band : "",
         },
         uniqueTrail: this.uniqueTrail,
       });
@@ -385,7 +414,6 @@ export default Vue.extend({
       this.currentPage = page;
       // fetch new data
       this.fetchTimeSeries();
-      this.fetchImagePack();
     },
     selectAll() {
       bulkRowSelectionUpdate(
