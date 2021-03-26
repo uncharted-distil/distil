@@ -196,7 +196,7 @@ export default Vue.extend({
     },
 
     totalDataCount(): number {
-      return routeGetters.getRouteDataSize(this.$store);
+      return datasetGetters.getIncludedTableDataNumRows(this.$store);
     },
 
     trainTestSplit(): number {
