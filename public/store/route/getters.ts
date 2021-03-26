@@ -139,12 +139,12 @@ export const getters = {
     return state.query.joinColumnB as string;
   },
 
-  getBaseColumnSuggestions(state: Route, getters: any): string {
-    return state.query.baseColumnSuggestions as string;
+  getBaseColumnSuggestions(state: Route, getters: any): string[] {
+    return state.query.baseColumnSuggestions as string[];
   },
 
-  getJoinColumnSuggestions(state: Route, getters: any): string {
-    return state.query.joinColumnSuggestions as string;
+  getJoinColumnSuggestions(state: Route, getters: any): string[] {
+    return state.query.joinColumnSuggestions as string[];
   },
 
   getJoinAccuracy(state: Route, getters: any): number {

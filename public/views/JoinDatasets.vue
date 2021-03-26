@@ -29,7 +29,7 @@
     </div>
 
     <div class="row flex-1 pb-3 h-100">
-      <div class="h-100">
+      <div class="h-100 col-md-3">
         <div class="h-50">
           <variable-facets
             enable-search
@@ -120,11 +120,11 @@ import vueSlider from "vue-slider-component";
 import JoinDatasetsForm from "../components/JoinDatasetsForm.vue";
 import JoinDataSlot from "../components/JoinDataSlot.vue";
 import VariableFacets from "../components/facets/VariableFacets.vue";
-import TypeChangeMenu from "../components/TypeChangeMenu.vue";
 import { overlayRouteEntry } from "../util/routes";
 import { Dictionary } from "../util/dict";
 import {
   VariableSummary,
+  Variable,
   TableData,
   TableColumn,
   TableRow,
@@ -283,22 +283,67 @@ export default Vue.extend({
       const route = {
         // clear top and bottom column
         joinColumnA: null,
-        joinColumnB: null,
+        joinColumnSuggestions: null,
+        baseColumnSuggestions: null,
       };
       if (column) {
         route.joinColumnA = column.key;
+        const suggestVars = this.variableSuggestions(
+          column.type,
+          this.bottomVariableSummaries
+        );
+        if (!this.bottomColumn) {
+          route.joinColumnSuggestions = suggestVars;
+        }
+      } else {
+        if (this.bottomColumn) {
+          const suggestVars = this.variableSuggestions(
+            this.bottomColumn.type,
+            this.topVariableSummaries
+          );
+          route.baseColumnSuggestions = suggestVars;
+        }
       }
       const entry = overlayRouteEntry(this.$route, route);
       this.$router.push(entry).catch((err) => console.warn(err));
     },
     onBottomColumnClicked(column) {
-      if (!this.topColumn) {
-        return;
+      const route = {
+        // clear top and bottom column
+        joinColumnB: null,
+        joinColumnSuggestions: null,
+        baseColumnSuggestions: null,
+      };
+      let suggestVars = [];
+      if (column) {
+        suggestVars = this.variableSuggestions(
+          column.type,
+          this.topVariableSummaries
+        );
+        route.joinColumnB = column.key;
+        if (!this.topColumn) {
+          route.baseColumnSuggestions = suggestVars;
+        }
+      } else {
+        if (this.topColumn) {
+          const suggestVars = this.variableSuggestions(
+            this.topColumn.type,
+            this.bottomVariableSummaries
+          );
+          route.joinColumnSuggestions = suggestVars;
+        }
       }
-      const entry = overlayRouteEntry(this.$route, {
-        joinColumnB: column ? column.key : null,
-      });
+      const entry = overlayRouteEntry(this.$route, route);
       this.$router.push(entry).catch((err) => console.warn(err));
+    },
+    variableSuggestions(type: string, variables: VariableSummary[]): string[] {
+      const result = [];
+      variables.forEach((v) => {
+        if (v.type === type) {
+          result.push(v.key);
+        }
+      });
+      return result;
     },
     onJoinAccuracyChanged(value: number) {
       const entry = overlayRouteEntry(this.$route, {

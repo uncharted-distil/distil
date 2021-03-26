@@ -39,8 +39,8 @@ export interface RouteArgs {
   joinColumnA?: string;
   joinColumnB?: string;
   joinAccuracy?: string;
-  baseColumnSuggestions?: string; // suggested base join columns
-  joinColumnSuggestions?: string; // suggested target join columns
+  baseColumnSuggestions?: string[]; // suggested base join columns
+  joinColumnSuggestions?: string[]; // suggested target join columns
   groupingType?: string;
   // added page & search args directly since we can't use the consts as names
   availableTargetVarsPage?: number;
