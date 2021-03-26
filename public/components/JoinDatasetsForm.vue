@@ -49,8 +49,14 @@
       <i class="fa fa-exclamation-triangle warning-icon mr-2" />
       <span v-html="joinWarning" />
     </div>
-
+    <search-input
+      class="p-2"
+      :header-title="'Join Relationships'"
+    ></search-input>
     <div class="row justify-content-center">
+      <b-button variant="primary" :disabled="disableJoin">
+        Add Join Relationship
+      </b-button>
       <b-button
         class="join-button"
         :disabled="disableJoin"
@@ -79,8 +85,11 @@
 <script lang="ts">
 import _ from "lodash";
 import Vue from "vue";
+// components
 import JoinDatasetsPreview from "../components/JoinDatasetsPreview.vue";
 import ErrorModal from "../components/ErrorModal.vue";
+import SearchInput from "./SearchInput.vue";
+import FilterBadge from "./FilterBadge.vue";
 import { getters as routeGetters } from "../store/route/module";
 import { Dataset, TableColumn, TableRow } from "../store/dataset/index";
 import {
@@ -98,6 +107,8 @@ export default Vue.extend({
   components: {
     JoinDatasetsPreview,
     ErrorModal,
+    SearchInput,
+    FilterBadge,
   },
 
   props: {
