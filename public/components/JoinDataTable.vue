@@ -20,6 +20,7 @@
     bordered
     hover
     small
+    sticky-header="100%"
     :items="items"
     :fields="emphasizedFields"
     @head-clicked="onColumnClicked"
@@ -59,8 +60,8 @@
 <script lang="ts">
 import _ from "lodash";
 import Vue from "vue";
-import SparklinePreview from "./SparklinePreview";
-import ImagePreview from "./ImagePreview";
+import SparklinePreview from "./SparklinePreview.vue";
+import ImagePreview from "./ImagePreview.vue";
 import { Dictionary } from "../util/dict";
 import {
   TableColumn,
@@ -124,7 +125,7 @@ export default Vue.extend({
     },
     baseColumnSuggestions(): string[] {
       const columnRoute = routeGetters.getBaseColumnSuggestions(this.$store);
-      const columns = columnRoute ? columnRoute.split(",") : [];
+      const columns = columnRoute ? columnRoute : [];
       return columns;
     },
     selectedSuggestedBaseColumn(): string {
@@ -136,7 +137,7 @@ export default Vue.extend({
     },
     joinColumnSuggestions(): string[] {
       const columnRoute = routeGetters.getJoinColumnSuggestions(this.$store);
-      const columns = columnRoute ? columnRoute.split(",") : [];
+      const columns = columnRoute ? columnRoute : [];
       return columns;
     },
     selectedSuggestedJoinColumn(): string {
@@ -167,6 +168,13 @@ export default Vue.extend({
         if (isFieldSelected) {
           emph.variant = "primary";
         }
+        if (
+          isFieldSelected &&
+          this.selectedJoinColumn &&
+          !isJoinable(field.type, this.selectedJoinColumn.type)
+        ) {
+          emph.variant = "danger";
+        }
         emphasized[field.key] = emph;
       });
       return emphasized;
@@ -184,28 +192,24 @@ export default Vue.extend({
         };
         const isFieldSelected =
           this.selectedJoinColumn && field.key === this.selectedJoinColumn.key;
-        // if a suggested base column is selected, highlgiht the corresponding suggested join column
+        let isFieldSuggested = false;
         if (this.selectedBaseColumn) {
-          const isFieldSuggested =
-            findSuggestionIndex(
-              this.baseColumnSuggestions,
-              this.selectedBaseColumn.key
-            ) === findSuggestionIndex(this.joinColumnSuggestions, field.key);
-          if (
-            this.selectedSuggestedBaseColumn !== undefined &&
-            isFieldSuggested
-          ) {
-            emph.variant = "success";
-          }
-          if (isFieldSelected) {
-            emph.variant = "primary";
-          }
-          if (
-            isFieldSelected &&
-            !isJoinable(field.type, this.selectedBaseColumn.type)
-          ) {
-            emph.variant = "danger";
-          }
+          isFieldSuggested = this.joinColumnSuggestions.some((sug) => {
+            return sug === field.key;
+          });
+        }
+        if (isFieldSuggested) {
+          emph.variant = "success";
+        }
+        if (isFieldSelected) {
+          emph.variant = "primary";
+        }
+        if (
+          isFieldSelected &&
+          this.selectedBaseColumn &&
+          !isJoinable(field.type, this.selectedBaseColumn.type)
+        ) {
+          emph.variant = "danger";
         }
         emphasized[field.key] = emph;
       });
