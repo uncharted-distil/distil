@@ -16,6 +16,7 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -41,6 +42,7 @@ const (
 	dataTypeEmail    = "EMAIL"
 	dataTypeLat      = "LATITUDE"
 	dataTypeLon      = "LONGITUDE"
+	dataTypeCoord    = "SPECIAL_COORD"
 	dateFormat       = "2006-01-02T15:04:05Z"
 
 	metadataTableCreationSQL = `CREATE TABLE %s (
@@ -730,7 +732,7 @@ func MapPostgresTypeToD3MType(pType string) ([]string, error) {
 		return []string{model.RealType, model.TimestampType}, nil
 	case dataTypeInteger:
 		return []string{model.TimestampType, model.IntegerType}, nil
-	case dataTypeVector:
+	case dataTypeVector, dataTypeCoord:
 		return []string{model.RealVectorType, model.RealListType}, nil
 	case dataTypeText:
 		return []string{model.OrdinalType, model.CategoricalType, model.StringType, model.AddressType, model.CityType, model.CountryType, model.PostalCodeType, model.StateType, model.URIType, model.PhoneType}, nil
@@ -837,7 +839,8 @@ func GetValidTypes() []string {
 		dataTypeEmail,
 		dataTypeLat,
 		dataTypeLon,
-		dataTypeImageExt}
+		dataTypeImageExt,
+		dataTypeCoord}
 }
 
 // GetIndexStatement returns the index SQL statement for a field of the provided type.
@@ -863,4 +866,46 @@ func (d *Database) CreateIndex(tableName string, fieldName string, typ string) e
 	}
 
 	return nil
+}
+
+// IsColumnType can be use to check columns potential types
+func IsColumnType(client DatabaseDriver, tableName string, variable *model.Variable, colType string) bool {
+	// check colType is valid
+	if !IsValidType(colType) {
+		return false
+	}
+	viewSelect := fmt.Sprintf("\"%s\"", variable.Key)
+	groupBy := ""
+	if colType == dataTypeCoord {
+		viewSelect = fmt.Sprintf("concat('{', %s::%s, '}')", viewSelect, dataTypeVector)
+		groupBy = fmt.Sprintf("GROUP BY array_length(\"%s\", 1)", variable.Key)
+	} else {
+		viewSelect = fmt.Sprintf("%s::%s", viewSelect, colType)
+	}
+	// generate view query
+	viewQuery := fmt.Sprintf("CREATE TEMPORARY VIEW temp_view_%[1]s AS SELECT %[3]s AS %[1]s FROM %[2]s", variable.Key, tableName, viewSelect)
+	// test query
+	testQuery := fmt.Sprintf("SELECT COUNT(\"%[1]s\") FROM temp_view_%[1]s %[2]s", variable.Key, groupBy)
+
+	// create transaction
+	tx, err := client.Begin()
+	if err != nil {
+		if rbErr := tx.Rollback(context.Background()); rbErr != nil {
+			log.Error("rollback failed")
+		}
+		return false
+	}
+	defer func() {
+		if rbErr := tx.Rollback(context.Background()); rbErr != nil {
+			log.Error("rollback failed")
+		}
+	}()
+	// create temp view
+	_, err = tx.Exec(context.Background(), viewQuery)
+	if err != nil {
+		return false
+	}
+	// test to see if the data can fit into the type
+	_, err = tx.Exec(context.Background(), testQuery)
+	return err == nil
 }
