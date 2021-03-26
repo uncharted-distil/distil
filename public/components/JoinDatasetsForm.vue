@@ -49,12 +49,24 @@
       <i class="fa fa-exclamation-triangle warning-icon mr-2" />
       <span v-html="joinWarning" />
     </div>
-    <search-input
-      class="p-2"
-      :header-title="'Join Relationships'"
-    ></search-input>
+    <div class="search-input p-2">
+      <header>Join Pairs</header>
+      <main>
+        <badge
+          v-for="(pair, index) in joinPairs"
+          :key="index"
+          :content="`${pair.first}->${pair.second}`"
+          :identifier="pair"
+          @removed="badgeRemoved"
+        />
+      </main>
+    </div>
     <div class="row justify-content-center">
-      <b-button variant="primary" :disabled="disableJoin">
+      <b-button
+        variant="primary"
+        :disabled="disableAdd"
+        @click="addJoinRelation"
+      >
         Add Join Relationship
       </b-button>
       <b-button
@@ -88,8 +100,7 @@ import Vue from "vue";
 // components
 import JoinDatasetsPreview from "../components/JoinDatasetsPreview.vue";
 import ErrorModal from "../components/ErrorModal.vue";
-import SearchInput from "./SearchInput.vue";
-import FilterBadge from "./FilterBadge.vue";
+import Badge from "./Badge.vue";
 import { getters as routeGetters } from "../store/route/module";
 import { Dataset, TableColumn, TableRow } from "../store/dataset/index";
 import {
@@ -97,9 +108,10 @@ import {
   actions as datasetActions,
 } from "../store/dataset/module";
 import { Dictionary } from "../util/dict";
-import { getTableDataItems, getTableDataFields } from "../util/data";
+import { getTableDataItems, getTableDataFields, JoinPair } from "../util/data";
 import { isJoinable } from "../util/types";
 import { loadJoinedDataset } from "../util/join";
+import { overlayRouteEntry } from "../util/routes";
 
 export default Vue.extend({
   name: "JoinDatasetsForm",
@@ -107,8 +119,7 @@ export default Vue.extend({
   components: {
     JoinDatasetsPreview,
     ErrorModal,
-    SearchInput,
-    FilterBadge,
+    Badge,
   },
 
   props: {
@@ -161,7 +172,7 @@ export default Vue.extend({
         return `Unable to join column <b>${this.datasetAColumn.key}</b> of type <b>${this.datasetAColumn.type}</b> with <b>${this.datasetBColumn.key}</b> of type <b>${this.datasetBColumn.type}</b>`;
       }
     },
-    disableJoin(): boolean {
+    disableAdd(): boolean {
       return (
         this.isPending || !this.columnsSelected || this.columnTypesDoNotMatch
       );
@@ -184,15 +195,59 @@ export default Vue.extend({
     joinDataPreviewHasData(): boolean {
       return !!this.previewTableData;
     },
+    disableJoin(): boolean {
+      return this.joinPairs.length < 1;
+    },
     joinedColumn(): string {
       const a = this.datasetAColumn ? this.datasetAColumn.key : "";
       const b = this.datasetBColumn ? this.datasetBColumn.key : "";
       // Note: It looks like joined column name is set to same as left column (a) name
       return a;
     },
+    joinPairs(): JoinPair[] {
+      return routeGetters.getJoinPairs(this.$store);
+    },
   },
 
   methods: {
+    badgeRemoved(joinPair: JoinPair) {
+      const pairs = this.joinPairs.filter((jp) => {
+        return jp.first !== joinPair.first && jp.second !== joinPair.second;
+      });
+      const entry = overlayRouteEntry(this.$route, {
+        joinPairs: pairs.length
+          ? pairs.map((jp) => {
+              return JSON.stringify(jp);
+            })
+          : null,
+      });
+      this.$router.push(entry).catch((err) => console.warn(err));
+    },
+    addJoinRelation() {
+      if (
+        this.joinPairs.some((jp) => {
+          return (
+            jp.first === this.datasetAColumn.key &&
+            jp.second === this.datasetBColumn.key
+          );
+        })
+      ) {
+        return;
+      }
+      const pair = JSON.stringify({
+        first: this.datasetAColumn.key,
+        second: this.datasetBColumn.key,
+      });
+      const entry = overlayRouteEntry(this.$route, {
+        joinPairs: [
+          ...this.joinPairs.map((jp) => {
+            return JSON.stringify(jp);
+          }),
+          pair,
+        ],
+      });
+      this.$router.push(entry).catch((err) => console.warn(err));
+    },
     previewJoin() {
       // flag as pending
       this.pending = true;
@@ -242,7 +297,7 @@ export default Vue.extend({
 });
 </script>
 
-<style>
+<style scoped>
 .join-button {
   margin: 0 8px;
   width: 35%;
@@ -273,5 +328,15 @@ export default Vue.extend({
 .warning-text {
   line-height: 16px;
   font-size: 16px;
+}
+main {
+  background-color: var(--gray-300);
+  border: 1px solid var(--gray-500);
+  border-radius: 0.2rem;
+  display: flex;
+  flex-shrink: 0; /* To avoid it to collapse and have the badges overflow. */
+  flex-wrap: wrap;
+  min-height: 2.5rem;
+  padding: 0.2rem;
 }
 </style>

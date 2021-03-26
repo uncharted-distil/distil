@@ -17,8 +17,18 @@
 
 import axios from "axios";
 import sha1 from "crypto-js/sha1";
+import {
+  interpolateInferno,
+  interpolateMagma,
+  interpolatePlasma,
+  interpolateTurbo,
+  interpolateViridis,
+} from "d3-scale-chromatic";
 import _ from "lodash";
+import localStorage from "store";
 import Vue from "vue";
+import { Location } from "vue-router";
+import router from "../router/router";
 import {
   D3M_INDEX_FIELD,
   DatasetPendingRequestType,
@@ -37,15 +47,15 @@ import {
 } from "../store/dataset/module";
 import { PredictionContext } from "../store/predictions/actions";
 import {
+  getters as predictionsGetters,
+  mutations as predictionsMutations,
+} from "../store/predictions/module";
+import {
   Predictions,
   PredictStatus,
   Solution,
   SolutionStatus,
 } from "../store/requests/index";
-import {
-  getters as predictionsGetters,
-  mutations as predictionsMutations,
-} from "../store/predictions/module";
 import { getters as requestGetters } from "../store/requests/module";
 import { ResultsContext } from "../store/results/actions";
 import {
@@ -57,12 +67,13 @@ import { getters as routeGetters } from "../store/route/module";
 import store from "../store/store";
 import {
   CLUSTER_PREFIX,
+  DISTIL_ROLES,
   formatValue,
   hasComputedVarPrefix,
   IMAGE_TYPE,
   isGeoLocatedType,
-  isIntegerType,
   isImageType,
+  isIntegerType,
   isLatitudeGroupType,
   isListType,
   isLongitudeGroupType,
@@ -73,21 +84,10 @@ import {
   LONGITUDE_TYPE,
   MULTIBAND_IMAGE_TYPE,
   TIMESERIES_TYPE,
-  DISTIL_ROLES,
 } from "../util/types";
 import { Dictionary } from "./dict";
 import { FilterParams } from "./filters";
 import { overlayRouteEntry } from "./routes";
-import { Location } from "vue-router";
-import {
-  interpolateTurbo,
-  interpolateViridis,
-  interpolateInferno,
-  interpolateMagma,
-  interpolatePlasma,
-} from "d3-scale-chromatic";
-import router from "../router/router";
-import localStorage from "store";
 
 // Postfixes for special variable names
 export const PREDICTED_SUFFIX = "_predicted";
@@ -109,6 +109,10 @@ export const FILE_PROVENANCE = "file";
 export const IMPORTANT_VARIABLE_RANKING_THRESHOLD = 0.5;
 export const LOW_SHOT_SCORE_COLUMN_PREFIX = "__query_";
 
+export interface JoinPair {
+  first: string;
+  second: string;
+}
 // LowShotLabels enum for labeling data in a binary classification
 export enum LowShotLabels {
   positive = "positive",
