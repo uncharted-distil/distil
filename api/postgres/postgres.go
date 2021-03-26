@@ -507,8 +507,6 @@ func (d *Database) IngestRow(tableName string, data []string) error {
 		var val interface{}
 		if d.isNullVariable(variables[i].Type, data[i]) {
 			val = nil
-		} else if d.isArray(variables[i].Type) && !d.dataIsArray(data[i]) {
-			val = fmt.Sprintf("{%s}", data[i])
 		} else if variables[i].Type == model.GeoBoundsType+"s" {
 			val = fmt.Sprintf("%s:geometry", data[i])
 		} else {
@@ -687,18 +685,19 @@ func (d *Database) isNullVariable(typ, value string) bool {
 	return value == "" && nonNullableTypes[typ]
 }
 
-func (d *Database) isArray(typ string) bool {
+// IsArray returns true if the type is an array type.
+func (d *Database) IsArray(typ string) bool {
 	return strings.HasSuffix(typ, "Vector")
 }
 
-func (d *Database) dataIsArray(data string) bool {
-	dataLength := len(data)
-	if dataLength < 2 {
-		return false
-	}
+//func (d *Database) dataIsArray(data string) bool {
+//	dataLength := len(data)
+//	if dataLength < 2 {
+//		return false
+//	}
 
-	return data[0] == '{' && data[dataLength-1] == '}'
-}
+//	return data[0] == '{' && data[dataLength-1] == '}'
+//}
 
 // MapD3MTypeToPostgresType generates a postgres type from a d3m type.
 func MapD3MTypeToPostgresType(typ string) string {
@@ -732,8 +731,10 @@ func MapPostgresTypeToD3MType(pType string) ([]string, error) {
 		return []string{model.RealType, model.TimestampType}, nil
 	case dataTypeInteger:
 		return []string{model.TimestampType, model.IntegerType}, nil
-	case dataTypeVector, dataTypeCoord:
+	case dataTypeVector:
 		return []string{model.RealVectorType, model.RealListType}, nil
+	case dataTypeCoord:
+		return []string{model.RealVectorType, model.RealListType, model.GeoBoundsType}, nil
 	case dataTypeText:
 		return []string{model.OrdinalType, model.CategoricalType, model.StringType, model.AddressType, model.CityType, model.CountryType, model.PostalCodeType, model.StateType, model.URIType, model.PhoneType}, nil
 	case dataTypeGeometry:
@@ -785,17 +786,18 @@ func ValueForFieldType(typ string, field string) string {
 	switch typ {
 	case model.RealListType:
 		return fmt.Sprintf("string_to_array(%s, ',')", fieldQuote)
+	case model.RealVectorType:
+		return fmt.Sprintf("concat('{', %s, '}')", fieldQuote)
 	case model.DateTimeType:
 		// datetime may be only time so need to support both cases
 		// times can have first value missing a 0 so want to first get a time value then add it to epoch time 0
 		return fmt.Sprintf("CASE WHEN length(%[1]s) IN (4, 5) AND position(':' in %[1]s) > 0 THEN CONCAT('1970-01-01 ', to_char(to_timestamp(%[1]s, 'MI:SS'), 'HH24:MI:SS')) ELSE %[1]s END", fieldQuote)
 	default:
-		return fmt.Sprintf("\"%s\"", field)
+		return fieldQuote
 	}
 }
 
-// IsValidType validates the string to make sure it is a valid supported type
-func IsValidType(pType string) bool {
+func isValidType(pType string) bool {
 	switch pType {
 	case dataTypeText:
 		return true
@@ -820,6 +822,8 @@ func IsValidType(pType string) bool {
 	case dataTypeBool:
 		return true
 	case dataTypeEmail:
+		return true
+	case dataTypeCoord:
 		return true
 	default:
 		return false
@@ -871,19 +875,19 @@ func (d *Database) CreateIndex(tableName string, fieldName string, typ string) e
 // IsColumnType can be use to check columns potential types
 func IsColumnType(client DatabaseDriver, tableName string, variable *model.Variable, colType string) bool {
 	// check colType is valid
-	if !IsValidType(colType) {
+	if !isValidType(colType) {
 		return false
 	}
 	viewSelect := fmt.Sprintf("\"%s\"", variable.Key)
 	groupBy := ""
 	if colType == dataTypeCoord {
-		viewSelect = fmt.Sprintf("concat('{', %s::%s, '}')", viewSelect, dataTypeVector)
-		groupBy = fmt.Sprintf("GROUP BY array_length(\"%s\", 1)", variable.Key)
+		viewSelect = fmt.Sprintf("array_length(concat('{', %s, '}')::%s, 1)", viewSelect, dataTypeVector)
+		groupBy = fmt.Sprintf("GROUP BY \"%s\"", variable.Key)
 	} else {
 		viewSelect = fmt.Sprintf("%s::%s", viewSelect, colType)
 	}
 	// generate view query
-	viewQuery := fmt.Sprintf("CREATE TEMPORARY VIEW temp_view_%[1]s AS SELECT %[3]s AS %[1]s FROM %[2]s", variable.Key, tableName, viewSelect)
+	viewQuery := fmt.Sprintf("CREATE TEMPORARY VIEW temp_view_%[1]s AS SELECT %[3]s AS \"%[1]s\" FROM %[2]s", variable.Key, tableName, viewSelect)
 	// test query
 	testQuery := fmt.Sprintf("SELECT COUNT(\"%[1]s\") FROM temp_view_%[1]s %[2]s", variable.Key, groupBy)
 
@@ -906,6 +910,23 @@ func IsColumnType(client DatabaseDriver, tableName string, variable *model.Varia
 		return false
 	}
 	// test to see if the data can fit into the type
-	_, err = tx.Exec(context.Background(), testQuery)
-	return err == nil
+	rows, err := tx.Query(context.Background(), testQuery)
+	if err != nil {
+		return false
+	}
+
+	// there should only be 1 row, even with the group by
+	// if there are more than 1 row, then it is not the expected type
+	count := 0
+	for rows.Next() {
+		count = count + 1
+	}
+	if rows.Err() != nil {
+		return false
+	}
+	if count != 1 {
+		return false
+	}
+
+	return true
 }
