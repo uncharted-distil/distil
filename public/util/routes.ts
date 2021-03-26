@@ -16,10 +16,10 @@
  */
 
 import _ from "lodash";
-import { Route, Location } from "vue-router";
-import { Dictionary } from "./dict";
+import { Location, Route } from "vue-router";
 import { SummaryMode } from "../store/dataset";
 import { ColorScaleNames } from "./data";
+import { Dictionary } from "./dict";
 // TODO: should really have a separate definition for each route
 export interface RouteArgs {
   clustering?: string;
@@ -39,6 +39,7 @@ export interface RouteArgs {
   joinColumnA?: string;
   joinColumnB?: string;
   joinAccuracy?: string;
+  joinPairs?: string[];
   baseColumnSuggestions?: string[]; // suggested base join columns
   joinColumnSuggestions?: string[]; // suggested target join columns
   groupingType?: string;
