@@ -65,14 +65,14 @@ func JoinDatamart(joinLeft *JoinSpec, joinRight *JoinSpec, rightOrigin *model.Da
 }
 
 // JoinDistil will bring misery.
-func JoinDistil(joinLeft *JoinSpec, joinRight *JoinSpec, leftCol string, rightCol string) (string, *apiModel.FilteredData, error) {
+func JoinDistil(joinLeft *JoinSpec, joinRight *JoinSpec, leftCol string, rightCol string, accuracy float32) (string, *apiModel.FilteredData, error) {
 	cfg, err := env.LoadConfig()
 	if err != nil {
 		return "", nil, err
 	}
 	varsLeftMap := apiModel.MapVariables(joinLeft.Variables, func(variable *model.Variable) string { return variable.Key })
 	varsRightMap := apiModel.MapVariables(joinRight.Variables, func(variable *model.Variable) string { return variable.Key })
-	pipelineDesc, err := description.CreateJoinPipeline("Joiner", "Join existing data", varsLeftMap[leftCol], varsRightMap[rightCol], 0.8)
+	pipelineDesc, err := description.CreateJoinPipeline("Joiner", "Join existing data", varsLeftMap[leftCol], varsRightMap[rightCol], accuracy)
 	if err != nil {
 		return "", nil, err
 	}
