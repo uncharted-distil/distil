@@ -111,7 +111,7 @@ import { Dictionary } from "../util/dict";
 import { getTableDataItems, getTableDataFields, JoinPair } from "../util/data";
 import { isJoinable } from "../util/types";
 import { loadJoinedDataset } from "../util/join";
-import { overlayRouteEntry } from "../util/routes";
+import { overlayRouteEntry, overlayRouteReplace } from "../util/routes";
 
 export default Vue.extend({
   name: "JoinDatasetsForm",
@@ -212,14 +212,13 @@ export default Vue.extend({
   methods: {
     badgeRemoved(joinPair: JoinPair) {
       const pairs = this.joinPairs.filter((jp) => {
-        return jp.first !== joinPair.first && jp.second !== joinPair.second;
+        return jp.first !== joinPair.first || jp.second !== joinPair.second;
       });
-      const entry = overlayRouteEntry(this.$route, {
-        joinPairs: pairs.length
-          ? pairs.map((jp) => {
-              return JSON.stringify(jp);
-            })
-          : null,
+      const strs = pairs.map((jp) => {
+        return JSON.stringify(jp);
+      });
+      const entry = overlayRouteReplace(this.$route, {
+        joinPairs: strs.length ? strs : null,
       });
       this.$router.push(entry).catch((err) => console.warn(err));
     },

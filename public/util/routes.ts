@@ -113,9 +113,21 @@ export function overlayRouteEntry(
 ): Location {
   const path = route.path;
   const query = _.merge({}, route.query, validateQueryArgs(args));
+
   return { path, query };
 }
-
+export function overlayRouteReplace(
+  route: Route,
+  args: RouteArgs = {}
+): Location {
+  const path = route.path;
+  const keys = Object.keys(args);
+  const query = _.cloneDeep(route.query);
+  keys.forEach((key) => {
+    query[key] = args[key];
+  });
+  return { path, query };
+}
 export function getRouteFacetPage(key: string, route: Route): number {
   const page = route.query[key] as string;
   return page ? parseInt(page) : 1;
