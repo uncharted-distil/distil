@@ -441,7 +441,7 @@ func (s *Storage) buildSelectStatement(variables []*model.Variable, filterVariab
 	}
 	return strings.Join(distincts, ",") + " " + strings.Join(fields, ","), nil
 }
-func (s *Storage) buildFilteredQueryField(variables []*model.Variable, filterVariables []string) (string, error) {
+func (s *Storage) buildFilteredQueryField(variables []*model.Variable, filterVariables []string, distinct bool) (string, error) {
 
 	distincts := make([]string, 0)
 	fields := make([]string, 0)
@@ -451,7 +451,7 @@ func (s *Storage) buildFilteredQueryField(variables []*model.Variable, filterVar
 			continue
 		}
 
-		if variable.DistilRole == model.VarDistilRoleGrouping {
+		if variable.DistilRole == model.VarDistilRoleGrouping && distinct {
 			distincts = append(distincts, fmt.Sprintf("DISTINCT ON (\"%s\")", variable.Key))
 		}
 
@@ -806,7 +806,7 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 			filterParams.Variables = append(filterParams.Variables, orderByVar.HeaderName)
 		}
 	}
-	fields, err := s.buildFilteredQueryField(variables, filterParams.Variables)
+	fields, err := s.buildFilteredQueryField(variables, filterParams.Variables, !includeGroupingCol)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not build field list")
 	}

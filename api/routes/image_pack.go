@@ -196,18 +196,25 @@ func getMultiBandImages(multiBandPackRequest *ImagePackRequest, threadID int, nu
 	options := util.Options{Gain: 2.5, Gamma: 2.2, GainL: 1.0, Scale: 0} // default options for color correction
 
 	imageScale := util.ImageScale{Width: ThumbnailDimensions, Height: ThumbnailDimensions}
+
+	// get the image file names
+	imageIDs := []string{}
+	for i := threadID; i < len(multiBandPackRequest.ImageIDs); i += numThreads {
+		imageIDs = append(imageIDs, multiBandPackRequest.ImageIDs[i])
+	}
+
+	// need to get the band -> filename from the data
+	bandMapping, err := getBandMapping(res, imageIDs, dataStorage)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
 	// loop through image info
 	for i := threadID; i < len(multiBandPackRequest.ImageIDs); i += numThreads {
 		imageID := multiBandPackRequest.ImageIDs[i]
 
-		// need to get the band -> filename from the data
-		bandMapping, err := getBandMapping(res, imageID, dataStorage)
-		if err != nil {
-			handleThreadError(&errorIDs, &imageID, &err)
-			continue
-		}
-
-		img, err := util.ImageFromCombination(sourcePath, bandMapping, multiBandPackRequest.Band, imageScale, options)
+		img, err := util.ImageFromCombination(sourcePath, bandMapping[imageID], multiBandPackRequest.Band, imageScale, options)
 		if err != nil {
 			handleThreadError(&errorIDs, &imageID, &err)
 			continue
