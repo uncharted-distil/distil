@@ -117,7 +117,9 @@ export default Vue.extend({
         this.trainingVarsPage,
         this.rowsPerPage,
         this.trainingVariables,
-        summaryDictionary
+        summaryDictionary,
+        false,
+        routeGetters.getRoutePredictionsDataset(this.$store)
       );
     },
     trainingSummariesByImportance(): VariableSummary[] {
@@ -130,7 +132,8 @@ export default Vue.extend({
         this.trainingVariables.length,
         this.trainingVariables,
         summaryDictionary,
-        true
+        true,
+        routeGetters.getRoutePredictionsDataset(this.$store)
       );
 
       return filterArrayByPage(
