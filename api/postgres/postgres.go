@@ -690,15 +690,6 @@ func (d *Database) IsArray(typ string) bool {
 	return strings.HasSuffix(typ, "Vector")
 }
 
-//func (d *Database) dataIsArray(data string) bool {
-//	dataLength := len(data)
-//	if dataLength < 2 {
-//		return false
-//	}
-
-//	return data[0] == '{' && data[dataLength-1] == '}'
-//}
-
 // MapD3MTypeToPostgresType generates a postgres type from a d3m type.
 func MapD3MTypeToPostgresType(typ string) string {
 	// Integer types can be returned as floats.
@@ -915,8 +906,7 @@ func IsColumnType(client DatabaseDriver, tableName string, variable *model.Varia
 		return false
 	}
 
-	// there should only be 1 row, even with the group by
-	// if there are more than 1 row, then it is not the expected type
+	// there should only be 1 row
 	count := 0
 	result := 0
 	for rows.Next() {
