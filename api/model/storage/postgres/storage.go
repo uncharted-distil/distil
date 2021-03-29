@@ -18,8 +18,6 @@ package postgres
 import (
 	"fmt"
 
-	"context"
-
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	log "github.com/unchartedsoftware/plog"
@@ -120,40 +118,6 @@ func (s *Storage) updateStats(storageName string) {
 	}
 }
 
-// IsColumnType can be use to check columns potential types
-func (s *Storage) isColumnType(tableName string, variable *model.Variable, colType string) bool {
-	// check colType is valid
-	if !postgres.IsValidType(colType) {
-		return false
-	}
-	// generate view query
-	viewQuery := fmt.Sprintf("CREATE TEMPORARY VIEW temp_view_%[1]s AS SELECT \"%[1]s\"::%[3]s FROM %[2]s", variable.Key, tableName, colType)
-	// test query
-	testQuery := fmt.Sprintf("SELECT COUNT(\"%[1]s\") FROM temp_view_%[1]s", variable.Key)
-
-	// create transaction
-	tx, err := s.client.Begin()
-	if err != nil {
-		if rbErr := tx.Rollback(context.Background()); rbErr != nil {
-			log.Error("rollback failed")
-		}
-		return false
-	}
-	defer func() {
-		if rbErr := tx.Rollback(context.Background()); rbErr != nil {
-			log.Error("rollback failed")
-		}
-	}()
-	// create temp view
-	_, err = tx.Exec(context.Background(), viewQuery)
-	if err != nil {
-		return false
-	}
-	// test to see if the data can fit into the type
-	_, err = tx.Exec(context.Background(), testQuery)
-	return err == nil
-}
-
 // VerifyData checks each column in the table against every supported type, then updates what types are valid in the SuggestedType
 func (s *Storage) VerifyData(datasetID string, tableName string) error {
 	validTypes := postgres.GetValidTypes()
@@ -182,7 +146,7 @@ func (s *Storage) VerifyData(datasetID string, tableName string) error {
 			suggestedMap[t.Type] = true
 		}
 		for _, j := range mainValidTypes {
-			if s.isColumnType(tableName, v, j) {
+			if postgres.IsColumnType(s.client, tableName, v, j) {
 				d3mTypes, err := postgres.MapPostgresTypeToD3MType(j)
 				if err != nil {
 					continue

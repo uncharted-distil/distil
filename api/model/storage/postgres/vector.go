@@ -117,6 +117,6 @@ func (f *VectorField) subSelect() string {
 	if f.Count != "" {
 		countSQL = fmt.Sprintf(", \"%s\"", f.Count)
 	}
-	return fmt.Sprintf("(SELECT \"%s\"%s, unnest(\"%s\") as %s FROM %s)",
+	return fmt.Sprintf("(SELECT \"%s\"%s, unnest(\"%s\") as \"%s\" FROM %s)",
 		model.D3MIndexFieldName, countSQL, f.Unnested, f.Key, f.DatasetStorageName)
 }
