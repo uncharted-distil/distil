@@ -879,17 +879,17 @@ func IsColumnType(client DatabaseDriver, tableName string, variable *model.Varia
 		return false
 	}
 	viewSelect := fmt.Sprintf("\"%s\"", variable.Key)
-	groupBy := ""
+	where := ""
 	if colType == dataTypeCoord {
 		viewSelect = fmt.Sprintf("array_length(concat('{', %s, '}')::%s, 1)", viewSelect, dataTypeVector)
-		groupBy = fmt.Sprintf("GROUP BY \"%s\"", variable.Key)
+		where = fmt.Sprintf("WHERE \"%s\" = 8", variable.Key)
 	} else {
 		viewSelect = fmt.Sprintf("%s::%s", viewSelect, colType)
 	}
 	// generate view query
 	viewQuery := fmt.Sprintf("CREATE TEMPORARY VIEW temp_view_%[1]s AS SELECT %[3]s AS \"%[1]s\" FROM %[2]s", variable.Key, tableName, viewSelect)
 	// test query
-	testQuery := fmt.Sprintf("SELECT COUNT(\"%[1]s\") FROM temp_view_%[1]s %[2]s", variable.Key, groupBy)
+	testQuery := fmt.Sprintf("SELECT COUNT(\"%[1]s\") FROM temp_view_%[1]s %[2]s", variable.Key, where)
 
 	// create transaction
 	tx, err := client.Begin()
@@ -918,13 +918,18 @@ func IsColumnType(client DatabaseDriver, tableName string, variable *model.Varia
 	// there should only be 1 row, even with the group by
 	// if there are more than 1 row, then it is not the expected type
 	count := 0
+	result := 0
 	for rows.Next() {
 		count = count + 1
+		err = rows.Scan(&result)
+		if err != nil {
+			return false
+		}
 	}
 	if rows.Err() != nil {
 		return false
 	}
-	if count != 1 {
+	if count != 1 || result == 0 {
 		return false
 	}
 
