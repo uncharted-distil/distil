@@ -44,7 +44,7 @@
         </div>
         <i class="fa fa-search-plus zoom-icon" @click.stop="showZoomedImage" />
       </template>
-      <img v-else alt="image unavailable" />
+      <img v-else alt="image unavailable" :class="imgClass" />
     </div>
 
     <image-drilldown
@@ -127,7 +127,9 @@ export default Vue.extend({
     imageId(): string {
       return this.imageUrl?.split(/_B[0-9][0-9a-zA-Z][.]/)[0];
     },
-
+    imgClass(): string {
+      return this.imageUrl == null ? "d-none" : "";
+    },
     imageDrilldown(): DrillDownInfo {
       return {
         band: this.band,
