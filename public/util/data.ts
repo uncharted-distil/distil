@@ -445,13 +445,15 @@ export function updateSummariesPerVariable(
 ) {
   const routeKey = minimumRouteKey();
   const summaryKey = summary.key;
+  const dataset = summary.dataset;
+  const compositeKey = summaryKey + dataset;
   // check for existing summaries for that variable, if not, instantiate
-  if (!variableSummaryDictionary[summaryKey]) {
-    Vue.set(variableSummaryDictionary, summaryKey, {});
+  if (!variableSummaryDictionary[compositeKey]) {
+    Vue.set(variableSummaryDictionary, compositeKey, {});
   }
   // freezing the return to prevent slow, unnecessary deep reactivity.
   Vue.set(
-    variableSummaryDictionary[summaryKey],
+    variableSummaryDictionary[compositeKey],
     routeKey,
     Object.freeze(summary)
   );
@@ -772,12 +774,13 @@ export function getVariableSummariesByState(
   pageSize: number,
   variables: Variable[],
   summaryDictionary: Dictionary<Dictionary<VariableSummary>>,
-  isSorted = false
+  isSorted = false,
+  dataset = ""
 ) {
   const routeKey = minimumRouteKey();
   const ranked =
     routeGetters.getRouteIsTrainingVariablesRanked(store) || isSorted;
-
+  const ds = dataset.length ? dataset : routeGetters.getRouteDataset(store);
   if (!(Object.keys(summaryDictionary).length > 0 && variables.length > 0)) {
     return [];
   }
@@ -797,7 +800,7 @@ export function getVariableSummariesByState(
 
   // map them back to the variable summary dictionary for the current route key
   const currentSummaries = sortedVariables.reduce((cs, vn) => {
-    if (!summaryDictionary[vn.key]) {
+    if (!summaryDictionary[vn.key + ds]) {
       const placeholder = createPendingSummary(
         vn.key,
         vn.colDisplayName,
@@ -806,13 +809,13 @@ export function getVariableSummariesByState(
       );
       cs.push(placeholder);
     } else {
-      if (summaryDictionary[vn.key][routeKey]) {
-        cs.push(summaryDictionary[vn.key][routeKey]);
+      if (summaryDictionary[vn.key + ds][routeKey]) {
+        cs.push(summaryDictionary[vn.key + ds][routeKey]);
       } else {
         const tempVariableSummaryKey = Object.keys(
-          summaryDictionary[vn.key]
+          summaryDictionary[vn.key + ds]
         )[0];
-        cs.push(summaryDictionary[vn.key][tempVariableSummaryKey]);
+        cs.push(summaryDictionary[vn.key + ds][tempVariableSummaryKey]);
       }
     }
     return cs;
