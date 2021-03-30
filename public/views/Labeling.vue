@@ -73,7 +73,7 @@
         class="h-18"
       />
     </div>
-    <b-modal :id="modalId" title="Label Creation" @hide="onLabelSubmit">
+    <b-modal :id="modalId" :title="labelModalTitle" @hide="onLabelSubmit">
       <b-form-group
         v-if="!isClone"
         id="input-group-1"
@@ -181,6 +181,9 @@ export default Vue.extend({
     };
   },
   computed: {
+    labelModalTitle(): string {
+      return this.isClone ? "Select Label Feature" : "Label Creation";
+    },
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
