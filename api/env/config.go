@@ -50,7 +50,7 @@ type Config struct {
 	FeaturizationEnabled       bool    `env:"FEATURIZATION_ENABLED" envDefault:"false"`
 	GeocodingEnabled           bool    `env:"GEOCODING_ENABLED" envDefault:"false"`
 	HelpURL                    string  `env:"HELP_URL" envDefault:"https://d3m.uncharted.software/"`
-	ImageThreadPool            int     `env:"IMAGE_THREAD_POOL" envDefault:"2"`
+	ImageThreadPool            int     `env:"IMAGE_THREAD_POOL" envDefault:"6"`
 	ImportErrorThreshold       float64 `env:"IMPORT_ERROR_THRESHOLD" envDefault:"0.1"`
 	IngestHardFail             bool    `env:"INGEST_HARD_FAIL" envDefault:"false"`
 	IngestOverwrite            bool    `env:"INGEST_OVERWRITE" envDefault:"false"`
