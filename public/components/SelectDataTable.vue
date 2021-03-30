@@ -369,7 +369,7 @@ export default Vue.extend({
         }
       }
       return true;
-      },
+    },
     debounceImageFetch() {
       clearTimeout(this.debounceKey);
       this.debounceKey = setTimeout(() => {
