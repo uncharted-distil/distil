@@ -1202,11 +1202,12 @@ export const actions = {
 
   async fetchImage(
     context: DatasetContext,
-    args: { dataset: string; url: string }
+    args: { dataset: string; url: string; isThumbnail?: boolean }
   ) {
     if (!validateArgs(args, ["dataset", "url"])) return;
     try {
-      const urlRequest = `distil/image/${args.dataset}/${args.url}`;
+      const thumbnail = args.isThumbnail ? "true" : "false";
+      const urlRequest = `distil/image/${args.dataset}/${args.url}/${thumbnail}`;
       const response = await loadImage(urlRequest);
       mutations.updateFile(context, { url: args.url, file: response });
     } catch (error) {

@@ -107,6 +107,7 @@ export default Vue.extend({
     isResult: { type: Boolean as () => boolean, default: false },
     labelFeatureName: { type: String, default: "" },
   },
+
   data() {
     return {
       imageWidth: 128,
@@ -115,34 +116,38 @@ export default Vue.extend({
       perPage: 100,
       shiftClickInfo: { first: null, second: null },
       uniqueTrail: "image-mosiac",
+      debounceKey: null,
     };
   },
+
   watch: {
     band() {
-      this.removeImages();
-      this.fetchImagePack(this.paginatedItems);
+      this.debounceImageFetch();
     },
     paginatedItems(prev, cur) {
       // check if all the indices are in the same order and prev == cur
       if (this.sameData(prev, cur)) {
         return;
       }
-      this.removeImages();
-      this.fetchImagePack(this.paginatedItems);
+      this.debounceImageFetch();
     },
   },
+
   destroyed() {
     window.removeEventListener("keyup", this.shiftRelease);
   },
+
   mounted() {
     this.removeImages();
     this.fetchImagePack(this.paginatedItems);
     window.addEventListener("keyup", this.shiftRelease);
   },
+
   computed: {
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
+
     items(): TableRow[] {
       if (this.dataItems) {
         return this.dataItems;
@@ -157,6 +162,7 @@ export default Vue.extend({
         this.instanceName
       );
     },
+
     paginatedItems(): TableRow[] {
       const page = this.currentPage - 1; // currentPage starts at 1
       const start = page * this.perPage;
@@ -168,6 +174,7 @@ export default Vue.extend({
     itemCount(): number {
       return this.items.length;
     },
+
     fields(): Dictionary<TableColumn> {
       const currentFields = this.dataFields
         ? this.dataFields
@@ -188,11 +195,20 @@ export default Vue.extend({
     includedActive(): boolean {
       return routeGetters.getRouteInclude(this.$store);
     },
+
     band(): string {
       return routeGetters.getBandCombinationId(this.$store);
     },
   },
+
   methods: {
+    debounceImageFetch() {
+      clearTimeout(this.debounceKey);
+      this.debounceKey = setTimeout(() => {
+        this.removeImages();
+        this.fetchImagePack(this.paginatedItems);
+      }, 1000);
+    },
     sameData(old: [], cur: []): boolean {
       if (old === null || cur === null) {
         return false;

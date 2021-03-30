@@ -196,6 +196,7 @@ export default Vue.extend({
       shiftClickInfo: { first: null, second: null },
       // this is v-model with b-table (it contains what is on the page in the sorted order)
       visibleRows: [],
+      debounceKey: null,
     };
   },
 
@@ -318,8 +319,7 @@ export default Vue.extend({
       if (this.sameData(prev, cur)) {
         return;
       }
-      this.removeImages();
-      this.fetchImagePack(this.visibleRows);
+      this.debounceImageFetch();
     },
     includedActive() {
       if (this.items.length) {
@@ -346,8 +346,7 @@ export default Vue.extend({
       }
     },
     band() {
-      this.removeImages();
-      this.fetchImagePack(this.visibleRows);
+      this.debounceImageFetch();
     },
   },
   destroyed() {
@@ -370,6 +369,13 @@ export default Vue.extend({
         }
       }
       return true;
+      },
+    debounceImageFetch() {
+      clearTimeout(this.debounceKey);
+      this.debounceKey = setTimeout(() => {
+        this.removeImages();
+        this.fetchImagePack(this.visibleRows);
+      }, 1000);
     },
     fetchTimeSeries() {
       if (!this.isTimeseries) {
@@ -428,6 +434,7 @@ export default Vue.extend({
       this.currentPage = page;
       // fetch new data
       this.fetchTimeSeries();
+      this.removeImages();
     },
     selectAll() {
       bulkRowSelectionUpdate(
