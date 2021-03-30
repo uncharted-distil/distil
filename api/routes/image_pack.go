@@ -146,7 +146,7 @@ func getImages(imagePackRequest *ImagePackRequest, threadID int, numThreads int,
 			handleThreadError(&errorIDs, &imageID, &err)
 			continue
 		}
-		img = resize.Resize(ThumbnailDimensions, ThumbnailDimensions, img, resize.Lanczos3)
+		img = resize.Thumbnail(ThumbnailDimensions, ThumbnailDimensions, img, resize.Lanczos3)
 		rgbaImg := image.NewRGBA(image.Rect(0, 0, ThumbnailDimensions, ThumbnailDimensions))
 		draw.Draw(rgbaImg, image.Rect(0, 0, ThumbnailDimensions, ThumbnailDimensions), img, img.Bounds().Min, draw.Src)
 		imageBytes, err := util.ImageToJPEG(rgbaImg)

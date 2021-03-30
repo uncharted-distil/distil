@@ -391,6 +391,7 @@ export default Vue.extend({
         await datasetActions.fetchImage(this.$store, {
           dataset: this.dataset,
           url: this.imageUrl,
+          isThumbnail: true,
         });
         if (this.isVisible) {
           this.injectImage();

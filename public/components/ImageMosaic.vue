@@ -107,6 +107,7 @@ export default Vue.extend({
     isResult: { type: Boolean as () => boolean, default: false },
     labelFeatureName: { type: String, default: "" },
   },
+
   data() {
     return {
       imageWidth: 128,
@@ -117,6 +118,7 @@ export default Vue.extend({
       uniqueTrail: "image-mosiac",
     };
   },
+
   watch: {
     band() {
       this.removeImages();
@@ -131,18 +133,22 @@ export default Vue.extend({
       this.fetchImagePack(this.paginatedItems);
     },
   },
+
   destroyed() {
     window.removeEventListener("keyup", this.shiftRelease);
   },
+
   mounted() {
     this.removeImages();
     this.fetchImagePack(this.paginatedItems);
     window.addEventListener("keyup", this.shiftRelease);
   },
+
   computed: {
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
+
     items(): TableRow[] {
       if (this.dataItems) {
         return this.dataItems;
@@ -157,6 +163,7 @@ export default Vue.extend({
         this.instanceName
       );
     },
+
     paginatedItems(): TableRow[] {
       const page = this.currentPage - 1; // currentPage starts at 1
       const start = page * this.perPage;
@@ -168,6 +175,7 @@ export default Vue.extend({
     itemCount(): number {
       return this.items.length;
     },
+
     fields(): Dictionary<TableColumn> {
       const currentFields = this.dataFields
         ? this.dataFields
@@ -188,10 +196,12 @@ export default Vue.extend({
     includedActive(): boolean {
       return routeGetters.getRouteInclude(this.$store);
     },
+
     band(): string {
       return routeGetters.getBandCombinationId(this.$store);
     },
   },
+
   methods: {
     sameData(old: [], cur: []): boolean {
       if (old === null || cur === null) {
