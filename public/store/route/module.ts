@@ -59,7 +59,7 @@ export const getters = {
   getDecodedTrainingVariableNames: read(
     moduleGetters.getDecodedTrainingVariableNames
   ),
-
+  getRouteLabel: read(moduleGetters.getRouteLabel),
   getRouteJoinDatasetsVarsPage: read(
     moduleGetters.getRouteJoinDatasetsVarsPage
   ),

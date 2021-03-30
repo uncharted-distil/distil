@@ -211,7 +211,16 @@ export const mutations = {
     });
     state.variables[index].isColTypeReviewed = update.isColTypeReviewed;
   },
-
+  // setIncludedVariableSummary used to clear an individual summary
+  setIncludedVariableSummary(
+    state: DatasetState,
+    args: {
+      key: string;
+      summary: VariableSummary;
+    }
+  ) {
+    Vue.set(state.includedSet.variableSummariesByKey, args.key, args.summary);
+  },
   updateIncludedVariableSummaries(
     state: DatasetState,
     summary: VariableSummary
