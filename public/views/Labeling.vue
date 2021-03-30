@@ -73,8 +73,9 @@
         class="h-18"
       />
     </div>
-    <b-modal :id="modalId" title="Label Creation" @hide="onLabelSubmit">
+    <b-modal :id="modalId" :title="labelModalTitle" @hide="onLabelSubmit">
       <b-form-group
+        v-if="!isClone"
         id="input-group-1"
         label="Label name:"
         label-for="label-input-field"
@@ -86,6 +87,18 @@
           type="text"
           required
           :placeholder="labelName"
+        />
+      </b-form-group>
+      <b-form-group
+        v-else
+        label="Label name:"
+        label-for="label-select-field"
+        description="Select the label field."
+      >
+        <b-form-select
+          id="label-select-field"
+          v-model="labelName"
+          :options="options"
         />
       </b-form-group>
     </b-modal>
@@ -168,6 +181,9 @@ export default Vue.extend({
     };
   },
   computed: {
+    labelModalTitle(): string {
+      return this.isClone ? "Select Label Feature" : "Label Creation";
+    },
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
@@ -181,6 +197,15 @@ export default Vue.extend({
           v.key !== this.labelScoreName
         );
       });
+    },
+    options(): { value: string; text: string }[] {
+      return this.variables
+        .filter((v) => {
+          return v.colType === CATEGORICAL_TYPE;
+        })
+        .map((v) => {
+          return { value: v.colName, text: v.colName };
+        });
     },
     scores(): Variable {
       return datasetGetters.getVariables(this.$store).find((v) => {
@@ -309,6 +334,9 @@ export default Vue.extend({
         // dataset is already a clone don't clone again. (used for testing. might add button for cloning later.)
         this.updateRoute();
         this.loading = false;
+        this.$nextTick(() => {
+          this.$bvModal.show(this.modalId);
+        });
         return;
       }
       const entry = await cloneDatasetUpdateRoute();
@@ -450,6 +478,18 @@ export default Vue.extend({
       });
     },
     async onLabelSubmit() {
+      if (
+        this.variables.some((v) => {
+          return v.colName === this.labelName;
+        })
+      ) {
+        const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
+          label: this.labelName,
+        });
+
+        this.$router.push(entry).catch((err) => console.warn(err));
+        return;
+      }
       // add new field
       await datasetActions.addField<string>(this.$store, {
         dataset: this.dataset,
@@ -522,6 +562,7 @@ export default Vue.extend({
       const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
         task: taskResponse.data.task.join(","),
         training: training.join(","),
+        label: this.labelName,
       });
 
       this.$router.push(entry).catch((err) => console.warn(err));

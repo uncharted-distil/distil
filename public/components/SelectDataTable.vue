@@ -315,7 +315,10 @@ export default Vue.extend({
   },
 
   watch: {
-    visibleRows() {
+    visibleRows(prev, cur) {
+      if (this.sameData(prev, cur)) {
+        return;
+      }
       this.debounceImageFetch();
     },
     includedActive() {
@@ -331,12 +334,10 @@ export default Vue.extend({
       // checks to see if items exist and if the timeseries has been queried for the new data
       if (!this.initialized && this.items.length) {
         this.fetchTimeSeries();
-        this.fetchImagePack(this.visibleRows);
         this.initialized = true;
       }
       if (prev?.length !== this.items.length) {
         this.fetchTimeSeries();
-        this.fetchImagePack(this.visibleRows);
       }
       // if the itemCount changes such that it's less than page
       // we were on, reset to page 1.
@@ -355,6 +356,20 @@ export default Vue.extend({
     window.addEventListener("keyup", this.shiftRelease);
   },
   methods: {
+    sameData(old: [], cur: []): boolean {
+      if (old === null || cur === null) {
+        return false;
+      }
+      if (old.length !== cur.length) {
+        return false;
+      }
+      for (let i = 0; i < old.length; ++i) {
+        if (old[i][D3M_INDEX_FIELD] !== cur[i][D3M_INDEX_FIELD]) {
+          return false;
+        }
+      }
+      return true;
+    },
     debounceImageFetch() {
       clearTimeout(this.debounceKey);
       this.debounceKey = setTimeout(() => {

@@ -551,8 +551,17 @@ export const actions = {
     const variables = datasetGetters.getVariables(store);
     const varModes = context.getters.getDecodedVarModes;
     const orderBy = routeGetters.getOrderBy(store);
-    clearVariableSummaries(context);
     filterParams.variables = variables.map((v) => v.key);
+    const label = routeGetters.getRouteLabel(store);
+    if (
+      highlights.some((h) => {
+        return h.key === label;
+      })
+    ) {
+      datasetMutations.clearVariableSummaries(store);
+    } else {
+      datasetMutations.setVariableSummary(store, { key: label, summary: null });
+    }
     return Promise.all([
       datasetActions.fetchIncludedVariableSummaries(store, {
         dataset,

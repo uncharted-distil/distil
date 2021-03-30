@@ -221,7 +221,9 @@ export const getters = {
   getRouteIsTrainingVariablesRanked(state: Route): boolean {
     return state.query.varRanked && state.query.varRanked === "1"; // Use "1" for truth.
   },
-
+  getRouteLabel(state: Route): string {
+    return state.query.label as string;
+  },
   // Returns a boolean to say that the cluster for this dataset has been generated.
   getRouteIsClusterGenerated(state: Route): boolean {
     return state.query.clustering && state.query.clustering === "1"; // Use "1" for truth.
