@@ -116,21 +116,20 @@ export default Vue.extend({
       perPage: 100,
       shiftClickInfo: { first: null, second: null },
       uniqueTrail: "image-mosiac",
+      debounceKey: null,
     };
   },
 
   watch: {
     band() {
-      this.removeImages();
-      this.fetchImagePack(this.paginatedItems);
+      this.debounceImageFetch();
     },
     paginatedItems(prev, cur) {
       // check if all the indices are in the same order and prev == cur
       if (this.sameData(prev, cur)) {
         return;
       }
-      this.removeImages();
-      this.fetchImagePack(this.paginatedItems);
+      this.debounceImageFetch();
     },
   },
 
@@ -203,6 +202,13 @@ export default Vue.extend({
   },
 
   methods: {
+    debounceImageFetch() {
+      clearTimeout(this.debounceKey);
+      this.debounceKey = setTimeout(() => {
+        this.removeImages();
+        this.fetchImagePack(this.paginatedItems);
+      }, 1000);
+    },
     sameData(old: [], cur: []): boolean {
       if (old === null || cur === null) {
         return false;
