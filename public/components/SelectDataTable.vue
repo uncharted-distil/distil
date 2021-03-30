@@ -196,6 +196,7 @@ export default Vue.extend({
       shiftClickInfo: { first: null, second: null },
       // this is v-model with b-table (it contains what is on the page in the sorted order)
       visibleRows: [],
+      debounceKey: null,
     };
   },
 
@@ -315,8 +316,7 @@ export default Vue.extend({
 
   watch: {
     visibleRows() {
-      this.removeImages();
-      this.fetchImagePack(this.visibleRows);
+      this.debounceImageFetch();
     },
     includedActive() {
       if (this.items.length) {
@@ -345,8 +345,7 @@ export default Vue.extend({
       }
     },
     band() {
-      this.removeImages();
-      this.fetchImagePack(this.visibleRows);
+      this.debounceImageFetch();
     },
   },
   destroyed() {
@@ -356,6 +355,13 @@ export default Vue.extend({
     window.addEventListener("keyup", this.shiftRelease);
   },
   methods: {
+    debounceImageFetch() {
+      clearTimeout(this.debounceKey);
+      this.debounceKey = setTimeout(() => {
+        this.removeImages();
+        this.fetchImagePack(this.visibleRows);
+      }, 1000);
+    },
     fetchTimeSeries() {
       if (!this.isTimeseries) {
         return;

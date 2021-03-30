@@ -196,6 +196,7 @@ export default Vue.extend({
       uniqueTrail: "predictions-table",
       // visibleRows contains the data being displayed on b-table
       visibleRows: [],
+      debounceKey: null,
     };
   },
 
@@ -332,12 +333,10 @@ export default Vue.extend({
 
   watch: {
     band() {
-      this.removeImages();
-      this.fetchImagePack(this.visibleRows);
+      this.debounceImageFetch();
     },
     visibleRows() {
-      this.removeImages();
-      this.fetchImagePack(this.visibleRows);
+      this.debounceImageFetch();
     },
     highlights() {
       this.initialized = false;
@@ -357,6 +356,13 @@ export default Vue.extend({
   },
 
   methods: {
+    debounceImageFetch() {
+      clearTimeout(this.debounceKey);
+      this.debounceKey = setTimeout(() => {
+        this.removeImages();
+        this.fetchImagePack(this.visibleRows);
+      }, 1000);
+    },
     removeImages() {
       if (!this.imageFields.length) {
         return;
