@@ -419,6 +419,7 @@ export default Vue.extend({
       this.currentPage = page;
       // fetch new data
       this.fetchTimeSeries();
+      this.removeImages();
     },
     selectAll() {
       bulkRowSelectionUpdate(

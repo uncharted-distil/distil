@@ -456,6 +456,7 @@ export default Vue.extend({
       );
       this.currentPage = page;
       this.fetchTimeseries();
+      this.removeImages();
     },
     async fetchTimeseries() {
       if (!this.isTimeseries) {
