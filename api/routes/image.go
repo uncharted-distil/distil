@@ -22,6 +22,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path"
+	"strconv"
 
 	"goji.io/v3/pat"
 
@@ -44,7 +45,11 @@ func ImageHandler(ctor model.MetadataStorageCtor, config *env.Config) func(http.
 		file := pat.Param(r, "file")
 
 		// check if a thumbnail is requested
-		isThumbnail := len(r.URL.Query()["is-thumbnail"]) > 0
+		isThumbnail, err := strconv.ParseBool(pat.Param(r, "is-thumbnail"))
+		if err != nil {
+			handleError(w, err)
+			return
+		}
 
 		// get metadata client
 		storage, err := ctor()

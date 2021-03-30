@@ -300,7 +300,7 @@ func main() {
 	registerRoutePost(mux, "/distil/delete-dataset/:dataset", routes.DeletingDatasetHandler(esMetadataStorageCtor, pgDataStorageCtor))
 
 	// static
-	registerRoute(mux, "/distil/image/:dataset/:file", routes.ImageHandler(esMetadataStorageCtor, &config))
+	registerRoute(mux, "/distil/image/:dataset/:file/:is-thumbnail", routes.ImageHandler(esMetadataStorageCtor, &config))
 	registerRoute(mux, "/distil/graphs/:dataset/:file", routes.GraphsHandler(config.D3MInputDir))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 
