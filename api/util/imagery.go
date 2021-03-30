@@ -400,7 +400,7 @@ func createRGBAFromRamp(xSize int, ySize int, bandImages []*image.Gray16, transf
 	// Create a new RGBA image to hold the collected bands
 	outputImage := image.NewRGBA(image.Rect(0, 0, xSize, ySize))
 
-	rampElements := len(ramp) / 3
+	rampElements := (len(ramp)-2) / 3
 
 	// Copy the 16 bit band images into the 8 bit target image.  If a band image couldn't be processed
 	// earlier, we set to grey.
