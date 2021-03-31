@@ -354,9 +354,10 @@ func (f *NumericalField) parseHistogram(rows pgx.Rows, extrema *api.Extrema, num
 		return nil, errors.Wrapf(err, "error reading data from postgres")
 	}
 
-	// assign histogram attributes
+	// Assign histogram attributes.  Extrema reflects the extrema of the data the histogram
+	// is created from, not the extrema of the buckets.
 	return &api.Histogram{
-		Extrema: rounded,
+		Extrema: extrema,
 		Buckets: buckets,
 	}, nil
 }
