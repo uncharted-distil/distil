@@ -19,52 +19,51 @@
   <div class="type-change-menu">
     <div class="type-change-dropdown-wrapper">
       <b-dropdown
-        variant="secondary"
-        class="var-type-button"
         id="type-change-dropdown"
+        class="var-type-button"
+        variant="secondary"
         :text="label"
         :disabled="isDisabled"
+        :boundary="boundary"
+        lazy
       >
         <template v-if="!isComputedFeature">
           <template v-if="!isGroupedCluster">
             <b-dropdown-item
               v-for="suggested in getSuggestedList()"
-              v-bind:class="{
+              :key="suggested.type"
+              :class="{
                 selected: suggested.isSelected,
                 recommended: suggested.isRecommended,
               }"
               @click.stop="onTypeChange(suggested.type)"
-              :key="suggested.type"
             >
               <i
                 v-if="suggested.isSelected"
                 class="fa fa-check"
                 aria-hidden="true"
-              ></i>
+              />
               {{ suggested.label }}
               <icon-base
                 v-if="suggested.isRecommended"
                 icon-name="bookmark"
                 class="recommended-icon"
-                ><icon-bookmark
-              /></icon-base>
+              >
+                <icon-bookmark />
+              </icon-base>
             </b-dropdown-item>
+            <b-dropdown-divider />
           </template>
-          <template v-if="!isGroupedCluster">
-            <b-dropdown-divider></b-dropdown-divider>
-          </template>
-          <template>
-            <b-dropdown-item
-              v-for="grouping in groupingOptions()"
-              @click.stop="onGroupingSelect(grouping.type)"
-              :key="grouping.type"
-            >
-              {{ grouping.label }}
-            </b-dropdown-item>
-          </template>
+          <b-dropdown-item
+            v-for="grouping in groupingOptions()"
+            :key="grouping.type"
+            @click.stop="onGroupingSelect(grouping.type)"
+          >
+            {{ grouping.label }}
+          </b-dropdown-item>
         </template>
       </b-dropdown>
-      <i v-if="isUnsure" class="unsure-type-icon fa fa-circle"></i>
+      <i v-if="isUnsure" class="unsure-type-icon fa fa-circle" />
     </div>
     <b-tooltip
       :delay="delay"
@@ -117,18 +116,30 @@ import { hasHighlightInRoute } from "../util/highlights";
 const PROBABILITY_THRESHOLD = 0.8;
 
 export default Vue.extend({
-  name: "type-change-menu",
+  name: "TypeChangeMenu",
 
   components: {
     IconBase,
     IconBookmark,
   },
+
   props: {
-    dataset: String as () => string,
-    field: String as () => string,
+    dataset: { type: String, default: null },
+    field: { type: String, default: null },
     expandCollapse: Function as () => Function,
-    expand: Boolean as () => Boolean,
+    expand: { type: Boolean, default: false },
   },
+
+  data() {
+    return {
+      delay: {
+        show: 10,
+        hide: 10,
+      },
+      boundary: "scrollParent" as string | HTMLElement,
+    };
+  },
+
   computed: {
     isPredictionOrResultsView(): boolean {
       const routePath = routeGetters.getRoutePath(this.$store);
@@ -137,11 +148,9 @@ export default Vue.extend({
         (routePath === PREDICTION_ROUTE || routePath === RESULTS_ROUTE)
       );
     },
-
-    isPageSelectTraining(): Boolean {
+    isPageSelectTraining(): boolean {
       return routeGetters.isPageSelectTraining(this.$store);
     },
-
     isGroupedCluster(): boolean {
       return this.isCluster && this.isGrouping;
     },
@@ -149,14 +158,11 @@ export default Vue.extend({
       return datasetGetters.getVariables(this.$store);
     },
     variable(): Variable {
-      if (!this.variables) {
-        return null;
-      }
+      if (!this.variables) return;
 
       const selectedVariable = this.variables.find((v) => {
-        if (this.field === null) {
-          return;
-        }
+        if (this.field === null) return;
+
         return (
           v.key.toLowerCase() === this.field.toLowerCase() &&
           v.datasetName === this.dataset
@@ -166,7 +172,8 @@ export default Vue.extend({
       const geocoordVariable = this.variables.find((v) => {
         return v.colOriginalType === "real" && v.datasetName === this.dataset;
       });
-      return selectedVariable ? selectedVariable : geocoordVariable;
+
+      return selectedVariable ?? geocoordVariable;
     },
     isGrouping(): boolean {
       if (!this.variable) {
@@ -175,13 +182,13 @@ export default Vue.extend({
       return !!this.variable.grouping;
     },
     type(): string {
-      return this.variable ? this.variable.colType : "";
+      return this.variable?.colType ?? "";
     },
     isColTypeReviewed(): boolean {
-      return this.variable ? this.variable.isColTypeReviewed : false;
+      return this.variable?.isColTypeReviewed ?? false;
     },
     originalType(): string {
-      return this.variable ? this.variable.colOriginalType : "";
+      return this.variable?.colOriginalType ?? "";
     },
     label(): string {
       return this.type !== "" ? getLabelFromType(this.type) : "";
@@ -239,13 +246,21 @@ export default Vue.extend({
         !isEquivalentType(this.schemaType.type, this.topNonSchemaType.type)
       ); // they don't agree
     },
-    delay(): any {
-      return {
-        show: 10,
-        hide: 10,
-      };
-    },
   },
+
+  mounted() {
+    this.$root.$on("bv::dropdown::show", () => {
+      const dataset = this.dataset;
+      const field = this.field;
+    });
+
+    // Change the boundary of the dropdown so that it display appropriately.
+    // https://bootstrap-vue.org/docs/components/dropdown#boundary-constraint
+    const variableFacet = this.$el.closest("[class^=variable]") as HTMLElement;
+    this.boundary =
+      (variableFacet.offsetParent as HTMLElement) ?? this.boundary;
+  },
+
   methods: {
     groupingOptions() {
       const options = [];
@@ -281,7 +296,6 @@ export default Vue.extend({
       }
       return options;
     },
-
     async onGroupingSelect(type) {
       if (type === TIMESERIES_TYPE || type === GEOCOORDINATE_TYPE) {
         const entry = createRouteEntry(GROUPING_ROUTE, {
@@ -317,7 +331,6 @@ export default Vue.extend({
         console.error(`Unhandled grouping action ${type}`);
       }
     },
-
     addMissingSuggestions() {
       const flatSuggestedTypes = this.suggestedTypes.map((st) => st.type);
       const missingSuggestions = addTypeSuggestions(flatSuggestedTypes);
@@ -395,13 +408,6 @@ export default Vue.extend({
         });
     },
   },
-
-  mounted() {
-    this.$root.$on("bv::dropdown::show", () => {
-      const dataset = this.dataset;
-      const field = this.field;
-    });
-  },
 });
 </script>
 
@@ -424,8 +430,8 @@ export default Vue.extend({
   border-radius: 0;
   padding: 2px 4px;
   color: white;
-  background-color: #424242;
-  border-color: #424242;
+  background-color: var(--gray-900);
+  border-color: var(--gray-900);
   box-shadow: none;
 }
 .type-change-menu .dropdown-item {
@@ -445,7 +451,7 @@ export default Vue.extend({
 }
 .unsure-type-icon {
   position: absolute;
-  color: #dc3545;
+  color: var(--red);
   top: -5px;
   right: -5px;
   z-index: 2;
