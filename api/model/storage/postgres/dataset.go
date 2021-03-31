@@ -425,7 +425,7 @@ func (s *Storage) SetDataType(dataset string, storageName string, varName string
 	}
 
 	// get all existing fields to rebuild the view.
-	fields, err := s.getExistingFields(dataset, storageName)
+	fields, err := s.getExistingFields(dataset, getBaseTableName(storageName))
 	if err != nil {
 		return errors.Wrap(err, "Unable to read existing fields")
 	}
@@ -838,21 +838,22 @@ func getJoinSQL(join *joinDefinition, inner bool) string {
 func (s *Storage) createGeometryField(dataset string, storageName string, varName string) error {
 	postgisFieldName := fmt.Sprintf("__geo_%s", varName)
 	exists, _ := s.DoesVariableExist(dataset, storageName, postgisFieldName)
+	baseTable := getBaseTableName(storageName)
 	if !exists {
-		err := s.AddField(dataset, storageName, varName, "geometry", postgres.DefaultPostgresValueFromD3MType(model.GeoBoundsType).(string))
+		err := s.AddField(dataset, baseTable, postgisFieldName, model.GeoBoundsType, "")
 		if err != nil {
 			return err
 		}
 
 		// create index on the field
-		err = s.createIndex(storageName, varName, "geometry")
+		err = s.createIndex(baseTable, postgisFieldName, model.GeoBoundsType)
 		if err != nil {
 			return err
 		}
 	}
 
 	// query the vector field to get the data for the geometry field
-	querySQL := fmt.Sprintf("SELECT \"%s\", \"%s\" FROM %s;", model.D3MIndexFieldName, varName, storageName)
+	querySQL := fmt.Sprintf("SELECT \"%s\", concat('{', \"%s\", '}')::double precision[] FROM %s;", model.D3MIndexFieldName, varName, baseTable)
 	rows, err := s.client.Query(querySQL)
 	if err != nil {
 		return errors.Wrapf(err, "unable to query for geobounds")
@@ -864,10 +865,10 @@ func (s *Storage) createGeometryField(dataset string, storageName string, varNam
 		var geometry []float64
 		err := rows.Scan(&d3mIndex, &geometry)
 		if err != nil {
-			return errors.Wrapf(err, "unable to read geometry fields from psotgres")
+			return errors.Wrapf(err, "unable to read geometry field from postgres")
 		}
 		if len(geometry) != 8 {
-			return errors.Errorf("field '%s' is not a vector denoting 4 points", varName)
+			return errors.Errorf("field '%s' is not a vector of 4 points", varName)
 		}
 
 		// add the link back to the first point since a polygon must be closed
@@ -886,7 +887,7 @@ func (s *Storage) createGeometryField(dataset string, storageName string, varNam
 		return errors.Wrapf(err, "error reading geometry data from postgres")
 	}
 
-	err = s.UpdateData(dataset, storageName, postgisFieldName, updates, nil)
+	err = s.UpdateData(dataset, baseTable, postgisFieldName, updates, nil)
 	if err != nil {
 		return err
 	}

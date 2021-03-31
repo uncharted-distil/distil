@@ -103,8 +103,20 @@ func VariableTypeHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataS
 }
 
 func updateType(ds *api.Dataset, field string, typ string, storage api.DataStorage, meta api.MetadataStorage) error {
+	newType := typ
+	// geobounds has special processing
+	if model.IsGeoBounds(typ) {
+		err := setGeoBoundsField(ds, field, storage, meta)
+		if err != nil {
+			return err
+		}
+
+		// the existing field actually becomes a vector
+		newType = model.RealVectorType
+	}
+
 	// check the variable type to make sure it is valid
-	isValid, err := storage.IsValidDataType(ds.ID, ds.StorageName, field, typ)
+	isValid, err := storage.IsValidDataType(ds.ID, ds.StorageName, field, newType)
 	if err != nil {
 		return err
 	}
@@ -113,7 +125,7 @@ func updateType(ds *api.Dataset, field string, typ string, storage api.DataStora
 	}
 
 	// update the variable type in the storage
-	err = setDataType(meta, storage, ds.ID, ds.StorageName, field, typ)
+	err = setDataType(meta, storage, ds.ID, ds.StorageName, field, newType)
 	if err != nil {
 		return err
 	}
@@ -124,27 +136,43 @@ func updateType(ds *api.Dataset, field string, typ string, storage api.DataStora
 		return err
 	}
 
-	// geobounds has special processing
-	if model.IsGeoBounds(typ) {
-		err = setGeoBoundsField(ds.ID, field, storage, meta)
-		if err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
-func setGeoBoundsField(datasetID string, field string, storage api.DataStorage, meta api.MetadataStorage) error {
-	// create the grouping
+func setGeoBoundsField(ds *api.Dataset, field string, storage api.DataStorage, meta api.MetadataStorage) error {
+	// HACK: assume the name of the grouping field
+	groupName := fmt.Sprintf("%s_group", field)
 	// HACK: assume the name of the geometry field!!!
 	geometryFieldName := fmt.Sprintf("__geo_%s", field)
+
+	// check if the grouping already exists
+	exists, err := meta.DoesVariableExist(ds.ID, groupName)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return nil
+	}
+
+	// create the metadata variable for the hidden geobounds field
+	err = meta.AddVariable(ds.ID, geometryFieldName, field, model.GeoBoundsType, model.VarDistilRoleMetadata)
+	if err != nil {
+		return err
+	}
+
+	err = storage.SetDataType(ds.ID, ds.StorageName, field, model.GeoBoundsType)
+	if err != nil {
+		return err
+	}
+
+	// create the grouping
 	grouping := &model.GeoBoundsGrouping{}
 	grouping.Type = model.GeoBoundsType
 	grouping.CoordinatesCol = field
 	grouping.PolygonCol = geometryFieldName
 	grouping.Hidden = []string{field, geometryFieldName}
-	return meta.AddGroupedVariable(datasetID, fmt.Sprintf("%s_group", field), field, model.GeoBoundsType, model.VarDistilRoleGrouping, grouping)
+
+	return meta.AddGroupedVariable(ds.ID, groupName, field, model.GeoBoundsType, model.VarDistilRoleGrouping, grouping)
 }
 
 func getPostParameters(r *http.Request) (map[string]interface{}, error) {
