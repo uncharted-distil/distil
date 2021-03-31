@@ -58,19 +58,17 @@ import Vue from "vue";
 import "@uncharted.software/facets-core";
 import "@uncharted.software/facets-plugins";
 
-import TypeChangeMenu from "../TypeChangeMenu";
-import ImportanceBars from "../ImportanceBars";
+import TypeChangeMenu from "../TypeChangeMenu.vue";
+import ImportanceBars from "../ImportanceBars.vue";
 import { Highlight, RowSelection, VariableSummary } from "../../store/dataset";
 import {
   getSubSelectionValues,
   hasBaseline,
-  hasSummary,
   facetTypeChangeState,
 } from "../../util/facets";
 import { DATETIME_FILTER } from "../../util/filters";
 import { numToDate, dateToNum } from "../../util/types";
 import _ from "lodash";
-import moment from "moment";
 
 export default Vue.extend({
   name: "FacetDateTime",
@@ -106,12 +104,14 @@ export default Vue.extend({
   },
 
   computed: {
-    max(): number {
+    maxBucketCount(): number {
       if (hasBaseline(this.summary)) {
         const buckets = this.summary.baseline.buckets;
-        // seems to be incorrect compute based on the current buckets
-        // const maxCount = summary.baseline.extrema.max;
-        return buckets.reduce((max, bucket) => Math.max(max, bucket.count), 0);
+        const bucketCount = buckets.reduce(
+          (max, bucket) => Math.max(max, bucket.count),
+          0
+        );
+        return bucketCount;
       }
       return 0;
     },
@@ -124,7 +124,7 @@ export default Vue.extend({
           const bucketDate = this.numToDate(buckets[i].key);
           const count = buckets[i].count;
           values.push({
-            ratio: count / this.max,
+            ratio: count / this.maxBucketCount,
             label: bucketDate,
             tooltip: `Date:\t\t${bucketDate}\nTotal Count:\t${count}`,
           });
@@ -148,7 +148,11 @@ export default Vue.extend({
         : "facet-header-container-no-scroll";
     },
     subSelection(): number[][] {
-      return getSubSelectionValues(this.summary, this.rowSelection, this.max);
+      return getSubSelectionValues(
+        this.summary,
+        this.rowSelection,
+        this.maxBucketCount
+      );
     },
     selection(): number[] {
       if (!this.enableHighlighting || !this.isHighlightedGroup()) {
