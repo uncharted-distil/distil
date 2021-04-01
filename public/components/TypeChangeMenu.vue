@@ -25,6 +25,7 @@
         :text="label"
         :disabled="isDisabled"
         :boundary="boundary"
+        menu-class="multi-columns"
         lazy
       >
         <template v-if="!isComputedFeature">
@@ -52,7 +53,6 @@
                 <icon-bookmark />
               </icon-base>
             </b-dropdown-item>
-            <b-dropdown-divider />
           </template>
           <b-dropdown-item
             v-for="grouping in groupingOptions()"
@@ -256,9 +256,8 @@ export default Vue.extend({
 
     // Change the boundary of the dropdown so that it display appropriately.
     // https://bootstrap-vue.org/docs/components/dropdown#boundary-constraint
-    const variableFacet = this.$el.closest("[class^=variable]") as HTMLElement;
-    this.boundary =
-      (variableFacet.offsetParent as HTMLElement) ?? this.boundary;
+    const varFacet = this.$el.closest("[class^=variable]") as HTMLElement;
+    this.boundary = (varFacet.offsetParent as HTMLElement) ?? this.boundary;
   },
 
   methods: {
@@ -458,5 +457,12 @@ export default Vue.extend({
 }
 .type-change-dropdown-wrapper {
   position: relative;
+}
+
+/* Display the dropdown menu in a multi-columns fashion. */
+.dropdown-menu.show.multi-columns {
+  column-gap: 1em;
+  display: grid;
+  grid-template-columns: repeat(3, 10em);
 }
 </style>
