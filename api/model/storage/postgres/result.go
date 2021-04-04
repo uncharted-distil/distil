@@ -546,23 +546,6 @@ func addIncludeCorrectnessFilterToWhere(wheres []string, params []interface{}, c
 	return wheres, params, nil
 }
 
-func addExcludeCorrectnessFilterToWhere(wheres []string, params []interface{}, correctnessFilter *model.Filter, target *model.Variable) ([]string, []interface{}, error) {
-	// filter for result correctness which is based on well know category values
-	if len(correctnessFilter.Categories[0]) == 0 {
-		return nil, nil, fmt.Errorf("no category")
-	}
-	where := ""
-	op := ""
-	if strings.EqualFold(correctnessFilter.Categories[0], CorrectCategory) {
-		op = "!="
-	} else if strings.EqualFold(correctnessFilter.Categories[0], IncorrectCategory) {
-		op = "="
-	}
-	where = fmt.Sprintf("predicted.value %s data.\"%s\"", op, target.Key)
-	wheres = append(wheres, where)
-	return wheres, params, nil
-}
-
 func getFullName(alias string, column string) string {
 	fullName := fmt.Sprintf("\"%s\"", column)
 	if alias != "" {
@@ -633,65 +616,6 @@ func addIncludePredictedFilterToWhere(wheres []string, params []interface{}, pre
 	return wheres, params, nil
 }
 
-func addExcludePredictedFilterToWhere(wheres []string, params []interface{}, predictedFilter *model.Filter, target *model.Variable) ([]string, []interface{}, error) {
-	// Handle the predicted column, which is accessed as `value` in the result query
-	where := ""
-	switch predictedFilter.Type {
-	case model.NumericalFilter:
-		// numerical range-based filter
-		where = fmt.Sprintf("(cast(predicted.value AS double precision) < $%d OR cast(predicted.value AS double precision) > $%d)", len(params)+1, len(params)+2)
-		params = append(params, *predictedFilter.Min)
-		params = append(params, *predictedFilter.Max)
-
-	case model.BivariateFilter:
-		// bivariate
-		// cast to double precision in case of string based representation
-		// hardcode [lat, lon] format for now
-		where := fmt.Sprintf("(predicted.value[2] < $%d OR predicted.value[2] > $%d) OR (predicted.value[1] < $%d OR predicted.value[1] > $%d)", len(params)+1, len(params)+2, len(params)+3, len(params)+4)
-		wheres = append(wheres, where)
-		params = append(params, predictedFilter.Bounds.MinX)
-		params = append(params, predictedFilter.Bounds.MaxX)
-		params = append(params, predictedFilter.Bounds.MinY)
-		params = append(params, predictedFilter.Bounds.MaxY)
-
-	case model.CategoricalFilter:
-		// categorical label based filter, with checks for special correct/incorrect metafilters
-		categories := make([]string, 0)
-		offset := len(params) + 1
-
-		for i, category := range predictedFilter.Categories {
-			if !isCorrectnessCategory(category) {
-				categories = append(categories, fmt.Sprintf("$%d", offset+i))
-				params = append(params, category)
-			}
-		}
-
-		if len(categories) >= 1 {
-			where = fmt.Sprintf("predicted.value NOT IN (%s)", strings.Join(categories, ", "))
-		}
-
-	case model.RowFilter:
-		// row index based filter
-		indices := make([]string, 0)
-		offset := len(params) + 1
-		for i, d3mIndex := range predictedFilter.D3mIndices {
-			indices = append(indices, fmt.Sprintf("$%d", offset+i))
-			params = append(params, d3mIndex)
-
-		}
-		if len(indices) >= 1 {
-			where = fmt.Sprintf("predicted.value NOT IN (%s)", strings.Join(indices, ", "))
-		}
-
-	default:
-		return nil, nil, errors.Errorf("unexpected type %s for variable %s", predictedFilter.Type, predictedFilter.Key)
-	}
-
-	// Append the AND clause
-	wheres = append(wheres, where)
-	return wheres, params, nil
-}
-
 func addIncludeErrorFilterToWhere(wheres []string, params []interface{}, alias string, targetName string, residualFilters api.FilterObject) ([]string, []interface{}, error) {
 	wheresFilter := []string{}
 	for _, residualFilter := range residualFilters.List {
@@ -705,38 +629,6 @@ func addIncludeErrorFilterToWhere(wheres []string, params []interface{}, alias s
 	// Append the AND clause
 	wheres = append(wheres, strings.Join(wheresFilter, " OR "))
 	return wheres, params, nil
-}
-
-func addExcludeErrorFilterToWhere(wheres []string, params []interface{}, alias string, targetName string, residualFilter *model.Filter) ([]string, []interface{}, error) {
-	// Add a clause to filter residuals to the existing where
-	typedError := getErrorTyped(alias, targetName)
-	where := fmt.Sprintf("(%s < $%d OR %s > $%d)", typedError, len(params)+1, typedError, len(params)+2)
-	params = append(params, *residualFilter.Min)
-	params = append(params, *residualFilter.Max)
-
-	// Append the AND clause
-	wheres = append(wheres, where)
-	return wheres, params, nil
-}
-
-func addExcludeConfidenceResultToWhere(wheres []string, params []interface{}, confidenceFilter *model.Filter) ([]string, []interface{}) {
-	where := fmt.Sprintf("((explain_values -> 'confidence')::double precision < $%d OR (explain_values -> 'confidence')::double precision > $%d)", len(params)+1, len(params)+2)
-	params = append(params, *confidenceFilter.Min)
-	params = append(params, *confidenceFilter.Max)
-
-	// Append the AND clause
-	wheres = append(wheres, where)
-	return wheres, params
-}
-
-func addExcludeRankResultToWhere(wheres []string, params []interface{}, rankFilter *model.Filter) ([]string, []interface{}) {
-	where := fmt.Sprintf("((explain_values -> 'rank')::double precision < $%d OR (explain_values -> 'rank')::double precision > $%d)", len(params)+1, len(params)+2)
-	params = append(params, *rankFilter.Min)
-	params = append(params, *rankFilter.Max)
-
-	// Append the AND clause
-	wheres = append(wheres, where)
-	return wheres, params
 }
 
 func addTableAlias(prefix string, fields []string, addToColumn bool) []string {

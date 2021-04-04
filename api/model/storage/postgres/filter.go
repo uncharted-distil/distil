@@ -665,6 +665,10 @@ type filters struct {
 }
 
 func splitFilters(filterParams *api.FilterParams) (*filters, error) {
+	if filterParams == nil {
+		return &filters{}, nil
+	}
+
 	// Groups filters for handling downstream
 	predictedFilters := []api.FilterObject{}
 	residualFilters := []api.FilterObject{}
@@ -676,10 +680,6 @@ func splitFilters(filterParams *api.FilterParams) (*filters, error) {
 		Invert:    filterParams.Invert,
 		DataMode:  filterParams.DataMode,
 		Variables: filterParams.Variables,
-	}
-
-	if filterParams == nil {
-		return &filters{}, nil
 	}
 
 	for _, modeFilters := range filterParams.Filters {
