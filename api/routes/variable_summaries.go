@@ -102,7 +102,7 @@ func VariableSummaryHandler(metaCtor api.MetadataStorageCtor, ctorStorage api.Da
 		}
 
 		// fetch summary histogram
-		summary, err := storage.FetchSummary(dataset, storageName, variable, filterParams, mode)
+		summary, err := storage.FetchSummary(dataset, storageName, variable, api.NewFilterParamsFromRaw(filterParams), mode)
 		if err != nil {
 			handleError(w, err)
 			return

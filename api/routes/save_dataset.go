@@ -63,7 +63,7 @@ func SaveDatasetHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStora
 			return
 		}
 		// replace any grouped variables in filter params with the group's
-		expandedFilterParams, err := api.ExpandFilterParams(dataset, filterParams, false, metaStorage)
+		expandedFilterParams, err := api.ExpandFilterParams(dataset, api.NewFilterParamsFromRaw(filterParams), false, metaStorage)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to expand filter params"))
 			return
@@ -79,13 +79,13 @@ func SaveDatasetHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStora
 		}
 
 		// export needs to invert the filters
-		expandedFilterParams.Invert()
+		expandedFilterParams.InvertFilters()
 		_, _, err = task.ExportDataset(dataset, metaStorage, dataStorage, expandedFilterParams)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-		expandedFilterParams.Invert()
+		expandedFilterParams.InvertFilters()
 
 		// delete rows based on filterParams
 		err = dataStorage.SaveDataset(dataset, ds.StorageName, expandedFilterParams)

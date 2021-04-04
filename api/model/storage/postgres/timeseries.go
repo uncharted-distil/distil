@@ -594,12 +594,15 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 	}
 
 	// split the filters to make sure the result based filters can be applied properly
-	filtersSplit := splitFilters(filterParams)
+	filtersSplit, err := splitFilters(filterParams)
+	if err != nil {
+		return nil, err
+	}
 	joins := make([]*joinDefinition, 0)
 	wheres := []string{}
 	params := []interface{}{}
-	if len(filtersSplit.residualFilters.List) > 0 {
-		for _, residualFilter := range filtersSplit.residualFilters.List {
+	if len(filtersSplit.residualFilters) > 0 {
+		for _, residualFilter := range filtersSplit.residualFilters {
 			wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, residualFilter)
 			if err != nil {
 				return nil, err
@@ -616,11 +619,6 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 		},
 		)
 	}
-
-	// reset the filter params since the residual filter has been handled already
-	filterParamsClone := filterParams.Clone()
-	filterParamsClone.Highlights = api.FilterObject{List: []*model.Filter{}, Invert: false}
-	filterParamsClone.Filters = filtersSplit.genericFilters
 
 	// clear filters since they are used in subselect
 	wheres = []string{}
@@ -639,7 +637,7 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 	if err != nil {
 		return nil, err
 	}
-	timeline, err := timelineField.fetchHistogramWithJoins(filterParamsClone, api.MaxNumBuckets, joins, wheres, params)
+	timeline, err := timelineField.fetchHistogramWithJoins(filtersSplit.genericFilters, api.MaxNumBuckets, joins, wheres, params)
 	if err != nil {
 		return nil, err
 	}
