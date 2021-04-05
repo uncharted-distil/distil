@@ -99,6 +99,7 @@ func NewFilterParamsFromRaw(raw *FilterParamsRaw) *FilterParams {
 		Size:      rawClone.Size,
 		Variables: rawClone.Variables,
 		DataMode:  rawClone.DataMode,
+		Filters:   map[string][]FilterObject{},
 	}
 
 	// add filters and highlights to the params
@@ -108,6 +109,8 @@ func NewFilterParamsFromRaw(raw *FilterParamsRaw) *FilterParams {
 	for _, h := range rawClone.Highlights.List {
 		params.AddFilter(h)
 	}
+	// TODO: THIS MAKES NO SENSE BUT WE SOMEHOW HAVE TO SET THE INVERT PROPERLY!
+	// OR DO WE INVERT THINGS HERE? (IE INVERT HIGHLIGHT = MAKE IT FILTER AND VICE VERSE)
 	if len(rawClone.Filters.List) > 0 {
 		for _, f := range params.Filters[rawClone.Filters.List[0].Mode] {
 			f.Invert = rawClone.Filters.Invert
@@ -161,7 +164,9 @@ func (f FilterObject) getBaselineFilter() []*model.Filter {
 
 // Clone returns a deep copy of the filter params.
 func (f *FilterParams) Clone() *FilterParams {
-	clone := &FilterParams{}
+	clone := &FilterParams{
+		Filters: map[string][]FilterObject{},
+	}
 	for mode, filters := range f.Filters {
 		if clone.Filters[mode] == nil {
 			clone.Filters[mode] = []FilterObject{}
@@ -200,9 +205,9 @@ func (f *FilterParams) AddFilter(filter *model.Filter) {
 	}
 
 	// find the list of filters for that feature
-	for _, feature := range filters {
+	for i, feature := range filters {
 		if feature.List[0].Key == filter.Key {
-			feature.List = append(feature.List, filter)
+			filters[i].List = append(filters[i].List, filter)
 			return
 		}
 	}
