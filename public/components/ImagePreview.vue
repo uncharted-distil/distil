@@ -23,6 +23,7 @@
       width: `${width}px`, // + 2 for boarder
       height: `${height}px`, // boarder
       filter: `grayscale(${gray}%)`,
+      '--confidence': confidenceColor,
     }"
   >
     <div class="image-container" :class="{ selected: isSelected && isLoaded }">
@@ -79,7 +80,7 @@ import {
 import { isRowSelected } from "../util/row";
 import { Dictionary } from "../util/dict";
 import { MULTIBAND_IMAGE_TYPE, IMAGE_TYPE } from "../util/types";
-import { ColorScaleNames } from "../util/data";
+import { ColorScaleNames, COLOR_SCALES } from "../util/data";
 
 export default Vue.extend({
   name: "ImagePreview",
@@ -120,6 +121,13 @@ export default Vue.extend({
   },
 
   computed: {
+    confidenceColor(): string {
+      if (!this.isLoaded) return;
+      const confidenceScale = this.row?.confidenceScale;
+      if (!confidenceScale) return;
+      return COLOR_SCALES.get(this.colorScale)(confidenceScale);
+    },
+
     colorScale(): ColorScaleNames {
       return routeGetters.getColorScale(this.$store);
     },
@@ -435,6 +443,7 @@ export default Vue.extend({
 
 .image-container {
   position: relative;
+  outline: solid 2px var(--confidence);
 }
 
 .image-container.selected {
