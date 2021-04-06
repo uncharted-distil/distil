@@ -50,7 +50,7 @@
         </div>
       </div>
       <div
-        v-if="this.html"
+        v-if="html"
         v-child="computeCustomHTML()"
         class="facet-footer-custom-html"
       />
@@ -60,6 +60,7 @@
 
 <script lang="ts">
 import Vue from "vue";
+import _ from "lodash";
 
 import "@uncharted.software/facets-core";
 import { FacetTermsData } from "@uncharted.software/facets-core/dist/types/facet-terms/FacetTerms";
@@ -76,7 +77,6 @@ import {
   viewLessData,
   facetTypeChangeState,
 } from "../../util/facets";
-import _ from "lodash";
 
 export default Vue.extend({
   name: "FacetCategorical",
