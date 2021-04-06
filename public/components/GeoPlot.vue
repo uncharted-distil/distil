@@ -617,7 +617,7 @@ export default Vue.extend({
 
     clusterState(): MapState {
       return {
-        onHover: (id: number) => {
+        onHover: () => {
           return;
         }, // onHover empty for cluster state
         onClick: (id: number) => {
@@ -1086,7 +1086,7 @@ export default Vue.extend({
       if (this.getCoordinateType === CoordinateType.PointBased) {
         return this.pointGroups(tableData);
       }
-      const areas = tableData.map((item, i) => {
+      const areas = tableData?.map((item, i) => {
         const imageUrl = this.isMultiBandImage
           ? item[this.multibandImageGroupColumn].value
           : null;
