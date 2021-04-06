@@ -527,7 +527,7 @@ func isCorrectnessCategory(categoryName string) bool {
 	return strings.EqualFold(CorrectCategory, categoryName) || strings.EqualFold(categoryName, IncorrectCategory)
 }
 
-func addIncludeCorrectnessFilterToWhere(wheres []string, params []interface{}, correctnessFilters api.FilterObject, target *model.Variable) ([]string, []interface{}, error) {
+func addCorrectnessFilterToWhere(wheres []string, params []interface{}, correctnessFilters api.FilterObject, target *model.Variable) ([]string, []interface{}, error) {
 	wheresFilter := []string{}
 	for _, correctnessFilter := range correctnessFilters.List {
 		if len(correctnessFilter.Categories[0]) == 0 {
@@ -540,7 +540,14 @@ func addIncludeCorrectnessFilterToWhere(wheres []string, params []interface{}, c
 		} else if strings.EqualFold(correctnessFilter.Categories[0], IncorrectCategory) {
 			op = "!="
 		}
-		wheresFilter = append(wheresFilter, fmt.Sprintf("(predicted.value %s data.\"%s\")", op, target.Key))
+
+		where := fmt.Sprintf("(predicted.value %s data.\"%s\")", op, target.Key)
+
+		// exclusion filter is the complement (inverse) of inclusion filter!
+		if correctnessFilter.Mode == model.ExcludeFilter {
+			where = fmt.Sprintf("(NOT %s)", where)
+		}
+		wheresFilter = append(wheresFilter, where)
 	}
 	wheres = append(wheres, strings.Join(wheresFilter, " OR "))
 	return wheres, params, nil
@@ -555,7 +562,7 @@ func getFullName(alias string, column string) string {
 	return fullName
 }
 
-func addIncludePredictedFilterToWhere(wheres []string, params []interface{}, predictedFilters api.FilterObject, target *model.Variable) ([]string, []interface{}, error) {
+func addPredictedFilterToWhere(wheres []string, params []interface{}, predictedFilters api.FilterObject, target *model.Variable) ([]string, []interface{}, error) {
 	// Handle the predicted column, which is accessed as `value` in the result query
 	wheresFilter := []string{}
 	for _, predictedFilter := range predictedFilters.List {
@@ -570,7 +577,7 @@ func addIncludePredictedFilterToWhere(wheres []string, params []interface{}, pre
 		case model.BivariateFilter:
 			// cast to double precision in case of string based representation
 			// hardcode [lat, lon] format for now
-			where = fmt.Sprintf("(predicted.value[2] >= $%d AND predicted.value[2] <= $%d predicted.value[1] >= $%d AND predicted.value[1] <= $%d)", len(params)+1, len(params)+2, len(params)+3, len(params)+4)
+			where = fmt.Sprintf("(predicted.value[2] >= $%d AND predicted.value[2] <= $%d AND predicted.value[1] >= $%d AND predicted.value[1] <= $%d)", len(params)+1, len(params)+2, len(params)+3, len(params)+4)
 			params = append(params, predictedFilter.Bounds.MinX)
 			params = append(params, predictedFilter.Bounds.MaxX)
 			params = append(params, predictedFilter.Bounds.MinY)
@@ -608,6 +615,11 @@ func addIncludePredictedFilterToWhere(wheres []string, params []interface{}, pre
 		default:
 			return nil, nil, errors.Errorf("unexpected type %s for variable %s", predictedFilter.Type, predictedFilter.Key)
 		}
+
+		// exclusion filter is the complement (inverse) of inclusion filter!
+		if predictedFilter.Mode == model.ExcludeFilter {
+			where = fmt.Sprintf("(NOT %s)", where)
+		}
 		wheresFilter = append(wheresFilter, where)
 	}
 
@@ -616,12 +628,19 @@ func addIncludePredictedFilterToWhere(wheres []string, params []interface{}, pre
 	return wheres, params, nil
 }
 
-func addIncludeErrorFilterToWhere(wheres []string, params []interface{}, alias string, targetName string, residualFilters api.FilterObject) ([]string, []interface{}, error) {
+func addErrorFilterToWhere(wheres []string, params []interface{}, alias string, targetName string, residualFilters api.FilterObject) ([]string, []interface{}, error) {
 	wheresFilter := []string{}
 	for _, residualFilter := range residualFilters.List {
 		// Add a clause to filter residuals to the existing where
 		typedError := getErrorTyped(alias, targetName)
-		wheresFilter = append(wheresFilter, fmt.Sprintf("(%s >= $%d AND %s <= $%d)", typedError, len(params)+1, typedError, len(params)+2))
+		where := fmt.Sprintf("(%s >= $%d AND %s <= $%d)", typedError, len(params)+1, typedError, len(params)+2)
+
+		// exclusion filter is the complement (inverse) of inclusion filter!
+		if residualFilter.Mode == model.ExcludeFilter {
+			where = fmt.Sprintf("(NOT %s)", where)
+		}
+
+		wheresFilter = append(wheresFilter, where)
 		params = append(params, *residualFilter.Min)
 		params = append(params, *residualFilter.Max)
 	}
@@ -690,7 +709,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 
 	// Add the predicted filter into the where clause if it was included in the filter set
 	for _, pf := range filters.predictedFilters {
-		wheres, params, err = addIncludePredictedFilterToWhere(wheres, params, pf, variable)
+		wheres, params, err = addPredictedFilterToWhere(wheres, params, pf, variable)
 		if err != nil {
 			return nil, errors.Wrap(err, "Could not add result to where clause")
 		}
@@ -698,7 +717,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 
 	// Add the correctness filter into the where clause if it was included in the filter set
 	for _, cf := range filters.correctnessFilters {
-		wheres, params, err = addIncludeCorrectnessFilterToWhere(wheres, params, cf, variable)
+		wheres, params, err = addCorrectnessFilterToWhere(wheres, params, cf, variable)
 		if err != nil {
 			return nil, errors.Wrap(err, "Could not add result to where clause")
 		}
@@ -706,7 +725,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 
 	// Add the error filter into the where clause if it was included in the filter set
 	for _, rf := range filters.residualFilters {
-		wheres, params, err = addIncludeErrorFilterToWhere(wheres, params, dataTableAlias, targetName, rf)
+		wheres, params, err = addErrorFilterToWhere(wheres, params, dataTableAlias, targetName, rf)
 		if err != nil {
 			return nil, errors.Wrap(err, "Could not add error to where clause")
 		}

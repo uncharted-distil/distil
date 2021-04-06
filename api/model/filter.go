@@ -138,12 +138,17 @@ func GetBaselineFilter(filterParam *FilterParams) *FilterParams {
 	for key, filters := range filterParam.Filters {
 		baselineFilters := []FilterObject{}
 		for _, f := range filters {
-			baselineFilters = append(baselineFilters, FilterObject{
-				Invert: f.Invert,
-				List:   f.getBaselineFilter(),
-			})
+			baseline := f.getBaselineFilter()
+			if len(baseline) > 0 {
+				baselineFilters = append(baselineFilters, FilterObject{
+					Invert: f.Invert,
+					List:   f.getBaselineFilter(),
+				})
+			}
 		}
-		clone.Filters[key] = baselineFilters
+		if len(baselineFilters) > 0 {
+			clone.Filters[key] = baselineFilters
+		}
 	}
 	clone.Variables = append(clone.Variables, filterParam.Variables...)
 	clone.Size = filterParam.Size

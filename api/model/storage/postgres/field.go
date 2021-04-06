@@ -107,7 +107,7 @@ func createJoinStatements(joins []*joinDefinition) string {
 }
 
 // Checks to see if the highlighted variable has cluster data.  If so, the highlight key will be switched to the
-// cluster column ID to ensure that it is used in downstream queries.  This necessary when dealing with the timerseries
+// cluster column ID to ensure that it is used in downstream queries.  This is necessary when dealing with the timerseries
 // compound facet, which will display cluster info when available.
 func updateClusterFilters(metadataStorage api.MetadataStorage, dataset string, filterParams *api.FilterParams, mode api.SummaryMode) error {
 	if filterParams != nil && !filterParams.Empty(false) {

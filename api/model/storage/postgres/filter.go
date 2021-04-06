@@ -560,7 +560,13 @@ func (s *Storage) buildErrorResultWhere(wheres []string, params []interface{}, r
 
 	wheresFilter := []string{}
 	for _, f := range residualFilter.List {
-		wheresFilter = append(wheresFilter, fmt.Sprintf("(%s >= $%d AND %s <= $%d)", typedError, len(params)+1, typedError, len(params)+2))
+		where := fmt.Sprintf("(%s >= $%d AND %s <= $%d)", typedError, len(params)+1, typedError, len(params)+2)
+
+		// exclusion filter is the complement (inverse) of inclusion filter!
+		if f.Mode == model.ExcludeFilter {
+			where = fmt.Sprintf("(NOT %s)", where)
+		}
+		wheresFilter = append(wheresFilter, where)
 		params = append(params, *f.Min)
 		params = append(params, *f.Max)
 	}
@@ -578,12 +584,18 @@ func (s *Storage) buildConfidenceResultWhere(wheres []string, params []interface
 
 	wheresFilter := []string{}
 	for _, f := range confidenceFilter.List {
-		wheresFilter = append(wheresFilter, fmt.Sprintf("((%sexplain_values -> 'confidence')::double precision >= $%d AND (%sexplain_values -> 'confidence')::double precision <= $%d)", alias, len(params)+1, alias, len(params)+2))
+		where := fmt.Sprintf("((%sexplain_values -> 'confidence')::double precision >= $%d AND (%sexplain_values -> 'confidence')::double precision <= $%d)", alias, len(params)+1, alias, len(params)+2)
+
+		// exclusion filter is the complement (inverse) of inclusion filter!
+		if f.Mode == model.ExcludeFilter {
+			where = fmt.Sprintf("(NOT %s)", where)
+		}
+		wheresFilter = append(wheresFilter, where)
 		params = append(params, *f.Min)
 		params = append(params, *f.Max)
 	}
 
-	// Append the AND clause
+	// Append the clause
 	wheres = append(wheres, strings.Join(wheresFilter, " OR "))
 	return wheres, params
 }
@@ -595,12 +607,18 @@ func (s *Storage) buildRankResultWhere(wheres []string, params []interface{}, ra
 
 	wheresFilter := []string{}
 	for _, f := range rankFilter.List {
-		wheresFilter = append(wheresFilter, fmt.Sprintf("((%sexplain_values -> 'rank')::double precision >= $%d AND (%sexplain_values -> 'rank')::double precision <= $%d)", alias, len(params)+1, alias, len(params)+2))
+		where := fmt.Sprintf("((%sexplain_values -> 'rank')::double precision >= $%d AND (%sexplain_values -> 'rank')::double precision <= $%d)", alias, len(params)+1, alias, len(params)+2)
+
+		// exclusion filter is the complement (inverse) of inclusion filter!
+		if f.Mode == model.ExcludeFilter {
+			where = fmt.Sprintf("(NOT %s)", where)
+		}
+		wheresFilter = append(wheresFilter, where)
 		params = append(params, *f.Min)
 		params = append(params, *f.Max)
 	}
 
-	// Append the AND clause
+	// Append the clause
 	wheres = append(wheres, strings.Join(wheresFilter, " OR "))
 	return wheres, params
 }
@@ -680,6 +698,7 @@ func splitFilters(filterParams *api.FilterParams) (*filters, error) {
 		Invert:    filterParams.Invert,
 		DataMode:  filterParams.DataMode,
 		Variables: filterParams.Variables,
+		Filters:   map[string][]api.FilterObject{},
 	}
 
 	for _, modeFilters := range filterParams.Filters {
@@ -704,15 +723,6 @@ func splitFilters(filterParams *api.FilterParams) (*filters, error) {
 		}
 	}
 
-	// none of these special filters can be exclusion filters
-	allSpecialFilters := append(residualFilters, correctnessFilters...)
-	allSpecialFilters = append(allSpecialFilters, predictedFilters...)
-	allSpecialFilters = append(allSpecialFilters, confidenceFilters...)
-	allSpecialFilters = append(allSpecialFilters, rankFilters...)
-	if hasExclusionFilters(allSpecialFilters) {
-		return nil, errors.Errorf("cannot have exclusion filters in result specific filters")
-	}
-
 	return &filters{
 		genericFilters:     remaining,
 		predictedFilters:   predictedFilters,
@@ -721,18 +731,6 @@ func splitFilters(filterParams *api.FilterParams) (*filters, error) {
 		confidenceFilters:  confidenceFilters,
 		rankFilters:        rankFilters,
 	}, nil
-}
-
-func hasExclusionFilters(filters []api.FilterObject) bool {
-	for _, fo := range filters {
-		for _, f := range fo.List {
-			if f.Mode == model.ExcludeFilter {
-				return true
-			}
-		}
-	}
-
-	return false
 }
 
 // FetchNumRows pulls the number of rows in the table.
