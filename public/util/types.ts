@@ -24,6 +24,7 @@ import { Dictionary } from "./dict";
 import { BIVARIATE_FILTER } from "./filters";
 
 export enum DISTIL_ROLES {
+  Augmented = "augmented",
   Grouping = "grouping",
   Index = "index",
   Meta = "metadata",

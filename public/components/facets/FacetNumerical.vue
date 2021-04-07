@@ -54,7 +54,7 @@
         round-caps="true"
       />
       <div
-        v-if="this.html"
+        v-if="displayFooter"
         v-child="computeCustomHTML()"
         class="facet-footer-custom-html"
       />
@@ -81,6 +81,7 @@ import {
   facetTypeChangeState,
 } from "../../util/facets";
 import _ from "lodash";
+import { DISTIL_ROLES } from "../../util/types";
 
 export default Vue.extend({
   name: "FacetNumerical",
@@ -195,6 +196,9 @@ export default Vue.extend({
         highlightAsSelection.push(buckets.length);
       }
       return highlightAsSelection.length > 0 ? highlightAsSelection : null;
+    },
+    displayFooter(): boolean {
+      return !!this.html && this.summary.distilRole != DISTIL_ROLES.Augmented;
     },
   },
 

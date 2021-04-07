@@ -40,6 +40,7 @@ var excludedTypes = map[string]bool{
 }
 
 var excludedRoles = map[string]bool{
+	model.VarDistilRoleAugmented:  true,
 	model.VarDistilRoleMetadata:   true,
 	model.VarDistilRoleSystemData: true,
 }

@@ -122,13 +122,12 @@ export default Vue.extend({
       return this.statusPanelState.contentType;
     },
     requestData(): DatasetPendingRequest {
-      const request = datasetGetters
+      return datasetGetters
         .getPendingRequests(this.$store)
         .find(
           (request) =>
             request.dataset === this.dataset && request.type === this.statusType
         );
-      return request;
     },
     isPending(): boolean {
       return this.requestData.status === DatasetPendingRequestStatus.PENDING;

@@ -46,6 +46,7 @@ import {
   MULTIBAND_IMAGE_TYPE,
   UNKNOWN_TYPE,
   MultiBandImagePackRequest,
+  DISTIL_ROLES,
 } from "../../util/types";
 import { getters as routeGetters } from "../route/module";
 import store, { DistilState } from "../store";
@@ -115,6 +116,16 @@ function getOutlierVariableName(): string {
   );
 }
 
+/** Check is the outlier variable has already been performed. */
+function isOutlierExist(): boolean {
+  const variables = getters.getVariables(store) ?? [];
+  return variables.some(
+    (variable) =>
+      variable.distilRole === DISTIL_ROLES.Augmented &&
+      variable.key === "_outlier"
+  );
+}
+
 export type DatasetContext = ActionContext<DatasetState, DistilState>;
 
 export const actions = {
@@ -156,9 +167,7 @@ export const actions = {
     }
     try {
       // delete dataset
-      const response = await axios.post(
-        `/distil/delete-dataset/${payload.dataset}`
-      );
+      await axios.post(`/distil/delete-dataset/${payload.dataset}`);
       // update current list of datasets
       await actions.searchDatasets(context, payload.terms);
     } catch (err) {
@@ -205,10 +214,9 @@ export const actions = {
     }
   },
 
-  async geocodeVariable(
-    context: DatasetContext,
-    args: { dataset: string; field: string }
-  ): Promise<any> {
+  async geocodeVariable(): /*context: DatasetContext,
+    args: { dataset: string; field: string }*/
+  Promise<any> {
     return null;
     /* TODO
      * Disabled because the current solution is not responsive enough:
@@ -394,7 +402,7 @@ export const actions = {
   /** Request the outlier detection results for a specific dataset. */
   async fetchOutliers(context: DatasetContext, dataset: string) {
     // Check if the outlier detection has already been applied.
-    if (routeGetters.isOutlierApplied(store)) return;
+    if (routeGetters.isOutlierApplied(store) || isOutlierExist()) return;
 
     const variableName = getOutlierVariableName();
 
@@ -413,6 +421,7 @@ export const actions = {
 
     // Run the outlier detection
     try {
+      status = DatasetPendingRequestStatus.RESOLVED;
       const url = `/distil/outlier-detection/${dataset}/${variableName}`;
       const response = await axios.get(url);
 
@@ -420,8 +429,6 @@ export const actions = {
       if (!response.data || !response.data.success) {
         throw "The outlier detection has no results";
       }
-
-      status = DatasetPendingRequestStatus.RESOLVED;
     } catch (error) {
       console.error(error);
       status = DatasetPendingRequestStatus.ERROR;
