@@ -430,8 +430,8 @@ export const actions = {
         throw "The outlier detection has no results";
       }
     } catch (error) {
-      console.error(error);
       status = DatasetPendingRequestStatus.ERROR;
+      console.error(error);
     }
 
     // Update the pending request status
@@ -446,7 +446,21 @@ export const actions = {
     let result = false;
     const variableName = getOutlierVariableName();
 
+    // Create the request.
+    let status: DatasetPendingRequestStatus;
+    const request: OutlierPendingRequest = {
+      id: _.uniqueId(),
+      dataset,
+      type: DatasetPendingRequestType.OUTLIER,
+      status,
+    };
+
+    // Set the request status as pending.
+    status = DatasetPendingRequestStatus.PENDING;
+    mutations.updatePendingRequests(context, { ...request, status });
+
     try {
+      status = DatasetPendingRequestStatus.RESOLVED;
       const url = `/distil/outlier-results/${dataset}/${variableName}`;
       const response = await axios.get(url);
 
@@ -457,8 +471,12 @@ export const actions = {
 
       result = response.data.success;
     } catch (error) {
+      status = DatasetPendingRequestStatus.ERROR;
       console.error(error);
     }
+
+    // Update the pending request status
+    mutations.updatePendingRequests(context, { ...request, status });
 
     return result;
   },

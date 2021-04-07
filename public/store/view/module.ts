@@ -73,4 +73,5 @@ export const actions = {
   ),
   updatePrediction: dispatch(moduleActions.updatePredictions),
   updateAreaOfInterest: dispatch(moduleActions.updateAreaOfInterest),
+  updateVariableSummaries: dispatch(moduleActions.updateVariableSummaries),
 };

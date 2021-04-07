@@ -537,6 +537,17 @@ export const actions = {
     ]);
   },
 
+  async updateVariableSummaries(context: ViewContext) {
+    const args = {
+      dataset: context.getters.getRouteDataset,
+      filterParams: context.getters
+        .getDecodedSolutionRequestFilterParams as FilterParams,
+      highlights: context.getters.getDecodedHighlights as Highlight[],
+      varModes: context.getters.getDecodedVarModes,
+    };
+    await fetchVariableSummaries(context, args);
+  },
+
   updateLabelData(context: ViewContext) {
     // clear any previous state
     const dataset = context.getters.getRouteDataset;

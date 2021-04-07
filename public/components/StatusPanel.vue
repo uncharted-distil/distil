@@ -75,6 +75,7 @@ import {
   getters as appGetters,
 } from "../store/app/module";
 import { getters as routeGetters } from "../store/route/module";
+import { actions as viewActions } from "../store/view/module";
 import { StatusPanelState, StatusPanelContentType } from "../store/app";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { overlayRouteEntry, varModesToString } from "../util/routes";
@@ -284,11 +285,16 @@ export default Vue.extend({
       if (!success) return;
 
       // Update the variables, which should now include the outlier variable.
-      datasetActions.fetchVariables(this.$store, { dataset: this.dataset });
+      await datasetActions.fetchVariables(this.$store, {
+        dataset: this.dataset,
+      });
+      await viewActions.updateVariableSummaries(this.$store);
 
       // Update the route to know that the outlier has been applied.
       const entry = overlayRouteEntry(this.$route, { outlier: "1" });
       this.$router.push(entry).catch((err) => console.warn(err));
+
+      this.close();
     },
 
     // Applies clustering changes and refetches update variable summaries
