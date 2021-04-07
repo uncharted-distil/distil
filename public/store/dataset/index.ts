@@ -399,7 +399,6 @@ export interface DatasetState {
   filteredDatasets: Dataset[];
   variables: Variable[];
   variableRankings: Dictionary<Dictionary<number>>;
-  outliers: Dictionary<string[]>;
   files: Dictionary<any>;
   timeseries: Dictionary<TimeSeries>;
   timeseriesExtrema: Dictionary<TimeseriesExtrema>;
@@ -459,9 +458,6 @@ export const state: DatasetState = {
   // variable list and rankings for the active dataset
   variables: [],
   variableRankings: {},
-
-  // Outlier detection
-  outliers: {},
 
   // working set of data
   includedSet: {
