@@ -1092,7 +1092,7 @@ export default Vue.extend({
 
     // type guard for geo table data
     isGeoTableRows(rows: TableRow[]): rows is GeoTableRow[] {
-      return (rows as GeoTableRow[])[0].latitude !== undefined;
+      return (rows as GeoTableRow[])[0]?.latitude !== undefined;
     },
   },
 

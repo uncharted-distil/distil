@@ -20,6 +20,7 @@ import {
   Row,
   D3M_INDEX_FIELD,
   state,
+  TableRow,
 } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
 import {
@@ -107,10 +108,10 @@ export function isRowSelected(
 }
 
 export function updateTableRowSelection(
-  items: any,
+  items: TableRow[],
   selection: RowSelection,
   context: string
-) {
+): TableRow[] {
   if (!items) {
     return null;
   }
@@ -133,7 +134,7 @@ export function updateTableRowSelection(
   selection.d3mIndices.forEach((index) => {
     d3mIndices[index] = true;
   });
-  items.forEach((item: any) => {
+  items.forEach((item) => {
     if (d3mIndices[item[D3M_INDEX_FIELD]]) {
       item._rowVariant = "selected-row";
     }

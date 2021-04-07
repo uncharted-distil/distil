@@ -21,7 +21,7 @@
       <template v-for="imageField in imageFields">
         <template v-for="(item, idx) in paginatedItems">
           <div class="image-tile" :key="idx">
-            <template v-for="(fieldInfo, fieldKey) in fields">
+            <template v-for="(fieldInfo, fieldKey) in dataFields">
               <image-preview
                 v-if="fieldKey === imageField.key"
                 :key="fieldKey"
@@ -45,7 +45,6 @@
               shortenLabels
               alignHorizontal
               :item="item"
-              :is-result="isResult"
               :label-feature-name="labelFeatureName"
             />
           </div>
@@ -53,7 +52,7 @@
       </template>
     </div>
     <b-pagination
-      v-if="items && items.length > perPage"
+      v-if="dataItems && dataItems.length > perPage"
       align="center"
       first-number
       last-number
@@ -76,7 +75,6 @@ import {
   D3M_INDEX_FIELD,
 } from "../store/dataset/index";
 import {
-  getters as datasetGetters,
   actions as datasetActions,
   mutations as datasetMutations,
 } from "../store/dataset/module";
@@ -86,7 +84,6 @@ import {
   addRowSelection,
   removeRowSelection,
   isRowSelected,
-  updateTableRowSelection,
   bulkRowSelectionUpdate,
 } from "../util/row";
 import { MULTIBAND_IMAGE_TYPE } from "../util/types";
@@ -102,10 +99,10 @@ export default Vue.extend({
 
   props: {
     instanceName: String as () => string,
-    dataItems: Array as () => any[],
+    dataItems: Array as () => TableRow[],
     dataFields: Object as () => Dictionary<TableColumn>,
-    isResult: { type: Boolean as () => boolean, default: false },
     labelFeatureName: { type: String, default: "" },
+    dataset: String as () => string,
   },
 
   data() {
@@ -144,44 +141,16 @@ export default Vue.extend({
   },
 
   computed: {
-    dataset(): string {
-      return routeGetters.getRouteDataset(this.$store);
-    },
-
-    items(): TableRow[] {
-      if (this.dataItems) {
-        return this.dataItems;
-      }
-      const items = this.includedActive
-        ? datasetGetters.getIncludedTableDataItems(this.$store)
-        : datasetGetters.getExcludedTableDataItems(this.$store);
-
-      return updateTableRowSelection(
-        items,
-        this.rowSelection,
-        this.instanceName
-      );
-    },
-
     paginatedItems(): TableRow[] {
       const page = this.currentPage - 1; // currentPage starts at 1
       const start = page * this.perPage;
       const end = start + this.perPage;
 
-      return this.items.slice(start, end);
+      return this.dataItems.slice(start, end);
     },
 
     itemCount(): number {
-      return this.items.length;
-    },
-
-    fields(): Dictionary<TableColumn> {
-      const currentFields = this.dataFields
-        ? this.dataFields
-        : this.includedActive
-        ? datasetGetters.getIncludedTableDataFields(this.$store)
-        : datasetGetters.getExcludedTableDataFields(this.$store);
-      return currentFields;
+      return this.dataItems.length;
     },
 
     rowSelection(): RowSelection {
@@ -189,7 +158,7 @@ export default Vue.extend({
     },
 
     imageFields(): { key: string; type: string }[] {
-      return getImageFields(this.fields);
+      return getImageFields(this.dataFields);
     },
 
     includedActive(): boolean {
@@ -279,13 +248,13 @@ export default Vue.extend({
     },
     onImageShiftClick(data: TableRow) {
       if (this.shiftClickInfo.first !== null) {
-        this.shiftClickInfo.second = this.items.findIndex(
+        this.shiftClickInfo.second = this.dataItems.findIndex(
           (x) => x.d3mIndex === data.d3mIndex
         );
         this.onShiftSelect();
         return;
       }
-      this.shiftClickInfo.first = this.items.findIndex(
+      this.shiftClickInfo.first = this.dataItems.findIndex(
         (x) => x.d3mIndex === data.d3mIndex
       );
     },
@@ -296,7 +265,9 @@ export default Vue.extend({
       );
       const end =
         Math.max(this.shiftClickInfo.second, this.shiftClickInfo.first) + 1; // +1 deals with slicing being exclusive
-      const subSet = this.items.slice(start, end).map((item) => item.d3mIndex);
+      const subSet = this.dataItems
+        .slice(start, end)
+        .map((item) => item.d3mIndex);
       this.resetShiftClickInfo();
       bulkRowSelectionUpdate(
         this.$router,

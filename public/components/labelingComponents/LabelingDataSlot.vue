@@ -58,8 +58,9 @@
         :has-confidence="hasConfidence"
         :label-feature-name="labelFeatureName"
         :label-score-name="labelScoreName"
+        :dataset="dataset"
         pagination
-        includedActive
+        included-active
       />
     </div>
   </div>
@@ -97,7 +98,7 @@ interface DataView {
   selectAll: () => void;
 }
 export default Vue.extend({
-  name: "labeling-data-slot",
+  name: "LabelingDataSlot",
   components: {
     ViewTypeToggle,
     LabelGeoPlot,
@@ -107,8 +108,18 @@ export default Vue.extend({
     FilterBadge,
   },
   props: {
-    variables: Array as () => Variable[],
-    summaries: Array as () => VariableSummary[],
+    variables: {
+      type: Array as () => Variable[],
+      default: () => {
+        return [] as Variable[];
+      },
+    },
+    summaries: {
+      type: Array as () => VariableSummary[],
+      default: () => {
+        return [] as Variable[];
+      },
+    },
     instanceName: { type: String, default: "label" },
     hasConfidence: { type: Boolean as () => boolean, default: false },
     labelFeatureName: { type: String, default: "" },

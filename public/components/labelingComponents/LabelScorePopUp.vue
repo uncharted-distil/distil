@@ -23,22 +23,23 @@
         <h5 class="header-title">Most Similar</h5>
         <component
           :is="viewComponent"
-          :instanceName="instanceName"
+          :instance-name="instanceName"
           :data-items="items"
           :data-fields="dataFields"
           :summaries="summaries"
-          includedActive
+          included-active
         />
       </div>
       <div class="col-12 col-md-6 d-flex flex-column h-100">
         <h5 class="header-title">Randomly Chosen</h5>
         <component
           :is="viewComponent"
-          :instanceName="instanceName"
+          :instance-name="instanceName"
           :data-items="randomItems"
           :data-fields="dataFields"
           :summaries="summaries"
-          includedActive
+          :dataset="dataset"
+          included-active
         />
       </div>
     </div>
@@ -46,7 +47,7 @@
       <!-- Emulate built in modal footer ok and cancel button actions -->
       <b-button size="lg" variant="secondary" @click="onApply">
         <template v-if="isLoading">
-          <div v-html="spinnerHTML"></div>
+          <div v-html="spinnerHTML" />
         </template>
         <template v-else> Apply </template>
       </b-button>
@@ -67,9 +68,10 @@ import SelectDataTable from "../SelectDataTable.vue";
 import ImageMosaic from "../ImageMosaic.vue";
 import LabelHeaderButtons from "./LabelHeaderButtons.vue";
 import { circleSpinnerHTML } from "../../util/spinner";
+import { getters as routeGetters } from "../../store/route/module";
 
 export default Vue.extend({
-  name: "label-score-pop-up",
+  name: "LabelScorePopUp",
   components: {
     SelectDataTable,
     ImageMosaic,
@@ -130,6 +132,9 @@ export default Vue.extend({
         return "SelectDataTable";
       }
       return "ImageMosaic";
+    },
+    dataset(): string {
+      return routeGetters.getRouteDataset(this.$store);
     },
   },
   methods: {
