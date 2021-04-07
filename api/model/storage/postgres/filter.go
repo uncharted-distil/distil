@@ -268,150 +268,59 @@ func (s *Storage) getBivariateFilterKeys(dataset string, key string, alias strin
 	return nil, errors.Errorf("unsupported field type %s for bivariate filter", g.Type)
 }
 
-func (s *Storage) buildExcludeFilter(dataset string, wheres []string, params []interface{}, alias string, filter *model.Filter) ([]string, []interface{}) {
-
-	name := s.formatFilterKey(alias, filter.Key)
-
-	switch filter.Type {
-	case model.DatetimeFilter:
-		// datetime
-		// extract epoch for comparison
-		where := fmt.Sprintf("cast(extract(epoch from %s) as double precision) < $%d OR cast(extract(epoch from %s) as double precision) >= $%d", name, len(params)+1, name, len(params)+2)
-		wheres = append(wheres, where)
-		params = append(params, *filter.Min)
-		params = append(params, *filter.Max)
-
-	case model.NumericalFilter:
-		// numerical
-		//TODO: WHY DOES THIS QUERY NOT CAST TO DOUBLE LIKE THE INCLUDE???
-		where := fmt.Sprintf("(%s < $%d OR %s >= $%d)", name, len(params)+1, name, len(params)+2)
-		wheres = append(wheres, where)
-		params = append(params, *filter.Min)
-		params = append(params, *filter.Max)
-
-	case model.VectorFilter:
-		// vector
-		// cast to double precision array in case of string based representation
-		nestedCast := ""
-		if filter.NestedType == model.NumericalFilter {
-			nestedCast = "double precision"
-		}
-		where := fmt.Sprintf("NOT(%s @> CAST(ARRAY[$%d, $%d] AS %s[]))", name, len(params)+1, len(params)+2, nestedCast)
-		wheres = append(wheres, where)
-		params = append(params, *filter.Min)
-		params = append(params, *filter.Max)
-
-	case model.BivariateFilter:
-		// bivariate
-		// cast to double precision in case of string based representation
-		fields, err := s.getBivariateFilterKeys(dataset, filter.Key, alias)
-		if err != nil {
-			log.Warnf("%+v", err)
-		} else {
-			where := fmt.Sprintf("(cast(%s as double precision) < $%d OR cast(%s as double precision) >= $%d) OR (cast(%s as double precision) < $%d OR cast(%s as double precision) >= $%d)",
-				fields[0], len(params)+1, fields[0], len(params)+2, fields[1], len(params)+3, fields[1], len(params)+4)
-			wheres = append(wheres, where)
-			params = append(params, filter.Bounds.MinX)
-			params = append(params, filter.Bounds.MaxX)
-			params = append(params, filter.Bounds.MinY)
-			params = append(params, filter.Bounds.MaxY)
-		}
-
-	case model.CategoricalFilter:
-		// categorical
-		categories := make([]string, 0)
-		offset := len(params) + 1
-		for i, category := range filter.Categories {
-			categories = append(categories, fmt.Sprintf("$%d", offset+i))
-			params = append(params, category)
-		}
-		where := fmt.Sprintf("%s NOT IN (%s)", name, strings.Join(categories, ", "))
-		wheres = append(wheres, where)
-
-	case model.GeoBoundsFilter:
-		// geo bounds
-		where := fmt.Sprintf("ST_INTERSECTS(%s, $%d)=false", name, len(params)+1)
-		params = append(params, buildBoundsGeometryString(filter.Bounds))
-		wheres = append(wheres, where)
-
-	case model.ClusterFilter:
-		// cluster
-		name = s.formatFilterKey(alias, featureVarName(filter.Key))
-		categories := make([]string, 0)
-		offset := len(params) + 1
-		for i, category := range filter.Categories {
-			categories = append(categories, fmt.Sprintf("$%d", offset+i))
-			params = append(params, category)
-		}
-		where := fmt.Sprintf("%s NOT IN (%s)", name, strings.Join(categories, ", "))
-		wheres = append(wheres, where)
-	case model.RowFilter:
-		// row
-		indices := make([]string, 0)
-		offset := len(params) + 1
-		for i, d3mIndex := range filter.D3mIndices {
-			indices = append(indices, fmt.Sprintf("$%d", offset+i))
-			params = append(params, d3mIndex)
-		}
-		where := fmt.Sprintf("%s NOT IN (%s)", name, strings.Join(indices, ", "))
-		wheres = append(wheres, where)
-	case model.TextFilter:
-		// text
-		offset := len(params) + 1
-		for i, category := range filter.Categories {
-			where := fmt.Sprintf("%s !~* (%s)", name, fmt.Sprintf("$%d", offset+i))
-			params = append(params, category)
-			wheres = append(wheres, where)
-		}
-	}
-	return wheres, params
-}
-
 func (s *Storage) buildFilteredQueryWhere(dataset string, wheres []string, params []interface{}, alias string, filterParams *api.FilterParams) ([]string, []interface{}) {
 
 	if filterParams == nil {
 		return wheres, params
 	}
 
+	// exclusion set is the complement of the equivalent inclusion set
+	// ie: the exclusion set can be defined as NOT(inclusion set)
+	filters := []string{}
+	for mode, filtersMode := range filterParams.Filters {
+		where := ""
+		where, params = s.buildSelectionFilter(dataset, params, alias, filtersMode)
+		if mode == model.ExcludeFilter {
+			where = fmt.Sprintf("NOT(%s)", where)
+		}
+		filters = append(filters, where)
+	}
+
+	// AND all the filters by mode (combining exclusion and inclusion filters)
+	if len(filters) > 0 {
+		where := fmt.Sprintf("(%s)", strings.Join(filters, " AND "))
+		if filterParams.Invert {
+			where = fmt.Sprintf("NOT%s", where)
+		}
+		wheres = append(wheres, where)
+	}
+	return wheres, params
+}
+
+func (s *Storage) buildSelectionFilter(dataset string, params []interface{}, alias string, filters []api.FilterObject) (string, []interface{}) {
 	// filters acting on the same feature are OR
 	// Filters acting on different features are AND
 	var filtersByFeature []string
-	for mode, filtersMode := range filterParams.Filters {
-		for _, filtersFeature := range filtersMode {
-			featureWheres := []string{}
-			for _, filter := range filtersFeature.List {
-				switch mode {
-				case model.IncludeFilter:
-					featureWheres, params = s.buildIncludeFilter(dataset, featureWheres, params, alias, filter)
-				case model.ExcludeFilter:
-					featureWheres, params = s.buildExcludeFilter(dataset, featureWheres, params, alias, filter)
-				}
+	for _, filtersFeature := range filters {
+		featureWheres := []string{}
+		for _, filter := range filtersFeature.List {
+			featureWheres, params = s.buildIncludeFilter(dataset, featureWheres, params, alias, filter)
+		}
+		if len(featureWheres) > 0 {
+			where := ""
+			if filtersFeature.Invert {
+				where = fmt.Sprintf("NOT(%s)", strings.Join(featureWheres, " OR "))
+			} else {
+				where = fmt.Sprintf("(%s)", strings.Join(featureWheres, " OR "))
 			}
-			if len(featureWheres) > 0 {
-				where := ""
-				if filtersFeature.Invert {
-					where = fmt.Sprintf("NOT(%s)", strings.Join(featureWheres, " OR "))
-				} else {
-					where = fmt.Sprintf("(%s)", strings.Join(featureWheres, " OR "))
-				}
-				filtersByFeature = append(filtersByFeature, where)
-			}
+			filtersByFeature = append(filtersByFeature, where)
 		}
 	}
 
 	// AND all the filters by feature
 	// we now have a series of (FEATURE 1 == X OR FEATURE 1 == Y) expressions
 	// we need to AND them together to end up with (FEATURE 1 FILTERS) AND (FEATURE 2 FILTERS) AND ...
-	if len(filtersByFeature) > 0 {
-		where := ""
-		if filterParams.Invert {
-			where = fmt.Sprintf("NOT(%s)", strings.Join(filtersByFeature, " AND "))
-		} else {
-			where = strings.Join(filtersByFeature, " AND ")
-		}
-		wheres = append(wheres, where)
-	}
-	return wheres, params
+	return strings.Join(filtersByFeature, " AND "), params
 }
 
 func (s *Storage) buildSelectStatement(variables []*model.Variable, filterVariables []string) (string, error) {
@@ -527,8 +436,7 @@ func (s *Storage) buildCorrectnessResultWhere(wheres []string, params []interfac
 		wheresFilter = append(wheresFilter, fmt.Sprintf("result.value %s data.\"%s\"", op, targetName))
 	}
 
-	wheres = append(wheres, fmt.Sprintf("(%s)", strings.Join(wheresFilter, " OR ")))
-	return wheres, params, nil
+	return append(wheres, fmt.Sprintf("(%s)", strings.Join(wheresFilter, " OR "))), params, nil
 }
 
 func (s *Storage) buildErrorResultWhere(wheres []string, params []interface{}, residualFilter api.FilterObject) ([]string, []interface{}, error) {
@@ -564,16 +472,15 @@ func (s *Storage) buildErrorResultWhere(wheres []string, params []interface{}, r
 
 		// exclusion filter is the complement (inverse) of inclusion filter!
 		if f.Mode == model.ExcludeFilter {
-			where = fmt.Sprintf("(NOT %s)", where)
+			where = fmt.Sprintf("(NOT%s)", where)
 		}
 		wheresFilter = append(wheresFilter, where)
 		params = append(params, *f.Min)
 		params = append(params, *f.Max)
 	}
 
-	// Append the AND clause
-	wheres = append(wheres, strings.Join(wheresFilter, " OR "))
-	return wheres, params, nil
+	// OR the clauses together
+	return append(wheres, fmt.Sprintf("(%s)", strings.Join(wheresFilter, " OR "))), params, nil
 }
 
 func (s *Storage) buildConfidenceResultWhere(wheres []string, params []interface{}, confidenceFilter api.FilterObject, alias string) ([]string, []interface{}) {
@@ -588,7 +495,7 @@ func (s *Storage) buildConfidenceResultWhere(wheres []string, params []interface
 
 		// exclusion filter is the complement (inverse) of inclusion filter!
 		if f.Mode == model.ExcludeFilter {
-			where = fmt.Sprintf("(NOT %s)", where)
+			where = fmt.Sprintf("(NOT%s)", where)
 		}
 		wheresFilter = append(wheresFilter, where)
 		params = append(params, *f.Min)
@@ -596,8 +503,7 @@ func (s *Storage) buildConfidenceResultWhere(wheres []string, params []interface
 	}
 
 	// Append the clause
-	wheres = append(wheres, strings.Join(wheresFilter, " OR "))
-	return wheres, params
+	return append(wheres, fmt.Sprintf("(%s)", strings.Join(wheresFilter, " OR "))), params
 }
 func (s *Storage) buildRankResultWhere(wheres []string, params []interface{}, rankFilter api.FilterObject, alias string) ([]string, []interface{}) {
 	// Add a clause to filter confidence to the existing where
@@ -611,7 +517,7 @@ func (s *Storage) buildRankResultWhere(wheres []string, params []interface{}, ra
 
 		// exclusion filter is the complement (inverse) of inclusion filter!
 		if f.Mode == model.ExcludeFilter {
-			where = fmt.Sprintf("(NOT %s)", where)
+			where = fmt.Sprintf("(NOT%s)", where)
 		}
 		wheresFilter = append(wheresFilter, where)
 		params = append(params, *f.Min)
@@ -619,8 +525,7 @@ func (s *Storage) buildRankResultWhere(wheres []string, params []interface{}, ra
 	}
 
 	// Append the clause
-	wheres = append(wheres, strings.Join(wheresFilter, " OR "))
-	return wheres, params
+	return append(wheres, fmt.Sprintf("(%s)", strings.Join(wheresFilter, " OR "))), params
 }
 func (s *Storage) buildPredictedResultWhere(dataset string, wheres []string, params []interface{}, alias string, resultURI string, resultFilter api.FilterObject) ([]string, []interface{}) {
 	// handle the general category case
@@ -637,40 +542,57 @@ func (s *Storage) buildPredictedResultWhere(dataset string, wheres []string, par
 
 func (s *Storage) buildResultQueryFilters(dataset string, storageName string, resultURI string, filterParams *api.FilterParams, alias string) ([]string, []interface{}, error) {
 	// pull filters generated against the result facet out for special handling
-	filters, err := splitFilters(filterParams)
+	filtersSplit, err := splitFilters(filterParams)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	genericFilterParams := filters.genericFilters
-	// create the filter for the query
-	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, alias, genericFilterParams)
+	wheresCombined := []string{}
+	for mode, filters := range filtersSplit {
+		genericFilterParams := filters.genericFilters
+		// create the filter for the query
+		wheres := make([]string, 0)
+		wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, alias, genericFilterParams)
 
-	// assemble split filters
-	for _, predictedFilter := range filters.predictedFilters {
-		wheres, params = s.buildPredictedResultWhere(dataset, wheres, params, alias, resultURI, predictedFilter)
-	}
-	for _, correctnessFilter := range filters.correctnessFilters {
-		wheres, params, err = s.buildCorrectnessResultWhere(wheres, params, storageName, resultURI, correctnessFilter)
-		if err != nil {
-			return nil, nil, err
+		// assemble split filters
+		for _, predictedFilter := range filters.predictedFilters {
+			wheres, params = s.buildPredictedResultWhere(dataset, wheres, params, alias, resultURI, predictedFilter)
 		}
-	}
-	for _, residualFilter := range filters.residualFilters {
-		wheres, params, err = s.buildErrorResultWhere(wheres, params, residualFilter)
-		if err != nil {
-			return nil, nil, err
+		for _, correctnessFilter := range filters.correctnessFilters {
+			wheres, params, err = s.buildCorrectnessResultWhere(wheres, params, storageName, resultURI, correctnessFilter)
+			if err != nil {
+				return nil, nil, err
+			}
 		}
+		for _, residualFilter := range filters.residualFilters {
+			wheres, params, err = s.buildErrorResultWhere(wheres, params, residualFilter)
+			if err != nil {
+				return nil, nil, err
+			}
+		}
+		for _, confidenceFilter := range filters.confidenceFilters {
+			wheres, params = s.buildConfidenceResultWhere(wheres, params, confidenceFilter, "result")
+		}
+		for _, rankFilter := range filters.rankFilters {
+			wheres, params = s.buildRankResultWhere(wheres, params, rankFilter, "result")
+		}
+
+		whereCombined := fmt.Sprintf("(%s)", strings.Join(wheres, " AND "))
+		if mode == model.ExcludeFilter {
+			whereCombined = fmt.Sprintf("NOT%s", whereCombined)
+		}
+		wheresCombined = append(wheresCombined, whereCombined)
 	}
-	for _, confidenceFilter := range filters.confidenceFilters {
-		wheres, params = s.buildConfidenceResultWhere(wheres, params, confidenceFilter, "result")
+	return wheresCombined, params, nil
+}
+
+func combineClauses(mode string, clauses []string, operation string) string {
+	whereCombined := fmt.Sprintf("(%s)", strings.Join(clauses, fmt.Sprintf(" %s ", operation)))
+	if mode == model.ExcludeFilter {
+		whereCombined = fmt.Sprintf("NOT%s", whereCombined)
 	}
-	for _, rankFilter := range filters.rankFilters {
-		wheres, params = s.buildRankResultWhere(wheres, params, rankFilter, "result")
-	}
-	return wheres, params, nil
+	return whereCombined
 }
 
 type filters struct {
@@ -682,55 +604,76 @@ type filters struct {
 	rankFilters        []api.FilterObject
 }
 
-func splitFilters(filterParams *api.FilterParams) (*filters, error) {
+func hasResidualFilters(filters map[string]*filters) bool {
+	for _, f := range filters {
+		if len(f.residualFilters) > 0 {
+			return true
+		}
+	}
+
+	return false
+}
+
+func splitFilters(filterParams *api.FilterParams) (map[string]*filters, error) {
 	if filterParams == nil {
-		return &filters{}, nil
+		return map[string]*filters{}, nil
 	}
 
-	// Groups filters for handling downstream
-	predictedFilters := []api.FilterObject{}
-	residualFilters := []api.FilterObject{}
-	correctnessFilters := []api.FilterObject{}
-	confidenceFilters := []api.FilterObject{}
-	rankFilters := []api.FilterObject{}
-	remaining := &api.FilterParams{
-		Size:      filterParams.Size,
-		Invert:    filterParams.Invert,
-		DataMode:  filterParams.DataMode,
-		Variables: filterParams.Variables,
-		Filters:   map[string][]api.FilterObject{},
+	// split fitlers into inclusion and exclusion sets
+	output := map[string]*filters{
+		model.IncludeFilter: {
+			genericFilters: &api.FilterParams{
+				Size:      filterParams.Size,
+				Invert:    filterParams.Invert,
+				DataMode:  filterParams.DataMode,
+				Variables: filterParams.Variables,
+				Filters:   map[string][]api.FilterObject{},
+			},
+			predictedFilters:   []api.FilterObject{},
+			residualFilters:    []api.FilterObject{},
+			correctnessFilters: []api.FilterObject{},
+			confidenceFilters:  []api.FilterObject{},
+			rankFilters:        []api.FilterObject{},
+		},
+		model.ExcludeFilter: {
+			genericFilters: &api.FilterParams{
+				Size:      filterParams.Size,
+				Invert:    filterParams.Invert,
+				DataMode:  filterParams.DataMode,
+				Variables: filterParams.Variables,
+				Filters:   map[string][]api.FilterObject{},
+			},
+			predictedFilters:   []api.FilterObject{},
+			residualFilters:    []api.FilterObject{},
+			correctnessFilters: []api.FilterObject{},
+			confidenceFilters:  []api.FilterObject{},
+			rankFilters:        []api.FilterObject{},
+		},
 	}
 
-	for _, modeFilters := range filterParams.Filters {
+	for mode, modeFilters := range filterParams.Filters {
 		for _, featureFilters := range modeFilters {
 			if api.IsPredictedKey(featureFilters.List[0].Key) {
-				predictedFilters = append(predictedFilters, featureFilters)
+				output[mode].predictedFilters = append(output[mode].predictedFilters, featureFilters)
 			} else if api.IsErrorKey(featureFilters.List[0].Key) {
 				if featureFilters.List[0].Type == model.NumericalFilter {
-					residualFilters = append(residualFilters, featureFilters)
+					output[mode].residualFilters = append(output[mode].residualFilters, featureFilters)
 				} else if featureFilters.List[0].Type == model.CategoricalFilter {
-					correctnessFilters = append(correctnessFilters, featureFilters)
+					output[mode].correctnessFilters = append(output[mode].correctnessFilters, featureFilters)
 				}
 			} else if api.IsConfidenceKey(featureFilters.List[0].Key) {
-				confidenceFilters = append(confidenceFilters, featureFilters)
+				output[mode].confidenceFilters = append(output[mode].confidenceFilters, featureFilters)
 			} else if api.IsRankKey(featureFilters.List[0].Key) {
-				rankFilters = append(rankFilters, featureFilters)
+				output[mode].rankFilters = append(output[mode].rankFilters, featureFilters)
 			} else {
 				for _, f := range featureFilters.List {
-					remaining.AddFilter(f)
+					output[mode].genericFilters.AddFilter(f)
 				}
 			}
 		}
 	}
 
-	return &filters{
-		genericFilters:     remaining,
-		predictedFilters:   predictedFilters,
-		residualFilters:    residualFilters,
-		correctnessFilters: correctnessFilters,
-		confidenceFilters:  confidenceFilters,
-		rankFilters:        rankFilters,
-	}, nil
+	return output, nil
 }
 
 // FetchNumRows pulls the number of rows in the table.

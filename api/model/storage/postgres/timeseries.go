@@ -601,11 +601,16 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 	joins := make([]*joinDefinition, 0)
 	wheres := []string{}
 	params := []interface{}{}
-	if len(filtersSplit.residualFilters) > 0 {
-		for _, residualFilter := range filtersSplit.residualFilters {
-			wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, residualFilter)
-			if err != nil {
-				return nil, err
+	if hasResidualFilters(filtersSplit) {
+		for mode, filters := range filtersSplit {
+			clauses := []string{}
+			for _, residualFilter := range filters.residualFilters {
+				wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, residualFilter)
+				if err != nil {
+					return nil, err
+				}
+
+				wheres = append(wheres, combineClauses(mode, clauses, "AND"))
 			}
 		}
 
@@ -637,7 +642,17 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 	if err != nil {
 		return nil, err
 	}
-	timeline, err := timelineField.fetchHistogramWithJoins(filtersSplit.genericFilters, api.MaxNumBuckets, joins, wheres, params)
+
+	// combine the generic filters together into a single one
+	var genericfilters *api.FilterParams
+	for _, filters := range filtersSplit {
+		if genericfilters == nil {
+			genericfilters = filters.genericFilters
+			continue
+		}
+		genericfilters.MergeParams(filters.genericFilters)
+	}
+	timeline, err := timelineField.fetchHistogramWithJoins(genericfilters, api.MaxNumBuckets, joins, wheres, params)
 	if err != nil {
 		return nil, err
 	}

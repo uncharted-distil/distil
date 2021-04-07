@@ -332,18 +332,61 @@ func (f *FilterParams) Merge(other *FilterParamsRaw) {
 		}
 	}
 
-	for _, highlight := range other.Filters.List {
+	for _, filter := range other.Filters.List {
 		found := false
-		for _, filters := range f.Filters[highlight.Mode] {
+		for _, filters := range f.Filters[filter.Mode] {
 			for _, currentFilter := range filters.List {
-				if filtersEqual(highlight, currentFilter) {
+				if filtersEqual(filter, currentFilter) {
 					found = true
 					break
 				}
 			}
 		}
 		if !found {
-			f.AddFilter(highlight)
+			f.AddFilter(filter)
+		}
+	}
+
+	for _, variable := range other.Variables {
+		found := false
+		for _, currentVariable := range f.Variables {
+			if variable == currentVariable {
+				found = true
+				break
+			}
+		}
+		if !found {
+			f.Variables = append(f.Variables, variable)
+		}
+	}
+}
+
+// MergeParams merges another set of filter params into this set, expanding all
+// properties.
+func (f *FilterParams) MergeParams(other *FilterParams) {
+
+	// If the filters has a nil or negative value, we use the value use by default on distil-model
+	// https://github.com/uncharted-distil/distil/blob/master/api/model/storage/postgres/request.go#L239
+	if other.Size >= 0 {
+		f.Size = other.Size
+	}
+
+	for _, mode := range other.Filters {
+		for _, features := range mode {
+			for _, filter := range features.List {
+				found := false
+				for _, filters := range f.Filters[filter.Mode] {
+					for _, currentFilter := range filters.List {
+						if filtersEqual(filter, currentFilter) {
+							found = true
+							break
+						}
+					}
+				}
+				if !found {
+					f.AddFilter(filter)
+				}
+			}
 		}
 	}
 
