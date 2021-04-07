@@ -208,7 +208,6 @@ import {
   getListFields,
   removeTimeseries,
   getTimeseriesVariablesFromFields,
-  sameData,
 } from "../util/data";
 import { getSolutionIndex } from "../util/solutions";
 
@@ -230,9 +229,24 @@ export default Vue.extend({
   },
 
   props: {
-    dataItems: Array as () => any[],
-    dataFields: Object as () => Dictionary<TableColumn>,
-    instanceName: String as () => string,
+    dataItems: {
+      type: Array as () => TableRow[],
+      default: () => {
+        return [];
+      },
+    },
+    dataFields: {
+      type: Object as () => Dictionary<TableColumn>,
+      default: () => {
+        return {};
+      },
+    },
+    instanceName: {
+      type: String as () => string,
+      default: () => {
+        return "";
+      },
+    },
   },
 
   data() {
@@ -245,7 +259,6 @@ export default Vue.extend({
       // visibleRows is v-model with the b-table and contains all the items in the current b-table page
       visibleRows: [],
       debounceKey: null,
-      imagesFetched: false,
     };
   },
 
