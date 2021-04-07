@@ -157,10 +157,16 @@ import {
   getImageFields,
   getListFields,
   removeTimeseries,
+  sameData,
 } from "../util/data";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import ImageLabel from "./ImageLabel.vue";
+
+interface Field {
+  key: string;
+  type: string;
+}
 
 export default Vue.extend({
   name: "SelectedDataTable",
@@ -192,7 +198,6 @@ export default Vue.extend({
       currentPage: 1,
       perPage: 100,
       uniqueTrail: "selected-table",
-      initialized: false,
       shiftClickInfo: { first: null, second: null },
       // this is v-model with b-table (it contains what is on the page in the sorted order)
       visibleRows: [],
@@ -208,6 +213,7 @@ export default Vue.extend({
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
     },
+
     items(): TableRow[] {
       let items = this.includedActive
         ? datasetGetters.getIncludedTableDataItems(this.$store)
@@ -229,6 +235,7 @@ export default Vue.extend({
         this.instanceName
       );
     },
+
     pageItems(): TableRow[] {
       const end =
         this.currentPage * this.perPage > this.items.length
@@ -236,6 +243,7 @@ export default Vue.extend({
           : this.currentPage * this.perPage;
       return this.items.slice((this.currentPage - 1) * this.perPage, end);
     },
+
     itemCount(): number {
       return this.includedActive
         ? datasetGetters.getIncludedTableDataLength(this.$store)
@@ -273,7 +281,7 @@ export default Vue.extend({
       ] as TableColumn[]);
     },
 
-    imageFields(): { key: string; type: string }[] {
+    imageFields(): Field[] {
       return getImageFields(this.fields);
     },
 
@@ -292,13 +300,14 @@ export default Vue.extend({
       return computedColumns;
     },
 
-    listFields(): { key: string; type: string }[] {
+    listFields(): Field[] {
       return getListFields(this.fields);
     },
 
     filters(): Filter[] {
       return routeGetters.getDecodedFilters(this.$store);
     },
+
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
     },
@@ -309,67 +318,51 @@ export default Vue.extend({
         !isEmpty(this.timeseriesGroupings)
       );
     },
+
     band(): string {
       return routeGetters.getBandCombinationId(this.$store);
     },
   },
 
   watch: {
-    visibleRows(prev, cur) {
-      if (this.sameData(prev, cur)) {
-        return;
-      }
-      this.debounceImageFetch();
-    },
     includedActive() {
       if (this.items.length) {
         this.fetchTimeSeries();
       }
     },
-    filters() {
-      // new data will be coming through pipeline
-      this.initialized = false;
-    },
-    items(cur, prev) {
-      // checks to see if items exist and if the timeseries has been queried for the new data
-      if (!this.initialized && this.items.length) {
-        this.fetchTimeSeries();
-        this.initialized = true;
-      }
-      if (prev?.length !== this.items.length) {
-        this.fetchTimeSeries();
-      }
-      // if the itemCount changes such that it's less than page
-      // we were on, reset to page 1.
-      if (this.itemCount < this.perPage * this.currentPage) {
-        this.currentPage = 1;
-      }
-    },
+
     band() {
       this.debounceImageFetch();
     },
+
+    pageItems(curr: TableRow[], prev: TableRow[]) {
+      // check if all the indices are in the same order and prev == cur
+      // and that we've already fetched the data
+      if (sameData(prev, curr)) {
+        return;
+      }
+
+      this.debounceImageFetch();
+    },
+
+    imageFields(cur: Field[], prev: Field[]) {
+      if (prev.length == 0 && cur.length > 0) {
+        this.debounceImageFetch();
+      }
+    },
   },
+
   destroyed() {
     window.removeEventListener("keyup", this.shiftRelease);
   },
+
   mounted() {
+    this.removeImages();
+    this.fetchImagePack(this.pageItems);
     window.addEventListener("keyup", this.shiftRelease);
   },
+
   methods: {
-    sameData(old: [], cur: []): boolean {
-      if (old === null || cur === null) {
-        return false;
-      }
-      if (old.length !== cur.length) {
-        return false;
-      }
-      for (let i = 0; i < old.length; ++i) {
-        if (old[i][D3M_INDEX_FIELD] !== cur[i][D3M_INDEX_FIELD]) {
-          return false;
-        }
-      }
-      return true;
-    },
     debounceImageFetch() {
       clearTimeout(this.debounceKey);
       this.debounceKey = setTimeout(() => {
@@ -377,6 +370,7 @@ export default Vue.extend({
         this.fetchImagePack(this.visibleRows);
       }, 1000);
     },
+
     fetchTimeSeries() {
       if (!this.isTimeseries) {
         return;
@@ -395,6 +389,7 @@ export default Vue.extend({
         });
       });
     },
+
     removeImages() {
       if (!this.imageFields.length) {
         return;
@@ -406,6 +401,7 @@ export default Vue.extend({
         }),
       });
     },
+
     fetchImagePack(items) {
       if (!this.imageFields.length) {
         return;
@@ -424,6 +420,7 @@ export default Vue.extend({
         uniqueTrail: this.uniqueTrail,
       });
     },
+
     onPagination(page: number) {
       // remove old data from store
       removeTimeseries(
@@ -436,6 +433,7 @@ export default Vue.extend({
       this.fetchTimeSeries();
       this.removeImages();
     },
+
     selectAll() {
       bulkRowSelectionUpdate(
         this.$router,
@@ -444,6 +442,7 @@ export default Vue.extend({
         this.pageItems.map((pi) => pi.d3mIndex)
       );
     },
+
     timeseriesInfo(id: string): Extrema {
       const timeseries = datasetGetters.getTimeseries(this.$store);
       return timeseries?.[this.dataset]?.info?.[id];
@@ -484,6 +483,7 @@ export default Vue.extend({
         );
       }
     },
+
     onRowShiftClick(data: TableRow) {
       if (this.shiftClickInfo.first !== null) {
         this.shiftClickInfo.second = this.items.findIndex(
@@ -496,6 +496,7 @@ export default Vue.extend({
         (x) => x.d3mIndex === data.d3mIndex
       );
     },
+
     onShiftSelect() {
       const start = Math.min(
         this.shiftClickInfo.second,
@@ -512,15 +513,18 @@ export default Vue.extend({
         subSet
       );
     },
+
     shiftRelease(event) {
       if (event.key === "Shift") {
         this.resetShiftClickInfo();
       }
     },
+
     resetShiftClickInfo() {
       this.shiftClickInfo.first = null;
       this.shiftClickInfo.second = null;
     },
+
     cellSlot(key: string): string {
       return formatSlot(key, "cell");
     },

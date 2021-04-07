@@ -20,7 +20,7 @@
     <div class="image-mosaic">
       <template v-for="imageField in imageFields">
         <template v-for="(item, idx) in paginatedItems">
-          <div class="image-tile" :key="idx">
+          <div :key="idx" class="image-tile">
             <template v-for="(fieldInfo, fieldKey) in dataFields">
               <image-preview
                 v-if="fieldKey === imageField.key"
@@ -40,10 +40,10 @@
             </template>
             <image-label
               class="image-label"
-              :dataFields="dataFields"
-              includedActive
-              shortenLabels
-              alignHorizontal
+              :data-fields="dataFields"
+              included-active
+              shorten-labels
+              align-horizontal
               :item="item"
               :label-feature-name="labelFeatureName"
             />
@@ -53,11 +53,11 @@
     </div>
     <b-pagination
       v-if="dataItems && dataItems.length > perPage"
+      v-model="currentPage"
       align="center"
       first-number
       last-number
       size="sm"
-      v-model="currentPage"
       :per-page="perPage"
       :total-rows="itemCount"
     />
@@ -87,10 +87,15 @@ import {
   bulkRowSelectionUpdate,
 } from "../util/row";
 import { MULTIBAND_IMAGE_TYPE } from "../util/types";
-import { getImageFields } from "../util/data";
+import { getImageFields, sameData } from "../util/data";
+
+interface Field {
+  key: string;
+  type: string;
+}
 
 export default Vue.extend({
-  name: "image-mosaic",
+  name: "ImageMosaic",
 
   components: {
     ImageLabel,
@@ -98,11 +103,16 @@ export default Vue.extend({
   },
 
   props: {
-    instanceName: String as () => string,
-    dataItems: Array as () => TableRow[],
-    dataFields: Object as () => Dictionary<TableColumn>,
-    labelFeatureName: { type: String, default: "" },
-    dataset: String as () => string,
+    instanceName: { type: String as () => string, default: "" },
+    dataItems: { type: Array as () => TableRow[], default: null },
+    dataFields: {
+      type: Object as () => Dictionary<TableColumn>,
+      default: () => {
+        return {};
+      },
+    },
+    labelFeatureName: { type: String as () => string, default: "" },
+    dataset: { type: String as () => string, default: "" },
   },
 
   data() {
@@ -110,34 +120,12 @@ export default Vue.extend({
       imageWidth: 128,
       imageHeight: 128,
       currentPage: 1,
+      previousPage: 0,
       perPage: 100,
       shiftClickInfo: { first: null, second: null },
       uniqueTrail: "image-mosiac",
       debounceKey: null,
     };
-  },
-
-  watch: {
-    band() {
-      this.debounceImageFetch();
-    },
-    paginatedItems(prev, cur) {
-      // check if all the indices are in the same order and prev == cur
-      if (this.sameData(prev, cur)) {
-        return;
-      }
-      this.debounceImageFetch();
-    },
-  },
-
-  destroyed() {
-    window.removeEventListener("keyup", this.shiftRelease);
-  },
-
-  mounted() {
-    this.removeImages();
-    this.fetchImagePack(this.paginatedItems);
-    window.addEventListener("keyup", this.shiftRelease);
   },
 
   computed: {
@@ -157,7 +145,7 @@ export default Vue.extend({
       return routeGetters.getDecodedRowSelection(this.$store);
     },
 
-    imageFields(): { key: string; type: string }[] {
+    imageFields(): Field[] {
       return getImageFields(this.dataFields);
     },
 
@@ -170,6 +158,37 @@ export default Vue.extend({
     },
   },
 
+  watch: {
+    band() {
+      this.debounceImageFetch();
+    },
+
+    paginatedItems(cur: TableRow[], prev: TableRow[]) {
+      // check if all the indices are in the same order and prev == cur
+      // and that images have been previously fetched
+      if (sameData(prev, cur)) {
+        return;
+      }
+      this.debounceImageFetch();
+    },
+
+    imageFields(cur: Field[], prev: Field[]) {
+      if (prev.length == 0 && cur.length > 0) {
+        this.debounceImageFetch();
+      }
+    },
+  },
+
+  destroyed() {
+    window.removeEventListener("keyup", this.shiftRelease);
+  },
+
+  mounted() {
+    this.removeImages();
+    this.fetchImagePack(this.paginatedItems);
+    window.addEventListener("keyup", this.shiftRelease);
+  },
+
   methods: {
     debounceImageFetch() {
       clearTimeout(this.debounceKey);
@@ -178,20 +197,7 @@ export default Vue.extend({
         this.fetchImagePack(this.paginatedItems);
       }, 1000);
     },
-    sameData(old: [], cur: []): boolean {
-      if (old === null || cur === null) {
-        return false;
-      }
-      if (old.length !== cur.length) {
-        return false;
-      }
-      for (let i = 0; i < old.length; ++i) {
-        if (old[i][D3M_INDEX_FIELD] !== cur[i][D3M_INDEX_FIELD]) {
-          return false;
-        }
-      }
-      return true;
-    },
+
     selectAll() {
       bulkRowSelectionUpdate(
         this.$router,
@@ -200,6 +206,7 @@ export default Vue.extend({
         this.paginatedItems.map((pi) => pi.d3mIndex)
       );
     },
+
     removeImages() {
       if (!this.imageFields.length) {
         return;
@@ -211,7 +218,8 @@ export default Vue.extend({
         }),
       });
     },
-    fetchImagePack(items) {
+
+    fetchImagePack(items: TableRow[]) {
       if (!this.imageFields.length) {
         return;
       }
@@ -229,7 +237,8 @@ export default Vue.extend({
         uniqueTrail: this.uniqueTrail,
       });
     },
-    onImageClick(event: any) {
+
+    onImageClick(event) {
       if (!isRowSelected(this.rowSelection, event.row[D3M_INDEX_FIELD])) {
         addRowSelection(
           this.$router,
@@ -246,6 +255,7 @@ export default Vue.extend({
         );
       }
     },
+
     onImageShiftClick(data: TableRow) {
       if (this.shiftClickInfo.first !== null) {
         this.shiftClickInfo.second = this.dataItems.findIndex(
@@ -258,6 +268,7 @@ export default Vue.extend({
         (x) => x.d3mIndex === data.d3mIndex
       );
     },
+
     onShiftSelect() {
       const start = Math.min(
         this.shiftClickInfo.second,
@@ -276,11 +287,13 @@ export default Vue.extend({
         subSet
       );
     },
+
     shiftRelease(event) {
       if (event.key === "Shift") {
         this.resetShiftClickInfo();
       }
     },
+
     resetShiftClickInfo() {
       this.shiftClickInfo.first = null;
       this.shiftClickInfo.second = null;
