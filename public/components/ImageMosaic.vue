@@ -24,17 +24,18 @@
             <template v-for="(fieldInfo, fieldKey) in fields">
               <image-preview
                 v-if="fieldKey === imageField.key"
+                :key="fieldKey"
                 class="image-preview"
                 :row="item"
                 :image-url="item[fieldKey].value"
                 :width="imageWidth"
                 :height="imageHeight"
+                :type="imageField.type"
+                :unique-trail="uniqueTrail"
+                :should-clean-up="false"
+                :should-fetch-image="false"
                 @click="onImageClick"
                 @shift-click="onImageShiftClick"
-                :type="imageField.type"
-                :key="fieldKey"
-                uniqueTrail="mosaic"
-                :debounce="true"
               />
             </template>
             <image-label
@@ -45,6 +46,7 @@
               alignHorizontal
               :item="item"
               :is-result="isResult"
+              :label-feature-name="labelFeatureName"
             />
           </div>
         </template>
@@ -73,7 +75,11 @@ import {
   TableRow,
   D3M_INDEX_FIELD,
 } from "../store/dataset/index";
-import { getters as datasetGetters } from "../store/dataset/module";
+import {
+  getters as datasetGetters,
+  actions as datasetActions,
+  mutations as datasetMutations,
+} from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
 import {
@@ -83,6 +89,7 @@ import {
   updateTableRowSelection,
   bulkRowSelectionUpdate,
 } from "../util/row";
+import { MULTIBAND_IMAGE_TYPE } from "../util/types";
 import { getImageFields } from "../util/data";
 
 export default Vue.extend({
@@ -98,6 +105,7 @@ export default Vue.extend({
     dataItems: Array as () => any[],
     dataFields: Object as () => Dictionary<TableColumn>,
     isResult: { type: Boolean as () => boolean, default: false },
+    labelFeatureName: { type: String, default: "" },
   },
 
   data() {
@@ -107,15 +115,39 @@ export default Vue.extend({
       currentPage: 1,
       perPage: 100,
       shiftClickInfo: { first: null, second: null },
+      uniqueTrail: "image-mosiac",
+      debounceKey: null,
     };
   },
+
+  watch: {
+    band() {
+      this.debounceImageFetch();
+    },
+    paginatedItems(prev, cur) {
+      // check if all the indices are in the same order and prev == cur
+      if (this.sameData(prev, cur)) {
+        return;
+      }
+      this.debounceImageFetch();
+    },
+  },
+
   destroyed() {
     window.removeEventListener("keyup", this.shiftRelease);
   },
+
   mounted() {
+    this.removeImages();
+    this.fetchImagePack(this.paginatedItems);
     window.addEventListener("keyup", this.shiftRelease);
   },
+
   computed: {
+    dataset(): string {
+      return routeGetters.getRouteDataset(this.$store);
+    },
+
     items(): TableRow[] {
       if (this.dataItems) {
         return this.dataItems;
@@ -123,12 +155,14 @@ export default Vue.extend({
       const items = this.includedActive
         ? datasetGetters.getIncludedTableDataItems(this.$store)
         : datasetGetters.getExcludedTableDataItems(this.$store);
+
       return updateTableRowSelection(
         items,
         this.rowSelection,
         this.instanceName
       );
     },
+
     paginatedItems(): TableRow[] {
       const page = this.currentPage - 1; // currentPage starts at 1
       const start = page * this.perPage;
@@ -140,6 +174,7 @@ export default Vue.extend({
     itemCount(): number {
       return this.items.length;
     },
+
     fields(): Dictionary<TableColumn> {
       const currentFields = this.dataFields
         ? this.dataFields
@@ -160,9 +195,34 @@ export default Vue.extend({
     includedActive(): boolean {
       return routeGetters.getRouteInclude(this.$store);
     },
+
+    band(): string {
+      return routeGetters.getBandCombinationId(this.$store);
+    },
   },
 
   methods: {
+    debounceImageFetch() {
+      clearTimeout(this.debounceKey);
+      this.debounceKey = setTimeout(() => {
+        this.removeImages();
+        this.fetchImagePack(this.paginatedItems);
+      }, 1000);
+    },
+    sameData(old: [], cur: []): boolean {
+      if (old === null || cur === null) {
+        return false;
+      }
+      if (old.length !== cur.length) {
+        return false;
+      }
+      for (let i = 0; i < old.length; ++i) {
+        if (old[i][D3M_INDEX_FIELD] !== cur[i][D3M_INDEX_FIELD]) {
+          return false;
+        }
+      }
+      return true;
+    },
     selectAll() {
       bulkRowSelectionUpdate(
         this.$router,
@@ -170,6 +230,35 @@ export default Vue.extend({
         this.rowSelection,
         this.paginatedItems.map((pi) => pi.d3mIndex)
       );
+    },
+    removeImages() {
+      if (!this.imageFields.length) {
+        return;
+      }
+      const imageKey = this.imageFields[0].key;
+      datasetMutations.bulkRemoveFiles(this.$store, {
+        urls: this.paginatedItems.map((item) => {
+          return `${item[imageKey].value}/${this.uniqueTrail}`;
+        }),
+      });
+    },
+    fetchImagePack(items) {
+      if (!this.imageFields.length) {
+        return;
+      }
+      const key = this.imageFields[0].key;
+      const type = this.imageFields[0].type;
+      // if band is "" the route assumes it is an image not a multi-band image
+      datasetActions.fetchImagePack(this.$store, {
+        multiBandImagePackRequest: {
+          imageIds: items.map((item) => {
+            return item[key].value;
+          }),
+          dataset: this.dataset,
+          band: type === MULTIBAND_IMAGE_TYPE ? this.band : "",
+        },
+        uniqueTrail: this.uniqueTrail,
+      });
     },
     onImageClick(event: any) {
       if (!isRowSelected(this.rowSelection, event.row[D3M_INDEX_FIELD])) {

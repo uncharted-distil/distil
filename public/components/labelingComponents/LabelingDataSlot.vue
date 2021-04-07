@@ -56,6 +56,8 @@
         :instance-name="instanceName"
         :summaries="summaries"
         :has-confidence="hasConfidence"
+        :label-feature-name="labelFeatureName"
+        :label-score-name="labelScoreName"
         pagination
         includedActive
       />
@@ -81,12 +83,7 @@ import {
 } from "../../store/dataset/index";
 import { getters as datasetGetters } from "../../store/dataset/module";
 import { getters as routeGetters } from "../../store/route/module";
-import {
-  LowShotLabels,
-  LOW_SHOT_LABEL_COLUMN_NAME,
-  LOW_SHOT_SCORE_COLUMN_NAME,
-  getAllDataItems,
-} from "../../util/data";
+import { LowShotLabels, getAllDataItems } from "../../util/data";
 import { createFiltersFromHighlights } from "../../util/highlights";
 import { Filter, INCLUDE_FILTER } from "../../util/filters";
 import LabelHeaderButtons from "./LabelHeaderButtons.vue";
@@ -114,6 +111,8 @@ export default Vue.extend({
     summaries: Array as () => VariableSummary[],
     instanceName: { type: String, default: "label" },
     hasConfidence: { type: Boolean as () => boolean, default: false },
+    labelFeatureName: { type: String, default: "" },
+    labelScoreName: { type: String, default: "" },
   },
   data() {
     return {
@@ -151,7 +150,7 @@ export default Vue.extend({
     },
     hasLowShotScores(): boolean {
       const orderBy = routeGetters.getOrderBy(this.$store);
-      return !orderBy ? false : orderBy.includes(LOW_SHOT_SCORE_COLUMN_NAME);
+      return !orderBy ? false : orderBy.includes(this.labelScoreName);
     },
     dataItems(): TableRow[] {
       const items =

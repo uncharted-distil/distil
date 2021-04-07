@@ -19,6 +19,7 @@ import { Highlight } from "../store/dataset/index";
 import {
   Filter,
   FilterParams,
+  FilterObject,
   CATEGORICAL_FILTER,
   CLUSTER_FILTER,
   VECTOR_FILTER,
@@ -36,6 +37,7 @@ import {
   TEXT_TYPE,
   getVarType,
   isCollectionType,
+  GEOBOUNDS_TYPE,
 } from "../util/types";
 import _ from "lodash";
 import store from "../store/store";
@@ -89,6 +91,22 @@ export function decodeHighlights(highlight: string): Highlight[] {
     return [];
   }
   return JSON.parse(atob(highlight)) as Highlight[];
+}
+// applies the supplied invert if invert is not present on the filter or highlight object (returns clone)
+export function setInvert(
+  filterParams: FilterParams,
+  invert: boolean
+): FilterParams {
+  const fp = cloneFilters(filterParams);
+  if (!fp.highlights) {
+    fp.highlights = { list: [], invert } as FilterObject;
+  }
+  if (!fp.filters) {
+    fp.filters = { list: [], invert } as FilterObject;
+  }
+  fp.highlights.invert = fp.highlights.invert ?? invert;
+  fp.filters.invert = fp.filters.invert ?? invert;
+  return fp;
 }
 
 export function createFiltersFromHighlights(
@@ -192,7 +210,7 @@ export function createFiltersFromHighlights(
     ) {
       return {
         key: key,
-        type: variable.colType,
+        type: variable?.colType ?? GEOBOUNDS_TYPE,
         mode: highlight.include ?? mode,
         minX: highlight.value.minX,
         maxX: highlight.value.maxX,
@@ -265,7 +283,7 @@ export function setHighlightModes(
   filterParams: FilterParams,
   mode: string
 ): FilterParams {
-  filterParams.highlights.forEach((highlight) => {
+  filterParams.highlights.list.forEach((highlight) => {
     highlight.mode = mode;
   });
   return filterParams;
@@ -274,7 +292,7 @@ export function setFilterModes(
   filterParams: FilterParams,
   mode: string
 ): FilterParams {
-  filterParams.filters.forEach((filter) => {
+  filterParams.filters.list.forEach((filter) => {
     filter.mode = mode;
   });
   return filterParams;
@@ -287,7 +305,7 @@ export function addHighlightToFilterParams(
   const params = _.cloneDeep(filterParams);
   const highlightFilters = createFiltersFromHighlights(highlights, mode);
   if (highlightFilters.length > 0) {
-    params.highlights = highlightFilters;
+    params.highlights.list = highlightFilters;
   }
   return params;
 }

@@ -1024,10 +1024,9 @@ export default Vue.extend({
           } else {
             // there's a highlight active - render from the set of features returned in the filter portion of the
             // variable summary strucure
-            const filteredMinVal = this.filteredMinCount;
-            const dVal = (maxVal - minVal) / BLUE_PALETTE.length;
+            const d = (maxVal - minVal) / BLUE_PALETTE.length;
             const filteredDomain = BLUE_PALETTE.map(
-              (val, index) => filteredMinVal + dVal * (index + 1)
+              (val, index) => minVal + d * (index + 1)
             );
             const filteredScaleColors = scaleThreshold()
               .range(BLUE_PALETTE as any)
@@ -1063,10 +1062,9 @@ export default Vue.extend({
           // Excluded mode is active - render visuals using a black pallette.
           // Any data we need to render is in the filter portion of variable summary structure.
 
-          const filteredMinVal = this.filteredMinCount;
-          const dVal = (maxVal - minVal) / BLACK_PALETTE.length;
-          const filteredDomain = BLACK_PALETTE.map(
-            (val, index) => filteredMinVal + dVal * (index + 1)
+          const d = (maxVal - minVal) / BLUE_PALETTE.length;
+          const filteredDomain = BLUE_PALETTE.map(
+            (val, index) => minVal + d * (index + 1)
           );
           const filteredScaleColors = scaleThreshold()
             .range(BLACK_PALETTE as any)

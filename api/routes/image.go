@@ -16,15 +16,21 @@
 package routes
 
 import (
+	"bytes"
+	"image"
+	"image/draw"
 	"io/ioutil"
 	"net/http"
 	"path"
+	"strconv"
 
 	"goji.io/v3/pat"
 
+	"github.com/nfnt/resize"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil/api/env"
 	"github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/util"
 )
 
 const (
@@ -37,6 +43,13 @@ func ImageHandler(ctor model.MetadataStorageCtor, config *env.Config) func(http.
 		// resources can either be local or remote
 		dataset := pat.Param(r, "dataset")
 		file := pat.Param(r, "file")
+
+		// check if a thumbnail is requested
+		isThumbnail, err := strconv.ParseBool(pat.Param(r, "is-thumbnail"))
+		if err != nil {
+			handleError(w, err)
+			return
+		}
 
 		// get metadata client
 		storage, err := ctor()
@@ -53,12 +66,30 @@ func ImageHandler(ctor model.MetadataStorageCtor, config *env.Config) func(http.
 
 		sourcePath := env.ResolvePath(res.Source, res.Folder)
 
-		bytes, err := ioutil.ReadFile(path.Join(sourcePath, imageFolder, file))
+		data, err := ioutil.ReadFile(path.Join(sourcePath, imageFolder, file))
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-		_, err = w.Write(bytes)
+
+		if isThumbnail {
+			img, _, err := image.Decode(bytes.NewReader(data))
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			img = resize.Thumbnail(ThumbnailDimensions, ThumbnailDimensions, img, resize.Lanczos3)
+			rgbaImg := image.NewRGBA(image.Rect(0, 0, ThumbnailDimensions, ThumbnailDimensions))
+			draw.Draw(rgbaImg, image.Rect(0, 0, ThumbnailDimensions, ThumbnailDimensions), img, img.Bounds().Min, draw.Src)
+			imageBytes, err := util.ImageToJPEG(rgbaImg)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			data = imageBytes
+		}
+
+		_, err = w.Write(data)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "failed to write image resource bytes"))
 			return

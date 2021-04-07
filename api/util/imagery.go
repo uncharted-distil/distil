@@ -132,7 +132,7 @@ func init() {
 		FalseColorInfrared:     {FalseColorInfrared, "False Color Infrared", []string{"b08", "b04", "b03"}, nil, nil},
 		FalseColorUrban:        {FalseColorUrban, "False Color Urban", []string{"b12", "b11", "b04"}, nil, nil},
 		Agriculture:            {Agriculture, "Agriculture", []string{"b11", "b08", "b02"}, nil, nil},
-		AtmosphericPenetration: {AtmosphericPenetration, "Atmospheric Penetration", []string{"b12", "b11", "b8A"}, nil, nil},
+		AtmosphericPenetration: {AtmosphericPenetration, "Atmospheric Penetration", []string{"b12", "b11", "b8a"}, nil, nil},
 		HealthyVegetation:      {HealthyVegetation, "Healthy Vegetation", []string{"b08", "b11", "b02"}, nil, nil},
 		LandWater:              {LandWater, "Land/Water", []string{"b08", "b11", "b04"}, nil, nil},
 		AtmosphericRemoval:     {AtmosphericRemoval, "Atmospheric Removal", []string{"b12", "b08", "b03"}, nil, nil},
@@ -400,7 +400,7 @@ func createRGBAFromRamp(xSize int, ySize int, bandImages []*image.Gray16, transf
 	// Create a new RGBA image to hold the collected bands
 	outputImage := image.NewRGBA(image.Rect(0, 0, xSize, ySize))
 
-	rampElements := len(ramp) / 3
+	rampElements := (len(ramp) - 2) / 3
 
 	// Copy the 16 bit band images into the 8 bit target image.  If a band image couldn't be processed
 	// earlier, we set to grey.

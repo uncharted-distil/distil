@@ -367,14 +367,14 @@ func (s *Storage) buildExcludeFilter(dataset string, wheres []string, params []i
 	return wheres, params
 }
 
-func (s *Storage) buildFilteredQueryWhere(dataset string, wheres []string, params []interface{}, alias string, filterParams *api.FilterParams, invert bool) ([]string, []interface{}) {
+func (s *Storage) buildFilteredQueryWhere(dataset string, wheres []string, params []interface{}, alias string, filterParams *api.FilterParams) ([]string, []interface{}) {
 
 	if filterParams == nil {
 		return wheres, params
 	}
 
 	var highlightWheres []string
-	for _, highlight := range filterParams.Highlights {
+	for _, highlight := range filterParams.Highlights.List {
 		switch highlight.Mode {
 		case model.IncludeFilter:
 			highlightWheres, params = s.buildIncludeFilter(dataset, highlightWheres, params, alias, highlight)
@@ -384,9 +384,9 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, wheres []string, param
 	}
 	if len(highlightWheres) > 0 {
 		where := ""
-		if invert {
+		if filterParams.Highlights.Invert {
 			// highlights are always treated as or (adding Not(...or...) makes it and)
-			where = fmt.Sprintf("(%s)", strings.Join(highlightWheres, " OR "))
+			where = fmt.Sprintf("NOT(%s)", strings.Join(highlightWheres, " OR "))
 		} else {
 			where = fmt.Sprintf("(%s)", strings.Join(highlightWheres, " OR "))
 		}
@@ -394,7 +394,7 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, wheres []string, param
 	}
 
 	var filterWheres []string
-	for _, filter := range filterParams.Filters {
+	for _, filter := range filterParams.Filters.List {
 		switch filter.Mode {
 		case model.IncludeFilter:
 			filterWheres, params = s.buildIncludeFilter(dataset, filterWheres, params, alias, filter)
@@ -404,7 +404,7 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, wheres []string, param
 	}
 	if len(filterWheres) > 0 {
 		where := ""
-		if invert {
+		if filterParams.Filters.Invert {
 			where = fmt.Sprintf("NOT(%s)", strings.Join(filterWheres, " AND "))
 		} else {
 			where = strings.Join(filterWheres, " AND ")
@@ -441,7 +441,7 @@ func (s *Storage) buildSelectStatement(variables []*model.Variable, filterVariab
 	}
 	return strings.Join(distincts, ",") + " " + strings.Join(fields, ","), nil
 }
-func (s *Storage) buildFilteredQueryField(variables []*model.Variable, filterVariables []string) (string, error) {
+func (s *Storage) buildFilteredQueryField(variables []*model.Variable, filterVariables []string, distinct bool) (string, error) {
 
 	distincts := make([]string, 0)
 	fields := make([]string, 0)
@@ -451,7 +451,7 @@ func (s *Storage) buildFilteredQueryField(variables []*model.Variable, filterVar
 			continue
 		}
 
-		if variable.DistilRole == model.VarDistilRoleGrouping {
+		if variable.DistilRole == model.VarDistilRoleGrouping && distinct {
 			distincts = append(distincts, fmt.Sprintf("DISTINCT ON (\"%s\")", variable.Key))
 		}
 
@@ -592,10 +592,12 @@ func (s *Storage) buildPredictedResultWhere(dataset string, wheres []string, par
 	// handle the general category case
 
 	filterParams := &api.FilterParams{
-		Filters: []*model.Filter{resultFilter},
+		Filters: api.FilterObject{List: []*model.Filter{resultFilter},
+			Invert: false,
+		},
 	}
 
-	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, alias, filterParams, false)
+	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, alias, filterParams)
 	return wheres, params
 }
 
@@ -610,91 +612,91 @@ func (s *Storage) buildResultQueryFilters(dataset string, storageName string, re
 	// create the filter for the query
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, alias, genericFilterParams, false)
+	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, alias, genericFilterParams)
 
 	// assemble split filters
 	var err error
-	for _, predictedFilter := range filters.predictedFilters {
+	for _, predictedFilter := range filters.predictedFilters.List {
 		wheres, params = s.buildPredictedResultWhere(dataset, wheres, params, alias, resultURI, predictedFilter)
 	}
-	for _, correctnessFilter := range filters.correctnessFilters {
+	for _, correctnessFilter := range filters.correctnessFilters.List {
 		wheres, params, err = s.buildCorrectnessResultWhere(wheres, params, storageName, resultURI, correctnessFilter)
 		if err != nil {
 			return nil, nil, err
 		}
 	}
-	for _, residualFilter := range filters.residualFilters {
+	for _, residualFilter := range filters.residualFilters.List {
 		wheres, params, err = s.buildErrorResultWhere(wheres, params, residualFilter)
 		if err != nil {
 			return nil, nil, err
 		}
 	}
-	for _, confidenceFilter := range filters.confidenceFilters {
+	for _, confidenceFilter := range filters.confidenceFilters.List {
 		wheres, params = s.buildConfidenceResultWhere(wheres, params, confidenceFilter, "result")
 	}
-	for _, rankFilter := range filters.rankFilters {
+	for _, rankFilter := range filters.rankFilters.List {
 		wheres, params = s.buildRankResultWhere(wheres, params, rankFilter, "result")
 	}
 	return wheres, params, nil
 }
 
 type filters struct {
-	genericFilters     []*model.Filter
-	genericHighlights  []*model.Filter
-	predictedFilters   []*model.Filter
-	residualFilters    []*model.Filter
-	correctnessFilters []*model.Filter
-	confidenceFilters  []*model.Filter
-	rankFilters        []*model.Filter
+	genericFilters     api.FilterObject
+	genericHighlights  api.FilterObject
+	predictedFilters   api.FilterObject
+	residualFilters    api.FilterObject
+	correctnessFilters api.FilterObject
+	confidenceFilters  api.FilterObject
+	rankFilters        api.FilterObject
 }
 
 func splitFilters(filterParams *api.FilterParams) *filters {
 	// Groups filters for handling downstream
-	var predictedFilters []*model.Filter
-	var residualFilters []*model.Filter
-	var correctnessFilters []*model.Filter
-	var confidenceFilters []*model.Filter
-	var rankFilters []*model.Filter
-	var remaining []*model.Filter
-	var remainingHighlights []*model.Filter
+	var predictedFilters api.FilterObject
+	var residualFilters api.FilterObject
+	var correctnessFilters api.FilterObject
+	var confidenceFilters api.FilterObject
+	var rankFilters api.FilterObject
+	var remaining api.FilterObject
+	var remainingHighlights api.FilterObject
 
 	if filterParams == nil {
 		return &filters{}
 	}
 
-	for _, highlight := range filterParams.Highlights {
+	for _, highlight := range filterParams.Highlights.List {
 		if api.IsPredictedKey(highlight.Key) {
-			predictedFilters = append(predictedFilters, highlight)
+			predictedFilters.List = append(predictedFilters.List, highlight)
 		} else if api.IsErrorKey(highlight.Key) {
 			if highlight.Type == model.NumericalFilter {
-				residualFilters = append(residualFilters, highlight)
+				residualFilters.List = append(residualFilters.List, highlight)
 			} else if highlight.Type == model.CategoricalFilter {
-				correctnessFilters = append(correctnessFilters, highlight)
+				correctnessFilters.List = append(correctnessFilters.List, highlight)
 			}
 		} else if api.IsConfidenceKey(highlight.Key) {
-			confidenceFilters = append(confidenceFilters, highlight)
+			confidenceFilters.List = append(confidenceFilters.List, highlight)
 		} else if api.IsRankKey(highlight.Key) {
-			rankFilters = append(rankFilters, highlight)
+			rankFilters.List = append(rankFilters.List, highlight)
 		} else {
-			remainingHighlights = append(remainingHighlights, highlight)
+			remainingHighlights.List = append(remainingHighlights.List, highlight)
 		}
 	}
 
-	for _, filter := range filterParams.Filters {
+	for _, filter := range filterParams.Filters.List {
 		if api.IsPredictedKey(filter.Key) {
-			predictedFilters = append(predictedFilters, filter)
+			predictedFilters.List = append(predictedFilters.List, filter)
 		} else if api.IsErrorKey(filter.Key) {
 			if filter.Type == model.NumericalFilter {
-				residualFilters = append(residualFilters, filter)
+				residualFilters.List = append(residualFilters.List, filter)
 			} else if filter.Type == model.CategoricalFilter {
-				correctnessFilters = append(correctnessFilters, filter)
+				correctnessFilters.List = append(correctnessFilters.List, filter)
 			}
 		} else if api.IsConfidenceKey(filter.Key) {
-			confidenceFilters = append(confidenceFilters, filter)
+			confidenceFilters.List = append(confidenceFilters.List, filter)
 		} else if api.IsRankKey(filter.Key) {
-			rankFilters = append(rankFilters, filter)
+			rankFilters.List = append(rankFilters.List, filter)
 		} else {
-			remaining = append(remaining, filter)
+			remaining.List = append(remaining.List, filter)
 		}
 	}
 
@@ -768,7 +770,7 @@ func (s *Storage) fetchNumRowsJoined(storageName string, variables []*model.Vari
 // FetchData creates a postgres query to fetch a set of rows.  Applies filters to restrict the
 // results to a user selected set of fields, with rows further filtered based on allowed ranges and
 // categories.
-func (s *Storage) FetchData(dataset string, storageName string, filterParams *api.FilterParams, invert bool, includeGroupingCol bool, orderByVar *model.Variable) (*api.FilteredData, error) {
+func (s *Storage) FetchData(dataset string, storageName string, filterParams *api.FilterParams, includeGroupingCol bool, orderByVar *model.Variable) (*api.FilteredData, error) {
 	variables, err := s.metadata.FetchVariables(dataset, true, true, true)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
@@ -781,7 +783,7 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 
 	// if there are no filters, and we are returning the exclude set, we expect
 	// no results in the filtered set
-	if invert && filterParams.Filters == nil {
+	if filterParams.Filters.Invert && filterParams.Filters.List == nil {
 		return &api.FilteredData{
 			NumRows: numRows,
 			Columns: make([]*api.Column, 0),
@@ -804,7 +806,7 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 			filterParams.Variables = append(filterParams.Variables, orderByVar.HeaderName)
 		}
 	}
-	fields, err := s.buildFilteredQueryField(variables, filterParams.Variables)
+	fields, err := s.buildFilteredQueryField(variables, filterParams.Variables, !includeGroupingCol)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not build field list")
 	}
@@ -816,7 +818,7 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, "", filterParams, invert)
+	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, "", filterParams)
 
 	if len(wheres) > 0 {
 		query = fmt.Sprintf("%s WHERE %s", query, strings.Join(wheres, " AND "))

@@ -261,6 +261,7 @@ func (s *stratifiedSplitter) splitCategories(colIndex int, data [][]string) map[
 }
 
 func (s *stratifiedSplitter) split(data [][]string) ([][]string, [][]string, error) {
+	log.Infof("performing split based on stratified sampling")
 	// create the output
 	outputTrain := [][]string{}
 	outputTest := [][]string{}
@@ -275,9 +276,11 @@ func (s *stratifiedSplitter) split(data [][]string) ([][]string, [][]string, err
 	// subsets by category, and then sampling the subsets using the supplied train/test ratio.
 
 	// first pass - create subsets by category
+	log.Infof("collecting categories")
 	categoryRowData := s.splitCategories(s.targetCol, inputData)
 
 	// second pass - randomly sample each category to generate train/test split
+	log.Infof("shuffling and splitting based on %d categories", len(categoryRowData))
 	for _, data := range categoryRowData {
 		maxCategoryTrainingRows := int(math.Max(1, float64(len(data))/float64(len(inputData))*float64(numTrainingRows)))
 		maxCategoryTestRows := int(math.Max(1, float64(len(data))/float64(len(inputData))*float64(numTestRows)))

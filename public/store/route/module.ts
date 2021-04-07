@@ -43,12 +43,12 @@ export const getters = {
   getDecodedJoinDatasetsFilterParams: read(
     moduleGetters.getDecodedJoinDatasetsFilterParams
   ),
+  getDecodedJoinDatasetsHighlight: read(
+    moduleGetters.getDecodedJoinDatasetsHighlight
+  ),
   getAnnotationHasChanged: read(moduleGetters.getAnnotationHasChanged),
   getRouteJoinDatasetsHash: read(moduleGetters.getRouteJoinDatasetsHash),
   getJoinDatasetsVariables: read(moduleGetters.getJoinDatasetsVariables),
-  getJoinDatasetsVariableSummaries: read(
-    moduleGetters.getJoinDatasetsVariableSummaries
-  ),
   getExploreVariables: read(moduleGetters.getExploreVariables),
   getRouteTrainingVariables: read(moduleGetters.getRouteTrainingVariables),
   getRouteIsTrainingVariablesRanked: read(
@@ -59,7 +59,7 @@ export const getters = {
   getDecodedTrainingVariableNames: read(
     moduleGetters.getDecodedTrainingVariableNames
   ),
-
+  getRouteLabel: read(moduleGetters.getRouteLabel),
   getRouteJoinDatasetsVarsPage: read(
     moduleGetters.getRouteJoinDatasetsVarsPage
   ),
@@ -150,4 +150,6 @@ export const getters = {
   getRoutePane: read(moduleGetters.getRoutePane),
   hasOrderBy: read(moduleGetters.hasOrderBy),
   getOrderBy: read(moduleGetters.getOrderBy),
+  isBinaryClassification: read(moduleGetters.isBinaryClassification),
+  getPositiveLabel: read(moduleGetters.getPositiveLabel),
 };

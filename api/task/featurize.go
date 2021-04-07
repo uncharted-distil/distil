@@ -57,8 +57,21 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 	}
 
 	// create & submit the featurize pipeline
-	pip, err := description.CreateMultiBandImageFeaturizationPipeline("Multiband image featurization", "", ds.Variables,
-		envConfig.RemoteSensingNumJobs, envConfig.RemoteSensingGPUBatchSize, envConfig.PoolFeatures)
+	// determine if remote sensing or image
+	var pip *description.FullySpecifiedPipeline
+	imageDataset := false
+	for _, v := range ds.Variables {
+		if model.IsImage(v.Type) {
+			imageDataset = true
+			break
+		}
+	}
+	if imageDataset {
+		pip, err = description.CreateImageFeaturizationPipeline("Image featurization", "", ds.Variables)
+	} else {
+		pip, err = description.CreateMultiBandImageFeaturizationPipeline("Multiband image featurization", "", ds.Variables,
+			envConfig.RemoteSensingNumJobs, envConfig.RemoteSensingGPUBatchSize, envConfig.PoolFeatures)
+	}
 	if err != nil {
 		return "", "", err
 	}
@@ -187,22 +200,18 @@ func getGeoBoundsGrouping(rawGroupings []map[string]interface{}) map[string]inte
 	return nil
 }
 
-func isRemoteSensingDataset(ds *api.Dataset) bool {
-	for _, v := range ds.Variables {
-		if model.IsMultiBandImage(v.Type) {
-			return true
-		}
-	}
-
-	return false
-}
-
 func canFeaturize(datasetID string, meta api.MetadataStorage) bool {
-	dataset, err := meta.FetchDataset(datasetID, true, true, false)
+	ds, err := meta.FetchDataset(datasetID, true, true, false)
 	if err != nil {
 		log.Warnf("error fetching dataset to determine if it can be featurized: %+v", err)
 		return false
 	}
 
-	return isRemoteSensingDataset(dataset)
+	for _, v := range ds.Variables {
+		if model.IsMultiBandImage(v.Type) || model.IsImage(v.Type) {
+			return true
+		}
+	}
+
+	return false
 }

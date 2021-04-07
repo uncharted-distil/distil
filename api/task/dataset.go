@@ -109,14 +109,14 @@ func CreateDataset(dataset string, datasetCtor DatasetConstructor, outputPath st
 
 // ExportDataset extracts a dataset from the database and metadata storage, writing
 // it to disk in D3M dataset format.
-func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage api.DataStorage, invert bool, filterParams *api.FilterParams) (string, string, error) {
+func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage api.DataStorage, filterParams *api.FilterParams) (string, string, error) {
 	metaDataset, err := metaStorage.FetchDataset(dataset, true, false, false)
 	if err != nil {
 		return "", "", err
 	}
 	meta := metaDataset.ToMetadata()
 
-	data, err := dataStorage.FetchDataset(dataset, meta.StorageName, false, invert, filterParams)
+	data, err := dataStorage.FetchDataset(dataset, meta.StorageName, false, filterParams)
 	if err != nil {
 		return "", "", err
 	}
@@ -124,7 +124,7 @@ func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage 
 	// need to update metadata variable order to match extracted data
 	header := data[0]
 	exportedVariables := make([]*model.Variable, len(header))
-	exportVarMap := apicompute.MapVariables(metaDataset.Variables, func(variable *model.Variable) string { return variable.Key })
+	exportVarMap := api.MapVariables(metaDataset.Variables, func(variable *model.Variable) string { return variable.Key })
 	for i, v := range header {
 		variable := exportVarMap[v]
 		variable.Index = i
@@ -149,7 +149,7 @@ func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage 
 			return "", "", err
 		}
 
-		err = updateLearningDataset(metaDataset, data)
+		err = api.UpdateDiskDataset(metaDataset, data)
 		if err != nil {
 			return "", "", err
 		}
@@ -169,7 +169,7 @@ func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage 
 		}
 
 		// main data resources need to be checked for any resource references
-		parentVariablesMap := apicompute.MapVariables(parentMetaDiskMainDR.Variables, func(variable *model.Variable) string { return variable.Key })
+		parentVariablesMap := api.MapVariables(parentMetaDiskMainDR.Variables, func(variable *model.Variable) string { return variable.Key })
 		for _, v := range dataRaw.Metadata.GetMainDataResource().Variables {
 			parentVar := parentVariablesMap[v.Key]
 			if parentVar != nil && parentVar.RefersTo != nil {
@@ -187,59 +187,6 @@ func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage 
 	}
 
 	return dataset, outputFolder, nil
-}
-
-func updateLearningDataset(ds *api.Dataset, data [][]string) error {
-	// read the dataset from disk
-	dsDisk, err := api.LoadDiskDataset(ds)
-	if err != nil {
-		return err
-	}
-	varMap := apicompute.MapVariables(ds.Variables, func(variable *model.Variable) string { return variable.HeaderName })
-
-	// use the header row to determine the variables to update
-	d3mIndexIndex := -1
-	updates := map[string]map[string]string{}
-	headerMap := map[string]int{}
-	for i, c := range data[0] {
-		if c == model.D3MIndexFieldName {
-			d3mIndexIndex = i
-		} else {
-			sourceVar := varMap[c]
-			if sourceVar.Immutable {
-				continue
-			}
-			headerMap[sourceVar.HeaderName] = i
-			updates[sourceVar.HeaderName] = map[string]string{}
-
-			// add missing fields
-			if !dsDisk.FieldExists(sourceVar) {
-				err = dsDisk.AddField(sourceVar)
-				if err != nil {
-					return err
-				}
-			}
-		}
-	}
-
-	// create the update maps (d3m index -> new value)
-	for _, row := range data[1:] {
-		for headerName, colIndex := range headerMap {
-			updates[headerName][row[d3mIndexIndex]] = row[colIndex]
-		}
-	}
-
-	err = dsDisk.UpdateDataset(updates, true)
-	if err != nil {
-		return err
-	}
-
-	err = dsDisk.SaveDataset()
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // CreateDatasetFromResult creates a new dataset based on a result set & the input

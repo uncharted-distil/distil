@@ -17,46 +17,46 @@
 
 <template>
   <div
-    v-observe-visibility="{ callback: visibilityChanged }"
+    v-observe-visibility="visibilityChanged"
     :class="{ 'is-hidden': !isVisible && !preventHiding }"
     :style="{
       width: `${width}px`, // + 2 for boarder
       height: `${height}px`, // boarder
       filter: `grayscale(${gray}%)`,
+      '--confidence': confidenceColor,
     }"
   >
     <div class="image-container" :class="{ selected: isSelected && isLoaded }">
-      <template v-if="!isLoaded">
-        <div v-html="spinnerHTML"></div>
-      </template>
+      <div v-if="!isLoaded" v-html="spinnerHTML" />
       <template v-else-if="!stopSpinner">
         <div
-          ref="imageElem"
           class="image-elem clickable"
           @click.stop.exact="handleClick"
           @click.shift.exact.stop="handleShiftClick"
-        />
+        >
+          <img ref="imageElem" />
+        </div>
         <div
-          ref="imageAttentionElem"
           class="filter-elem clickable"
           @click.stop.exact="handleClick"
           @click.shift.exact.stop="handleShiftClick"
-        />
+        >
+          <img ref="imageAttentionElem" />
+        </div>
         <i class="fa fa-search-plus zoom-icon" @click.stop="showZoomedImage" />
       </template>
+      <img v-else alt="image unavailable" :class="imgClass" />
     </div>
 
     <image-drilldown
-      :url="imageUrl"
-      :type="type"
+      :image-urls="overlappedUrls"
       :info="imageDrilldown"
+      :initial-position="imageDrilldownPosition"
       :items="[row]"
+      :type="type"
+      :url="imageUrl"
       :visible="!!zoomImage"
       @hide="hideZoomImage"
-      :imageUrls="overlappedUrls"
-      :initialPosition="
-        overlappedUrls.length ? overlappedUrls.indexOf(imageUrl) : 0
-      "
     />
   </div>
 </template>
@@ -71,7 +71,7 @@ import {
   mutations as datasetMutations,
 } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
-import { circleSpinnerHTML } from "../util/spinner";
+import { circleSpinnerHTML as spinnerHTML } from "../util/spinner";
 import {
   D3M_INDEX_FIELD,
   TableRow,
@@ -80,7 +80,7 @@ import {
 import { isRowSelected } from "../util/row";
 import { Dictionary } from "../util/dict";
 import { MULTIBAND_IMAGE_TYPE, IMAGE_TYPE } from "../util/types";
-import { ColorScaleNames } from "../util/data";
+import { ColorScaleNames, COLOR_SCALES } from "../util/data";
 
 export default Vue.extend({
   name: "ImagePreview",
@@ -90,29 +90,151 @@ export default Vue.extend({
   },
 
   props: {
-    row: Object as () => TableRow,
-    imageUrl: String as () => string,
+    row: { type: Object as () => TableRow, default: null as TableRow },
+    imageUrl: { type: String as () => string, default: null },
     overlappedUrls: {
       type: Array as () => string[],
       default: () => [] as string[],
     },
     uniqueTrail: { type: String as () => string, default: "" },
-    type: String as () => string,
-    width: {
-      default: 64,
-      type: Number as () => number,
-    },
-    height: {
-      default: 64,
-      type: Number as () => number,
-    },
-    preventHiding: {
-      default: false,
-      type: Boolean as () => boolean,
-    },
+    type: { type: String as () => string, default: IMAGE_TYPE },
+    width: { type: Number as () => number, default: 64 },
+    height: { type: Number as () => number, default: 64 },
+    preventHiding: { type: Boolean as () => boolean, default: false },
     gray: { type: Number, default: 0 }, // support for graying images.
-    debounce: { type: Boolean as () => boolean, default: false },
-    debounceWaitTime: { type: Number as () => number, default: 500 },
+    shouldCleanUp: { type: Boolean as () => boolean, default: true },
+    shouldFetchImage: { type: Boolean as () => boolean, default: true },
+  },
+
+  data() {
+    return {
+      getImage: null,
+      hasRendered: false,
+      hasRequested: false,
+      imageAttentionHasRendered: false,
+      isVisible: false,
+      stopSpinner: false,
+      zoomedHeight: 400,
+      zoomImage: false,
+      zoomedWidth: 400,
+    };
+  },
+
+  computed: {
+    confidenceColor(): string {
+      if (!this.isLoaded) return;
+      const confidenceScale = this.row?.confidenceScale;
+      if (!confidenceScale) return;
+      return COLOR_SCALES.get(this.colorScale)(confidenceScale);
+    },
+
+    colorScale(): ColorScaleNames {
+      return routeGetters.getColorScale(this.$store);
+    },
+
+    imageId(): string {
+      return this.imageUrl?.split(/_B[0-9][0-9a-zA-Z][.]/)[0];
+    },
+    imgClass(): string {
+      return this.imageUrl == null ? "d-none" : "";
+    },
+    imageDrilldown(): DrillDownInfo {
+      return {
+        band: this.band,
+        title: this.imageUrl,
+      };
+    },
+
+    imageDrilldownPosition(): number {
+      return this.overlappedUrls.length
+        ? this.overlappedUrls.indexOf(this.imageUrl)
+        : 0;
+    },
+
+    files(): Dictionary<any> {
+      return datasetGetters.getFiles(this.$store);
+    },
+
+    imageParamUrl(): string {
+      return this.uniqueTrail.length
+        ? `${this.imageUrl}/${this.uniqueTrail}`
+        : this.imageUrl;
+    },
+
+    imageParamId(): string {
+      return this.uniqueTrail.length
+        ? `${this.imageId}/${this.uniqueTrail}`
+        : this.imageId;
+    },
+
+    isLoaded(): boolean {
+      if (this.type === IMAGE_TYPE) {
+        return !!this.files[this.imageParamUrl] || this.stopSpinner;
+      }
+
+      return (
+        (!!this.files[this.imageParamUrl] && !!this.files[this.imageParamId]) ||
+        this.stopSpinner
+      );
+    },
+
+    imageAttentionIsLoaded(): boolean {
+      return (
+        !!this.solutionId &&
+        !!this.row &&
+        !!this.files[this.solutionId + this.row.d3mIndex]
+      );
+    },
+
+    image(): HTMLImageElement {
+      if (this.type === IMAGE_TYPE) {
+        return this.files[this.imageParamUrl] ?? null;
+      }
+      return (
+        this.files[this.imageParamUrl] ?? this.files[this.imageParamId] ?? null
+      );
+    },
+
+    imageAttentionId(): string {
+      return this.solutionId + this.row.d3mIndex;
+    },
+
+    imageAttention(): HTMLImageElement {
+      return this.files[this.solutionId + this.row?.d3mIndex] ?? null;
+    },
+
+    dataset(): string {
+      const dataset = routeGetters.getRoutePredictionsDataset(this.$store);
+      if (dataset) {
+        return dataset;
+      }
+      return routeGetters.getRouteDataset(this.$store);
+    },
+
+    rowSelection(): RowSelection {
+      return routeGetters.getDecodedRowSelection(this.$store);
+    },
+
+    isSelected(): boolean {
+      if (this.row) {
+        return isRowSelected(this.rowSelection, this.row[D3M_INDEX_FIELD]);
+      }
+      return false;
+    },
+
+    band(): string {
+      return routeGetters.getBandCombinationId(this.$store);
+    },
+
+    hasImageAttention(): boolean {
+      return routeGetters.getImageAttention(this.$store);
+    },
+
+    solutionId(): string {
+      return routeGetters.getRouteSolutionId(this.$store);
+    },
+
+    spinnerHTML,
   },
 
   watch: {
@@ -121,25 +243,23 @@ export default Vue.extend({
         if (!this.isLoaded) {
           return;
         }
+        this.injectImage();
         await this.handleImageAttention();
       });
     },
     imageUrl(newUrl: string, oldUrl: string) {
-      if (newUrl === null) {
-        return;
-      }
+      if (newUrl === null) return;
       if (newUrl !== oldUrl) {
         this.cleanUp();
         this.hasRendered = false;
         this.hasRequested = false;
-        this.clearImage();
         this.getImage();
       }
     },
     async hasImageAttention() {
       await this.handleImageAttention();
     },
-    async row(newRow: TableRow, oldRow: TableRow) {
+    async row() {
       await this.handleImageAttention();
     },
     async colorScale() {
@@ -159,125 +279,37 @@ export default Vue.extend({
         this.hasRendered = false;
         this.hasRequested = false;
         if (this.isVisible) {
-          this.clearImage();
           this.getImage();
         }
       }
     },
-    debounce(newVal: boolean) {
-      if (newVal) {
-        this.getImage = this.debouncedRequestImage;
-        return;
-      }
-      this.getImage = this.requestImage;
-    },
   },
 
-  data() {
-    return {
-      debouncedRequestImage: null,
-      entry: null,
-      getImage: null,
-      hasRendered: false,
-      hasRequested: false,
-      imageAttentionHasRendered: false,
-      isVisible: false,
-      stopSpinner: false,
-      zoomedHeight: 400,
-      zoomImage: false,
-      zoomedWidth: 400,
-    };
+  async beforeMount() {
+    // lazy fetch available band types
+    if (
+      this.type === MULTIBAND_IMAGE_TYPE &&
+      _.isEmpty(datasetGetters.getMultiBandCombinations(this.$store))
+    ) {
+      await datasetActions.fetchMultiBandCombinations(this.$store, {
+        dataset: this.dataset,
+      });
+    }
   },
 
-  computed: {
-    colorScale(): ColorScaleNames {
-      return routeGetters.getColorScale(this.$store);
-    },
+  created() {
+    this.getImage = this.requestImage;
+  },
 
-    imageId(): string {
-      return this.imageUrl?.split(/_B[0-9][0-9a-zA-Z][.]/)[0];
-    },
-
-    imageDrilldown(): DrillDownInfo {
-      return {
-        band: this.band,
-        title: this.imageUrl,
-      };
-    },
-
-    files(): Dictionary<any> {
-      return datasetGetters.getFiles(this.$store);
-    },
-    imageParamUrl(): string {
-      return this.uniqueTrail.length
-        ? `${this.imageUrl}/${this.uniqueTrail}`
-        : this.imageUrl;
-    },
-    imageParamId(): string {
-      return this.uniqueTrail.length
-        ? `${this.imageId}/${this.uniqueTrail}`
-        : this.imageId;
-    },
-    isLoaded(): boolean {
-      return (
-        (!!this.files[this.imageParamUrl] && !!this.files[this.imageParamId]) ||
-        this.stopSpinner
-      );
-    },
-    imageAttentionIsLoaded(): boolean {
-      return (
-        !!this.solutionId &&
-        !!this.row &&
-        !!this.files[this.solutionId + this.row.d3mIndex]
-      );
-    },
-    image(): HTMLImageElement {
-      return (
-        this.files[this.imageParamUrl] ?? this.files[this.imageParamId] ?? null
-      );
-    },
-    imageAttentionId(): string {
-      return this.solutionId + this.row.d3mIndex;
-    },
-    imageAttention(): HTMLImageElement {
-      return this.files[this.solutionId + this.row?.d3mIndex] ?? null;
-    },
-    spinnerHTML(): string {
-      return circleSpinnerHTML();
-    },
-    dataset(): string {
-      const dataset = routeGetters.getRoutePredictionsDataset(this.$store);
-      if (dataset) {
-        return dataset;
-      }
-      return routeGetters.getRouteDataset(this.$store);
-    },
-    rowSelection(): RowSelection {
-      return routeGetters.getDecodedRowSelection(this.$store);
-    },
-    isSelected(): boolean {
-      if (this.row) {
-        return isRowSelected(this.rowSelection, this.row[D3M_INDEX_FIELD]);
-      }
-      return false;
-    },
-
-    band(): string {
-      return routeGetters.getBandCombinationId(this.$store);
-    },
-
-    hasImageAttention(): boolean {
-      return routeGetters.getImageAttention(this.$store);
-    },
-    solutionId(): string {
-      return routeGetters.getRouteSolutionId(this.$store);
-    },
+  destroyed() {
+    this.cleanUp();
   },
 
   methods: {
     handleShiftClick() {
       this.$emit("shift-click", this.row);
     },
+
     async visibilityChanged(isVisible: boolean) {
       this.isVisible = isVisible;
       if (this.isVisible && !this.hasRequested) {
@@ -289,9 +321,9 @@ export default Vue.extend({
         this.injectImage();
       }
     },
+
     async handleImageAttention() {
       this.hasRendered = false;
-      this.clearImage(this.$refs.imageAttentionElem as any);
       if (
         this.hasImageAttention &&
         !this.imageAttentionIsLoaded &&
@@ -307,10 +339,10 @@ export default Vue.extend({
         this.injectFilter();
       }
       if (!this.hasImageAttention && this.imageAttentionHasRendered) {
-        this.clearImage(this.$refs.imageAttentionElem as any);
         this.imageAttentionHasRendered = false;
       }
     },
+
     handleClick() {
       this.$emit("click", {
         row: this.row,
@@ -322,61 +354,42 @@ export default Vue.extend({
     showZoomedImage() {
       this.zoomImage = true;
     },
+
     hideZoomImage() {
       this.zoomImage = false;
     },
 
-    clearImage(elem?: any) {
-      const $elem = elem || (this.$refs.imageElem as any);
-      if ($elem) {
-        $elem.innerHTML = "";
-      }
-    },
-
     injectImage() {
-      if (!this.image) {
-        return;
-      }
-
-      const elem = this.$refs.imageElem as any;
+      if (!this.image) return;
+      const elem = this.$refs.imageElem as HTMLImageElement;
       if (elem) {
-        this.clearImage(elem);
-        const image = this.image.cloneNode() as HTMLImageElement;
-        elem.appendChild(image);
-
-        // fit image preview to available area with no overflows
-        if (
-          this.width === this.height &&
-          elem.children[0].height > elem.children[0].width
-        ) {
-          elem.children[0].style.height = elem.children[0].width + "px";
+        // this.image can be an HTMLImageElement or Binary data
+        if (typeof this.image === "object") {
+          elem.src = this.image.src;
+        } else {
+          // in this instance this.image is binary data
+          elem.src = ("data:image/jpeg;base64," + this.image) as string;
         }
         this.hasRendered = true;
       }
     },
+
     injectFilter() {
       if (!this.imageAttention) {
         return;
       }
 
-      const elem = this.$refs.imageAttentionElem as any;
+      const elem = this.$refs.imageAttentionElem as HTMLImageElement;
       if (elem) {
-        this.clearImage(elem);
-        const image = this.imageAttention.cloneNode() as HTMLImageElement;
-        elem.appendChild(image);
-
-        // fit image preview to available area with no overflows
-        if (
-          this.width === this.height &&
-          elem.children[0].height > elem.children[0].width
-        ) {
-          elem.children[0].style.height = elem.children[0].width + "px";
-        }
+        elem.src = this.imageAttention.src;
         this.imageAttentionHasRendered = true;
       }
     },
 
     async requestImage() {
+      if (!this.shouldFetchImage) {
+        return;
+      }
       if (this.imageUrl === null) {
         this.stopSpinner = true; // imageUrl is null stop spinner
         return;
@@ -386,6 +399,7 @@ export default Vue.extend({
         await datasetActions.fetchImage(this.$store, {
           dataset: this.dataset,
           url: this.imageUrl,
+          isThumbnail: true,
         });
         if (this.isVisible) {
           this.injectImage();
@@ -405,7 +419,11 @@ export default Vue.extend({
         console.warn(`Image Data Type ${this.type} is not supported`);
       }
     },
+
     cleanUp() {
+      if (!this.shouldCleanUp) {
+        return;
+      }
       const empty = "";
       if (this.uniqueTrail !== empty) {
         datasetMutations.removeFile(this.$store, this.imageParamId);
@@ -414,35 +432,6 @@ export default Vue.extend({
         }
       }
     },
-  },
-
-  async beforeMount() {
-    // lazy fetch available band types
-    if (
-      this.type === MULTIBAND_IMAGE_TYPE &&
-      _.isEmpty(datasetGetters.getMultiBandCombinations(this.$store))
-    ) {
-      await datasetActions.fetchMultiBandCombinations(this.$store, {
-        dataset: this.dataset,
-      });
-    }
-  },
-  created() {
-    this.debouncedRequestImage = _.debounce(
-      this.requestImage.bind(this),
-      this.debounceWaitTime
-    );
-    if (this.debounce) {
-      this.getImage = this.debouncedRequestImage;
-    } else {
-      this.getImage = this.requestImage;
-    }
-  },
-  destroyed() {
-    this.cleanUp();
-    if (this.debounce) {
-      this.getImage.cancel();
-    }
   },
 });
 </script>
@@ -454,6 +443,7 @@ export default Vue.extend({
 
 .image-container {
   position: relative;
+  outline: solid 2px var(--confidence);
 }
 
 .image-container.selected {

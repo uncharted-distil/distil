@@ -130,23 +130,6 @@ export const getters = {
       !state.query.annotationHasChanged;
     return hasChanged;
   },
-  getJoinDatasetsVariableSummaries(
-    state: Route,
-    getters: any
-  ): VariableSummary[] {
-    function hashSummary(datasetName: string, key: string) {
-      return `${datasetName}:${key}`.toLowerCase();
-    }
-
-    const variables = getters.getJoinDatasetsVariables;
-    const lookup = buildLookup(
-      variables.map((v) => hashSummary(v.datasetName, v.key))
-    );
-    const summaries = getters.getVariableSummaries ?? ([] as VariableSummary[]);
-    return summaries.filter(
-      (summary) => lookup[hashSummary(summary.dataset, summary.key)]
-    );
-  },
 
   getJoinDatasetColumnA(state: Route, getters: any): string {
     return state.query.joinColumnA as string;
@@ -168,7 +151,26 @@ export const getters = {
     const accuracy = state.query.joinAccuracy;
     return accuracy ? _.toNumber(accuracy) : 1;
   },
-
+  getDecodedJoinDatasetsHighlight(
+    state: Route,
+    getters: any
+  ): Dictionary<Highlight[]> {
+    const datasetIDs = getters.getRouteJoinDatasets as string[];
+    if (datasetIDs.length !== 2) {
+      return {};
+    }
+    const highlights = getters.getDecodedHighlights as Highlight[];
+    const result = {};
+    datasetIDs.forEach((id) => {
+      result[id] = [];
+    });
+    highlights.forEach((highlight) => {
+      if (result[highlight.dataset]) {
+        result[highlight.dataset].push(highlight);
+      }
+    });
+    return result;
+  },
   getDecodedJoinDatasetsFilterParams(
     state: Route,
     getters: any
@@ -195,8 +197,9 @@ export const getters = {
         });
 
         const filterParams = _.cloneDeep({
-          filters: filtersForDataset,
+          filters: { list: filtersForDataset },
           variables: dataset.variables.map((v) => v.key),
+          highlights: { list: [] },
         });
         res[datasetID] = filterParams;
       }
@@ -218,7 +221,9 @@ export const getters = {
   getRouteIsTrainingVariablesRanked(state: Route): boolean {
     return state.query.varRanked && state.query.varRanked === "1"; // Use "1" for truth.
   },
-
+  getRouteLabel(state: Route): string {
+    return state.query.label as string;
+  },
   // Returns a boolean to say that the cluster for this dataset has been generated.
   getRouteIsClusterGenerated(state: Route): boolean {
     return state.query.clustering && state.query.clustering === "1"; // Use "1" for truth.
@@ -396,7 +401,7 @@ export const getters = {
   },
 
   getDecodedFilters(state: Route, getters: any): Filter[] {
-    return decodeFilters(state.query.filters as string);
+    return decodeFilters(state.query.filters as string).list;
   },
 
   getDecodedSolutionRequestFilterParams(
@@ -406,9 +411,9 @@ export const getters = {
     const filters = getters.getDecodedFilters;
     const size = getters.getRouteDataSize;
     const filterParams = _.cloneDeep({
-      highlights: [],
+      highlights: { list: [] },
       variables: [],
-      filters,
+      filters: { list: filters },
       size,
     });
 
@@ -613,6 +618,7 @@ export const getters = {
     const orderBy = state.query.orderBy as string;
     return !!orderBy;
   },
+
   /* Check if the current task includes Remote Sensing. */
   isMultiBandImage(state: Route): boolean {
     // Get the list of task of the route.
@@ -698,17 +704,35 @@ export const getters = {
   },
 
   /* Check if the current page is SELECT_TARGET_ROUTE. */
-  isPageSelectTarget(state: Route): Boolean {
+  isPageSelectTarget(state: Route): boolean {
     return state.path === SELECT_TARGET_ROUTE;
   },
 
   /* Check if the current page is SELECT_TRAINING_ROUTE. */
-  isPageSelectTraining(state: Route): Boolean {
+  isPageSelectTraining(state: Route): boolean {
     return state.path === SELECT_TRAINING_ROUTE;
   },
 
   /* Get the active pane on the route */
   getRoutePane(state: Route): string {
     return state.query.pane as string;
+  },
+
+  /* Check if the current task includes a Binary classification. */
+  isBinaryClassification(state: Route): boolean {
+    // Get the list of task of the route.
+    const task = state.query.task as string;
+    if (!task) return false;
+
+    // Check if BINARY and CLASSIFICATION are part of it.
+    const isBinary = task.includes(TaskTypes.BINARY);
+    const isClassification = task.includes(TaskTypes.CLASSIFICATION);
+
+    return isBinary && isClassification;
+  },
+
+  /* Get the Binary Classification Positive Label */
+  getPositiveLabel(state: Route): string {
+    return (state.query?.positiveLabel as string) ?? null;
   },
 };

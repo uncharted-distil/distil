@@ -29,16 +29,28 @@
     </div>
 
     <div class="row flex-1 pb-3 h-100">
-      <variable-facets
-        class="col-12 col-md-3 d-flex h-100 pt-2"
-        enable-search
-        enable-type-change
-        enable-highlighting
-        :instance-name="instanceName"
-        :rows-per-page="numRowsPerPage"
-        :summaries="variableSummaries"
-      >
-      </variable-facets>
+      <div class="h-100">
+        <div class="h-50">
+          <variable-facets
+            enable-search
+            enable-type-change
+            enable-highlighting
+            :instance-name="instanceName"
+            :rows-per-page="numRowsPerPage"
+            :summaries="topVariableSummaries"
+          />
+        </div>
+        <div class="h-50">
+          <variable-facets
+            enable-search
+            enable-type-change
+            enable-highlighting
+            :instance-name="instanceName"
+            :rows-per-page="numRowsPerPage"
+            :summaries="bottomVariableSummaries"
+          />
+        </div>
+      </div>
       <div class="col-12 col-md-9 d-flex flex-column h-100">
         <div class="row flex-1 pb-3">
           <join-data-slot
@@ -52,7 +64,7 @@
             :other-selected-column="bottomColumn"
             instance-name="join-dataset-top"
             @col-clicked="onTopColumnClicked"
-          ></join-data-slot>
+          />
         </div>
         <div class="row flex-1 pb-3">
           <join-data-slot
@@ -66,7 +78,7 @@
             :other-selected-column="topColumn"
             instance-name="join-dataset-bottom"
             @col-clicked="onBottomColumnClicked"
-          ></join-data-slot>
+          />
         </div>
         <div class="row pb-5">
           <div
@@ -94,7 +106,7 @@
               :dataset-a-column="topColumn"
               :dataset-b-column="bottomColumn"
               :join-accuracy="joinAccuracy"
-            ></join-datasets-form>
+            />
           </div>
         </div>
       </div>
@@ -119,7 +131,6 @@ import {
   Dataset,
 } from "../store/dataset/index";
 import {
-  filterSummariesByDataset,
   NUM_PER_PAGE,
   getTableDataItems,
   getTableDataFields,
@@ -128,6 +139,7 @@ import { JOINED_VARS_INSTANCE } from "../store/route/index";
 import { actions as viewActions } from "../store/view/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as datasetGetters } from "../store/dataset/module";
+import { getVariableSummaries } from "../util/join";
 
 export default Vue.extend({
   name: "join-datasets",
@@ -143,8 +155,24 @@ export default Vue.extend({
     joinDatasets(): string[] {
       return routeGetters.getRouteJoinDatasets(this.$store);
     },
-    variableSummaries(): VariableSummary[] {
-      return routeGetters.getJoinDatasetsVariableSummaries(this.$store);
+    variableSummaries(): Map<string, VariableSummary[]> {
+      const result = new Map<string, VariableSummary[]>();
+      this.joinDatasets.forEach((d) => {
+        result.set(d, getVariableSummaries(this.$store, d));
+      });
+      return result;
+    },
+    topVariableSummaries(): VariableSummary[] {
+      if (!this.variableSummaries.has(this.topDataset)) {
+        return [];
+      }
+      return this.variableSummaries.get(this.topDataset);
+    },
+    bottomVariableSummaries(): VariableSummary[] {
+      if (!this.variableSummaries.has(this.bottomDataset)) {
+        return [];
+      }
+      return this.variableSummaries.get(this.bottomDataset);
     },
     numRowsPerPage(): number {
       return NUM_PER_PAGE;

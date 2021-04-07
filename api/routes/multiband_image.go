@@ -103,13 +103,13 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, dataCtor api.DataStorag
 		}
 
 		// need to get the band -> filename from the data
-		bandMapping, err := getBandMapping(res, imageID, dataStorage)
+		bandMapping, err := getBandMapping(res, []string{imageID}, dataStorage)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		img, err := util.ImageFromCombination(sourcePath, bandMapping, bandCombo, imageScale, options)
+		img, err := util.ImageFromCombination(sourcePath, bandMapping[imageID], bandCombo, imageScale, options)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -137,7 +137,7 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, dataCtor api.DataStorag
 	}
 }
 
-func getBandMapping(ds *api.Dataset, groupKey string, dataStorage api.DataStorage) (map[string]string, error) {
+func getBandMapping(ds *api.Dataset, groupKeys []string, dataStorage api.DataStorage) (map[string]map[string]string, error) {
 	// build a filter to only include rows matching a group id
 	var groupingCol *model.Variable
 	var bandCol *model.Variable
@@ -162,44 +162,50 @@ func getBandMapping(ds *api.Dataset, groupKey string, dataStorage api.DataStorag
 	}
 
 	filter := &api.FilterParams{}
-	filter.Filters = []*model.Filter{
+	filter.Filters = api.FilterObject{List: []*model.Filter{
 		{
 			Key:        groupingCol.Key,
 			Type:       model.CategoricalFilter,
-			Categories: []string{groupKey},
+			Categories: groupKeys,
 			Mode:       model.IncludeFilter,
 		},
+	},
 	}
-	filter.Variables = []string{fileCol.Key, bandCol.Key}
+	filter.Variables = []string{fileCol.Key, bandCol.Key, groupingCol.Key}
 
 	// pull back all rows for a group id
-	data, err := dataStorage.FetchData(ds.ID, ds.StorageName, filter, false, false, nil)
+	data, err := dataStorage.FetchData(ds.ID, ds.StorageName, filter, true, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	// cycle through results to build the band mapping
-	fileColumn := -1
-	bandColumn := -1
+	outputColumns := map[string]int{}
 	for i, c := range data.Columns {
-		if c.Key == fileCol.Key {
-			fileColumn = i
-		} else if c.Key == bandCol.Key {
-			bandColumn = i
-		}
+		outputColumns[c.Key] = i
 	}
-	if fileColumn == -1 {
+	fileColumn, ok := outputColumns[fileCol.Key]
+	if !ok {
 		return nil, errors.Errorf("no file column found in stored data")
 	}
-	if bandColumn == -1 {
+	bandColumn, ok := outputColumns[bandCol.Key]
+	if !ok {
 		return nil, errors.Errorf("no band column found in stored data")
 	}
+	groupColumn, ok := outputColumns[groupingCol.Key]
+	if !ok {
+		return nil, errors.Errorf("no group column found in stored data")
+	}
 
-	mapping := map[string]string{}
+	mapping := map[string]map[string]string{}
 	for _, r := range data.Values {
+		groupKey := r[groupColumn].Value.(string)
+		if mapping[groupKey] == nil {
+			mapping[groupKey] = map[string]string{}
+		}
 		// the mapping expects bXX but the database only stores XX
 		bandKey := fmt.Sprintf("b%s", r[bandColumn].Value.(string))
-		mapping[bandKey] = r[fileColumn].Value.(string)
+		mapping[groupKey][bandKey] = r[fileColumn].Value.(string)
 	}
 
 	return mapping, nil

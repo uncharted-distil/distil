@@ -15,13 +15,14 @@
  *    limitations under the License.
  */
 
+import VueRouter from "vue-router";
+import { VariableSummary } from "../store/dataset";
+import { getters as datasetGetters } from "../store/dataset/module";
 import { JOIN_DATASETS_ROUTE } from "../store/route/index";
 import { getters as routeGetters } from "../store/route/module";
-import { getters as datasetGetters } from "../store/dataset/module";
-import { createRouteEntry } from "./routes";
-import { addRecentDataset } from "./data";
 import store from "../store/store";
-import VueRouter from "vue-router";
+import { addRecentDataset, minimumRouteKey } from "./data";
+import { createRouteEntry } from "./routes";
 
 export function loadJoinedDataset(
   router: VueRouter,
@@ -59,4 +60,24 @@ export function loadJoinView(
     target: target,
   });
   router.push(entry).catch((err) => console.warn(err));
+}
+
+export function getVariableSummaries(
+  context,
+  dataset?: string
+): VariableSummary[] {
+  let variables = routeGetters.getJoinDatasetsVariables(context);
+  if (dataset) {
+    variables = variables.filter((v) => {
+      return v.datasetName === dataset;
+    });
+  }
+  const summaries = datasetGetters.getVariableSummariesDictionary(context);
+  const routeKey = minimumRouteKey();
+  const result = [] as VariableSummary[];
+  variables.forEach((v) => {
+    if (summaries[v.key])
+      if (summaries[v.key][routeKey]) result.push(summaries[v.key][routeKey]);
+  });
+  return result;
 }

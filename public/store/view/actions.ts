@@ -29,9 +29,10 @@ import { Dictionary } from "../../util/dict";
 import {
   EXCLUDE_FILTER,
   Filter,
-  invertFilter,
   FilterParams,
+  invertFilter,
 } from "../../util/filters";
+import { cloneFilters, setHighlightModes } from "../../util/highlights";
 import { getPredictionsById } from "../../util/predictions";
 import {
   DataMode,
@@ -42,8 +43,8 @@ import {
 } from "../dataset";
 import {
   actions as datasetActions,
-  mutations as datasetMutations,
   getters as datasetGetters,
+  mutations as datasetMutations,
 } from "../dataset/module";
 import {
   actions as modelActions,
@@ -60,15 +61,14 @@ import {
 } from "../requests/module";
 import {
   actions as resultActions,
-  mutations as resultMutations,
   getters as resultGetters,
+  mutations as resultMutations,
 } from "../results/module";
-import { DATA_EXPLORER_ROUTE, SELECT_TARGET_ROUTE } from "../route";
+import { SELECT_TARGET_ROUTE } from "../route";
 import { getters as routeGetters } from "../route/module";
 import store, { DistilState } from "../store";
 import { ViewState } from "./index";
 import { getters as viewGetters, mutations as viewMutations } from "./module";
-import { setHighlightModes, cloneFilters } from "../../util/highlights";
 
 enum ParamCacheKey {
   VARIABLES = "VARIABLES",
@@ -380,7 +380,7 @@ export const actions = {
     datasetMutations.clearJoinDatasetsTableData(store);
 
     const datasetIDs = context.getters.getRouteJoinDatasets;
-    const highlights = context.getters.getDecodedHighlights as Highlight[];
+    const highlights = context.getters.getDecodedJoinDatasetsHighlight;
     const filterParams = context.getters.getDecodedJoinDatasetsFilterParams;
     const datasets = context.getters.getDatasets;
     const dataMode = context.getters.getDataMode as DataMode;
@@ -400,16 +400,16 @@ export const actions = {
       datasetActions.fetchIncludedVariableSummaries(store, {
         dataset: datasetA.id,
         variables: datasetA.variables,
-        filterParams: filterParams,
-        highlights: highlights,
+        filterParams: filterParams[datasetA.id],
+        highlights: highlights[datasetA.id],
         dataMode: dataMode,
         varModes: varModes,
       }),
       datasetActions.fetchIncludedVariableSummaries(store, {
         dataset: datasetB.id,
         variables: datasetB.variables,
-        filterParams: filterParams,
-        highlights: highlights,
+        filterParams: filterParams[datasetB.id],
+        highlights: highlights[datasetB.id],
         dataMode: dataMode,
         varModes: varModes,
       }),
@@ -549,8 +549,17 @@ export const actions = {
     const variables = datasetGetters.getVariables(store);
     const varModes = context.getters.getDecodedVarModes;
     const orderBy = routeGetters.getOrderBy(store);
-    clearVariableSummaries(context);
     filterParams.variables = variables.map((v) => v.key);
+    const label = routeGetters.getRouteLabel(store);
+    if (
+      highlights.some((h) => {
+        return h.key === label;
+      })
+    ) {
+      datasetMutations.clearVariableSummaries(store);
+    } else {
+      datasetMutations.setVariableSummary(store, { key: label, summary: null });
+    }
     return Promise.all([
       datasetActions.fetchIncludedVariableSummaries(store, {
         dataset,
@@ -578,21 +587,25 @@ export const actions = {
     filterParams.size = datasetGetters.getNumberOfRecords(store);
     filterParams = setHighlightModes(filterParams, EXCLUDE_FILTER);
     const baseline = {
-      highlights: filterParams.highlights,
-      filters: filterParams.filters.filter((f) => {
-        return f.mode === EXCLUDE_FILTER;
-      }),
+      highlights: { list: filterParams.highlights.list },
+      filters: {
+        list: filterParams.filters.list.filter((f) => {
+          return f.mode === EXCLUDE_FILTER;
+        }),
+      },
       variables: filterParams.variables,
       size: Number.MAX_SAFE_INTEGER,
     } as FilterParams;
     const excludeBaseline = {
-      highlights: filterParams.highlights,
-      filters: filterParams.filters.filter((f) => {
-        return f.mode === EXCLUDE_FILTER;
-      }),
+      highlights: { list: filterParams.highlights.list },
+      filters: {
+        list: filterParams.filters.list.filter((f) => {
+          return f.mode === EXCLUDE_FILTER;
+        }),
+      },
       variables: filterParams.variables,
       size: Number.MAX_SAFE_INTEGER,
-    };
+    } as FilterParams;
     return Promise.all([
       datasetActions.fetchBaselineTableData(store, {
         dataset: dataset,
@@ -619,27 +632,29 @@ export const actions = {
     // artificially add filter but dont add it to the url
     // this is a hack to avoid adding an extra field just for the area of interest
     const clonedFilterParams = _.cloneDeep(filterParams);
-    clonedFilterParams.filters.push(filter);
+    clonedFilterParams.filters.list.push(filter);
     const clonedExcludeFilter = _.cloneDeep(filter);
     // the exclude has to invert all the filters -- the route does a collective NOT() and
     // for areaOfInterest we need compounded ands so therefore we invert client side pass in
     // as an include and that removes the collective NOT
     const clonedFilterParamsExclude = _.cloneDeep(filterParams);
-    clonedFilterParamsExclude.filters.forEach((f) => {
+    clonedFilterParamsExclude.filters.list.forEach((f) => {
       f.mode = invertFilter(f.mode);
     });
-    clonedFilterParamsExclude.filters.push(clonedExcludeFilter);
+    clonedFilterParamsExclude.filters.list.push(clonedExcludeFilter);
     const invertedHighlights = highlights.map((highlight) => {
       return { ...highlight, include: EXCLUDE_FILTER };
     });
     const baseline = {
-      highlights: [],
-      filters: [
-        filter,
-        ...clonedFilterParams.filters.filter((f) => {
-          return f.mode === EXCLUDE_FILTER;
-        }),
-      ],
+      highlights: { list: [] },
+      filters: {
+        list: [
+          filter,
+          ...clonedFilterParams.filters.list.filter((f) => {
+            return f.mode === EXCLUDE_FILTER;
+          }),
+        ],
+      },
       size: Number.MAX_SAFE_INTEGER,
       variables: clonedFilterParams.variables,
     } as FilterParams;
@@ -932,7 +947,7 @@ export const actions = {
     predictionMutations.clearTrainingSummaries(store);
     predictionMutations.setIncludedPredictionTableData(store, null);
 
-    const produceRequestId = <string>context.getters.getRouteProduceRequestId;
+    const produceRequestId = context.getters.getRouteProduceRequestId as string;
     const fittedSolutionId = context.getters.getRouteFittedSolutionId;
 
     // fetch the predictions
@@ -955,15 +970,16 @@ export const actions = {
 
   updatePredictionTrainingSummaries(context: ViewContext) {
     // fetch new state
-    const produceRequestId = <string>context.getters.getRouteProduceRequestId;
+    const produceRequestId = context.getters.getRouteProduceRequestId as string;
     const inferenceDataset = getPredictionsById(
       context.getters.getPredictions,
       produceRequestId
     ).dataset;
     const highlights = context.getters.getDecodedHighlights as Highlight[];
-    const varModes = <Map<string, SummaryMode>>(
-      context.getters.getDecodedVarModes
-    );
+    const varModes = context.getters.getDecodedVarModes as Map<
+      string,
+      SummaryMode
+    >;
     const currentSearch = context.getters
       .getRouteResultTrainingVarsSearch as string;
     const trainingVariables = searchVariables(

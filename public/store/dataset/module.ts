@@ -166,6 +166,7 @@ export const actions = {
   // files
   fetchFiles: dispatch(moduleActions.fetchFiles),
   fetchImage: dispatch(moduleActions.fetchImage),
+  fetchImagePack: dispatch(moduleActions.fetchImagePack),
   fetchMultiBandImage: dispatch(moduleActions.fetchMultiBandImage),
   fetchImageAttention: dispatch(moduleActions.fetchImageAttention),
   fetchTimeseries: dispatch(moduleActions.fetchTimeseries),
@@ -214,6 +215,7 @@ export const mutations = {
     moduleMutations.updateExcludedVariableSummaries
   ),
   clearVariableSummaries: commit(moduleMutations.clearVariableSummaries),
+  setVariableSummary: commit(moduleMutations.setIncludedVariableSummary),
   // ranking
   setVariableRankings: commit(moduleMutations.setVariableRankings),
   updateVariableRankings: commit(moduleMutations.updateVariableRankings),
@@ -223,6 +225,8 @@ export const mutations = {
   // files
   updateFile: commit(moduleMutations.updateFile),
   removeFile: commit(moduleMutations.removeFile),
+  bulkRemoveFiles: commit(moduleMutations.bulkRemoveFiles),
+  bulkUpdateFiles: commit(moduleMutations.bulkUpdateFiles),
   bulkUpdateTimeseries: commit(moduleMutations.bulkUpdateTimeseries),
   // included / excluded table data
   setJoinDatasetsTableData: commit(moduleMutations.setJoinDatasetsTableData),

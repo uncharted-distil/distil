@@ -143,9 +143,9 @@ export const actions = {
     }
   ) {
     const filterParamsBlank = {
-      highlights: [],
+      highlights: { list: [], invert: false },
       variables: [],
-      filters: [],
+      filters: { list: [], invert: false },
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -155,7 +155,7 @@ export const actions = {
     if (_.isInteger(args.size)) {
       filterParams.size = args.size;
     }
-    filterParams.filters.push(args.filter);
+    filterParams.filters.list.push(args.filter);
     try {
       const response = await axios.post(
         `/distil/prediction-results/${encodeURIComponent(
@@ -183,9 +183,9 @@ export const actions = {
     }
   ) {
     const filterParamsBlank = {
-      highlights: [],
+      highlights: { list: [], invert: false },
       variables: [],
-      filters: [],
+      filters: { list: [], invert: false },
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -196,11 +196,11 @@ export const actions = {
     if (_.isInteger(args.size)) {
       filterParams.size = args.size;
     }
-    filterParams.filters.push(args.filter);
+    filterParams.filters.list.push(args.filter);
     // if highlight is null there is nothing to invert so return null
     if (
       filterParams.highlights === null &&
-      filterParams.highlights.length > 0
+      filterParams.highlights.list.length > 0
     ) {
       mutations.setAreaOfInterestOuter(context, createEmptyTableData());
       return;
@@ -248,10 +248,10 @@ export const actions = {
     }
 
     let filterParams = {
-      highlights: [],
+      highlights: { list: [], invert: false },
       variables: [],
-      filters: [],
-    };
+      filters: { list: [], invert: false },
+    } as FilterParams;
     filterParams = addHighlightToFilterParams(filterParams, args.highlights);
     try {
       const response = await axios.post(
@@ -285,11 +285,11 @@ export const actions = {
       size?: number;
     }
   ) {
-    let filterParams: FilterParams = {
-      highlights: [],
+    let filterParams = {
+      highlights: { list: [], invert: false },
       variables: [],
-      filters: [],
-    };
+      filters: { list: [], invert: false },
+    } as FilterParams;
     filterParams = addHighlightToFilterParams(filterParams, args.highlights);
 
     // Add the size limit to results if provided.
@@ -349,10 +349,10 @@ export const actions = {
     }
 
     let filterParams = {
-      highlights: [],
+      highlights: { list: [], invert: false },
       variables: [],
-      filters: [],
-    };
+      filters: { list: [], invert: false },
+    } as FilterParams;
     filterParams = addHighlightToFilterParams(filterParams, args.highlights);
 
     const endpoint = `/distil/prediction-result-summary`;

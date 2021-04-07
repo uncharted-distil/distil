@@ -52,11 +52,17 @@ func DataModeFromString(s string) (DataMode, error) {
 // FilterParams defines the set of numeric range and categorical filters. Variables
 // with no range or category filters are also allowed.
 type FilterParams struct {
-	Size       int             `json:"size"`
-	Highlights []*model.Filter `json:"highlights"`
-	Filters    []*model.Filter `json:"filters"`
-	Variables  []string        `json:"variables"`
-	DataMode   DataMode        `json:"dataMode"`
+	Size       int          `json:"size"`
+	Highlights FilterObject `json:"highlights"`
+	Filters    FilterObject `json:"filters"`
+	Variables  []string     `json:"variables"`
+	DataMode   DataMode     `json:"dataMode"`
+}
+
+// FilterObject captures a collection of invertable filters.
+type FilterObject struct {
+	List   []*model.Filter `json:"list"`
+	Invert bool            `json:"invert"`
 }
 
 // GetBaselineFilter returns a filter params that only has the baseline filters.
@@ -67,9 +73,9 @@ func GetBaselineFilter(filterParam *FilterParams) *FilterParams {
 
 	// highlights should not be applied to the baseline
 	clone := &FilterParams{}
-	for _, filter := range filterParam.Filters {
+	for _, filter := range filterParam.Filters.List {
 		if filter.IsBaselineFilter {
-			clone.Filters = append(clone.Filters, filter)
+			clone.Filters.List = append(clone.Filters.List, filter)
 		}
 	}
 	clone.Variables = append(clone.Variables, filterParam.Variables...)
@@ -80,12 +86,12 @@ func GetBaselineFilter(filterParam *FilterParams) *FilterParams {
 
 // Empty returns if the filter set is empty.
 func (f *FilterParams) Empty(ignoreBaselineFilters bool) bool {
-	for _, filter := range f.Filters {
+	for _, filter := range f.Filters.List {
 		if !filter.IsBaselineFilter || !ignoreBaselineFilters {
 			return false
 		}
 	}
-	for _, highlight := range f.Highlights {
+	for _, highlight := range f.Highlights.List {
 		if !highlight.IsBaselineFilter || !ignoreBaselineFilters {
 			return false
 		}
@@ -97,18 +103,26 @@ func (f *FilterParams) Empty(ignoreBaselineFilters bool) bool {
 func (f *FilterParams) Clone() *FilterParams {
 	clone := &FilterParams{}
 
-	for _, h := range f.Highlights {
+	for _, h := range f.Highlights.List {
 		c := *h
-		clone.Highlights = append(clone.Highlights, &c)
+		clone.Highlights.List = append(clone.Highlights.List, &c)
 	}
-	for _, f := range f.Filters {
+	for _, f := range f.Filters.List {
 		c := *f
-		clone.Filters = append(clone.Filters, &c)
+		clone.Filters.List = append(clone.Filters.List, &c)
 	}
+	clone.Highlights.Invert = f.Highlights.Invert
+	clone.Filters.Invert = f.Filters.Invert
 	clone.Variables = append(clone.Variables, f.Variables...)
 	clone.Size = f.Size
 	clone.DataMode = f.DataMode
 	return clone
+}
+
+// Invert inverts filters and highlights.
+func (f *FilterParams) Invert() {
+	f.Filters.Invert = !f.Filters.Invert
+	f.Highlights.Invert = !f.Highlights.Invert
 }
 
 // AddVariable adds a variable, preventing duplicates
@@ -145,28 +159,28 @@ func (f *FilterParams) Merge(other *FilterParams) {
 		f.Size = other.Size
 	}
 
-	for _, highlight := range other.Highlights {
+	for _, highlight := range other.Highlights.List {
 		found := false
-		for _, currentHighlight := range f.Highlights {
+		for _, currentHighlight := range f.Highlights.List {
 			if filtersEqual(highlight, currentHighlight) {
 				found = true
 				break
 			}
 		}
 		if !found {
-			f.Highlights = append(f.Highlights, highlight)
+			f.Highlights.List = append(f.Highlights.List, highlight)
 		}
 	}
-	for _, filter := range other.Filters {
+	for _, filter := range other.Filters.List {
 		found := false
-		for _, currentFilter := range f.Filters {
+		for _, currentFilter := range f.Filters.List {
 			if filtersEqual(filter, currentFilter) {
 				found = true
 				break
 			}
 		}
 		if !found {
-			f.Filters = append(f.Filters, filter)
+			f.Filters.List = append(f.Filters.List, filter)
 		}
 	}
 	for _, variable := range other.Variables {
@@ -428,26 +442,38 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 		return filterParams, nil
 	}
 
-	highlights, ok := json.Array(params, "highlights")
+	highlights, ok := json.Array(params, "highlights", "list")
 	if ok {
 		for _, highlight := range highlights {
 			h, err := parseFilter(highlight)
 			if err != nil {
 				return nil, err
 			}
-			filterParams.Highlights = append(filterParams.Highlights, h)
+			filterParams.Highlights.List = append(filterParams.Highlights.List, h)
 		}
 	}
-
-	filters, ok := json.Array(params, "filters")
+	invertHighlights, ok := json.Bool(params, "highlights", "invert")
+	if ok {
+		filterParams.Highlights.Invert = invertHighlights
+	} else {
+		return nil, errors.New("Missing required param highlights.Invert")
+	}
+	filters, ok := json.Array(params, "filters", "list")
 	if ok {
 		for _, filter := range filters {
 			f, err := parseFilter(filter)
 			if err != nil {
 				return nil, err
 			}
-			filterParams.Filters = append(filterParams.Filters, f)
+			filterParams.Filters.List = append(filterParams.Filters.List, f)
 		}
+	}
+
+	invertFilters, ok := json.Bool(params, "filters", "invert")
+	if ok {
+		filterParams.Filters.Invert = invertFilters
+	} else {
+		return nil, errors.New("Missing required param filters.Invert")
 	}
 
 	variables, ok := json.StringArray(params, "variables")
@@ -455,12 +481,12 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 		filterParams.Variables = variables
 	}
 
-	sort.SliceStable(filterParams.Highlights, func(i, j int) bool {
-		return filterParams.Highlights[i].Key < filterParams.Highlights[j].Key
+	sort.SliceStable(filterParams.Highlights.List, func(i, j int) bool {
+		return filterParams.Highlights.List[i].Key < filterParams.Highlights.List[j].Key
 	})
 
-	sort.SliceStable(filterParams.Filters, func(i, j int) bool {
-		return filterParams.Filters[i].Key < filterParams.Filters[j].Key
+	sort.SliceStable(filterParams.Filters.List, func(i, j int) bool {
+		return filterParams.Filters.List[i].Key < filterParams.Filters.List[j].Key
 	})
 
 	return filterParams, nil

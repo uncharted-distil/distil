@@ -17,7 +17,7 @@
 
 <template>
   <div class="d-flex flex-column align-items-stretch h-100 w-100">
-    <div v-if="enableSearch" class="py-1">
+    <div v-if="enableSearch" class="py-1 mb-3">
       <b-form-input v-model="search" size="sm" placeholder="Search" />
     </div>
     <!-- TODO: this should be passed in as title HTML -->
@@ -39,7 +39,8 @@
         <div
           v-for="summary in summaries"
           :key="summary.key"
-          class="variable-facets-item flex-fill my-2 mx-1"
+          class="variable-facets-item flex-fill my-2"
+          :class="{ 'mx-1': !noMargin }"
         >
           <template v-if="summary.pending">
             <facet-loading :summary="summary" />
@@ -253,6 +254,7 @@ export default Vue.extend({
       type: String as () => Activity,
       default: Activity.DATA_PREPARATION,
     },
+    noMargin: { type: Boolean, default: false },
     summaries: { type: Array as () => VariableSummary[], default: [] },
     subtitle: { type: String, default: null },
     rowsPerPage: { type: Number, default: 0 },
@@ -270,24 +272,28 @@ export default Vue.extend({
         const entry = overlayRouteEntry(this.$route, {
           [this.routePageKey()]: page,
         });
-        this.$router.push(entry).catch((err) => console.debug(err));
+        this.$router.push(entry).catch((err) => console.warn(err));
         this.$emit("page", page);
       },
       get(): number {
         return getRouteFacetPage(this.routePageKey(), this.$route);
       },
     },
+
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
+
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
     },
+
     timeseriesSummaries(): VariableSummary[] {
       return this.summaries.filter((s) => {
         return s.varType === TIMESERIES_TYPE;
       });
     },
+
     timeseriesVars(): Variable[] | null {
       const checkMap = new Map(
         this.timeseriesSummaries.map((ts) => {
@@ -298,6 +304,7 @@ export default Vue.extend({
         return checkMap.has(v.key);
       });
     },
+
     highlights(): Highlight[] {
       return routeGetters.getDecodedHighlights(this.$store);
     },
@@ -354,9 +361,11 @@ export default Vue.extend({
         FACET_COLOR_FILTERED,
       ]);
     },
+
     numFacetPerPage(): number {
       return !this.rowsPerPage ? NUM_PER_PAGE : this.rowsPerPage;
     },
+
     pagination(): boolean {
       return this.facetCount > this.numFacetPerPage;
     },
@@ -381,6 +390,7 @@ export default Vue.extend({
         });
       }
     },
+
     search(newTerm, oldTerm) {
       if (newTerm === undefined || newTerm === oldTerm) return;
 
@@ -405,6 +415,7 @@ export default Vue.extend({
     routePageKey(): string {
       return `${this.instanceName}${ROUTE_PAGE_SUFFIX}`;
     },
+
     routeSearchKey(): string {
       return `${this.instanceName}${ROUTE_SEARCH_SUFFIX}`;
     },

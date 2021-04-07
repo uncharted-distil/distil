@@ -20,6 +20,9 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/pkg/errors"
+	log "github.com/unchartedsoftware/plog"
+
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
 )
@@ -76,11 +79,17 @@ func (s *Storage) fetchExplainHistogram(dataset string, storageName string, targ
 	// use a numerical sub select
 	field := NewNumericalFieldSubSelect(s, dataset, storageName, explainFieldAlias, explainFieldName, model.RealType, "", s.explainSubSelect(storageName, explainFieldName, explainFieldAlias))
 
-	// use predefined ranged of [0,1] for everything except rank - we'll leave that as nil so that it
-	// will be computed when the histogram is fetched
+	// use predefined ranged of [0,1] for everything except rank
+	// rank extrema should be pulled now to optimize the query
 	var extrema *api.Extrema
-	if explainFieldName != "rank" {
+	var err error
+	if explainFieldName == "rank" {
+		extrema, err = s.fetchExplainExtrema(storageName, explainFieldName, resultURI)
+	} else {
 		extrema, _ = api.NewExtrema(0.0, 1.0)
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	// filter for the single result confidences instead of having all result confidences
@@ -89,7 +98,7 @@ func (s *Storage) fetchExplainHistogram(dataset string, storageName string, targ
 	}
 
 	// filter info derived from the sub select function
-	filterParams.Filters = append(filterParams.Filters, model.NewCategoricalFilter("result_key", model.IncludeFilter, []string{resultURI}))
+	filterParams.Filters.List = append(filterParams.Filters.List, model.NewCategoricalFilter("result_key", model.IncludeFilter, []string{resultURI}))
 
 	return field.fetchHistogramByResult(resultURI, filterParams, extrema, 20)
 }
@@ -107,6 +116,43 @@ func (s *Storage) listExplainFields() []string {
 	}
 
 	return jsonNames
+}
+
+func (s *Storage) fetchExplainExtrema(storageName string, explainFieldName string, resultURI string) (*api.Extrema, error) {
+	selectSQL := fmt.Sprintf(
+		"MIN((explain_values ->> '%s')::double precision) as min_val, MAX((explain_values ->> '%s')::double precision) as max_val",
+		explainFieldName, explainFieldName)
+	sql := fmt.Sprintf("SELECT %s FROM %s WHERE result_id = $1", selectSQL, s.getResultTable(storageName))
+
+	rows, err := s.client.Query(sql, resultURI)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to query explain field extrema")
+	}
+	defer rows.Close()
+
+	var minValue *float64
+	var maxValue *float64
+	if rows.Next() {
+		err := rows.Scan(&minValue, &maxValue)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to parse extrema for explain field")
+		}
+	}
+
+	// check values exist and if none exist, then use a default extrema to avoid slow queries.
+	if minValue == nil || maxValue == nil {
+		log.Warnf("no min / max aggregation values found for explain field so defaulting to [0, 1]")
+		minValue = new(float64)
+		*minValue = 0
+		maxValue = new(float64)
+		*maxValue = 1
+	}
+
+	// assign attributes
+	return &api.Extrema{
+		Min: *minValue,
+		Max: *maxValue,
+	}, nil
 }
 
 func (s *Storage) explainSubSelect(storageName string, fieldName string, aliasName string) func() string {

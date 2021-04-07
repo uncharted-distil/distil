@@ -28,7 +28,6 @@ import (
 
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
-	apiCompute "github.com/uncharted-distil/distil/api/compute"
 	"github.com/uncharted-distil/distil/api/dataset"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
@@ -145,9 +144,9 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 						return
 					}
 					definitiveVars := append(getVariablesDefault(originalDataset["id"].(string), metaStore), getVariablesDefault(joinedDataset["id"].(string), metaStore)...)
-					ingestParams.DefinitiveTypes = apiCompute.MapVariables(definitiveVars, func(variable *model.Variable) string { return variable.Key })
+					ingestParams.DefinitiveTypes = api.MapVariables(definitiveVars, func(variable *model.Variable) string { return variable.Key })
 				} else {
-					ingestParams.DefinitiveTypes = apiCompute.MapVariables(creationResult.definitiveVars, func(variable *model.Variable) string { return variable.Key })
+					ingestParams.DefinitiveTypes = api.MapVariables(creationResult.definitiveVars, func(variable *model.Variable) string { return variable.Key })
 				}
 				log.Infof("Created dataset '%s' from local source '%s'", ingestParams.ID, ingestParams.Path)
 			}

@@ -104,7 +104,7 @@ export const META_TYPES = {
 };
 
 const TYPES_TO_LABELS: Dictionary<string> = {
-  [BIVARIATE_FILTER]: "Bivariate",
+  [BIVARIATE_FILTER]: "Geocoordinate",
   [INTEGER_TYPE]: "Integer",
   [REAL_TYPE]: "Decimal",
   [REAL_LIST_TYPE]: "List",
@@ -277,7 +277,11 @@ export const RANKABLE_VARIABLE_TYPES = new Set([
   COUNTRY_TYPE,
   COUNTRY_CODE_TYPE,
 ]);
-
+export interface MultiBandImagePackRequest {
+  dataset: string;
+  band?: string;
+  imageIds: string[];
+}
 export function isEquivalentType(a: string, b: string): boolean {
   const equiv = EQUIV_TYPES[a];
   if (!equiv) {

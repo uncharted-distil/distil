@@ -24,6 +24,7 @@ import (
 	"strconv"
 	"strings"
 
+	log "github.com/unchartedsoftware/plog"
 	"github.com/xitongsys/parquet-go-source/local"
 	"github.com/xitongsys/parquet-go/parquet"
 	"github.com/xitongsys/parquet-go/reader"
@@ -70,6 +71,8 @@ func (d *Parquet) ReadDataset(schemaFile string) (*RawDataset, error) {
 // WriteDataset writes the raw dataset to the file system, writing out
 // the data to a parquet file.
 func (d *Parquet) WriteDataset(uri string, data *RawDataset) error {
+	log.Infof("writing parquet dataset to '%s'", uri)
+
 	dataFilename := path.Join(uri, compute.D3MDataFolder, compute.DistilParquetLearningData)
 	err := d.WriteData(dataFilename, data.Data)
 	if err != nil {
@@ -87,6 +90,7 @@ func (d *Parquet) WriteDataset(uri string, data *RawDataset) error {
 
 // ReadData reads the data from a parquet file.
 func (d *Parquet) ReadData(uri string) ([][]string, error) {
+	log.Infof("reading parquet data from %s", uri)
 	fr, err := local.NewLocalFileReader(uri)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to open parquet file")
@@ -100,9 +104,24 @@ func (d *Parquet) ReadData(uri string) ([][]string, error) {
 
 	colCount := pr.SchemaHandler.GetColumnNum()
 	rowCount := pr.GetNumRows()
-	dataByCol := make([][]string, colCount)
-	for i := int64(0); i < colCount; i++ {
-		colRaw, err := d.readColumn(pr, i, rowCount)
+	headerRowCount := rowCount + 1
+
+	// Allocate output memory for rows + header
+	output := make([][]string, headerRowCount)
+	for i := int64(0); i < headerRowCount; i++ {
+		output[i] = make([]string, colCount)
+	}
+
+	// Save the header
+	header, err := d.ReadRawVariables(uri)
+	if err != nil {
+		return nil, err
+	}
+	output[0] = header
+
+	for colIdx := int64(0); colIdx < colCount; colIdx++ {
+		// Read in column data
+		colRaw, err := d.readColumn(pr, colIdx, rowCount)
 		if err != nil {
 			fr.Close()
 			pr.ReadStop()
@@ -116,31 +135,24 @@ func (d *Parquet) ReadData(uri string) ([][]string, error) {
 				pr.ReadStop()
 				return nil, errors.Wrap(err, "unable to open parquet file reader")
 			}
-			colRaw, err = d.readColumn(pr, i, rowCount)
+			colRaw, err = d.readColumn(pr, colIdx, rowCount)
 			if err != nil {
 				return nil, err
 			}
 		}
-		dataByCol[i] = d.columnToString(colRaw, *pr.SchemaHandler.SchemaElements[i+1].Type)
+
+		// Write column data into each row
+		colStrings := d.columnToString(colRaw, *pr.SchemaHandler.SchemaElements[colIdx+1].Type)
+		for rowIdx := int64(0); rowIdx < rowCount; rowIdx++ {
+			output[rowIdx+1][colIdx] = colStrings[rowIdx] // offset by to account for header
+		}
+
+		if colIdx%1000 == 0 {
+			log.Infof("%d/%d columns read", colIdx, colCount)
+		}
 	}
 	fr.Close()
 	pr.ReadStop()
-
-	// header is the expected first row of the output
-	header, err := d.ReadRawVariables(uri)
-	if err != nil {
-		return nil, err
-	}
-
-	output := make([][]string, rowCount+1)
-	output[0] = header
-	for rowIndex := 0; rowIndex < int(rowCount); rowIndex++ {
-		outputRowIndex := rowIndex + 1
-		output[outputRowIndex] = make([]string, colCount)
-		for colIndex := 0; colIndex < int(colCount); colIndex++ {
-			output[outputRowIndex][colIndex] = dataByCol[colIndex][rowIndex]
-		}
-	}
 
 	return output, nil
 }
@@ -157,7 +169,6 @@ func (d *Parquet) readColumn(pr *reader.ParquetReader, index int64, rows int64) 
 // WriteData writes data to a parquet file.
 func (d *Parquet) WriteData(uri string, data [][]string) error {
 	// create the containing folder
-	// (ignore the error since the write failure will pick it up regardless)
 	folder := path.Dir(uri)
 	err := os.MkdirAll(folder, os.ModePerm)
 	if err != nil {

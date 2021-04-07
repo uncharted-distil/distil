@@ -18,6 +18,7 @@
 <template>
   <div class="distil-table-container">
     <b-table
+      v-model="visibleRows"
       bordered
       hover
       small
@@ -60,8 +61,9 @@
           :row="data.item"
           :type="imageField.type"
           :image-url="data.item[imageField.key].value"
-          :debounce="true"
           :unique-trail="uniqueTrail"
+          :should-clean-up="false"
+          :should-fetch-image="false"
         />
       </template>
 
@@ -169,13 +171,18 @@ import {
   TableValue,
   Highlight,
 } from "../store/dataset/index";
-import { getters as datasetGetters } from "../store/dataset/module";
+import {
+  getters as datasetGetters,
+  mutations as datasetMutations,
+  actions as datasetActions,
+} from "../store/dataset/module";
 import {
   getters as resultsGetters,
   actions as resultsActions,
 } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
+
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { Solution } from "../store/requests/index";
@@ -185,6 +192,7 @@ import {
   isTextType,
   hasComputedVarPrefix,
   TIMESERIES_TYPE,
+  MULTIBAND_IMAGE_TYPE,
 } from "../util/types";
 import {
   addRowSelection,
@@ -233,6 +241,9 @@ export default Vue.extend({
       perPage: 100,
       uniqueTrail: "result-table",
       initialized: false,
+      // visibleRows is v-model with the b-table and contains all the items in the current b-table page
+      visibleRows: [],
+      debounceKey: null,
     };
   },
 
@@ -260,7 +271,9 @@ export default Vue.extend({
     hasResults(): boolean {
       return this.hasData && this.items.length > 0;
     },
-
+    band(): string {
+      return routeGetters.getBandCombinationId(this.$store);
+    },
     target(): string {
       return routeGetters.getRouteTargetVariable(this.$store);
     },
@@ -415,6 +428,12 @@ export default Vue.extend({
   },
 
   watch: {
+    band() {
+      this.debounceImageFetch();
+    },
+    visibleRows() {
+      this.debounceImageFetch();
+    },
     highlights() {
       this.initialized = false;
     },
@@ -433,6 +452,42 @@ export default Vue.extend({
   },
 
   methods: {
+    debounceImageFetch() {
+      clearTimeout(this.debounceKey);
+      this.debounceKey = setTimeout(() => {
+        this.removeImages();
+        this.fetchImagePack(this.visibleRows);
+      }, 1000);
+    },
+    removeImages() {
+      if (!this.imageFields.length) {
+        return;
+      }
+      const imageKey = this.imageFields[0].key;
+      datasetMutations.bulkRemoveFiles(this.$store, {
+        urls: this.visibleRows.map((item) => {
+          return `${item[imageKey].value}/${this.uniqueTrail}`;
+        }),
+      });
+    },
+    fetchImagePack(items) {
+      if (!this.imageFields.length) {
+        return;
+      }
+      const key = this.imageFields[0].key;
+      const type = this.imageFields[0].type;
+      // if band is "" the route assumes it is an image not a multi-band image
+      datasetActions.fetchImagePack(this.$store, {
+        multiBandImagePackRequest: {
+          imageIds: items.map((item) => {
+            return item[key].value;
+          }),
+          dataset: this.dataset,
+          band: type === MULTIBAND_IMAGE_TYPE ? this.band : "",
+        },
+        uniqueTrail: this.uniqueTrail,
+      });
+    },
     timeserieInfo(id: string): Extrema {
       const timeseries = resultsGetters.getPredictedTimeseries(this.$store);
       return timeseries?.[this.solutionId]?.info?.[id];
@@ -538,6 +593,7 @@ export default Vue.extend({
       );
       this.currentPage = page;
       this.fetchTimeseries();
+      this.removeImages();
     },
     fetchTimeseries() {
       if (!this.isTimeseries) {

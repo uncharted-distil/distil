@@ -72,10 +72,12 @@ export interface RouteArgs {
   trainTestSplit?: number;
   timestampSplit?: number;
   annotationHasChanged?: boolean;
+  label?: string;
   // orderBy contains variable names that will order the dataset
   orderBy?: string;
   outlier?: string;
   priorRoute?: string;
+  positiveLabel?: string;
 }
 
 function validateQueryArgs(args: RouteArgs): RouteArgs {

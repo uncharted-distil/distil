@@ -47,7 +47,7 @@ import { circleSpinnerHTML } from "../../util/spinner";
 import { getters as datasetGetters } from "../../store/dataset/module";
 import { VariableSummary } from "../../store/dataset";
 import { Dictionary } from "../../util/dict";
-import { LowShotLabels, LOW_SHOT_LABEL_COLUMN_NAME } from "../../util/data";
+import { LowShotLabels } from "../../util/data";
 import { getters as routeGetters } from "../../store/route/module";
 const enum COMPONENT_EVENT {
   EXPORT = "export",
@@ -59,6 +59,7 @@ export default Vue.extend({
   props: {
     isLoading: { type: Boolean as () => boolean, default: false },
     lowShotSummary: Object as () => VariableSummary,
+    labelFeatureName: { type: String, default: "" },
   },
   computed: {
     spinnerHTML(): string {
@@ -92,7 +93,7 @@ export default Vue.extend({
         this.$store
       );
       return summaryDictionary
-        ? summaryDictionary[LOW_SHOT_LABEL_COLUMN_NAME]
+        ? summaryDictionary[this.labelFeatureName]
         : null;
     },
   },

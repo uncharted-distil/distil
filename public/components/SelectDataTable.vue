@@ -18,6 +18,7 @@
 <template>
   <div class="distil-table-container">
     <b-table
+      v-model="visibleRows"
       bordered
       hover
       small
@@ -52,8 +53,9 @@
             :type="imageField.type"
             :row="data.item"
             :image-url="data.item[imageField.key].value"
-            :debounce="true"
             :unique-trail="uniqueTrail"
+            :should-clean-up="false"
+            :should-fetch-image="false"
           />
           <image-label
             class="image-label"
@@ -61,6 +63,7 @@
             shorten-labels
             align-horizontal
             :item="data.item"
+            :label-feature-name="labelFeatureName"
           />
         </div>
       </template>
@@ -123,6 +126,7 @@ import ImagePreview from "./ImagePreview.vue";
 import {
   getters as datasetGetters,
   actions as datasetActions,
+  mutations as datasetMutations,
 } from "../store/dataset/module";
 import { Dictionary } from "../util/dict";
 import { Filter } from "../util/filters";
@@ -137,7 +141,7 @@ import {
   TableValue,
 } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
-import { hasComputedVarPrefix } from "../util/types";
+import { hasComputedVarPrefix, MULTIBAND_IMAGE_TYPE } from "../util/types";
 import {
   addRowSelection,
   removeRowSelection,
@@ -180,6 +184,7 @@ export default Vue.extend({
     instanceName: { type: String as () => string, default: "" },
     dataItems: { type: Array as () => TableRow[], default: null },
     includedActive: { type: Boolean, default: true },
+    labelFeatureName: { type: String, default: "" },
   },
 
   data() {
@@ -189,6 +194,9 @@ export default Vue.extend({
       uniqueTrail: "selected-table",
       initialized: false,
       shiftClickInfo: { first: null, second: null },
+      // this is v-model with b-table (it contains what is on the page in the sorted order)
+      visibleRows: [],
+      debounceKey: null,
     };
   },
 
@@ -301,9 +309,18 @@ export default Vue.extend({
         !isEmpty(this.timeseriesGroupings)
       );
     },
+    band(): string {
+      return routeGetters.getBandCombinationId(this.$store);
+    },
   },
 
   watch: {
+    visibleRows(prev, cur) {
+      if (this.sameData(prev, cur)) {
+        return;
+      }
+      this.debounceImageFetch();
+    },
     includedActive() {
       if (this.items.length) {
         this.fetchTimeSeries();
@@ -328,6 +345,9 @@ export default Vue.extend({
         this.currentPage = 1;
       }
     },
+    band() {
+      this.debounceImageFetch();
+    },
   },
   destroyed() {
     window.removeEventListener("keyup", this.shiftRelease);
@@ -336,6 +356,27 @@ export default Vue.extend({
     window.addEventListener("keyup", this.shiftRelease);
   },
   methods: {
+    sameData(old: [], cur: []): boolean {
+      if (old === null || cur === null) {
+        return false;
+      }
+      if (old.length !== cur.length) {
+        return false;
+      }
+      for (let i = 0; i < old.length; ++i) {
+        if (old[i][D3M_INDEX_FIELD] !== cur[i][D3M_INDEX_FIELD]) {
+          return false;
+        }
+      }
+      return true;
+    },
+    debounceImageFetch() {
+      clearTimeout(this.debounceKey);
+      this.debounceKey = setTimeout(() => {
+        this.removeImages();
+        this.fetchImagePack(this.visibleRows);
+      }, 1000);
+    },
     fetchTimeSeries() {
       if (!this.isTimeseries) {
         return;
@@ -354,6 +395,35 @@ export default Vue.extend({
         });
       });
     },
+    removeImages() {
+      if (!this.imageFields.length) {
+        return;
+      }
+      const imageKey = this.imageFields[0].key;
+      datasetMutations.bulkRemoveFiles(this.$store, {
+        urls: this.visibleRows.map((item) => {
+          return `${item[imageKey].value}/${this.uniqueTrail}`;
+        }),
+      });
+    },
+    fetchImagePack(items) {
+      if (!this.imageFields.length) {
+        return;
+      }
+      const key = this.imageFields[0].key;
+      const type = this.imageFields[0].type;
+      // if band is "" the route assumes it is an image not a multi-band image
+      datasetActions.fetchImagePack(this.$store, {
+        multiBandImagePackRequest: {
+          imageIds: items.map((item) => {
+            return item[key].value;
+          }),
+          dataset: this.dataset,
+          band: type === MULTIBAND_IMAGE_TYPE ? this.band : "",
+        },
+        uniqueTrail: this.uniqueTrail,
+      });
+    },
     onPagination(page: number) {
       // remove old data from store
       removeTimeseries(
@@ -364,6 +434,7 @@ export default Vue.extend({
       this.currentPage = page;
       // fetch new data
       this.fetchTimeSeries();
+      this.removeImages();
     },
     selectAll() {
       bulkRowSelectionUpdate(

@@ -241,6 +241,7 @@ export interface TableRow {
   coordinates: any;
   d3mIndex?: number;
   isExcluded?: boolean;
+  confidenceScale?: number;
 }
 
 export interface TimeseriesExtrema {

@@ -62,11 +62,7 @@ import {
   VariableSummary,
   TableColumn,
 } from "../../store/dataset/index";
-import {
-  LOW_SHOT_LABEL_COLUMN_NAME,
-  LowShotLabels,
-  getRandomInt,
-} from "../../util/data";
+import { LowShotLabels, getRandomInt } from "../../util/data";
 import SelectDataTable from "../SelectDataTable.vue";
 import ImageMosaic from "../ImageMosaic.vue";
 import LabelHeaderButtons from "./LabelHeaderButtons.vue";
@@ -97,6 +93,7 @@ export default Vue.extend({
     isLoading: { type: Boolean as () => boolean, default: false },
     modalId: { type: String as () => string, default: "score-popup" },
     isRemoteSensing: { type: Boolean as () => boolean, default: false }, // default to false to support every dataset
+    labelFeatureName: { type: String, default: "" },
   },
   data() {
     return { sampleSize: 10 };
@@ -117,7 +114,7 @@ export default Vue.extend({
     },
     randomItems(): TableRow[] {
       const random = this.data?.filter((d) => {
-        return d[LOW_SHOT_LABEL_COLUMN_NAME]?.value === LowShotLabels.unlabeled;
+        return d[this.labelFeatureName]?.value === LowShotLabels.unlabeled;
       });
       if (!random) {
         return null;

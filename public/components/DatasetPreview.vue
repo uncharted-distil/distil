@@ -71,7 +71,7 @@
         <div class="col-4">
           <span><b>Top features:</b></span>
           <ul>
-            <li v-for="variable in topVariables" :key="variable.name">
+            <li v-for="(variable, index) in topVariables" :key="index">
               {{ variable.colDisplayName }}
             </li>
           </ul>

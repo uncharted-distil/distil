@@ -81,12 +81,9 @@ func (s *SolutionRequest) dispatchSolutionExplainPipeline(client *compute.Client
 	for _, eo := range explainOutputs {
 		exposedOutputs = append(exposedOutputs, eo.output)
 	}
-
-	exposeType := []string{}
-	if s.useParquet {
-		exposeType = append(exposeType, compute.ParquetURIValueType)
-	}
-	produceSolutionRequest := createProduceSolutionRequest(explainDatasetURI, searchResult.fittedSolutionID, exposedOutputs, exposeType)
+	// create the produce request that will generate the explanations - we force the use of CSV for output since the
+	// go parquet library doesn't handle nested lists well
+	produceSolutionRequest := createProduceSolutionRequest(explainDatasetURI, searchResult.fittedSolutionID, exposedOutputs, []string{compute.CSVURIValueType})
 
 	// generate predictions
 	_, predictionResponses, err := client.GeneratePredictions(context.Background(), produceSolutionRequest)
@@ -212,7 +209,7 @@ func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan Solutio
 	s.persistSolutionStatus(statusChan, solutionStorage, searchContext.searchID, searchSolutionID, compute.SolutionScoringStatus)
 
 	// score solution
-	solutionScoreResponses, err := client.GenerateSolutionScores(cancelContext, searchSolutionID, searchContext.testDatasetURI, s.Metrics)
+	solutionScoreResponses, err := client.GenerateSolutionScores(cancelContext, searchSolutionID, searchContext.testDatasetURI, s.Metrics, s.PosLabel)
 	if err != nil {
 		return nil, err
 	}
@@ -224,7 +221,7 @@ func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan Solutio
 			for _, score := range response.Scores {
 				metric := ""
 				if score.GetMetric() == nil {
-					metric = compute.ConvertMetricsFromTA3ToTA2(s.Metrics)[0].GetMetric()
+					metric = compute.ConvertMetricsFromTA3ToTA2(s.Metrics, s.PosLabel)[0].GetMetric()
 				} else {
 					metric = score.Metric.Metric
 				}

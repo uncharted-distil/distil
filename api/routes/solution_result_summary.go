@@ -157,7 +157,7 @@ func SolutionResultSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor
 		if hasBand && isGeobounds {
 			boundsFilter := model.NewCategoricalFilter("band", model.IncludeFilter, []string{"01"})
 			boundsFilter.IsBaselineFilter = true
-			filterParams.Filters = append(filterParams.Filters, boundsFilter)
+			filterParams.Filters.List = append(filterParams.Filters.List, boundsFilter)
 		}
 		// extract extrema for solution
 		extrema, err := fetchSolutionPredictedExtrema(meta, data, solution, request.Dataset, storageName, request.TargetFeature(), "")

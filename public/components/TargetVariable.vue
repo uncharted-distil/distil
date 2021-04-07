@@ -25,12 +25,15 @@
       :instance-name="instanceName"
       :log-activity="logActivity"
     />
+
+    <!-- Dropdown to select a positive label for Binary Classification task -->
+    <positive-label v-if="labels" :labels="labels" />
   </div>
 </template>
 
 <script lang="ts">
-import _ from "lodash";
 import Vue from "vue";
+import PositiveLabel from "./buttons/PositiveLabel.vue";
 import VariableFacets from "./facets/VariableFacets.vue";
 import { getters as routeGetters } from "../store/route/module";
 import { TARGET_VAR_INSTANCE } from "../store/route/index";
@@ -41,12 +44,13 @@ export default Vue.extend({
   name: "TargetVariable",
 
   components: {
+    PositiveLabel,
     VariableFacets,
   },
 
   data() {
     return {
-      hasDefaultedAlready: false,
+      instanceName: TARGET_VAR_INSTANCE,
       logActivity: Activity.DATA_PREPARATION,
     };
   },
@@ -55,19 +59,18 @@ export default Vue.extend({
     targetSummaries(): VariableSummary[] {
       return routeGetters.getTargetVariableSummaries(this.$store);
     },
-    instanceName(): string {
-      return TARGET_VAR_INSTANCE;
+
+    labels(): string[] {
+      // make sure we are only on a binary classification task
+      if (!routeGetters.isBinaryClassification(this.$store)) return;
+
+      // retreive the target variable buckets
+      const buckets = this.targetSummaries?.[0]?.baseline?.buckets;
+      if (!buckets) return;
+
+      // use the buckets keys as labels
+      return buckets.map((bucket) => bucket.key);
     },
   },
 });
 </script>
-
-<style>
-.target-summary
-  .variable-facets-container
-  .facets-root-container
-  .facets-group-container
-  .facets-group {
-  box-shadow: none;
-}
-</style>

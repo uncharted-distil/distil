@@ -25,7 +25,7 @@
   >
     <div slot="header-label" :class="headerClass">
       <span>{{ summary.label.toUpperCase() }}</span>
-      <importance-bars v-if="importance" :importance="importance" />
+      <importance-bars :importance="importance" />
       <type-change-menu
         v-if="facetEnableTypeChanges"
         class="facet-header-dropdown"
@@ -72,8 +72,8 @@ import "@uncharted.software/facets-core";
 import "@uncharted.software/facets-plugins";
 import { FacetBarsData } from "@uncharted.software/facets-core/dist/types/facet-bars/FacetBars";
 
-import TypeChangeMenu from "../TypeChangeMenu";
-import ImportanceBars from "../ImportanceBars";
+import TypeChangeMenu from "../TypeChangeMenu.vue";
+import ImportanceBars from "../ImportanceBars.vue";
 import { Highlight, RowSelection, VariableSummary } from "../../store/dataset";
 import {
   getSubSelectionValues,
@@ -108,7 +108,10 @@ export default Vue.extend({
       Function as () => Function,
     ],
     expandCollapse: Function as () => Function,
-    highlights: Array as () => Highlight[],
+    highlights: {
+      type: Array as () => Highlight[],
+      default: () => [] as Highlight[],
+    },
     enableHighlighting: Boolean as () => boolean,
     instanceName: String as () => string,
     rowSelection: Object as () => RowSelection,
@@ -116,11 +119,9 @@ export default Vue.extend({
   },
 
   computed: {
-    max(): number {
+    maxBucketCount(): number {
       if (hasBaseline(this.summary)) {
         const buckets = this.summary.baseline.buckets;
-        // seems to be incorrect compute based on the current buckets
-        // const maxCount = summary.baseline.extrema.max;
         return buckets.reduce((max, bucket) => Math.max(max, bucket.count), 0);
       }
       return 0;
@@ -137,7 +138,7 @@ export default Vue.extend({
           const count = buckets[i].count;
           const key = parseFloat(buckets[i].key);
           values.push({
-            ratio: count / this.max,
+            ratio: count / this.maxBucketCount,
             label: key,
             tooltip: `Range:\t\t${key}-${
               key + bucketSize
@@ -163,7 +164,11 @@ export default Vue.extend({
         : "facet-header-container-no-scroll";
     },
     subSelection(): number[][] {
-      return getSubSelectionValues(this.summary, this.rowSelection, this.max);
+      return getSubSelectionValues(
+        this.summary,
+        this.rowSelection,
+        this.maxBucketCount
+      );
     },
     selection(): number[] {
       if (!this.enableHighlighting || !this.isHighlightedGroup()) {

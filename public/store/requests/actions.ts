@@ -40,6 +40,7 @@ import {
   SolutionRequestStatus,
   SolutionStatus,
 } from "./index";
+import { setInvert, cloneFilters } from "../../util/highlights";
 import { mutations } from "./module";
 
 // Message definitions for the websocket.  These are only for communication with the
@@ -62,16 +63,17 @@ interface StatusMessage {
 }
 
 // Search request message used in web socket context
-interface SolutionRequestMsg {
+export interface SolutionRequestMsg {
   dataset: string;
-  target: string;
+  filters: FilterParams;
   metrics: string[];
   maxSolutions: number;
   maxTime: number;
+  positiveLabel?: string;
   quality: ModelQuality;
-  filters: FilterParams;
-  trainTestSplit: number;
+  target: string;
   timestampSplitValue?: number;
+  trainTestSplit: number;
 }
 
 // Solution status message used in web socket context
@@ -527,7 +529,8 @@ export const actions = {
   createSolutionRequest(context: RequestContext, request: SolutionRequestMsg) {
     return new Promise((resolve, reject) => {
       const conn = getWebSocketConnection();
-
+      const filters = cloneFilters(request.filters);
+      request.filters = setInvert(filters, false);
       let receivedFirstSolution = false;
 
       const stream = conn.stream((response: SolutionStatusMsg) => {
@@ -569,6 +572,7 @@ export const actions = {
       stream.send(MessageType.CREATE_SOLUTIONS, {
         dataset: request.dataset,
         target: request.target,
+        positiveLabel: request.positiveLabel,
         metrics: request.metrics,
         maxSolutions: request.maxSolutions,
         maxTime: request.maxTime,

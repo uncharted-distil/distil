@@ -53,7 +53,7 @@ func NewVectorField(storage *Storage, datasetName string, datasetStorageName str
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *VectorField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool, mode api.SummaryMode) (*api.VariableSummary, error) {
+func (f *VectorField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.VariableSummary, error) {
 
 	// update the highlight key to use the cluster if necessary
 	if err := f.updateClusterHighlight(filterParams, mode); err != nil {
@@ -67,7 +67,7 @@ func (f *VectorField) FetchSummaryData(resultURI string, filterParams *api.Filte
 		underlyingField = NewCategoricalFieldSubSelect(f.Storage, f.DatasetName, f.DatasetStorageName, f.Key, f.Label, f.Type, f.Count, f.subSelect)
 	}
 
-	histo, err := underlyingField.FetchSummaryData(resultURI, filterParams, extrema, invert, mode)
+	histo, err := underlyingField.FetchSummaryData(resultURI, filterParams, extrema, mode)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func (f *VectorField) FetchNumericalStats(filterParams *api.FilterParams, invert
 	// use the underlying numerical field implementation
 	field := NewNumericalFieldSubSelect(f.Storage, f.DatasetName, f.DatasetStorageName, f.Key, f.Label, f.Type, f.Count, f.subSelect)
 
-	return field.FetchNumericalStats(filterParams, invert)
+	return field.FetchNumericalStats(filterParams)
 }
 
 // FetchNumericalStatsByResult gets the variable's numerical summary info (mean, stddev) for a result set.
@@ -117,6 +117,6 @@ func (f *VectorField) subSelect() string {
 	if f.Count != "" {
 		countSQL = fmt.Sprintf(", \"%s\"", f.Count)
 	}
-	return fmt.Sprintf("(SELECT \"%s\"%s, unnest(\"%s\") as %s FROM %s)",
+	return fmt.Sprintf("(SELECT \"%s\"%s, unnest(\"%s\") as \"%s\" FROM %s)",
 		model.D3MIndexFieldName, countSQL, f.Unnested, f.Key, f.DatasetStorageName)
 }

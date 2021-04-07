@@ -23,7 +23,7 @@
         :show="showStatusMessage"
         variant="info"
       >
-        Importing <b>{{ importedDataset.name }}...</b>
+        Importing <strong>{{ importedDataset.name }}...</strong>
       </b-alert>
       <b-alert
         v-else-if="isImportRequestResolved"
@@ -32,7 +32,7 @@
         dismissible
         @dismissed="reviewImportingRequest"
       >
-        Successfully imported <b>{{ importedDataset.name }}</b>
+        Successfully imported <strong>{{ importedDataset.name }}</strong>
       </b-alert>
       <b-alert
         v-else-if="isImportRequestError"
@@ -42,34 +42,36 @@
         @dismissed="reviewImportingRequest"
       >
         Unexpected error has occured while importing
-        <b>{{ importedDataset.name }}</b>
+        <strong>{{ importedDataset.name }}</strong>
       </b-alert>
     </div>
-    <div class="suggestion-heading">
-      <h6>Select a dataset to join with:</h6>
-    </div>
+
+    <h5 class="suggestion-heading flex-shrink-0">
+      Select a dataset to join with:
+    </h5>
+
     <div class="suggestion-list">
       <div v-if="filteredSuggestedItems.length === 0">
         No datasets are found
       </div>
-      <div v-if="isAttemptingJoin || (isImporting && importedDataset)">
-        <div v-html="spinnerHTML"></div>
-      </div>
+
+      <div
+        v-if="isAttemptingJoin || (isImporting && importedDataset)"
+        v-html="spinnerHTML"
+      />
+
       <b-list-group v-else>
         <b-list-group-item
           v-for="item in filteredSuggestedItems"
           :key="item.key"
-          href="#"
+          href="javascript:void()"
           :class="{ selected: item.selected }"
           :disabled="isImporting"
           @click="selectItem(item)"
         >
-          <p>
-            <b>{{ item.dataset.name }}</b>
-          </p>
-          <div class="description" v-html="item.dataset.description">
-            {{ item.dataset.description }}
-          </div>
+          <h6>{{ item.dataset.name }}</h6>
+          <div class="description" v-html="item.dataset.summary" />
+
           <b-list-group>
             <b-list-group-item
               v-for="suggestion in item.suggestionItems"
@@ -85,25 +87,41 @@
               </div>
             </b-list-group-item>
           </b-list-group>
-          <div>
-            <!-- Skip import step for now -->
-            <!-- <span>
-							<small v-if="!item.isAvailable" class="text-info">Requires import</small>
-							<small v-if="item.isAvailable" class="text-success">Ready for join</small>
-						</span> -->
-            <span class="float-right">
-              <small class="text-muted">
-                {{ formatNumber(item.dataset.numRows) }} rows
-              </small>
-              <small class="text-muted">
+
+          <footer class="item-footer">
+            <ul>
+              <li>
+                <strong>Features:</strong>
+                {{ filterVariablesByFeature(item.dataset.variables).length }}
+              </li>
+              <li>
+                <strong>Rows:</strong>
+                {{ formatNumber(item.dataset.numRows) }}
+              </li>
+              <li>
+                <strong>Size:</strong>
                 {{ formatBytes(item.dataset.numBytes) }}
-              </small>
-            </span>
-          </div>
+              </li>
+            </ul>
+            <div>
+              <strong>Top features:</strong>
+              <ol>
+                <li
+                  v-for="(variable, index) in topVariablesNames(
+                    item.dataset.variables
+                  )"
+                  :key="index"
+                >
+                  {{ variable }}
+                </li>
+              </ol>
+            </div>
+          </footer>
         </b-list-group-item>
       </b-list-group>
     </div>
-    <div class="join-button-container">
+
+    <div class="join-button-container flex-shrink-0 mt-3">
       <b-input
         v-model="searchQuery"
         placeholder="Refine Suggestions Via Search"
@@ -120,6 +138,7 @@
         Join
       </b-button>
     </div>
+
     <b-modal
       v-if="selectedDataset"
       id="join-import-modal"
@@ -128,9 +147,9 @@
       title="JoinSuggestionImport"
       @ok="importDataset"
     >
-      <p class="">
-        Dataset, <b>{{ selectedDataset.name }}</b> is not available in the
-        system. Would you like to import the dataset?
+      <p>
+        Dataset, <strong>{{ selectedDataset.name }}</strong> is not available in
+        the system. Would you like to import the dataset?
       </p>
     </b-modal>
 
@@ -181,7 +200,11 @@ import {
 import { getters as routeGetters } from "../store/route/module";
 import { formatBytes } from "../util/bytes";
 import { circleSpinnerHTML } from "../util/spinner";
-import { isDatamartProvenance } from "../util/data";
+import {
+  isDatamartProvenance,
+  filterVariablesByFeature,
+  topVariablesNames,
+} from "../util/data";
 import { loadJoinedDataset, loadJoinView } from "../util/join";
 
 interface JoinSuggestionDatasetItem {
@@ -215,27 +238,30 @@ interface StatusPanelJoinState {
 
 export default Vue.extend({
   name: "StatusPanelJoin",
+
+  components: {
+    ErrorModal,
+    JoinDatasetsPreview,
+  },
+
   data(): StatusPanelJoinState {
     return {
-      showStatusMessage: true,
-      suggestionDatasets: [],
+      datasetA: null,
+      datasetAColumn: "",
+      datasetB: null,
+      datasetBColumn: "",
       filterString: "",
       isAttemptingJoin: false,
+      previewTableData: null,
+      searchResultIndex: null,
+      searchQuery: "",
       showJoinFailure: false,
       showJoinSuccess: false,
-      previewTableData: null,
-      datasetA: null,
-      datasetB: null,
-      datasetAColumn: "",
-      datasetBColumn: "",
-      searchQuery: "",
-      searchResultIndex: null,
+      showStatusMessage: true,
+      suggestionDatasets: [],
     };
   },
-  components: {
-    JoinDatasetsPreview,
-    ErrorModal,
-  },
+
   computed: {
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
@@ -285,7 +311,9 @@ export default Vue.extend({
                   .indexOf(this.filterString.toLowerCase()) > -1
             )
           : this.suggestionDatasets;
-      return filteredItems;
+      return filteredItems.sort((a, b) =>
+        a.dataset.name.localeCompare(b.dataset.name)
+      );
     },
     joinDatasetImportRequestData(): JoinDatasetImportPendingRequest {
       // get importing request for a dataset that is in the suggestion list.
@@ -354,13 +382,18 @@ export default Vue.extend({
       return circleSpinnerHTML();
     },
   },
+
   created() {
     this.initSuggestionItems();
   },
+
   beforeDestroy() {
     this.reviewImportingRequest();
   },
+
   methods: {
+    topVariablesNames,
+    filterVariablesByFeature,
     initSuggestionItems() {
       const items = this.joinSuggestions || [];
       // resolve join availablity of the importing dataset
@@ -540,13 +573,6 @@ export default Vue.extend({
   flex-direction: column;
 }
 
-.status-panel-join .suggestion-heading {
-  height: 2em;
-  flex-shrink: 0;
-}
-.status-panel-join .suggestion-heading h6 {
-  margin: 0;
-}
 .status-panel-join .suggestion-list {
   overflow: auto;
   overflow-wrap: break-word;
@@ -554,6 +580,41 @@ export default Vue.extend({
 
 .status-panel-join .suggestion-list .suggested-columns {
   font-size: 0.75rem;
+}
+
+.status-panel-join .item-footer {
+  color: var(--color-text-second);
+  display: flex;
+  font-size: 0.9em;
+  justify-content: space-between;
+  margin-top: 1rem;
+}
+
+.status-panel-join .item-footer > * {
+  flex-basis: 0;
+  flex-grow: 2;
+  flex-shrink: 1;
+}
+
+.status-panel-join .item-footer > *:last-child {
+  flex-grow: 3;
+}
+
+.status-panel-join .item-footer ul,
+.status-panel-join .item-footer ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.status-panel-join .item-footer ol {
+  list-style: decimal inside;
+}
+
+.status-panel-join .item-footer ol li {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .status-panel-join .suggestion-search {
@@ -576,11 +637,7 @@ export default Vue.extend({
   flex-shrink: 0;
   margin-top: 5px;
 }
-.status-panel-join .join-button-container {
-  min-height: 0;
-  padding: 10px 0 5px;
-  flex-shrink: 0;
-}
+
 .status-panel-join .join-button-container button {
   margin-top: 5px;
   width: 100%;

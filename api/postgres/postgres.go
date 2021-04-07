@@ -16,6 +16,7 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -41,6 +42,7 @@ const (
 	dataTypeEmail    = "EMAIL"
 	dataTypeLat      = "LATITUDE"
 	dataTypeLon      = "LONGITUDE"
+	dataTypeCoord    = "SPECIAL_COORD"
 	dateFormat       = "2006-01-02T15:04:05Z"
 
 	metadataTableCreationSQL = `CREATE TABLE %s (
@@ -174,7 +176,10 @@ var (
 		"float":   true,
 		"real":    true,
 	}
-	wordRegex = regexp.MustCompile("[^a-zA-Z]")
+	wordRegex     = regexp.MustCompile("[^a-zA-Z]")
+	resultIndices = []string{
+		"result_id",
+	}
 )
 
 // Database is a struct representing a full logical database.
@@ -431,6 +436,15 @@ func (d *Database) CreateResultTable(tableName string) error {
 		return err
 	}
 
+	log.Infof("creating indices on result table %s", resultTableName)
+	for i, index := range resultIndices {
+		indexStatement := fmt.Sprintf("CREATE INDEX idx%d_%s ON %s (%s)", i+1, resultTableName, resultTableName, index)
+		_, err = d.Client.Exec(indexStatement)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -493,8 +507,6 @@ func (d *Database) IngestRow(tableName string, data []string) error {
 		var val interface{}
 		if d.isNullVariable(variables[i].Type, data[i]) {
 			val = nil
-		} else if d.isArray(variables[i].Type) && !d.dataIsArray(data[i]) {
-			val = fmt.Sprintf("{%s}", data[i])
 		} else if variables[i].Type == model.GeoBoundsType+"s" {
 			val = fmt.Sprintf("%s:geometry", data[i])
 		} else {
@@ -673,17 +685,9 @@ func (d *Database) isNullVariable(typ, value string) bool {
 	return value == "" && nonNullableTypes[typ]
 }
 
-func (d *Database) isArray(typ string) bool {
+// IsArray returns true if the type is an array type.
+func (d *Database) IsArray(typ string) bool {
 	return strings.HasSuffix(typ, "Vector")
-}
-
-func (d *Database) dataIsArray(data string) bool {
-	dataLength := len(data)
-	if dataLength < 2 {
-		return false
-	}
-
-	return data[0] == '{' && data[dataLength-1] == '}'
 }
 
 // MapD3MTypeToPostgresType generates a postgres type from a d3m type.
@@ -720,6 +724,8 @@ func MapPostgresTypeToD3MType(pType string) ([]string, error) {
 		return []string{model.TimestampType, model.IntegerType}, nil
 	case dataTypeVector:
 		return []string{model.RealVectorType, model.RealListType}, nil
+	case dataTypeCoord:
+		return []string{model.RealVectorType, model.RealListType, model.GeoBoundsType}, nil
 	case dataTypeText:
 		return []string{model.OrdinalType, model.CategoricalType, model.StringType, model.AddressType, model.CityType, model.CountryType, model.PostalCodeType, model.StateType, model.URIType, model.PhoneType}, nil
 	case dataTypeGeometry:
@@ -771,17 +777,18 @@ func ValueForFieldType(typ string, field string) string {
 	switch typ {
 	case model.RealListType:
 		return fmt.Sprintf("string_to_array(%s, ',')", fieldQuote)
+	case model.RealVectorType:
+		return fmt.Sprintf("concat('{', %s, '}')", fieldQuote)
 	case model.DateTimeType:
 		// datetime may be only time so need to support both cases
 		// times can have first value missing a 0 so want to first get a time value then add it to epoch time 0
 		return fmt.Sprintf("CASE WHEN length(%[1]s) IN (4, 5) AND position(':' in %[1]s) > 0 THEN CONCAT('1970-01-01 ', to_char(to_timestamp(%[1]s, 'MI:SS'), 'HH24:MI:SS')) ELSE %[1]s END", fieldQuote)
 	default:
-		return fmt.Sprintf("\"%s\"", field)
+		return fieldQuote
 	}
 }
 
-// IsValidType validates the string to make sure it is a valid supported type
-func IsValidType(pType string) bool {
+func isValidType(pType string) bool {
 	switch pType {
 	case dataTypeText:
 		return true
@@ -807,6 +814,8 @@ func IsValidType(pType string) bool {
 		return true
 	case dataTypeEmail:
 		return true
+	case dataTypeCoord:
+		return true
 	default:
 		return false
 	}
@@ -825,7 +834,8 @@ func GetValidTypes() []string {
 		dataTypeEmail,
 		dataTypeLat,
 		dataTypeLon,
-		dataTypeImageExt}
+		dataTypeImageExt,
+		dataTypeCoord}
 }
 
 // GetIndexStatement returns the index SQL statement for a field of the provided type.
@@ -851,4 +861,67 @@ func (d *Database) CreateIndex(tableName string, fieldName string, typ string) e
 	}
 
 	return nil
+}
+
+// IsColumnType can be use to check columns potential types
+func IsColumnType(client DatabaseDriver, tableName string, variable *model.Variable, colType string) bool {
+	// check colType is valid
+	if !isValidType(colType) {
+		return false
+	}
+	viewSelect := fmt.Sprintf("\"%s\"", variable.Key)
+	where := ""
+	if colType == dataTypeCoord {
+		viewSelect = fmt.Sprintf("array_length(concat('{', %s, '}')::%s, 1)", viewSelect, dataTypeVector)
+		where = fmt.Sprintf("WHERE \"%s\" = 8", variable.Key)
+	} else {
+		viewSelect = fmt.Sprintf("%s::%s", viewSelect, colType)
+	}
+	// generate view query
+	viewQuery := fmt.Sprintf("CREATE TEMPORARY VIEW temp_view_%[1]s AS SELECT %[3]s AS \"%[1]s\" FROM %[2]s", variable.Key, tableName, viewSelect)
+	// test query
+	testQuery := fmt.Sprintf("SELECT COUNT(\"%[1]s\") FROM temp_view_%[1]s %[2]s", variable.Key, where)
+
+	// create transaction
+	tx, err := client.Begin()
+	if err != nil {
+		if rbErr := tx.Rollback(context.Background()); rbErr != nil {
+			log.Error("rollback failed")
+		}
+		return false
+	}
+	defer func() {
+		if rbErr := tx.Rollback(context.Background()); rbErr != nil {
+			log.Error("rollback failed")
+		}
+	}()
+	// create temp view
+	_, err = tx.Exec(context.Background(), viewQuery)
+	if err != nil {
+		return false
+	}
+	// test to see if the data can fit into the type
+	rows, err := tx.Query(context.Background(), testQuery)
+	if err != nil {
+		return false
+	}
+
+	// there should only be 1 row
+	count := 0
+	result := 0
+	for rows.Next() {
+		count = count + 1
+		err = rows.Scan(&result)
+		if err != nil {
+			return false
+		}
+	}
+	if rows.Err() != nil {
+		return false
+	}
+	if count != 1 || result == 0 {
+		return false
+	}
+
+	return true
 }

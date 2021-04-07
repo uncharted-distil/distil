@@ -18,6 +18,7 @@
 <template>
   <div
     id="geo-test"
+    ref="geoPlotContainer"
     class="geo-plot-container"
     :class="{ 'selection-mode': isSelectionMode }"
   >
@@ -272,7 +273,6 @@ export default Vue.extend({
 
   data() {
     return {
-      poiLayer: null,
       map: null,
       tileRenderer: null,
       overlay: null,
@@ -280,7 +280,6 @@ export default Vue.extend({
       markers: null,
       areasMeanLng: 0,
       closeButton: null,
-      startingLatLng: null,
       currentRect: null,
       selectedRect: null,
       isSelectionMode: false,
@@ -317,6 +316,7 @@ export default Vue.extend({
       confidenceIconClass: "confidence-icon",
       isSatelliteView: false,
       tileAreaThreshold: 170, // area in pixels
+      boundsInitialized: false,
     };
   },
 
@@ -617,7 +617,7 @@ export default Vue.extend({
 
     clusterState(): MapState {
       return {
-        onHover: (id: number) => {
+        onHover: () => {
           return;
         }, // onHover empty for cluster state
         onClick: (id: number) => {
@@ -736,7 +736,14 @@ export default Vue.extend({
 
   mounted() {
     this.createLumoMap();
+
+    // Make the map container square to avoid webGl issue.
+    // https://github.com/uncharted-distil/distil/issues/2015
+    const container = this.$refs.geoPlotContainer as HTMLElement;
+    const width = container?.getBoundingClientRect().width ?? 500;
+    container.style.height = width + "px";
   },
+
   methods: {
     createLumoMap() {
       // create map
@@ -1242,7 +1249,7 @@ export default Vue.extend({
       if (fieldSpec.type === SINGLE_FIELD) {
         return fieldSpec.field;
       }
-      return fieldSpec.lngField + ":" + fieldSpec.latField;
+      return fieldSpec.lngField + "_" + fieldSpec.latField;
     },
 
     showImageDrilldown(imageUrl: string, item: TableRow) {
@@ -1299,6 +1306,12 @@ export default Vue.extend({
         quads,
         this.currentState.drawMode()
       );
+
+      if (!this.boundsInitialized) {
+        const mapBounds = this.getBounds(quads);
+        this.map.fitToBounds(mapBounds);
+        this.boundsInitialized = true;
+      }
     },
   },
 });
@@ -1310,7 +1323,7 @@ export default Vue.extend({
   position: relative;
   z-index: 0;
   width: 100%;
-  height: 100%;
+  max-height: 100%;
   bottom: 0;
 }
 
@@ -1418,8 +1431,6 @@ export default Vue.extend({
   top: -7px; /*works out to 4 pixels from top (this is based off the font size)*/
   display: inline;
   position: absolute;
-}
-.toggle {
 }
 .toggle:hover {
   background-color: #f4f4f4;

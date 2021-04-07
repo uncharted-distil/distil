@@ -22,20 +22,17 @@ import {
   createEmptyTableData,
   createErrorSummary,
   createPendingSummary,
+  DatasetUpdate,
   fetchSummaryExemplars,
   minimumRouteKey,
   validateArgs,
-  DatasetUpdate,
 } from "../../util/data";
 import { Dictionary } from "../../util/dict";
-import {
-  EXCLUDE_FILTER,
-  FilterParams,
-  INCLUDE_FILTER,
-} from "../../util/filters";
+import { FilterParams } from "../../util/filters";
 import {
   addHighlightToFilterParams,
-  highlightsExist,
+  cloneFilters,
+  setInvert,
 } from "../../util/highlights";
 import { loadImage } from "../../util/image";
 import {
@@ -44,10 +41,11 @@ import {
   getVarType,
   IMAGE_TYPE,
   isImageType,
-  isRankableVariableType,
   isMultibandImageType,
+  isRankableVariableType,
   MULTIBAND_IMAGE_TYPE,
   UNKNOWN_TYPE,
+  MultiBandImagePackRequest,
 } from "../../util/types";
 import { getters as routeGetters } from "../route/module";
 import store, { DistilState } from "../store";
@@ -1057,10 +1055,11 @@ export const actions = {
     if (!validateArgs(args, ["dataset", "variable"])) {
       return null;
     }
-    const filterParams = addHighlightToFilterParams(
+    let filterParams = addHighlightToFilterParams(
       args.filterParams,
       args.highlights
     );
+    filterParams = setInvert(filterParams, !args.include);
     const decodedVarModes = routeGetters.getDecodedVarModes(store);
     const mutator = args.include
       ? mutations.updateIncludedVariableSummaries
@@ -1073,9 +1072,7 @@ export const actions = {
 
     try {
       const response = await axios.post(
-        `/distil/variable-summary/${args.dataset}/${
-          args.variable
-        }/${!args.include}/${varMode}`,
+        `/distil/variable-summary/${args.dataset}/${args.variable}/${varMode}`,
         filterParams
       );
       const summary = response.data.summary;
@@ -1227,15 +1224,13 @@ export const actions = {
 
   async fetchImage(
     context: DatasetContext,
-    args: { dataset: string; url: string }
+    args: { dataset: string; url: string; isThumbnail?: boolean }
   ) {
-    if (!validateArgs(args, ["dataset", "url"])) {
-      return null;
-    }
+    if (!validateArgs(args, ["dataset", "url"])) return;
     try {
-      const response = await loadImage(
-        `distil/image/${args.dataset}/${args.url}`
-      );
+      const thumbnail = args.isThumbnail ? "true" : "false";
+      const urlRequest = `distil/image/${args.dataset}/${args.url}/${thumbnail}`;
+      const response = await loadImage(urlRequest);
       mutations.updateFile(context, { url: args.url, file: response });
     } catch (error) {
       console.error(error);
@@ -1301,6 +1296,36 @@ export const actions = {
         ? `${args.imageId}/${args.uniqueTrail}`
         : args.imageId;
       mutations.updateFile(context, { url: imageUrl, file: response });
+    } catch (error) {
+      console.error(error);
+    }
+  },
+
+  async fetchImagePack(
+    context: DatasetContext,
+    args: {
+      multiBandImagePackRequest: MultiBandImagePackRequest;
+      uniqueTrail?: string;
+    }
+  ) {
+    try {
+      const response = await axios.post(
+        "distil/image-pack",
+        args.multiBandImagePackRequest
+      );
+      let urls = response.data.imageIds;
+      if (args.uniqueTrail) {
+        urls = response.data.imageIds.map((id) => {
+          return `${id}/${args.uniqueTrail}`;
+        });
+      }
+      response.data.errorIds.forEach((id) => {
+        console.error(`Error fetching image with ${id}`);
+      });
+      mutations.bulkUpdateFiles(context, {
+        urls: urls,
+        files: response.data.images,
+      });
     } catch (error) {
       console.error(error);
     }
@@ -1392,7 +1417,7 @@ export const actions = {
     args: {
       datasets: string[];
       filterParams: Dictionary<FilterParams>;
-      highlights: Highlight[];
+      highlights: Dictionary<Highlight[]>;
     }
   ) {
     if (!validateArgs(args, ["datasets", "filterParams"])) {
@@ -1400,16 +1425,15 @@ export const actions = {
     }
     return Promise.all(
       args.datasets.map(async (dataset) => {
-        const highlights =
-          args.highlights?.[0]?.dataset === dataset ? args.highlights : null;
-        const filterParams = addHighlightToFilterParams(
+        const highlights = args.highlights[dataset];
+        let filterParams = addHighlightToFilterParams(
           args.filterParams[dataset],
           highlights
         );
-
+        filterParams = setInvert(filterParams, false);
         try {
           const response = await axios.post(
-            `distil/data/${dataset}/false/true`,
+            `distil/data/${dataset}/true`,
             filterParams
           );
           mutations.setJoinDatasetsTableData(context, {
@@ -1457,9 +1481,11 @@ export const actions = {
       dataMode: DataMode;
     }
   ) {
+    const filterParams = cloneFilters(args.filterParams);
+    filterParams.highlights.invert = false;
     const data = await actions.fetchTableData(context, {
       dataset: args.dataset,
-      filterParams: args.filterParams,
+      filterParams: filterParams,
       highlights: args.highlights,
       include: false,
       dataMode: args.dataMode,
@@ -1540,20 +1566,20 @@ export const actions = {
     if (!validateArgs(args, ["dataset", "filterParams"])) {
       return null;
     }
-    const filterParams = addHighlightToFilterParams(
+    let filterParams = addHighlightToFilterParams(
       args.filterParams,
       args.highlights,
       args.mode
     );
-
+    filterParams = setInvert(filterParams, !args.include);
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
     filterParams.dataMode = dataModeDefault;
 
     try {
-      const response = await axios.post(
-        `distil/data/${args.dataset}/${!args.include}/false`,
-        { ...filterParams, orderBy: args.orderBy }
-      );
+      const response = await axios.post(`distil/data/${args.dataset}/false`, {
+        ...filterParams,
+        orderBy: args.orderBy,
+      });
       return response.data;
     } catch (error) {
       console.error(error);
@@ -1667,20 +1693,20 @@ export const actions = {
     if (!validateArgs(args, ["dataset", "filterParams"])) {
       return null;
     }
-    const filterParams = addHighlightToFilterParams(
+    let filterParams = addHighlightToFilterParams(
       args.filterParams,
       args.highlights,
       args.mode
     );
-
+    filterParams = setInvert(filterParams, args.include);
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
     filterParams.dataMode = dataModeDefault;
 
     try {
-      const response = await axios.post(
-        `distil/save-dataset/${args.dataset}/${args.include}`,
-        { datasetName: args.datasetNewName, ...filterParams }
-      );
+      const response = await axios.post(`distil/save-dataset/${args.dataset}`, {
+        datasetName: args.datasetNewName,
+        ...filterParams,
+      });
       return response.data;
     } catch (error) {
       console.error(error);
@@ -1701,18 +1727,18 @@ export const actions = {
     if (!validateArgs(args, ["dataset", "filterParams"])) {
       return null;
     }
-    const filterParams = addHighlightToFilterParams(
+    let filterParams = addHighlightToFilterParams(
       args.filterParams,
       args.highlights,
       args.mode
     );
-
+    filterParams = setInvert(filterParams, !args.include);
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
     filterParams.dataMode = dataModeDefault;
 
     try {
       const response = await axios.post(
-        `distil/extract/${args.dataset}/${!args.include}`,
+        `distil/extract/${args.dataset}`,
         filterParams
       );
       return response.data;

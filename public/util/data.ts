@@ -26,6 +26,7 @@ import {
   TableColumn,
   TableData,
   TableRow,
+  TableValue,
   TimeseriesGrouping,
   Variable,
   VariableSummary,
@@ -107,15 +108,15 @@ export const ELASTIC_PROVENANCE = "elastic";
 export const FILE_PROVENANCE = "file";
 
 export const IMPORTANT_VARIABLE_RANKING_THRESHOLD = 0.5;
-export const LOW_SHOT_LABEL_COLUMN_NAME = "LowShotLabel";
-export const LOW_SHOT_SCORE_COLUMN_NAME =
-  "__query_" + LOW_SHOT_LABEL_COLUMN_NAME;
+export const LOW_SHOT_SCORE_COLUMN_PREFIX = "__query_";
+
 // LowShotLabels enum for labeling data in a binary classification
 export enum LowShotLabels {
   positive = "positive",
   negative = "negative",
   unlabeled = "unlabeled",
 }
+
 // DatasetUpdate is an interface that contains the data to update existing data
 export interface DatasetUpdate {
   index: string; // d3mIndex
@@ -632,7 +633,9 @@ export async function fetchSolutionResultSummary(
   try {
     const response = await axios.post(
       completeEndpoint,
-      filterParams ? filterParams : {}
+      filterParams
+        ? filterParams
+        : { highlights: { invert: false }, filters: { invert: false } }
     );
     // save the histogram data if this is summary data
     const summary = response.data[resultProperty];
@@ -724,6 +727,13 @@ export function searchVariables(
     );
   });
 }
+
+export function topVariablesNames(variables: Variable[], max = 5): string[] {
+  return sortVariablesByPCARanking(filterVariablesByFeature(variables))
+    .slice(0, max)
+    .map((variable) => variable.colDisplayName);
+}
+
 export function sortVariablesByPCARanking(variables: Variable[]): Variable[] {
   variables.sort((a, b) => {
     return b.importance - a.importance;
@@ -929,8 +939,31 @@ export function fetchLowShotScores() {
     orderBy: lowShotScore,
   });
 }
+
+/** Create the method to get the scale [0, 1] of a TableValue 
+    to visually display its ranking or confidence. */
+function getConfidenceScale(dataLength: number): Function {
+  const solutionId = requestGetters.getActiveSolution(store)?.solutionId;
+  const rankSummary = resultsGetters
+    .getRankingSummaries(store)
+    .filter((rank) => rank.solutionId === solutionId)[0];
+
+  // The max value is either the ranking summary max value,
+  // or the length of the dataset.
+  const max = rankSummary?.baseline.extrema.max ?? dataLength;
+
+  // Create the scale that uses ranking before confidence.
+  return function (value: TableValue): number {
+    if (value.rank !== undefined) return value.rank / max;
+    if (value.confidence !== undefined) return value.confidence;
+    return;
+  };
+}
+
 export function getTableDataItems(data: TableData): TableRow[] {
   if (validateData(data)) {
+    const confidenceScale = getConfidenceScale(data.numRows);
+
     // convert fetched result data rows into table data rows
     const formattedTable = data.values.map((resultRow, rowIndex) => {
       const row = {} as TableRow;
@@ -952,6 +985,12 @@ export function getTableDataItems(data: TableData): TableRow[] {
             const conKey = "rank";
             row[conKey] = {};
             row[conKey].value = colValue.rank;
+          }
+          if (
+            colValue.rank !== undefined ||
+            colValue.confidence !== undefined
+          ) {
+            row.confidenceScale = confidenceScale(colValue);
           }
         } else {
           row[key] = formatValue(colValue.value, colType);

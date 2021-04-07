@@ -74,7 +74,7 @@ func NewDateTimeFieldSubSelect(storage *Storage, datasetName string, datasetStor
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *DateTimeField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool, mode api.SummaryMode) (*api.VariableSummary, error) {
+func (f *DateTimeField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.VariableSummary, error) {
 
 	var baseline *api.Histogram
 	var filtered *api.Histogram
@@ -86,12 +86,12 @@ func (f *DateTimeField) FetchSummaryData(resultURI string, filterParams *api.Fil
 	}
 
 	if resultURI == "" {
-		baseline, err = f.fetchHistogram(api.GetBaselineFilter(filterParams), invert, api.MaxNumBuckets)
+		baseline, err = f.fetchHistogram(api.GetBaselineFilter(filterParams), api.MaxNumBuckets)
 		if err != nil {
 			return nil, err
 		}
 		if !filterParams.Empty(true) {
-			filtered, err = f.fetchHistogram(filterParams, invert, api.MaxNumBuckets)
+			filtered, err = f.fetchHistogram(filterParams, api.MaxNumBuckets)
 			if err != nil {
 				return nil, err
 			}
@@ -119,15 +119,15 @@ func (f *DateTimeField) FetchSummaryData(resultURI string, filterParams *api.Fil
 	}, nil
 }
 
-func (f *DateTimeField) fetchHistogram(filterParams *api.FilterParams, invert bool, numBuckets int) (*api.Histogram, error) {
-	return f.fetchHistogramWithJoins(filterParams, invert, numBuckets, nil, []string{}, []interface{}{})
+func (f *DateTimeField) fetchHistogram(filterParams *api.FilterParams, numBuckets int) (*api.Histogram, error) {
+	return f.fetchHistogramWithJoins(filterParams, numBuckets, nil, []string{}, []interface{}{})
 }
 
-func (f *DateTimeField) fetchHistogramWithJoins(filterParams *api.FilterParams, invert bool, numBuckets int, joins []*joinDefinition, wheres []string, params []interface{}) (*api.Histogram, error) {
+func (f *DateTimeField) fetchHistogramWithJoins(filterParams *api.FilterParams, numBuckets int, joins []*joinDefinition, wheres []string, params []interface{}) (*api.Histogram, error) {
 	fromClause := f.getFromClause(true)
 
 	// create the filter for the query.
-	wheres, params = f.Storage.buildFilteredQueryWhere(f.GetDatasetName(), wheres, params, "", filterParams, invert)
+	wheres, params = f.Storage.buildFilteredQueryWhere(f.GetDatasetName(), wheres, params, "", filterParams)
 
 	// need the extrema to calculate the histogram interval
 	extrema, err := f.fetchExtrema()
