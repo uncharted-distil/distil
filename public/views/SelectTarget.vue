@@ -71,6 +71,7 @@
           :pagination="searchedActiveVariables.length > numRowsPerPage"
           :rows-per-page="numRowsPerPage"
           :summaries="summaries"
+          no-margin
         />
       </div>
     </section>

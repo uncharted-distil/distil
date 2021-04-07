@@ -416,8 +416,16 @@ func (s *Storage) IsValidDataType(dataset string, storageName string, varName st
 // SetDataType updates the data type of the specified variable.
 // Multiple simultaneous calls to the function can result in discarded changes.
 func (s *Storage) SetDataType(dataset string, storageName string, varName string, varType string) error {
+	// geometry types need special handling to make sure the backing field exists properly
+	if model.IsGeoBounds(varType) {
+		err := s.createGeometryField(dataset, storageName, varName)
+		if err != nil {
+			return err
+		}
+	}
+
 	// get all existing fields to rebuild the view.
-	fields, err := s.getExistingFields(dataset, storageName)
+	fields, err := s.getExistingFields(dataset, getBaseTableName(storageName))
 	if err != nil {
 		return errors.Wrap(err, "Unable to read existing fields")
 	}
@@ -825,4 +833,64 @@ func getJoinSQL(join *joinDefinition, inner bool) string {
 	return fmt.Sprintf("%s %s AS %s ON %s.\"%s\" = %s.\"%s\"",
 		joinType, join.joinTableName, join.joinAlias, join.joinAlias,
 		join.joinColumn, join.baseAlias, join.baseColumn)
+}
+
+func (s *Storage) createGeometryField(dataset string, storageName string, varName string) error {
+	postgisFieldName := fmt.Sprintf("__geo_%s", varName)
+	exists, _ := s.DoesVariableExist(dataset, storageName, postgisFieldName)
+	baseTable := getBaseTableName(storageName)
+	if !exists {
+		err := s.AddField(dataset, baseTable, postgisFieldName, model.GeoBoundsType, "")
+		if err != nil {
+			return err
+		}
+
+		// create index on the field
+		err = s.createIndex(baseTable, postgisFieldName, model.GeoBoundsType)
+		if err != nil {
+			return err
+		}
+	}
+
+	// query the vector field to get the data for the geometry field
+	querySQL := fmt.Sprintf("SELECT \"%s\", concat('{', \"%s\", '}')::double precision[] FROM %s;", model.D3MIndexFieldName, varName, baseTable)
+	rows, err := s.client.Query(querySQL)
+	if err != nil {
+		return errors.Wrapf(err, "unable to query for geobounds")
+	}
+
+	updates := map[string]string{}
+	for rows.Next() {
+		var d3mIndex string
+		var geometry []float64
+		err := rows.Scan(&d3mIndex, &geometry)
+		if err != nil {
+			return errors.Wrapf(err, "unable to read geometry field from postgres")
+		}
+		if len(geometry) != 8 {
+			return errors.Errorf("field '%s' is not a vector of 4 points", varName)
+		}
+
+		// add the link back to the first point since a polygon must be closed
+		geometry = append(geometry, geometry[0], geometry[1])
+
+		// geometry string should have the coordinates of a point separate by a space
+		// and the points separated by commas
+		geometryString := ""
+		for i := 0; i < len(geometry); i += 2 {
+			geometryString = fmt.Sprintf("%s,%f %f", geometryString, geometry[i], geometry[i+1])
+		}
+		updates[d3mIndex] = fmt.Sprintf("POLYGON((%s))", geometryString[1:])
+	}
+	err = rows.Err()
+	if err != nil {
+		return errors.Wrapf(err, "error reading geometry data from postgres")
+	}
+
+	err = s.UpdateData(dataset, baseTable, postgisFieldName, updates, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

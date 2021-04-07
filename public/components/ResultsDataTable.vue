@@ -229,9 +229,24 @@ export default Vue.extend({
   },
 
   props: {
-    dataItems: Array as () => any[],
-    dataFields: Object as () => Dictionary<TableColumn>,
-    instanceName: String as () => string,
+    dataItems: {
+      type: Array as () => TableRow[],
+      default: () => {
+        return [];
+      },
+    },
+    dataFields: {
+      type: Object as () => Dictionary<TableColumn>,
+      default: () => {
+        return {};
+      },
+    },
+    instanceName: {
+      type: String as () => string,
+      default: () => {
+        return "";
+      },
+    },
   },
 
   data() {
@@ -459,6 +474,7 @@ export default Vue.extend({
         this.fetchImagePack(this.visibleRows);
       }, 1000);
     },
+
     removeImages() {
       if (!this.imageFields.length) {
         return;
@@ -470,6 +486,7 @@ export default Vue.extend({
         }),
       });
     },
+
     fetchImagePack(items) {
       if (!this.imageFields.length) {
         return;
@@ -488,6 +505,7 @@ export default Vue.extend({
         uniqueTrail: this.uniqueTrail,
       });
     },
+
     timeserieInfo(id: string): Extrema {
       const timeseries = resultsGetters.getPredictedTimeseries(this.$store);
       return timeseries?.[this.solutionId]?.info?.[id];
@@ -595,6 +613,7 @@ export default Vue.extend({
       this.fetchTimeseries();
       this.removeImages();
     },
+
     fetchTimeseries() {
       if (!this.isTimeseries) {
         return;

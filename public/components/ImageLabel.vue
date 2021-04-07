@@ -68,38 +68,36 @@ export default Vue.extend({
   },
 
   props: {
-    includedActive: Boolean as () => boolean,
+    dataFields: {
+      type: Object as () => Dictionary<TableColumn>,
+      default: () => {
+        return {} as Dictionary<TableColumn>;
+      },
+    },
+    includedActive: {
+      type: Boolean as () => boolean,
+      default: false,
+    },
     item: Object as () => TableRow,
     shortenLabels: {
       type: Boolean as () => boolean,
-      default: false,
+      default: true,
     },
     alignHorizontal: {
       type: Boolean as () => boolean,
       default: false,
     },
-    isResult: { type: Boolean as () => boolean, default: false },
     labelFeatureName: { type: String, default: "" },
   },
 
   computed: {
-    fields(): Dictionary<TableColumn> {
-      if (this.isResult) {
-        return this.includedActive
-          ? resultGetters.getIncludedResultTableDataFields(this.$store)
-          : resultGetters.getExcludedResultTableDataFields(this.$store);
-      }
-      return this.includedActive
-        ? datasetGetters.getIncludedTableDataFields(this.$store)
-        : datasetGetters.getExcludedTableDataFields(this.$store);
-    },
     labels(): Label[] {
       const labels: Label[] = [];
       let status: string;
       if (!this.item) {
         return [];
       }
-      for (const key in this.fields) {
+      for (const key in this.dataFields) {
         status = null;
 
         // If we're showing error, we want to show

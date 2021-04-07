@@ -18,6 +18,7 @@
 <template>
   <div
     id="geo-test"
+    ref="geoPlotContainer"
     class="geo-plot-container"
     :class="{ 'selection-mode': isSelectionMode }"
   >
@@ -619,7 +620,7 @@ export default Vue.extend({
 
     clusterState(): MapState {
       return {
-        onHover: (id: number) => {
+        onHover: () => {
           return;
         }, // onHover empty for cluster state
         onClick: (id: number) => {
@@ -745,7 +746,14 @@ export default Vue.extend({
 
   mounted() {
     this.createLumoMap();
+
+    // Make the map container square to avoid webGl issue.
+    // https://github.com/uncharted-distil/distil/issues/2015
+    const container = this.$refs.geoPlotContainer as HTMLElement;
+    const width = container?.getBoundingClientRect().width ?? 500;
+    container.style.height = width + "px";
   },
+
   methods: {
     addPrimitives() {
       let vertices = this.tileState.vertices();
@@ -1462,8 +1470,6 @@ export default Vue.extend({
   top: -7px; /*works out to 4 pixels from top (this is based off the font size)*/
   display: inline;
   position: absolute;
-}
-.toggle {
 }
 .toggle:hover {
   background-color: #f4f4f4;

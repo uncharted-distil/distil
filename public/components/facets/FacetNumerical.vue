@@ -119,11 +119,9 @@ export default Vue.extend({
   },
 
   computed: {
-    max(): number {
+    maxBucketCount(): number {
       if (hasBaseline(this.summary)) {
         const buckets = this.summary.baseline.buckets;
-        // seems to be incorrect compute based on the current buckets
-        // const maxCount = summary.baseline.extrema.max;
         return buckets.reduce((max, bucket) => Math.max(max, bucket.count), 0);
       }
       return 0;
@@ -140,7 +138,7 @@ export default Vue.extend({
           const count = buckets[i].count;
           const key = parseFloat(buckets[i].key);
           values.push({
-            ratio: count / this.max,
+            ratio: count / this.maxBucketCount,
             label: key,
             tooltip: `Range:\t\t${key}-${
               key + bucketSize
@@ -166,7 +164,11 @@ export default Vue.extend({
         : "facet-header-container-no-scroll";
     },
     subSelection(): number[][] {
-      return getSubSelectionValues(this.summary, this.rowSelection, this.max);
+      return getSubSelectionValues(
+        this.summary,
+        this.rowSelection,
+        this.maxBucketCount
+      );
     },
     selection(): number[] {
       if (!this.enableHighlighting || !this.isHighlightedGroup()) {
