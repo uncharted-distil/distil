@@ -30,7 +30,12 @@ export const mutations = {
   updateTrainingSummary(state: PredictionState, summary: VariableSummary) {
     updateSummariesPerVariable(summary, state.trainingSummaries);
   },
-
+  setBaselinePredictionTableData(
+    state: PredictionState,
+    predictionData: TableData
+  ) {
+    state.baselinePredictionTableData = Object.freeze(predictionData);
+  },
   // sets the current Prediction data into the store
   setIncludedPredictionTableData(
     state: PredictionState,

@@ -582,30 +582,22 @@ export const actions = {
   },
   updateHighlight(context: ViewContext) {
     const dataset = context.getters.getRouteDataset;
-    let filterParams = cloneFilters(
-      context.getters.getDecodedSolutionRequestFilterParams
-    );
+    const variables = datasetGetters.getVariables(store);
+    let variableNames = variables.map((v) => {
+      return v.colName;
+    });
+    // upon refresh variables are not available but they exist in route url so fetch those
+    if (!variables.length) {
+      variableNames = routeGetters.getDecodedSolutionRequestFilterParams(store)
+        .variables;
+    }
     const dataMode = context.getters.getDataMode;
-    filterParams.size = datasetGetters.getNumberOfRecords(store);
-    filterParams = setHighlightModes(filterParams, EXCLUDE_FILTER);
     const baseline = {
-      highlights: { list: filterParams.highlights.list },
+      highlights: { list: [] },
       filters: {
-        list: filterParams.filters.list.filter((f) => {
-          return f.mode === EXCLUDE_FILTER;
-        }),
+        list: [],
       },
-      variables: filterParams.variables,
-      size: Number.MAX_SAFE_INTEGER,
-    } as FilterParams;
-    const excludeBaseline = {
-      highlights: { list: filterParams.highlights.list },
-      filters: {
-        list: filterParams.filters.list.filter((f) => {
-          return f.mode === EXCLUDE_FILTER;
-        }),
-      },
-      variables: filterParams.variables,
+      variables: variableNames,
       size: Number.MAX_SAFE_INTEGER,
     } as FilterParams;
     return Promise.all([
@@ -614,15 +606,7 @@ export const actions = {
         filterParams: baseline,
         highlights: [],
         dataMode: dataMode,
-        include: true,
-      }), // include
-      datasetActions.fetchBaselineTableData(store, {
-        dataset: dataset,
-        filterParams: excludeBaseline,
-        highlights: [],
-        dataMode: dataMode,
-        include: false,
-      }), // exclude
+      }),
     ]);
   },
   async updateAreaOfInterest(context: ViewContext, filter: Filter) {
@@ -823,20 +807,31 @@ export const actions = {
       varModes: varModes,
     });
   },
-
+  async updateResultBaseline(context: ViewContext) {
+    resultMutations.setFullIncludedResultTableData(
+      store,
+      createEmptyTableData()
+    );
+    // fetch new state
+    const dataset = routeGetters.getRouteDataset(store);
+    const solutionId = routeGetters.getRouteSolutionId(store);
+    const dataMode = context.getters.getDataMode;
+    // baseline geo data for the map
+    const allData = Number.MAX_SAFE_INTEGER;
+    resultActions.fetchIncludedResultTableData(store, {
+      dataset: dataset,
+      solutionId: solutionId,
+      highlights: [],
+      dataMode: dataMode,
+      isMapData: true,
+      size: allData,
+    });
+  },
   async updateResultsSolution(context: ViewContext) {
     // clear previous state
     resultMutations.clearResidualsExtrema(store);
     resultMutations.setIncludedResultTableData(store, createEmptyTableData());
     resultMutations.setExcludedResultTableData(store, createEmptyTableData());
-    resultMutations.setFullIncludedResultTableData(
-      store,
-      createEmptyTableData()
-    );
-    resultMutations.setFullExcludedResultTableData(
-      store,
-      createEmptyTableData()
-    );
     // fetch new state
     const dataset = routeGetters.getRouteDataset(store);
     const target = routeGetters.getRouteTargetVariable(store);
@@ -848,24 +843,13 @@ export const actions = {
       store
     );
     const size = routeGetters.getRouteDataSize(store);
-    // needs the await call to get the dataset size from the DB
-    await resultActions.fetchResultTableData(store, {
+    resultActions.fetchResultTableData(store, {
       dataset: dataset,
       solutionId: solutionId,
       highlights: highlights,
       dataMode: dataMode,
       isMapData: false,
       size,
-    });
-    // fetch datasize has to be called before the clear
-    const allData = resultGetters.getNumOfRecords(store);
-    resultActions.fetchResultTableData(store, {
-      dataset: dataset,
-      solutionId: solutionId,
-      highlights: highlights,
-      dataMode: dataMode,
-      isMapData: true,
-      size: allData,
     });
     resultActions.fetchTargetSummary(store, {
       dataset: dataset,
@@ -1003,7 +987,21 @@ export const actions = {
       produceRequestId: produceRequestId,
     });
   },
-
+  updateBaselinePredictions(context: ViewContext) {
+    const produceRequestId = context.getters.getRouteProduceRequestId as string;
+    const allData = Number.MAX_SAFE_INTEGER;
+    const inferenceDataset = getPredictionsById(
+      context.getters.getPredictions,
+      produceRequestId
+    ).dataset;
+    predictionActions.fetchPredictionTableData(store, {
+      dataset: inferenceDataset,
+      highlights: [],
+      produceRequestId: produceRequestId,
+      size: allData,
+      isBaseline: true,
+    });
+  },
   updatePredictions(context: ViewContext) {
     // clear previous state
     predictionMutations.setIncludedPredictionTableData(store, null);
@@ -1023,6 +1021,7 @@ export const actions = {
       highlights: highlights,
       produceRequestId: produceRequestId,
       size,
+      isBaseline: false,
     });
 
     actions.updatePredictionTrainingSummaries(context);

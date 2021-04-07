@@ -261,7 +261,7 @@ func main() {
 	registerRoute(mux, "/distil/model-metrics/:task", routes.ModelMetricsHandler(esMetadataStorageCtor))
 	registerRoute(mux, "/ws", ws.SolutionHandler(solutionClient, esMetadataStorageCtor, pgDataStorageCtor, pgSolutionStorageCtor, esExportedModelStorageCtor))
 	registerRoute(mux, "/distil/image-attention/:dataset/:result-id/:index/:opacity/:color-scale", routes.ImageAttentionHandler(pgSolutionStorageCtor, esMetadataStorageCtor))
-	registerRoute(mux, "/distil/outlier-detection/:dataset/:variable", routes.OutlierDetectionHandler(esMetadataStorageCtor))
+	registerRoute(mux, "/distil/outlier-detection/:dataset/:variable", routes.OutlierDetectionHandler(esMetadataStorageCtor, config))
 	registerRoute(mux, "/distil/outlier-results/:dataset/:variable", routes.OutlierResultsHandler(esMetadataStorageCtor, pgDataStorageCtor))
 
 	// POST

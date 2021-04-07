@@ -18,6 +18,8 @@
 import { BatchQuadOverlayRenderer } from "./BatchQuadOverlayRenderer";
 type LatLngBoundsLiteral = import("leaflet").LatLngBoundsLiteral;
 import Color from "color";
+import { TableRow } from "../../store/dataset";
+import { Dictionary } from "../dict";
 export enum Coordinate {
   lat,
   lng,
@@ -35,6 +37,7 @@ export interface VertexPrimitive {
   iB: number; // id second largest byte
   iA: number; // id largest byte
 }
+
 export interface RenderPrimitive {
   vertexPrimitives: VertexPrimitive[];
 }
@@ -152,7 +155,7 @@ export class PointInfo extends CoordinateInfo {
     return { vertexPrimitives: result };
   }
   toQuad(renderer: BatchQuadOverlayRenderer, opacity: number, id: number) {
-    return null;
+    return { vertexPrimitives: [] };
   }
   // should never tile because this is a point only primitive
   shouldTile(
@@ -161,5 +164,56 @@ export class PointInfo extends CoordinateInfo {
     threshold: number
   ): boolean {
     return false;
+  }
+}
+
+export function updateVertexPrimitiveColor(
+  vertices: VertexPrimitive[],
+  data: TableRow[],
+  colorFunc: (d, idx) => string,
+  originalNumOfItems: number,
+  baselineMap: Dictionary<number>
+) {
+  let idxFetch = (d: TableRow) => {
+    return d.d3mIndex - 1;
+  }; // d3mIndex starts at 1
+  if (baselineMap != null) {
+    idxFetch = (d: TableRow) => {
+      return baselineMap[d.d3mIndex];
+    };
+    if (!Object.keys(baselineMap).length) {
+      return;
+    }
+  }
+  const step = vertices.length / originalNumOfItems;
+  if (step % 1 != 0) {
+    console.error("Step is decimal mismatch data length");
+    return;
+  }
+  const maxVal = 255;
+  const gray = Color("#999999").rgb().object();
+  gray.r /= maxVal;
+  gray.g /= maxVal;
+  gray.b /= maxVal;
+  for (let i = 0; i < vertices.length; ++i) {
+    vertices[i].r = gray.r;
+    vertices[i].g = gray.g;
+    vertices[i].b = gray.b;
+  }
+  if (!data) {
+    return;
+  }
+  for (let i = 0; i < data.length; ++i) {
+    const color = Color(colorFunc(data[i], i)).rgb().object();
+    color.r /= maxVal;
+    color.g /= maxVal;
+    color.b /= maxVal;
+    const baseStep = idxFetch(data[i]) * step; //d3m index starts at 1
+    for (let j = 0; j < step; ++j) {
+      const idx = baseStep + j;
+      vertices[idx].r = color.r;
+      vertices[idx].g = color.g;
+      vertices[idx].b = color.b;
+    }
   }
 }

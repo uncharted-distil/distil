@@ -282,6 +282,7 @@ export const actions = {
       dataset: string;
       highlights: Highlight[];
       produceRequestId: string;
+      isBaseline: boolean;
       size?: number;
     }
   ) {
@@ -291,7 +292,9 @@ export const actions = {
       filters: { list: [], invert: false },
     } as FilterParams;
     filterParams = addHighlightToFilterParams(filterParams, args.highlights);
-
+    const mutator = args.isBaseline
+      ? mutations.setBaselinePredictionTableData
+      : mutations.setIncludedPredictionTableData;
     // Add the size limit to results if provided.
     if (_.isInteger(args.size)) {
       filterParams.size = args.size;
@@ -304,7 +307,7 @@ export const actions = {
         )}`,
         filterParams
       );
-      mutations.setIncludedPredictionTableData(context, response.data);
+      mutator(context, response.data);
     } catch (error) {
       console.error(
         `Failed to fetch results from ${args.produceRequestId} with error ${error}`
@@ -320,6 +323,7 @@ export const actions = {
       highlights: Highlight[];
       produceRequestId: string;
       size?: number;
+      isBaseline: boolean;
     }
   ) {
     return Promise.all([

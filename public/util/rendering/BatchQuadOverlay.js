@@ -74,12 +74,22 @@ export default class BatchQuadOverlay extends Overlay {
   addQuad(id, points, drawMode) {
     this.quads.set(id, points);
     this.drawModeMap.set(id, drawMode);
+    this.renderer.addDrawLayer(id);
     if (this.plot) {
       this.refresh();
     }
     return this;
   }
-
+  /**
+   * Get a set of points
+   *
+   * @param {string} id - The id the quad is under.
+   *
+   * @returns {Array} points - The quad points.
+   */
+  getQuad(id) {
+    return this.quads.get(id);
+  }
   /**
    * Remove a quad by id from the overlay.
    *

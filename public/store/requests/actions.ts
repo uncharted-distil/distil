@@ -245,6 +245,7 @@ function updateCurrentPredictResults(
     dataset: req.datasetId,
     highlights: context.getters.getDecodedHighlights,
     produceRequestId: res.produceRequestId,
+    isBaseline: false,
   });
 
   predictActions.fetchPredictedSummary(store, {

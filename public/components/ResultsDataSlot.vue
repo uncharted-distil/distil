@@ -41,6 +41,8 @@
         :is="viewComponent"
         :data-fields="dataFields"
         :data-items="dataItems"
+        :baseline-items="baselineItems"
+        :baseline-map="baselineMap"
         :instance-name="instanceName"
         :summaries="trainingSummaries"
         :area-of-interest-items="{ inner: inner, outer: outer }"
@@ -193,19 +195,18 @@ export default Vue.extend({
         this.instanceName
       );
     },
-
+    baselineMap(): Dictionary<number> {
+      const result = {};
+      const base = this.baselineItems ?? [];
+      base.forEach((item, i) => {
+        result[item.d3mIndex] = i;
+      });
+      return result;
+    },
+    baselineItems(): TableRow[] {
+      return resultsGetters.getFullIncludedResultTableDataItems(this.$store);
+    },
     dataItems(): TableRow[] {
-      if (this.isGeoView) {
-        const excluded = resultsGetters
-          .getFullExcludedResultTableDataItems(this.$store)
-          .map((i) => {
-            return { ...i, isExcluded: true };
-          });
-        const included = resultsGetters.getFullIncludedResultTableDataItems(
-          this.$store
-        );
-        return [...excluded, ...included];
-      }
       if (this.excluded) {
         return resultsGetters.getExcludedResultTableDataItems(this.$store);
       }

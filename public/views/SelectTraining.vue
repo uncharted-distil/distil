@@ -161,8 +161,6 @@ export default Vue.extend({
     filters() {
       viewActions.clearDatasetTableData(this.$store);
       viewActions.updateSelectTrainingData(this.$store);
-      viewActions.clearHighlight(this.$store);
-      viewActions.updateHighlight(this.$store);
     },
     availableTrainingVarsPage() {
       viewActions.updateSelectTrainingData(this.$store);
@@ -200,6 +198,7 @@ export default Vue.extend({
 
   beforeMount() {
     viewActions.fetchSelectTrainingData(this.$store, false);
+    viewActions.updateHighlight(this.$store);
   },
 });
 </script>
