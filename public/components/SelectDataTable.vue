@@ -188,7 +188,12 @@ export default Vue.extend({
 
   props: {
     instanceName: { type: String as () => string, default: "" },
-    dataItems: { type: Array as () => TableRow[], default: null },
+    dataItems: {
+      type: Array as () => TableRow[],
+      default: () => {
+        return [];
+      },
+    },
     includedActive: { type: Boolean, default: true },
     labelFeatureName: { type: String, default: "" },
   },
@@ -218,7 +223,11 @@ export default Vue.extend({
       let items = this.includedActive
         ? datasetGetters.getIncludedTableDataItems(this.$store)
         : datasetGetters.getExcludedTableDataItems(this.$store);
-      items = this.dataItems ? this.dataItems : items;
+      items = this.dataItems.length > 0 ? this.dataItems : items;
+      if (items === null) {
+        items = [];
+      }
+
       // In the case of timeseries, we add their Min/Max/Mean.
       if (this.isTimeseries) {
         items = items?.map((item) => {
@@ -325,6 +334,13 @@ export default Vue.extend({
   },
 
   watch: {
+    visibleRows(prev: TableRow[], cur: TableRow[]) {
+      if (sameData(prev, cur)) {
+        return;
+      }
+      this.debounceImageFetch();
+    },
+
     includedActive() {
       if (this.items.length) {
         this.fetchTimeSeries();
@@ -332,16 +348,6 @@ export default Vue.extend({
     },
 
     band() {
-      this.debounceImageFetch();
-    },
-
-    pageItems(curr: TableRow[], prev: TableRow[]) {
-      // check if all the indices are in the same order and prev == cur
-      // and that we've already fetched the data
-      if (sameData(prev, curr)) {
-        return;
-      }
-
       this.debounceImageFetch();
     },
 

@@ -52,7 +52,7 @@
       </template>
     </div>
     <b-pagination
-      v-if="dataItems && dataItems.length > perPage"
+      v-if="dataItems.length > perPage"
       v-model="currentPage"
       align="center"
       first-number
@@ -104,7 +104,12 @@ export default Vue.extend({
 
   props: {
     instanceName: { type: String as () => string, default: "" },
-    dataItems: { type: Array as () => TableRow[], default: null },
+    dataItems: {
+      type: Array as () => TableRow[],
+      default: () => {
+        return [];
+      },
+    },
     dataFields: {
       type: Object as () => Dictionary<TableColumn>,
       default: () => {
@@ -120,7 +125,6 @@ export default Vue.extend({
       imageWidth: 128,
       imageHeight: 128,
       currentPage: 1,
-      previousPage: 0,
       perPage: 100,
       shiftClickInfo: { first: null, second: null },
       uniqueTrail: "image-mosiac",

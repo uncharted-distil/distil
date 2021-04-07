@@ -451,14 +451,6 @@ export default Vue.extend({
         this.currentPage = 1;
       }
     },
-
-    pageItems(prev: TableRow[], curr: TableRow[]) {
-      // check if all the indices are in the same order and prev == cur
-      if (sameData(prev, curr)) {
-        return;
-      }
-      this.debounceImageFetch();
-    },
   },
 
   methods: {
