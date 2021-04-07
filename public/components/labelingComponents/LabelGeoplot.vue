@@ -20,6 +20,7 @@
     :instance-name="instanceName"
     :data-fields="fields"
     :data-items="items"
+    :baseline-items="baselineItems"
     :summaries="summaries"
     :area-of-interest-items="{ inner: inner, outer: outer }"
     :confidence-access-func="confidenceGetter"
@@ -114,6 +115,13 @@ export default Vue.extend({
 
       return currentSummaries.filter((cs) => {
         return isGeoLocatedType(cs.varType);
+      });
+    },
+    baselineItems(): TableRow[] {
+      const bItems =
+        datasetGetters.getBaselineIncludeTableDataItems(this.$store) ?? [];
+      return bItems.sort((a, b) => {
+        return a.d3mIndex - b.d3mIndex;
       });
     },
     confidenceGetter(): Function {

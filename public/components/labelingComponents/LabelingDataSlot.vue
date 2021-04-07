@@ -153,11 +153,7 @@ export default Vue.extend({
       return !orderBy ? false : orderBy.includes(this.labelScoreName);
     },
     dataItems(): TableRow[] {
-      const items =
-        this.viewTypeModel === GEO_VIEW
-          ? getAllDataItems(true)
-          : datasetGetters.getIncludedTableDataItems(this.$store);
-      return items;
+      return datasetGetters.getIncludedTableDataItems(this.$store);
     },
     numItems(): number {
       return this.dataItems?.length;

@@ -336,6 +336,7 @@ export default Vue.extend({
         this.loading = false;
         this.$nextTick(() => {
           this.$bvModal.show(this.modalId);
+          viewActions.updateHighlight(this.$store);
         });
         return;
       }
@@ -347,6 +348,7 @@ export default Vue.extend({
       this.loading = false;
       this.$nextTick(() => {
         this.$bvModal.show(this.modalId);
+        viewActions.updateHighlight(this.$store);
       });
     },
     // used for generating default labels in the instance where labels do not exist in the dataset
