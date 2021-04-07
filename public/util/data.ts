@@ -559,6 +559,21 @@ export function formatFieldsAsArray(
   return _.map(fields, (field) => field);
 }
 
+export function sameData(old: TableRow[], cur: TableRow[]): boolean {
+  if (old === null || cur === null) {
+    return false;
+  }
+  if (old.length !== cur.length) {
+    return false;
+  }
+  for (let i = 0; i < old.length; ++i) {
+    if (old[i][D3M_INDEX_FIELD] !== cur[i][D3M_INDEX_FIELD]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export function createPendingSummary(
   key: string,
   label: string,
