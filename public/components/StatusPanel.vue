@@ -131,18 +131,18 @@ export default Vue.extend({
         );
     },
     isPending(): boolean {
-      return this.requestData.status === DatasetPendingRequestStatus.PENDING;
+      return this.requestData?.status === DatasetPendingRequestStatus.PENDING;
     },
     isResolved(): boolean {
       return (
-        this.requestData.status === DatasetPendingRequestStatus.RESOLVED ||
-        this.requestData.status === DatasetPendingRequestStatus.REVIEWED
+        this.requestData?.status === DatasetPendingRequestStatus.RESOLVED ||
+        this.requestData?.status === DatasetPendingRequestStatus.REVIEWED
       );
     },
     isError(): boolean {
       return (
-        this.requestData.status === DatasetPendingRequestStatus.ERROR ||
-        this.requestData.status === DatasetPendingRequestStatus.ERROR_REVIEWED
+        this.requestData?.status === DatasetPendingRequestStatus.ERROR ||
+        this.requestData?.status === DatasetPendingRequestStatus.ERROR_REVIEWED
       );
     },
     contentData(): {
