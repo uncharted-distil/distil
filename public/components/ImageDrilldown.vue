@@ -52,47 +52,62 @@
         ref="imageAttentionElem"
         class="filter-elem"
       />
-      <ul class="information">
-        <li v-if="bandName"><label>Image Layer:</label> {{ bandName }}</li>
-        <li v-if="latLongValue"><label>Lat/Long:</label> {{ latLongValue }}</li>
-        <li v-if="isResultScreen" class="d-flex justify-content-between">
-          <label> {{ toggleStateString }} image explanation: </label>
-          <div>
-            <input
-              id="drill-down-filter-toggle"
-              v-model="isFilteredToggled"
-              class="form-check-input"
-              type="checkbox"
-              value=""
-            />
-          </div>
-        </li>
-        <li v-if="isMultiBandImage" class="information-brightness">
-          <b-input-group prepend="0" append="1.0" class="mt-3 mb-1" size="sm">
-            <b-form-input
-              type="range"
-              name="brightness"
-              :min="brightnessMin"
-              :max="brightnessMax"
-              step="1"
-              class="brightness-slider"
-              @change="onBrightnessChanged"
-            />
-          </b-input-group>
-          <label class="brightness-label">
-            <i class="fa fa-adjust fa-rotate-180" aria-hidden="true" />
-            {{ brightnessValue }}
-          </label>
-          <b-button
-            v-if="shouldImagesScale"
-            :disabled="disableUpscale"
-            @click="upscaleFetch"
-          >
-            <b-spinner v-if="fetchingUpscale" small />
-            Upscale Image
-          </b-button>
-        </li>
-      </ul>
+      <div class="row">
+        <div class="col-md-6">
+          <ul class="information">
+            <li v-if="bandName"><label>Image Layer:</label> {{ bandName }}</li>
+            <li v-if="latLongValue">
+              <label>Lat/Long:</label> {{ latLongValue }}
+            </li>
+            <li v-if="isResultScreen" class="d-flex justify-content-between">
+              <label> {{ toggleStateString }} image explanation: </label>
+              <div>
+                <input
+                  id="drill-down-filter-toggle"
+                  v-model="isFilteredToggled"
+                  class="form-check-input"
+                  type="checkbox"
+                  value=""
+                />
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="col-md-6">
+          <ul>
+            <li v-if="isMultiBandImage" class="information-brightness">
+              <b-input-group
+                prepend="0"
+                append="1.0"
+                class="mt-3 mb-1"
+                size="sm"
+              >
+                <b-form-input
+                  type="range"
+                  name="brightness"
+                  :min="brightnessMin"
+                  :max="brightnessMax"
+                  step="1"
+                  class="brightness-slider"
+                  @change="onBrightnessChanged"
+                />
+              </b-input-group>
+              <label class="brightness-label">
+                <i class="fa fa-adjust fa-rotate-180" aria-hidden="true" />
+                {{ brightnessValue }}
+              </label>
+              <b-button
+                v-if="shouldImagesScale"
+                :disabled="disableUpscale"
+                @click="upscaleFetch"
+              >
+                <b-spinner v-if="fetchingUpscale" small />
+                Upscale Image
+              </b-button>
+            </li>
+          </ul>
+        </div>
+      </div>
     </main>
   </b-modal>
 </template>
