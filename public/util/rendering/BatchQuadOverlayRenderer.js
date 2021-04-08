@@ -18,7 +18,7 @@
 "use strict";
 
 import defaultTo from "lodash/defaultTo";
-import VertexBuffer from "lumo/src/webgl/vertex/VertexBuffer";
+import DistilVertexBuffer from "./DistilVertexBuffer";
 import WebGLOverlayRenderer from "lumo/src/renderer/overlay/WebGLOverlayRenderer";
 
 // Constants
@@ -186,7 +186,7 @@ const createBuffers = function (renderer, points, key) {
   const vertSize = 2; // x,y
   const colorSize = 4;
   const idSize = 4;
-  const vertexBuffer = new VertexBuffer(
+  const vertexBuffer = new DistilVertexBuffer(
     renderer.gl,
     vertices,
     {
