@@ -105,6 +105,7 @@ import { getVariableSummariesByState } from "../util/data";
 import { updateHighlight, UPDATE_ALL } from "../util/highlights";
 import { lexQueryToFiltersAndHighlight } from "../util/lex";
 import { resultSummariesToVariables } from "../util/summaries";
+import { overlayRouteEntry } from "../util/routes";
 const TABLE_VIEW = "table";
 const IMAGE_VIEW = "image";
 const GRAPH_VIEW = "graph";
@@ -303,6 +304,8 @@ export default Vue.extend({
     },
     /* When the user request to fetch a different size of data. */
     onDataSizeSubmit(dataSize: number) {
+      const entry = overlayRouteEntry(this.$route, { dataSize });
+      this.$router.push(entry).catch((err) => console.warn(err));
       predictionsActions.fetchPredictionTableData(this.$store, {
         dataset: this.dataset,
         highlights: this.highlights,
