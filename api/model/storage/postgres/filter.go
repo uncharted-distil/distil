@@ -523,6 +523,10 @@ func (s *Storage) buildPredictedResultWhere(dataset string, wheres []string, par
 func (s *Storage) buildResultQueryFilters(dataset string, storageName string, resultURI string, filterParams *api.FilterParams, alias string) ([]string, []interface{}, error) {
 	params := make([]interface{}, 0)
 	wheresCombined := []string{}
+	if filterParams == nil {
+		return wheresCombined, params, nil
+	}
+
 	for _, filterSet := range filterParams.Filters {
 		// pull filters generated against the result facet out for special handling
 		filters, err := splitFilters(filterSet)
@@ -533,10 +537,9 @@ func (s *Storage) buildResultQueryFilters(dataset string, storageName string, re
 		wheres := make([]string, 0)
 		where := ""
 		where, params = s.buildSelectionFilter(dataset, params, alias, filters.genericFilters)
-		if filterSet.Mode == model.ExcludeFilter {
-			where = fmt.Sprintf("NOT(%s)", where)
+		if len(where) > 0 {
+			wheres = append(wheres, where)
 		}
-		wheres = append(wheres, where)
 
 		// assemble split filters
 		for _, predictedFilter := range filters.predictedFilters {
@@ -569,11 +572,17 @@ func (s *Storage) buildResultQueryFilters(dataset string, storageName string, re
 }
 
 func combineClauses(mode string, clauses []string, operation string) string {
-	if len(clauses) == 0 {
+	clausesContent := []string{}
+	for _, clause := range clauses {
+		if len(clause) > 0 {
+			clausesContent = append(clausesContent, clause)
+		}
+	}
+	if len(clausesContent) == 0 {
 		return ""
 	}
 
-	whereCombined := fmt.Sprintf("(%s)", strings.Join(clauses, fmt.Sprintf(" %s ", operation)))
+	whereCombined := fmt.Sprintf("(%s)", strings.Join(clausesContent, fmt.Sprintf(" %s ", operation)))
 	if mode == model.ExcludeFilter {
 		whereCombined = fmt.Sprintf("NOT%s", whereCombined)
 	}
@@ -587,16 +596,6 @@ type filters struct {
 	correctnessFilters []api.FilterObject
 	confidenceFilters  []api.FilterObject
 	rankFilters        []api.FilterObject
-}
-
-func hasResidualFilters(filters map[string]*filters) bool {
-	for _, f := range filters {
-		if len(f.residualFilters) > 0 {
-			return true
-		}
-	}
-
-	return false
 }
 
 func splitFilters(filterSet *api.FilterSet) (*filters, error) {
@@ -637,13 +636,11 @@ func splitFilters(filterSet *api.FilterSet) (*filters, error) {
 
 // FetchNumRows pulls the number of rows in the table.
 func (s *Storage) FetchNumRows(storageName string, variables []*model.Variable) (int, error) {
-
 	return s.fetchNumRowsJoined(storageName, variables, nil, nil, nil)
 }
 
 // FetchNumRowsFiltered pulls the number of filtered rows in the table.
 func (s *Storage) FetchNumRowsFiltered(storageName string, variables []*model.Variable, filters []string, params []interface{}) (int, error) {
-
 	return s.fetchNumRowsJoined(storageName, variables, filters, params, nil)
 }
 

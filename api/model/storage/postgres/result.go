@@ -686,13 +686,11 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 
 		wheresMode := make([]string, 0)
 		// Create the filter portion of the where clause.
-		//this call is resulting in a nested not on exclusion filters!!!!!
 		where := ""
 		where, params = s.buildSelectionFilter(dataset, params, dataTableAlias, filters.genericFilters)
-		if filterSet.Mode == model.ExcludeFilter {
-			where = fmt.Sprintf("NOT(%s)", where)
+		if len(where) > 0 {
+			wheresMode = append(wheresMode, where)
 		}
-		wheresMode = append(wheresMode, where)
 
 		// Add the predicted filter into the where clause if it was included in the filter set
 		for _, pf := range filters.predictedFilters {
