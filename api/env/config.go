@@ -33,8 +33,9 @@ type Config struct {
 	BatchSubFolder             string  `env:"BATCH_SUBFOLDER" envDefault:"batch"`
 	ClassificationOutputPath   string  `env:"CLASSIFICATION_OUTPUT_PATH" envDefault:"classification.json"`
 	ClassificationEnabled      bool    `env:"CLASSIFICATION_ENABLED" envDefault:"true"`
-	ClusteringEnabled          bool    `env:"CLUSTERING_ENABLED" envDefault:"true"`
+	ClusteringEnabled          bool    `env:"CLUSTERING_ENABLED" envDefault:"true"` // This clustering is used during ingest
 	ClusteringKMeans           bool    `env:"CLUSTERING_KMEANS" envDefault:"true"`
+	ClusteringRouteEnabled     bool    `env:"CLUSTERING_ROUTE_ENABLED" envDefault:"true"` // This disables select view clustering see routes/clustering.go
 	D3MInputDir                string  `env:"D3MINPUTDIR" envDefault:"datasets"`
 	D3MOutputDir               string  `env:"D3MOUTPUTDIR" envDefault:"outputs"`
 	DatamartURIISI             string  `env:"DATAMART_ISI_URL" envDefault:"https://dsbox02.isi.edu:9000"`

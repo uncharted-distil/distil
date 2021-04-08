@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/pkg/errors"
 	"goji.io/v3/pat"
 
@@ -38,6 +39,16 @@ type ClusteringResult struct {
 // of a variable and the creation of the new column to hold the cluster label.
 func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCtor, config env.Config) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// check if route is enabled
+		if !config.ClusteringRouteEnabled {
+			// return empty result
+			err := handleJSON(w, empty.Empty{})
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable marshal clustering result into JSON"))
+				return
+			}
+			return
+		}
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
 		// get variable name
