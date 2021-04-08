@@ -18,7 +18,13 @@
 <template>
   <b-dropdown variant="outline-secondary" no-flip>
     <template v-slot:button-content>
-      <div class="selected-bar" :style="selectedColorScale.gradient" />
+      <div class="d-inline-flex align-items-center">
+        <div class="d-inline-flex">Confidence</div>
+        <div
+          class="selected-bar d-inline-flex ml-1"
+          :style="selectedColorScale.gradient"
+        />
+      </div>
     </template>
     <b-dropdown-item
       v-for="item in colorScales"
