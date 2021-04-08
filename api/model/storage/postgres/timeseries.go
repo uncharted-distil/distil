@@ -593,27 +593,37 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 		}
 	}
 
-	// split the filters to make sure the result based filters can be applied properly
-	filtersSplit, err := splitFilters(filterParams)
-	if err != nil {
-		return nil, err
+	genericfilters := &api.FilterParams{
+		Size:      filterParams.Size,
+		Variables: filterParams.Variables,
+		DataMode:  filterParams.DataMode,
+		Filters:   []*api.FilterSet{},
 	}
 	joins := make([]*joinDefinition, 0)
 	wheres := []string{}
 	params := []interface{}{}
-	if hasResidualFilters(filtersSplit) {
-		for mode, filters := range filtersSplit {
+	for _, filterSet := range filterParams.Filters {
+		// split the filters to make sure the result based filters can be applied properly
+		filtersSplit, err := splitFilters(filterSet)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(filtersSplit.residualFilters) > 0 {
 			clauses := []string{}
-			for _, residualFilter := range filters.residualFilters {
+			for _, residualFilter := range filtersSplit.residualFilters {
 				wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, residualFilter)
 				if err != nil {
 					return nil, err
 				}
-
-				wheres = append(wheres, combineClauses(mode, clauses, "AND"))
 			}
+			wheres = append(wheres, combineClauses(filterSet.Mode, clauses, "AND"))
 		}
 
+		// combine the generic filters together into a single one
+		genericfilters.MergeFilterObjects(filtersSplit.genericFilters)
+	}
+	if len(wheres) > 0 {
 		joins = append(joins, &joinDefinition{
 			baseAlias:  baseTableAlias,
 			baseColumn: f.IDCol,
@@ -643,15 +653,6 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 		return nil, err
 	}
 
-	// combine the generic filters together into a single one
-	var genericfilters *api.FilterParams
-	for _, filters := range filtersSplit {
-		if genericfilters == nil {
-			genericfilters = filters.genericFilters
-			continue
-		}
-		genericfilters.MergeParams(filters.genericFilters)
-	}
 	timeline, err := timelineField.fetchHistogramWithJoins(genericfilters, api.MaxNumBuckets, joins, wheres, params)
 	if err != nil {
 		return nil, err

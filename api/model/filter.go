@@ -53,11 +53,11 @@ func DataModeFromString(s string) (DataMode, error) {
 // by the server only, and not the client. Filters are gathered by mode (include/exclude),
 // with each mode being a list of features that are used as filters.
 type FilterParams struct {
-	Size      int                       `json:"size"`
-	Filters   map[string][]FilterObject `json:"filters"`
-	Variables []string                  `json:"variables"`
-	DataMode  DataMode                  `json:"dataMode"`
-	Invert    bool                      `json:"invert"`
+	Size      int          `json:"size"`
+	Filters   []*FilterSet `json:"filters"`
+	Variables []string     `json:"variables"`
+	DataMode  DataMode     `json:"dataMode"`
+	Invert    bool         `json:"invert"`
 }
 
 // FilterParamsRaw defines the set of numeric range and categorical filters. Variables
@@ -76,11 +76,17 @@ type FilterObject struct {
 	Invert bool            `json:"invert"`
 }
 
+// FilterSet captures a set of filters representing one subset of data.
+type FilterSet struct {
+	FeatureFilters []FilterObject `json:"featureFilters"`
+	Mode           string         `json:"mode"`
+}
+
 // NewFilterParamsFromFilters creates a wrapping container for all filters.
 func NewFilterParamsFromFilters(filters []*model.Filter) *FilterParams {
 	// group filters by feature and mode
 	params := &FilterParams{
-		Filters: map[string][]FilterObject{},
+		Filters: []*FilterSet{},
 	}
 
 	// add filters to the params
@@ -99,7 +105,7 @@ func NewFilterParamsFromRaw(raw *FilterParamsRaw) *FilterParams {
 		Size:      rawClone.Size,
 		Variables: rawClone.Variables,
 		DataMode:  rawClone.DataMode,
-		Filters:   map[string][]FilterObject{},
+		Filters:   []*FilterSet{},
 	}
 
 	// add filters and highlights to the params
@@ -109,16 +115,23 @@ func NewFilterParamsFromRaw(raw *FilterParamsRaw) *FilterParams {
 	for _, h := range rawClone.Highlights.List {
 		params.AddFilter(h)
 	}
-	// TODO: THIS MAKES NO SENSE BUT WE SOMEHOW HAVE TO SET THE INVERT PROPERLY!
-	// OR DO WE INVERT THINGS HERE? (IE INVERT HIGHLIGHT = MAKE IT FILTER AND VICE VERSE)
+	// TODO: FIGURE OUT A NICE WAY TO INVERT THINGS!
 	if len(rawClone.Filters.List) > 0 {
-		for _, f := range params.Filters[rawClone.Filters.List[0].Mode] {
-			f.Invert = rawClone.Filters.Invert
+		for _, set := range params.Filters {
+			if set.Mode == rawClone.Filters.List[0].Mode {
+				for i := range set.FeatureFilters {
+					set.FeatureFilters[i].Invert = rawClone.Filters.Invert
+				}
+			}
 		}
 	}
 	if len(rawClone.Highlights.List) > 0 {
-		for _, f := range params.Filters[rawClone.Highlights.List[0].Mode] {
-			f.Invert = rawClone.Highlights.Invert
+		for _, set := range params.Filters {
+			if set.Mode == rawClone.Highlights.List[0].Mode {
+				for i := range set.FeatureFilters {
+					set.FeatureFilters[i].Invert = rawClone.Highlights.Invert
+				}
+			}
 		}
 	}
 
@@ -133,11 +146,11 @@ func GetBaselineFilter(filterParam *FilterParams) *FilterParams {
 
 	// highlights should not be applied to the baseline
 	clone := &FilterParams{
-		Filters: map[string][]FilterObject{},
+		Filters: []*FilterSet{},
 	}
-	for key, filters := range filterParam.Filters {
+	for _, filters := range filterParam.Filters {
 		baselineFilters := []FilterObject{}
-		for _, f := range filters {
+		for _, f := range filters.FeatureFilters {
 			baseline := f.getBaselineFilter()
 			if len(baseline) > 0 {
 				baselineFilters = append(baselineFilters, FilterObject{
@@ -147,7 +160,10 @@ func GetBaselineFilter(filterParam *FilterParams) *FilterParams {
 			}
 		}
 		if len(baselineFilters) > 0 {
-			clone.Filters[key] = baselineFilters
+			clone.Filters = append(clone.Filters, &FilterSet{
+				FeatureFilters: baselineFilters,
+				Mode:           filters.Mode,
+			})
 		}
 	}
 	clone.Variables = append(clone.Variables, filterParam.Variables...)
@@ -170,13 +186,14 @@ func (f FilterObject) getBaselineFilter() []*model.Filter {
 // Clone returns a deep copy of the filter params.
 func (f *FilterParams) Clone() *FilterParams {
 	clone := &FilterParams{
-		Filters: map[string][]FilterObject{},
+		Filters: []*FilterSet{},
 	}
-	for mode, filters := range f.Filters {
-		if clone.Filters[mode] == nil {
-			clone.Filters[mode] = []FilterObject{}
+	for _, filters := range f.Filters {
+		featureSet := &FilterSet{
+			Mode:           filters.Mode,
+			FeatureFilters: []FilterObject{},
 		}
-		for _, fo := range filters {
+		for _, fo := range filters.FeatureFilters {
 			cloneFilterObject := FilterObject{
 				Invert: fo.Invert,
 				List:   []*model.Filter{},
@@ -185,8 +202,9 @@ func (f *FilterParams) Clone() *FilterParams {
 				c := *f
 				cloneFilterObject.List = append(cloneFilterObject.List, &c)
 			}
-			clone.Filters[mode] = append(clone.Filters[mode], cloneFilterObject)
+			featureSet.FeatureFilters = append(featureSet.FeatureFilters, cloneFilterObject)
 		}
+		clone.Filters = append(clone.Filters, featureSet)
 	}
 	clone.Invert = f.Invert
 	clone.Variables = append(clone.Variables, f.Variables...)
@@ -197,37 +215,40 @@ func (f *FilterParams) Clone() *FilterParams {
 
 // AddFilter adds a filter to the filter params, inserting it in the proper collection.
 func (f *FilterParams) AddFilter(filter *model.Filter) {
+	// currently assume all include filters are one filter set, and exclude another
 	// need to add it to the right mode (include, exclude)
-	filters, ok := f.Filters[filter.Mode]
-	if !ok {
-		// no filter for that mode exists yet
-		f.Filters[filter.Mode] = []FilterObject{{
-			Invert: false,
-			List:   []*model.Filter{filter},
-		}}
+	for _, set := range f.Filters {
+		if set.Mode == filter.Mode {
+			// find the list of filters for that feature
+			for i, feature := range set.FeatureFilters {
+				if feature.List[0].Key == filter.Key {
+					set.FeatureFilters[i].List = append(set.FeatureFilters[i].List, filter)
+					return
+				}
+			}
 
-		return
-	}
-
-	// find the list of filters for that feature
-	for i, feature := range filters {
-		if feature.List[0].Key == filter.Key {
-			filters[i].List = append(filters[i].List, filter)
+			// feature not filtered yet
+			set.FeatureFilters = append(set.FeatureFilters, FilterObject{
+				Invert: false,
+				List:   []*model.Filter{filter},
+			})
 			return
 		}
 	}
-
-	// feature not filtered yet in that mode
-	f.Filters[filter.Mode] = append(filters, FilterObject{
-		Invert: false,
-		List:   []*model.Filter{filter},
+	// no filter for that mode exists yet
+	f.Filters = append(f.Filters, &FilterSet{
+		Mode: filter.Mode,
+		FeatureFilters: []FilterObject{{
+			Invert: false,
+			List:   []*model.Filter{filter},
+		}},
 	})
 }
 
 // Empty returns if the filter set is empty.
 func (f *FilterParams) Empty(ignoreBaselineFilters bool) bool {
-	for _, mode := range f.Filters {
-		for _, filters := range mode {
+	for _, set := range f.Filters {
+		for _, filters := range set.FeatureFilters {
 			for _, filter := range filters.List {
 				if !filter.IsBaselineFilter || !ignoreBaselineFilters {
 					return false
@@ -250,8 +271,8 @@ func (f *FilterParams) AddVariable(nv string) {
 
 // InvertFilters inverts filters and highlights.
 func (f *FilterParams) InvertFilters() {
-	for _, mode := range f.Filters {
-		for _, fo := range mode {
+	for _, set := range f.Filters {
+		for _, fo := range set.FeatureFilters {
 			fo.Invert = !fo.Invert
 		}
 	}
@@ -296,7 +317,8 @@ func (f *FilterParamsRaw) Clone() *FilterParamsRaw {
 func filtersEqual(first *model.Filter, second *model.Filter) bool {
 	baseEquals := first.Key == second.Key &&
 		first.Min == second.Min &&
-		first.Max == second.Max
+		first.Max == second.Max &&
+		first.Mode == second.Mode
 	boundsEquals := (first.Bounds == nil && second.Bounds == nil) ||
 		(first.Bounds != nil && second.Bounds != nil &&
 			first.Bounds.MinX == second.Bounds.MinX &&
@@ -319,11 +341,15 @@ func (f *FilterParams) Merge(other *FilterParamsRaw) {
 
 	for _, highlight := range other.Highlights.List {
 		found := false
-		for _, filters := range f.Filters[highlight.Mode] {
-			for _, currentFilter := range filters.List {
-				if filtersEqual(highlight, currentFilter) {
-					found = true
-					break
+		for _, set := range f.Filters {
+			if set.Mode == highlight.Mode {
+				for _, filters := range set.FeatureFilters {
+					for _, currentFilter := range filters.List {
+						if filtersEqual(highlight, currentFilter) {
+							found = true
+							break
+						}
+					}
 				}
 			}
 		}
@@ -334,11 +360,15 @@ func (f *FilterParams) Merge(other *FilterParamsRaw) {
 
 	for _, filter := range other.Filters.List {
 		found := false
-		for _, filters := range f.Filters[filter.Mode] {
-			for _, currentFilter := range filters.List {
-				if filtersEqual(filter, currentFilter) {
-					found = true
-					break
+		for _, set := range f.Filters {
+			if set.Mode == filter.Mode {
+				for _, filters := range set.FeatureFilters {
+					for _, currentFilter := range filters.List {
+						if filtersEqual(filter, currentFilter) {
+							found = true
+							break
+						}
+					}
 				}
 			}
 		}
@@ -371,15 +401,19 @@ func (f *FilterParams) MergeParams(other *FilterParams) {
 		f.Size = other.Size
 	}
 
-	for _, mode := range other.Filters {
-		for _, features := range mode {
+	for _, set := range other.Filters {
+		for _, features := range set.FeatureFilters {
 			for _, filter := range features.List {
 				found := false
-				for _, filters := range f.Filters[filter.Mode] {
-					for _, currentFilter := range filters.List {
-						if filtersEqual(filter, currentFilter) {
-							found = true
-							break
+				for _, setOther := range f.Filters {
+					if setOther.Mode == set.Mode {
+						for _, filters := range setOther.FeatureFilters {
+							for _, currentFilter := range filters.List {
+								if filtersEqual(filter, currentFilter) {
+									found = true
+									break
+								}
+							}
 						}
 					}
 				}
@@ -400,6 +434,28 @@ func (f *FilterParams) MergeParams(other *FilterParams) {
 		}
 		if !found {
 			f.Variables = append(f.Variables, variable)
+		}
+	}
+}
+
+// MergeFilterObjects merges a slice of filter objects with the existing filter params.
+func (f *FilterParams) MergeFilterObjects(filters []FilterObject) {
+	for _, features := range filters {
+		for _, filter := range features.List {
+			found := false
+			for _, setOther := range f.Filters {
+				for _, filters := range setOther.FeatureFilters {
+					for _, currentFilter := range filters.List {
+						if filtersEqual(filter, currentFilter) {
+							found = true
+							break
+						}
+					}
+				}
+			}
+			if !found {
+				f.AddFilter(filter)
+			}
 		}
 	}
 }

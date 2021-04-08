@@ -277,10 +277,10 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, wheres []string, param
 	// exclusion set is the complement of the equivalent inclusion set
 	// ie: the exclusion set can be defined as NOT(inclusion set)
 	filters := []string{}
-	for mode, filtersMode := range filterParams.Filters {
+	for _, set := range filterParams.Filters {
 		where := ""
-		where, params = s.buildSelectionFilter(dataset, params, alias, filtersMode)
-		if mode == model.ExcludeFilter {
+		where, params = s.buildSelectionFilter(dataset, params, alias, set.FeatureFilters)
+		if set.Mode == model.ExcludeFilter {
 			where = fmt.Sprintf("NOT(%s)", where)
 		}
 		filters = append(filters, where)
@@ -468,13 +468,7 @@ func (s *Storage) buildErrorResultWhere(wheres []string, params []interface{}, r
 
 	wheresFilter := []string{}
 	for _, f := range residualFilter.List {
-		where := fmt.Sprintf("(%s >= $%d AND %s <= $%d)", typedError, len(params)+1, typedError, len(params)+2)
-
-		// exclusion filter is the complement (inverse) of inclusion filter!
-		if f.Mode == model.ExcludeFilter {
-			where = fmt.Sprintf("(NOT%s)", where)
-		}
-		wheresFilter = append(wheresFilter, where)
+		wheresFilter = append(wheresFilter, fmt.Sprintf("(%s >= $%d AND %s <= $%d)", typedError, len(params)+1, typedError, len(params)+2))
 		params = append(params, *f.Min)
 		params = append(params, *f.Max)
 	}
@@ -491,13 +485,7 @@ func (s *Storage) buildConfidenceResultWhere(wheres []string, params []interface
 
 	wheresFilter := []string{}
 	for _, f := range confidenceFilter.List {
-		where := fmt.Sprintf("((%sexplain_values -> 'confidence')::double precision >= $%d AND (%sexplain_values -> 'confidence')::double precision <= $%d)", alias, len(params)+1, alias, len(params)+2)
-
-		// exclusion filter is the complement (inverse) of inclusion filter!
-		if f.Mode == model.ExcludeFilter {
-			where = fmt.Sprintf("(NOT%s)", where)
-		}
-		wheresFilter = append(wheresFilter, where)
+		wheresFilter = append(wheresFilter, fmt.Sprintf("((%sexplain_values -> 'confidence')::double precision >= $%d AND (%sexplain_values -> 'confidence')::double precision <= $%d)", alias, len(params)+1, alias, len(params)+2))
 		params = append(params, *f.Min)
 		params = append(params, *f.Max)
 	}
@@ -513,13 +501,7 @@ func (s *Storage) buildRankResultWhere(wheres []string, params []interface{}, ra
 
 	wheresFilter := []string{}
 	for _, f := range rankFilter.List {
-		where := fmt.Sprintf("((%sexplain_values -> 'rank')::double precision >= $%d AND (%sexplain_values -> 'rank')::double precision <= $%d)", alias, len(params)+1, alias, len(params)+2)
-
-		// exclusion filter is the complement (inverse) of inclusion filter!
-		if f.Mode == model.ExcludeFilter {
-			where = fmt.Sprintf("(NOT%s)", where)
-		}
-		wheresFilter = append(wheresFilter, where)
+		wheresFilter = append(wheresFilter, fmt.Sprintf("((%sexplain_values -> 'rank')::double precision >= $%d AND (%sexplain_values -> 'rank')::double precision <= $%d)", alias, len(params)+1, alias, len(params)+2))
 		params = append(params, *f.Min)
 		params = append(params, *f.Max)
 	}
@@ -529,31 +511,32 @@ func (s *Storage) buildRankResultWhere(wheres []string, params []interface{}, ra
 }
 func (s *Storage) buildPredictedResultWhere(dataset string, wheres []string, params []interface{}, alias string, resultURI string, resultFilter api.FilterObject) ([]string, []interface{}) {
 	// handle the general category case
-
 	filterParams := &api.FilterParams{
-		Filters: map[string][]api.FilterObject{
-			resultFilter.List[0].Mode: {resultFilter},
-		},
+		Filters: []*api.FilterSet{{
+			FeatureFilters: []api.FilterObject{resultFilter},
+			Mode:           resultFilter.List[0].Mode,
+		}},
 	}
-
-	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, alias, filterParams)
-	return wheres, params
+	return s.buildFilteredQueryWhere(dataset, wheres, params, alias, filterParams)
 }
 
 func (s *Storage) buildResultQueryFilters(dataset string, storageName string, resultURI string, filterParams *api.FilterParams, alias string) ([]string, []interface{}, error) {
-	// pull filters generated against the result facet out for special handling
-	filtersSplit, err := splitFilters(filterParams)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	params := make([]interface{}, 0)
 	wheresCombined := []string{}
-	for mode, filters := range filtersSplit {
-		genericFilterParams := filters.genericFilters
+	for _, filterSet := range filterParams.Filters {
+		// pull filters generated against the result facet out for special handling
+		filters, err := splitFilters(filterSet)
+		if err != nil {
+			return nil, nil, err
+		}
 		// create the filter for the query
 		wheres := make([]string, 0)
-		wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, alias, genericFilterParams)
+		where := ""
+		where, params = s.buildSelectionFilter(dataset, params, alias, filters.genericFilters)
+		if filterSet.Mode == model.ExcludeFilter {
+			where = fmt.Sprintf("NOT(%s)", where)
+		}
+		wheres = append(wheres, where)
 
 		// assemble split filters
 		for _, predictedFilter := range filters.predictedFilters {
@@ -578,16 +561,18 @@ func (s *Storage) buildResultQueryFilters(dataset string, storageName string, re
 			wheres, params = s.buildRankResultWhere(wheres, params, rankFilter, "result")
 		}
 
-		whereCombined := fmt.Sprintf("(%s)", strings.Join(wheres, " AND "))
-		if mode == model.ExcludeFilter {
-			whereCombined = fmt.Sprintf("NOT%s", whereCombined)
+		if len(wheres) > 0 {
+			wheresCombined = append(wheresCombined, combineClauses(filterSet.Mode, wheres, "AND"))
 		}
-		wheresCombined = append(wheresCombined, whereCombined)
 	}
 	return wheresCombined, params, nil
 }
 
 func combineClauses(mode string, clauses []string, operation string) string {
+	if len(clauses) == 0 {
+		return ""
+	}
+
 	whereCombined := fmt.Sprintf("(%s)", strings.Join(clauses, fmt.Sprintf(" %s ", operation)))
 	if mode == model.ExcludeFilter {
 		whereCombined = fmt.Sprintf("NOT%s", whereCombined)
@@ -596,7 +581,7 @@ func combineClauses(mode string, clauses []string, operation string) string {
 }
 
 type filters struct {
-	genericFilters     *api.FilterParams
+	genericFilters     []api.FilterObject
 	predictedFilters   []api.FilterObject
 	residualFilters    []api.FilterObject
 	correctnessFilters []api.FilterObject
@@ -614,62 +599,36 @@ func hasResidualFilters(filters map[string]*filters) bool {
 	return false
 }
 
-func splitFilters(filterParams *api.FilterParams) (map[string]*filters, error) {
-	if filterParams == nil {
-		return map[string]*filters{}, nil
+func splitFilters(filterSet *api.FilterSet) (*filters, error) {
+	if filterSet == nil {
+		return &filters{}, nil
 	}
 
 	// split fitlers into inclusion and exclusion sets
-	output := map[string]*filters{
-		model.IncludeFilter: {
-			genericFilters: &api.FilterParams{
-				Size:      filterParams.Size,
-				Invert:    filterParams.Invert,
-				DataMode:  filterParams.DataMode,
-				Variables: filterParams.Variables,
-				Filters:   map[string][]api.FilterObject{},
-			},
-			predictedFilters:   []api.FilterObject{},
-			residualFilters:    []api.FilterObject{},
-			correctnessFilters: []api.FilterObject{},
-			confidenceFilters:  []api.FilterObject{},
-			rankFilters:        []api.FilterObject{},
-		},
-		model.ExcludeFilter: {
-			genericFilters: &api.FilterParams{
-				Size:      filterParams.Size,
-				Invert:    filterParams.Invert,
-				DataMode:  filterParams.DataMode,
-				Variables: filterParams.Variables,
-				Filters:   map[string][]api.FilterObject{},
-			},
-			predictedFilters:   []api.FilterObject{},
-			residualFilters:    []api.FilterObject{},
-			correctnessFilters: []api.FilterObject{},
-			confidenceFilters:  []api.FilterObject{},
-			rankFilters:        []api.FilterObject{},
-		},
+	output := &filters{
+		genericFilters:     []api.FilterObject{},
+		predictedFilters:   []api.FilterObject{},
+		residualFilters:    []api.FilterObject{},
+		correctnessFilters: []api.FilterObject{},
+		confidenceFilters:  []api.FilterObject{},
+		rankFilters:        []api.FilterObject{},
 	}
 
-	for mode, modeFilters := range filterParams.Filters {
-		for _, featureFilters := range modeFilters {
-			if api.IsPredictedKey(featureFilters.List[0].Key) {
-				output[mode].predictedFilters = append(output[mode].predictedFilters, featureFilters)
-			} else if api.IsErrorKey(featureFilters.List[0].Key) {
-				if featureFilters.List[0].Type == model.NumericalFilter {
-					output[mode].residualFilters = append(output[mode].residualFilters, featureFilters)
-				} else if featureFilters.List[0].Type == model.CategoricalFilter {
-					output[mode].correctnessFilters = append(output[mode].correctnessFilters, featureFilters)
-				}
-			} else if api.IsConfidenceKey(featureFilters.List[0].Key) {
-				output[mode].confidenceFilters = append(output[mode].confidenceFilters, featureFilters)
-			} else if api.IsRankKey(featureFilters.List[0].Key) {
-				output[mode].rankFilters = append(output[mode].rankFilters, featureFilters)
-			} else {
-				for _, f := range featureFilters.List {
-					output[mode].genericFilters.AddFilter(f)
-				}
+	for _, featureFilters := range filterSet.FeatureFilters {
+		if api.IsPredictedKey(featureFilters.List[0].Key) {
+			output.predictedFilters = append(output.predictedFilters, featureFilters)
+		} else if api.IsErrorKey(featureFilters.List[0].Key) {
+			if featureFilters.List[0].Type == model.NumericalFilter {
+				output.residualFilters = append(output.residualFilters, featureFilters)
+			} else if featureFilters.List[0].Type == model.CategoricalFilter {
+				output.correctnessFilters = append(output.correctnessFilters, featureFilters)
 			}
+		} else if api.IsConfidenceKey(featureFilters.List[0].Key) {
+			output.confidenceFilters = append(output.confidenceFilters, featureFilters)
+		} else if api.IsRankKey(featureFilters.List[0].Key) {
+			output.rankFilters = append(output.rankFilters, featureFilters)
+		} else {
+			output.genericFilters = append(output.genericFilters, featureFilters)
 		}
 	}
 

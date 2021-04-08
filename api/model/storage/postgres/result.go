@@ -540,14 +540,7 @@ func addCorrectnessFilterToWhere(wheres []string, params []interface{}, correctn
 		} else if strings.EqualFold(correctnessFilter.Categories[0], IncorrectCategory) {
 			op = "!="
 		}
-
-		where := fmt.Sprintf("(predicted.value %s data.\"%s\")", op, target.Key)
-
-		// exclusion filter is the complement (inverse) of inclusion filter!
-		if correctnessFilter.Mode == model.ExcludeFilter {
-			where = fmt.Sprintf("NOT%s", where)
-		}
-		wheresFilter = append(wheresFilter, where)
+		wheresFilter = append(wheresFilter, fmt.Sprintf("(predicted.value %s data.\"%s\")", op, target.Key))
 	}
 	return append(wheres, fmt.Sprintf("(%s)", strings.Join(wheresFilter, " OR "))), params, nil
 }
@@ -563,7 +556,7 @@ func getFullName(alias string, column string) string {
 
 func addPredictedFilterToWhere(wheres []string, params []interface{}, predictedFilters api.FilterObject, target *model.Variable) ([]string, []interface{}, error) {
 	// Handle the predicted column, which is accessed as `value` in the result query
-	wheresFilter := map[string][]string{}
+	wheresFilter := []string{}
 	for _, predictedFilter := range predictedFilters.List {
 		where := ""
 		switch predictedFilter.Type {
@@ -615,22 +608,11 @@ func addPredictedFilterToWhere(wheres []string, params []interface{}, predictedF
 			return nil, nil, errors.Errorf("unexpected type %s for variable %s", predictedFilter.Type, predictedFilter.Key)
 		}
 
-		// exclusion filter is the complement (inverse) of inclusion filter!
-		wheresFilter[predictedFilter.Mode] = append(wheresFilter[predictedFilter.Mode], where)
-	}
-
-	// reduce filters to a single statement by mode, where exclusion just inverts the filter
-	wheresOutput := []string{}
-	for mode, fs := range wheresFilter {
-		whereReduced := fmt.Sprintf("(%s)", strings.Join(fs, " OR "))
-		if mode == model.ExcludeFilter {
-			whereReduced = fmt.Sprintf("NOT%s", whereReduced)
-		}
-		wheresOutput = append(wheresOutput, whereReduced)
+		wheresFilter = append(wheresFilter, where)
 	}
 
 	// combine the different modes together into a single filter statement
-	return append(wheres, strings.Join(wheresOutput, " AND ")), params, nil
+	return append(wheres, fmt.Sprintf("(%s)", strings.Join(wheresFilter, " OR "))), params, nil
 }
 
 func addErrorFilterToWhere(wheres []string, params []interface{}, alias string, targetName string, residualFilters api.FilterObject) ([]string, []interface{}, error) {
@@ -638,14 +620,7 @@ func addErrorFilterToWhere(wheres []string, params []interface{}, alias string, 
 	for _, residualFilter := range residualFilters.List {
 		// Add a clause to filter residuals to the existing where
 		typedError := getErrorTyped(alias, targetName)
-		where := fmt.Sprintf("(%s >= $%d AND %s <= $%d)", typedError, len(params)+1, typedError, len(params)+2)
-
-		// exclusion filter is the complement (inverse) of inclusion filter!
-		if residualFilter.Mode == model.ExcludeFilter {
-			where = fmt.Sprintf("NOT%s", where)
-		}
-
-		wheresFilter = append(wheresFilter, where)
+		wheresFilter = append(wheresFilter, fmt.Sprintf("(%s >= $%d AND %s <= $%d)", typedError, len(params)+1, typedError, len(params)+2))
 		params = append(params, *residualFilter.Min)
 		params = append(params, *residualFilter.Max)
 	}
@@ -698,22 +673,26 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	fieldsData := addTableAlias(dataTableAlias, fields, false)
 	fieldsExplain := addTableAlias("weights", fields, true)
 
-	// break filters out groups for specific handling
-	splitFilters, err := splitFilters(filterParams)
-	if err != nil {
-		return nil, err
-	}
-
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
 
 	// need to create all filters by mode
-	for mode, filters := range splitFilters {
+	for _, filterSet := range filterParams.Filters {
+		// break filters out groups for specific handling
+		filters, err := splitFilters(filterSet)
+		if err != nil {
+			return nil, err
+		}
+
 		wheresMode := make([]string, 0)
-		genericFilterParams := filters.genericFilters
-		genericFilterParams.DataMode = filterParams.DataMode
 		// Create the filter portion of the where clause.
-		wheresMode, params = s.buildFilteredQueryWhere(dataset, wheresMode, params, dataTableAlias, genericFilterParams)
+		//this call is resulting in a nested not on exclusion filters!!!!!
+		where := ""
+		where, params = s.buildSelectionFilter(dataset, params, dataTableAlias, filters.genericFilters)
+		if filterSet.Mode == model.ExcludeFilter {
+			where = fmt.Sprintf("NOT(%s)", where)
+		}
+		wheresMode = append(wheresMode, where)
 
 		// Add the predicted filter into the where clause if it was included in the filter set
 		for _, pf := range filters.predictedFilters {
@@ -748,11 +727,9 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 			wheresMode, params = s.buildRankResultWhere(wheresMode, params, rf, "predicted")
 		}
 
-		whereCombined := fmt.Sprintf("(%s)", strings.Join(wheresMode, " AND "))
-		if mode == model.ExcludeFilter {
-			whereCombined = fmt.Sprintf("NOT%s", whereCombined)
+		if len(wheresMode) > 0 {
+			wheres = append(wheres, combineClauses(filterSet.Mode, wheresMode, "AND"))
 		}
-		wheres = append(wheres, whereCombined)
 	}
 	// If this is a timeseries forecast we don't want to include the target, predicted target or error
 	// info in the returned data.  That information is fetched on a per-timeseries basis using the info

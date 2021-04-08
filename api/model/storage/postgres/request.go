@@ -60,8 +60,8 @@ func (s *Storage) PersistRequestFilters(requestID string, filters *api.FilterPar
 		"INSERT INTO %s (request_id, feature_name, filter_type, filter_mode, filter_min, filter_max, filter_min_x, filter_max_x, filter_min_y, filter_max_y, filter_categories, filter_indices) "+
 			"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12);", postgres.RequestFilterTableName)
 
-	for _, filterMode := range filters.Filters {
-		for _, filterFeatures := range filterMode {
+	for _, filterSet := range filters.Filters {
+		for _, filterFeatures := range filterSet.FeatureFilters {
 			for _, filter := range filterFeatures.List {
 				switch filter.Type {
 				case model.NumericalFilter:
