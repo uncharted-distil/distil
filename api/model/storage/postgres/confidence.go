@@ -79,15 +79,8 @@ func (s *Storage) fetchExplainHistogram(dataset string, storageName string, targ
 	// use a numerical sub select
 	field := NewNumericalFieldSubSelect(s, dataset, storageName, explainFieldAlias, explainFieldName, model.RealType, "", s.explainSubSelect(storageName, explainFieldName, explainFieldAlias))
 
-	// use predefined ranged of [0,1] for everything except rank
 	// rank extrema should be pulled now to optimize the query
-	var extrema *api.Extrema
-	var err error
-	if explainFieldName == "rank" {
-		extrema, err = s.fetchExplainExtrema(storageName, explainFieldName, resultURI)
-	} else {
-		extrema, _ = api.NewExtrema(0.0, 1.0)
-	}
+	extrema, err := s.fetchExplainExtrema(storageName, explainFieldName, resultURI)
 	if err != nil {
 		return nil, err
 	}

@@ -20,9 +20,9 @@
     <div>
       <div class="toolbar">
         <div class="title">{{ title }}</div>
-        <b-button class="exit-button" @click="onExitClicked"
-          ><span aria-hidden="true">&times;</span></b-button
-        >
+        <b-button class="exit-button" @click="onExitClicked">
+          <span aria-hidden="true">&times;</span>
+        </b-button>
       </div>
       <div class="grid-container" :style="gridColStyle">
         <template v-for="(r, i) in renderTiles.length">
@@ -30,10 +30,10 @@
             <div class="image-container">
               <image-label
                 class="image-label"
-                :dataFields="dataFields"
-                includedActive
-                shortenLabels
-                alignHorizontal
+                :data-fields="dataFields"
+                included-active
+                shorten-labels
+                align-horizontal
                 :item="renderTiles[i][j].selected.item"
               />
               <image-preview
@@ -44,18 +44,18 @@
                 :height="imageHeight"
                 :type="imageType"
                 :gray="renderTiles[i][j].selected.gray"
-                @click="onImageClick"
-                :overlappedUrls="
+                :overlapped-urls="
                   renderTiles[i][j].overlapped.map((o) => o.imageUrl)
                 "
+                @click="onImageClick"
               />
               <overlap-selection
                 :items="renderTiles[i][j].overlapped"
                 :indices="{ y: i, x: j }"
-                :instanceName="`over-lap-${i}-${j}`"
+                :instance-name="`over-lap-${i}-${j}`"
                 :width="imageWidth"
                 :height="imageHeight"
-                :imageType="imageType"
+                :image-type="imageType"
                 @item-selected="onOverlapSelected"
               />
             </div>
@@ -67,7 +67,6 @@
 </template>
 
 <script lang="ts">
-import _ from "lodash";
 import Vue from "vue";
 import ImagePreview from "./ImagePreview.vue";
 import ImageLabel from "./ImageLabel.vue";
@@ -108,7 +107,7 @@ interface Dimensions {
 }
 
 export default Vue.extend({
-  name: "drill-down",
+  name: "DrillDown",
 
   components: {
     ImagePreview,
@@ -122,7 +121,7 @@ export default Vue.extend({
     cols: { type: Number, default: 7 },
     imageWidth: { type: Number, default: 124 },
     imageHeight: { type: Number, default: 124 },
-    imageType: { type: String },
+    imageType: { type: String, default: null },
     dataFields: Object as () => Dictionary<TableColumn>,
     bounds: { type: Array as () => number[][] },
     centerTile: {
@@ -131,19 +130,13 @@ export default Vue.extend({
     },
     instanceName: { type: String as () => string, default: "" },
   },
+
   data() {
     return {
       renderTiles: [] as RenderTile[][],
     };
   },
-  mounted() {
-    this.renderTiles = this.spatialSort();
-  },
-  watch: {
-    tiles() {
-      this.renderTiles = this.spatialSort();
-    },
-  },
+
   computed: {
     tileDims(): Dimensions {
       return {
@@ -169,6 +162,17 @@ export default Vue.extend({
       return routeGetters.getDecodedRowSelection(this.$store);
     },
   },
+
+  watch: {
+    tiles() {
+      this.renderTiles = this.spatialSort();
+    },
+  },
+
+  mounted() {
+    this.renderTiles = this.spatialSort();
+  },
+
   methods: {
     getIndex(x: number, y: number): SpatialIndex {
       const minX = this.bounds[0][1];

@@ -59,7 +59,8 @@
         :baseline-items="baselineItems"
         :instance-name="instanceName"
         :summaries="summaries"
-        :areaOfInterestItems="{ inner: inner, outer: outer }"
+        :area-of-interest-items="{ inner: inner, outer: outer }"
+        :dataset="dataset"
         @tileClicked="onTileClick"
       />
     </div>
@@ -157,7 +158,7 @@ export default Vue.extend({
       return requestGetters.getActivePredictionTrainingVariables(this.$store);
     },
     dataset(): string {
-      return routeGetters.getRouteDataset(this.$store);
+      return routeGetters.getRoutePredictionsDataset(this.$store);
     },
     allVariables(): Variable[] {
       let predictionVariables = [];

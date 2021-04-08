@@ -91,6 +91,7 @@
           :is="viewComponent"
           :instance-name="instanceName"
           :included-active="includedActive"
+          :dataset="dataset"
         />
       </section>
 

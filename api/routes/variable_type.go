@@ -67,33 +67,10 @@ func VariableTypeHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataS
 			handleError(w, err)
 			return
 		}
-		storageName := ds.StorageName
 
-		// check the variable type to make sure it is valid
-		isValid, err := storage.IsValidDataType(dataset, storageName, field, typ)
+		err = updateType(ds, field, typ, storage, meta)
 		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to verify the data type in storage"))
-			return
-		}
-		if !isValid {
-			handleErrorType(
-				w,
-				fmt.Errorf("unable to verify the data type in storage"),
-				http.StatusBadRequest)
-			return
-		}
-
-		// update the variable type in the storage
-		err = setDataType(meta, storage, dataset, storageName, field, typ)
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
-			return
-		}
-
-		// update the extremas stored in ES
-		err = api.UpdateExtremas(dataset, field, meta, storage)
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to update the extremas in metadata"))
+			handleError(w, err)
 			return
 		}
 
@@ -123,6 +100,79 @@ func VariableTypeHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataS
 			return
 		}
 	}
+}
+
+func updateType(ds *api.Dataset, field string, typ string, storage api.DataStorage, meta api.MetadataStorage) error {
+	newType := typ
+	// geobounds has special processing
+	if model.IsGeoBounds(typ) {
+		err := setGeoBoundsField(ds, field, storage, meta)
+		if err != nil {
+			return err
+		}
+
+		// the existing field actually becomes a vector
+		newType = model.RealVectorType
+	}
+
+	// check the variable type to make sure it is valid
+	isValid, err := storage.IsValidDataType(ds.ID, ds.StorageName, field, newType)
+	if err != nil {
+		return err
+	}
+	if !isValid {
+		return errors.Errorf("unable to verify the data type in storage")
+	}
+
+	// update the variable type in the storage
+	err = setDataType(meta, storage, ds.ID, ds.StorageName, field, newType)
+	if err != nil {
+		return err
+	}
+
+	// update the extremas stored in ES
+	err = api.UpdateExtremas(ds.ID, field, meta, storage)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func setGeoBoundsField(ds *api.Dataset, field string, storage api.DataStorage, meta api.MetadataStorage) error {
+	// HACK: assume the name of the grouping field
+	groupName := fmt.Sprintf("%s_group", field)
+	// HACK: assume the name of the geometry field!!!
+	geometryFieldName := fmt.Sprintf("__geo_%s", field)
+
+	// check if the grouping already exists
+	exists, err := meta.DoesVariableExist(ds.ID, groupName)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return nil
+	}
+
+	// create the metadata variable for the hidden geobounds field
+	err = meta.AddVariable(ds.ID, geometryFieldName, field, model.GeoBoundsType, model.VarDistilRoleMetadata)
+	if err != nil {
+		return err
+	}
+
+	err = storage.SetDataType(ds.ID, ds.StorageName, field, model.GeoBoundsType)
+	if err != nil {
+		return err
+	}
+
+	// create the grouping
+	grouping := &model.GeoBoundsGrouping{}
+	grouping.Type = model.GeoBoundsType
+	grouping.CoordinatesCol = field
+	grouping.PolygonCol = geometryFieldName
+	grouping.Hidden = []string{field, geometryFieldName}
+
+	return meta.AddGroupedVariable(ds.ID, groupName, field, model.GeoBoundsType, model.VarDistilRoleGrouping, grouping)
 }
 
 func getPostParameters(r *http.Request) (map[string]interface{}, error) {

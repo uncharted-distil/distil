@@ -933,7 +933,7 @@ export const actions = {
     predictionMutations.clearTrainingSummaries(store);
     predictionMutations.setIncludedPredictionTableData(store, null);
 
-    const produceRequestId = <string>context.getters.getRouteProduceRequestId;
+    const produceRequestId = context.getters.getRouteProduceRequestId as string;
     const fittedSolutionId = context.getters.getRouteFittedSolutionId;
 
     // fetch the predictions
@@ -956,15 +956,16 @@ export const actions = {
 
   updatePredictionTrainingSummaries(context: ViewContext) {
     // fetch new state
-    const produceRequestId = <string>context.getters.getRouteProduceRequestId;
+    const produceRequestId = context.getters.getRouteProduceRequestId as string;
     const inferenceDataset = getPredictionsById(
       context.getters.getPredictions,
       produceRequestId
     ).dataset;
     const highlights = context.getters.getDecodedHighlights as Highlight[];
-    const varModes = <Map<string, SummaryMode>>(
-      context.getters.getDecodedVarModes
-    );
+    const varModes = context.getters.getDecodedVarModes as Map<
+      string,
+      SummaryMode
+    >;
     const currentSearch = context.getters
       .getRouteResultTrainingVarsSearch as string;
     const trainingVariables = searchVariables(

@@ -26,6 +26,7 @@ import {
   TableColumn,
   TableData,
   TableRow,
+  TableValue,
   TimeseriesGrouping,
   Variable,
   VariableSummary,
@@ -558,6 +559,21 @@ export function formatFieldsAsArray(
   return _.map(fields, (field) => field);
 }
 
+export function sameData(old: TableRow[], cur: TableRow[]): boolean {
+  if (old === null || cur === null) {
+    return false;
+  }
+  if (old.length !== cur.length) {
+    return false;
+  }
+  for (let i = 0; i < old.length; ++i) {
+    if (old[i][D3M_INDEX_FIELD] !== cur[i][D3M_INDEX_FIELD]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export function createPendingSummary(
   key: string,
   label: string,
@@ -938,8 +954,31 @@ export function fetchLowShotScores() {
     orderBy: lowShotScore,
   });
 }
+
+/** Create the method to get the scale [0, 1] of a TableValue 
+    to visually display its ranking or confidence. */
+function getConfidenceScale(dataLength: number): Function {
+  const solutionId = requestGetters.getActiveSolution(store)?.solutionId;
+  const rankSummary = resultsGetters
+    .getRankingSummaries(store)
+    .filter((rank) => rank.solutionId === solutionId)[0];
+
+  // The max value is either the ranking summary max value,
+  // or the length of the dataset.
+  const max = rankSummary?.baseline.extrema.max ?? dataLength;
+
+  // Create the scale that uses ranking before confidence.
+  return function (value: TableValue): number {
+    if (value.rank !== undefined) return value.rank / max;
+    if (value.confidence !== undefined) return value.confidence;
+    return;
+  };
+}
+
 export function getTableDataItems(data: TableData): TableRow[] {
   if (validateData(data)) {
+    const confidenceScale = getConfidenceScale(data.numRows);
+
     // convert fetched result data rows into table data rows
     const formattedTable = data.values.map((resultRow, rowIndex) => {
       const row = {} as TableRow;
@@ -961,6 +1000,12 @@ export function getTableDataItems(data: TableData): TableRow[] {
             const conKey = "rank";
             row[conKey] = {};
             row[conKey].value = colValue.rank;
+          }
+          if (
+            colValue.rank !== undefined ||
+            colValue.confidence !== undefined
+          ) {
+            row.confidenceScale = confidenceScale(colValue);
           }
         } else {
           row[key] = formatValue(colValue.value, colType);

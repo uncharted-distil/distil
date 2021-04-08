@@ -27,17 +27,19 @@
       <b-button
         v-if="isCarousel"
         class="position-absolute left"
-        @click="rotateSelection(-1)"
         :disabled="carouselPosition === 0"
-        ><b>&lt</b></b-button
+        @click="rotateSelection(-1)"
       >
+        <b>&lt;</b>
+      </b-button>
       <b-button
         v-if="isCarousel"
         class="position-absolute right"
-        @click="rotateSelection(1)"
         :disabled="carouselPosition === imageUrls.length - 1"
-        ><b>&gt</b></b-button
+        @click="rotateSelection(1)"
       >
+        <b>&gt;</b>
+      </b-button>
       <image-transformer
         ref="transformer"
         :width="width"
@@ -57,11 +59,11 @@
           <label> {{ toggleStateString }} image explanation: </label>
           <div>
             <input
+              id="drill-down-filter-toggle"
+              v-model="isFilteredToggled"
               class="form-check-input"
               type="checkbox"
               value=""
-              id="drill-down-filter-toggle"
-              v-model="isFilteredToggled"
             />
           </div>
         </li>
@@ -83,8 +85,8 @@
           </label>
           <b-button
             v-if="shouldImagesScale"
-            @click="upscaleFetch"
             :disabled="disableUpscale"
+            @click="upscaleFetch"
           >
             <b-spinner v-if="fetchingUpscale" small />
             Upscale Image
@@ -137,7 +139,7 @@ export default Vue.extend({
   props: {
     info: Object as () => DrillDownInfo,
     type: { type: String, default: IMAGE_TYPE },
-    url: String,
+    url: { type: String, default: null },
     visible: Boolean,
     imageUrls: { type: Array as () => string[], default: () => [] as string[] },
     items: { type: Array as () => TableRow[], default: () => [] as TableRow[] },

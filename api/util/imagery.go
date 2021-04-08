@@ -177,8 +177,7 @@ func ImageFromBands(paths []string, ramp []uint8, transform func(...uint16) floa
 		bandImage, err := loadAsGray16(filePath)
 		bandImages = append(bandImages, bandImage)
 		if err != nil {
-			log.Error(err, "band file not loaded")
-			continue
+			return nil, err
 		}
 	}
 	if imageScale.shouldScale() {
