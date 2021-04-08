@@ -42,7 +42,6 @@
               class="image-label"
               :data-fields="dataFields"
               included-active
-              shorten-labels
               align-horizontal
               :item="item"
               :label-feature-name="labelFeatureName"
