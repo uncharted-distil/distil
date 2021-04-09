@@ -170,7 +170,7 @@ export class PointInfo extends CoordinateInfo {
 export function updateVertexPrimitiveColor(
   vertices: VertexPrimitive[],
   data: TableRow[],
-  colorFunc: (d, idx) => string,
+  colorFunc: (d: TableRow, idx: number) => string,
   originalNumOfItems: number,
   baselineMap: Dictionary<number>
 ) {

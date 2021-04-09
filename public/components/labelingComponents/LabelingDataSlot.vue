@@ -84,7 +84,7 @@ import {
 } from "../../store/dataset/index";
 import { getters as datasetGetters } from "../../store/dataset/module";
 import { getters as routeGetters } from "../../store/route/module";
-import { LowShotLabels, getAllDataItems } from "../../util/data";
+import { LowShotLabels } from "../../util/data";
 import { createFiltersFromHighlights } from "../../util/highlights";
 import { Filter, INCLUDE_FILTER } from "../../util/filters";
 import LabelHeaderButtons from "./LabelHeaderButtons.vue";

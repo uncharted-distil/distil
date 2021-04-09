@@ -126,7 +126,7 @@ export default Vue.extend({
     },
     confidenceGetter(): Function {
       if (!this.hasConfidence) {
-        return (item: TableRow, idx: number) => {
+        return () => {
           return undefined;
         };
       }

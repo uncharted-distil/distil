@@ -816,7 +816,7 @@ export default Vue.extend({
         this.currentState.onHover
       );
     },
-    createMapLayers() {
+    createMapLayers(createOverlay = true) {
       // WebGL CARTO Image Layer
       this.tileRenderer = new lumo.TileLayer({
         renderer: new lumo.ImageTileRenderer(),
@@ -828,11 +828,13 @@ export default Vue.extend({
         lumo.loadImage(url, done); // load the image to the map
       };
       this.map.add(this.tileRenderer);
-      // Quad layer
-      this.overlay = new BatchQuadOverlay();
-      this.renderer = new BatchQuadOverlayRenderer();
-      this.overlay.setRenderer(this.renderer);
-      this.map.add(this.overlay);
+      if (createOverlay) {
+        // Quad layer
+        this.overlay = new BatchQuadOverlay();
+        this.renderer = new BatchQuadOverlayRenderer();
+        this.overlay.setRenderer(this.renderer);
+        this.map.add(this.overlay);
+      }
     },
     getInterestBounds(area: Area): LatLngBoundsLiteral {
       const xDistance = (this.drillDownState.numCols - 1) / 2;
@@ -864,7 +866,8 @@ export default Vue.extend({
       this.isSatelliteView = !this.isSatelliteView;
       this.map.remove(this.tileRenderer); // remove old tile renderer to destroy the buffers hold the previous tile set
       this.map.remove(this.overlay);
-      this.createMapLayers();
+      this.createMapLayers(false);
+      this.map.add(this.overlay);
       this.updateMapState(); // trigger a tile render
     },
     /**

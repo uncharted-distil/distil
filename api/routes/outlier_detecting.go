@@ -40,8 +40,13 @@ type OutlierResult struct {
 // OutlierDetectionHandler generates a route handler that enables outlier detection
 // for either remote sensing or tabular data.
 // Return the name of the variable if the detection has run successfully.
-func OutlierDetectionHandler(metaCtor api.MetadataStorageCtor, config env.Config) func(http.ResponseWriter, *http.Request) {
+func OutlierDetectionHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		config, err:=env.LoadConfig()
+		if err != nil{
+			handleError(w, err)
+			return
+		}
 		if !config.OutlierDetectionEnabled {
 			err := handleJSON(w, OutlierResult{
 				OutlierSuccess: false,
