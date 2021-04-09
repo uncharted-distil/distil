@@ -171,8 +171,9 @@ export default Vue.extend({
     },
   },
 
-  beforeMount() {
-    viewActions.fetchResultsData(this.$store);
+  async beforeMount() {
+    await viewActions.fetchResultsData(this.$store);
+    viewActions.updateResultBaseline(this.$store);
   },
   mounted() {
     this.runMi();
@@ -197,6 +198,7 @@ export default Vue.extend({
     },
     solutionId() {
       viewActions.updateResultsSolution(this.$store);
+      viewActions.updateResultBaseline(this.$store);
     },
     resultTrainingVarsPage() {
       viewActions.updateResultsSummaries(this.$store);

@@ -84,7 +84,7 @@ import {
 } from "../../store/dataset/index";
 import { getters as datasetGetters } from "../../store/dataset/module";
 import { getters as routeGetters } from "../../store/route/module";
-import { LowShotLabels, getAllDataItems } from "../../util/data";
+import { LowShotLabels } from "../../util/data";
 import { createFiltersFromHighlights } from "../../util/highlights";
 import { Filter, INCLUDE_FILTER } from "../../util/filters";
 import LabelHeaderButtons from "./LabelHeaderButtons.vue";
@@ -164,11 +164,7 @@ export default Vue.extend({
       return !orderBy ? false : orderBy.includes(this.labelScoreName);
     },
     dataItems(): TableRow[] {
-      const items =
-        this.viewTypeModel === GEO_VIEW
-          ? getAllDataItems(true)
-          : datasetGetters.getIncludedTableDataItems(this.$store);
-      return items;
+      return datasetGetters.getIncludedTableDataItems(this.$store);
     },
     numItems(): number {
       return this.dataItems?.length;

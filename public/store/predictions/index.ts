@@ -23,6 +23,8 @@ export interface PredictionState {
   // table data
   includedPredictionTableData: TableData;
   excludedPredictionTableData: TableData;
+  // baseline tableData
+  baselinePredictionTableData: TableData;
   // areaOfInterest
   areaOfInterestInner: TableData;
   areaOfInterestOuter: TableData;
@@ -42,6 +44,8 @@ export const state: PredictionState = {
   // table data
   includedPredictionTableData: null,
   excludedPredictionTableData: null,
+  // baseline table data
+  baselinePredictionTableData: null,
   // training / target
   trainingSummaries: {},
   targetSummary: null,

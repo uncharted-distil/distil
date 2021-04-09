@@ -19,11 +19,11 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
-	"goji.io/v3/pat"
-
 	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/task"
+	"goji.io/v3/pat"
 )
 
 const (
@@ -42,6 +42,21 @@ type OutlierResult struct {
 // Return the name of the variable if the detection has run successfully.
 func OutlierDetectionHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		config, err:=env.LoadConfig()
+		if err != nil{
+			handleError(w, err)
+			return
+		}
+		if !config.OutlierDetectionEnabled {
+			err := handleJSON(w, OutlierResult{
+				OutlierSuccess: false,
+			})
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable marshal outlier variable name into JSON"))
+				return
+			}
+			return
+		}
 		dataset := pat.Param(r, "dataset")
 		variable := pat.Param(r, "variable")
 

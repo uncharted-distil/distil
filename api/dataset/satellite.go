@@ -147,6 +147,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 	if datasetName == "" {
 		datasetName = s.Dataset
 	}
+	errorLogCount := 0
 	outputDatasetPath := rootDataPath
 	dataFilePath := path.Join(outputDatasetPath, compute.D3MDataFolder, compute.D3MLearningData)
 
@@ -198,7 +199,11 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 
 			filesToProcess, err := copyAndSplitMultiBandImage(imageFilenameFull, s.ImageType, mediaFolder)
 			if err != nil {
-				return nil, err
+				errorLogCount++
+				if errorLogCount < 5 {
+					log.Warn(err)
+				}
+				continue
 			}
 
 			for _, targetImageFilename := range filesToProcess {

@@ -54,6 +54,12 @@ export const getters = {
   getAreaOfInterestOuterDataItems(state: PredictionState): TableRow[] {
     return getTableDataItems(state.areaOfInterestOuter);
   },
+  getBaselinePredictionTableDataItems(
+    state: PredictionState,
+    getters: any
+  ): TableRow[] {
+    return getTableDataItems(state.baselinePredictionTableData);
+  },
   getIncludedPredictionTableDataItems(
     state: PredictionState,
     getters: any

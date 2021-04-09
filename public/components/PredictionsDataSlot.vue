@@ -56,6 +56,7 @@
         :is="viewComponent"
         :data-fields="dataFields"
         :data-items="dataItems"
+        :baseline-items="baselineItems"
         :instance-name="instanceName"
         :summaries="summaries"
         :area-of-interest-items="{ inner: inner, outer: outer }"
@@ -184,7 +185,14 @@ export default Vue.extend({
     produceRequestId(): string {
       return routeGetters.getRouteProduceRequestId(this.$store);
     },
-
+    baselineItems(): TableRow[] {
+      const result = predictionsGetters.getBaselinePredictionTableDataItems(
+        this.$store
+      );
+      return result?.sort((a, b) => {
+        return a.d3mIndex - b.d3mIndex;
+      });
+    },
     dataItems(): TableRow[] {
       return predictionsGetters.getIncludedPredictionTableDataItems(
         this.$store
@@ -311,6 +319,7 @@ export default Vue.extend({
         highlights: this.highlights,
         produceRequestId: this.produceRequestId,
         size: dataSize,
+        isBaseline: false,
       });
     },
   },

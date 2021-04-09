@@ -28,7 +28,7 @@ import {
   validateArgs,
 } from "../../util/data";
 import { Dictionary } from "../../util/dict";
-import { FilterParams } from "../../util/filters";
+import { EXCLUDE_FILTER, FilterParams } from "../../util/filters";
 import {
   addHighlightToFilterParams,
   cloneFilters,
@@ -1477,17 +1477,14 @@ export const actions = {
       filterParams: FilterParams;
       highlights: Highlight[];
       dataMode: DataMode;
-      include: boolean;
     }
   ) {
-    const mutator = args.include
-      ? mutations.setBaselineIncludeTableData
-      : mutations.setBaselineExcludeTableData;
+    const mutator = mutations.setBaselineIncludeTableData;
     const data = await actions.fetchTableData(context, {
       dataset: args.dataset,
       filterParams: args.filterParams,
       highlights: args.highlights,
-      include: args.include,
+      include: true,
       dataMode: args.dataMode,
     });
     mutator(context, data);

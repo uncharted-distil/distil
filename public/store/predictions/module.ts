@@ -60,6 +60,9 @@ export const getters = {
   getIncludedPredictionTableDataItems: read(
     moduleGetters.getIncludedPredictionTableDataItems
   ),
+  getBaselinePredictionTableDataItems: read(
+    moduleGetters.getBaselinePredictionTableDataItems
+  ),
   getIncludedPredictionTableDataFields: read(
     moduleGetters.getIncludedPredictionTableDataFields
   ),
@@ -121,6 +124,9 @@ export const mutations = {
   // predicted
   clearPredictedSummary: commit(moduleMutations.clearPredictedSummary),
   updatePredictedSummary: commit(moduleMutations.updatePredictedSummary),
+  setBaselinePredictionTableData: commit(
+    moduleMutations.setBaselinePredictionTableData
+  ),
   // forecasts
   updatePredictedTimeseries: commit(moduleMutations.updatePredictedTimeseries),
   bulkUpdatePredictedTimeseries: commit(

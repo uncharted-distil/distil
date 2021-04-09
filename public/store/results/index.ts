@@ -39,8 +39,7 @@ export interface ResultsState {
   // table data
   includedResultTableData: TableData;
   excludedResultTableData: TableData;
-  // excluded data without datasize applied (for the map)
-  fullExcludedResultTableData: TableData;
+  // baseline data without datasize applied (for the map)
   fullIncludedResultTableData: TableData;
   // areaOfInterest
   areaOfInterestInner: TableData;
@@ -74,7 +73,6 @@ export const state: ResultsState = {
   // table data
   includedResultTableData: null,
   excludedResultTableData: null,
-  fullExcludedResultTableData: null,
   fullIncludedResultTableData: null,
   // area of interest for tiles clicks in geo map
   areaOfInterestInner: null,

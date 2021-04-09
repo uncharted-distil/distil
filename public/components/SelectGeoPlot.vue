@@ -20,8 +20,10 @@
     :instance-name="instanceName"
     :data-fields="fields"
     :data-items="items"
+    :baseline-items="baselineItems"
     :summaries="summaries"
     :areaOfInterestItems="{ inner: inner, outer: outer }"
+    :is-exclude="!includedActive"
     @tileClicked="onTileClick"
   >
   </geo-plot>
@@ -33,6 +35,7 @@ import GeoPlot, { TileClickData } from "./GeoPlot.vue";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { Dictionary } from "../util/dict";
 import {
+  D3M_INDEX_FIELD,
   TableColumn,
   TableRow,
   Variable,
@@ -61,25 +64,17 @@ export default Vue.extend({
         ? datasetGetters.getIncludedTableDataFields(this.$store)
         : datasetGetters.getExcludedTableDataFields(this.$store);
     },
-
+    baselineItems(): TableRow[] {
+      const bItems =
+        datasetGetters.getBaselineIncludeTableDataItems(this.$store) ?? [];
+      return bItems.sort((a, b) => {
+        return a[D3M_INDEX_FIELD] - b[D3M_INDEX_FIELD];
+      });
+    },
     items(): TableRow[] {
-      const tableData = this.includedActive
-        ? datasetGetters.getBaselineIncludeTableDataItems(this.$store)
-        : datasetGetters.getBaselineExcludeTableDataItems(this.$store);
-      const highlighted = tableData
-        ? tableData.map((h) => {
-            return { ...h, isExcluded: true };
-          })
-        : [];
       return this.includedActive
-        ? [
-            ...highlighted,
-            ...datasetGetters.getIncludedTableDataItems(this.$store),
-          ]
-        : [
-            ...highlighted,
-            ...datasetGetters.getExcludedTableDataItems(this.$store),
-          ];
+        ? datasetGetters.getIncludedTableDataItems(this.$store)
+        : datasetGetters.getExcludedTableDataItems(this.$store);
     },
     inner(): TableRow[] {
       return this.includedActive

@@ -362,9 +362,7 @@ export const actions = {
 
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
     filterParams.dataMode = dataModeDefault;
-    const mutator = args.isMapData
-      ? mutations.setFullExcludedResultTableData
-      : mutations.setExcludedResultTableData;
+    const mutator = mutations.setExcludedResultTableData;
     // Add the size limit to results if provided.
     if (_.isInteger(args.size)) {
       filterParams.size = args.size;
