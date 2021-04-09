@@ -325,6 +325,7 @@ export default Vue.extend({
       tileAreaThreshold: 170, // area in pixels
       boundsInitialized: false,
       areas: [],
+      debounceKey: null,
     };
   },
 
@@ -704,7 +705,10 @@ export default Vue.extend({
       this.onNewData();
     },
     rowSelection() {
-      this.onNewData();
+      clearTimeout(this.debounceKey);
+      this.debounceKey = setTimeout(() => {
+        this.onNewData();
+      }, 2000);
     },
     baselineItems() {
       if (this.baselineItems && !this.areas.length) {
