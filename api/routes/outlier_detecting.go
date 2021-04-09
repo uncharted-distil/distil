@@ -42,8 +42,8 @@ type OutlierResult struct {
 // Return the name of the variable if the detection has run successfully.
 func OutlierDetectionHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		config, err:=env.LoadConfig()
-		if err != nil{
+		config, err := env.LoadConfig()
+		if err != nil {
 			handleError(w, err)
 			return
 		}
