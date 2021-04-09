@@ -727,7 +727,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		found := false
 
 		// update groupingVariable to the dateTime variable
-		for _, variable := range metaVars {
+		for _, variable := range variables {
 			if variable.Type == model.DateTimeType {
 				groupingVariableIndex = variable.Index
 				found = true
