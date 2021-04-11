@@ -351,7 +351,7 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 		}
 		indicesParsed[parsedVal] = true
 
-		dataForInsert := []interface{}{resultURI, parsedVal, targetHeaderName, records[i][targetIndex]}
+		dataForInsert := []interface{}{resultURI, parsedVal, targetVariable.Key, records[i][targetIndex]}
 		explainValues, err := s.parseExplainValues(records[i], confidenceIndex, rankIndex)
 		if err != nil {
 			return err
