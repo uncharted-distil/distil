@@ -261,7 +261,10 @@ export default Vue.extend({
     getHighlightValues(): string[] {
       return this.highlights.reduce(
         (acc, highlight) =>
-          typeof highlight.value === "string" ? [...acc, highlight.value] : acc,
+          this.summary.key === highlight.key &&
+          typeof highlight.value === "string"
+            ? [...acc, highlight.value]
+            : acc,
         []
       );
     },

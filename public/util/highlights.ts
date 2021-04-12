@@ -77,7 +77,7 @@ export function encodeHighlights(
 
   // then filter unique highlights, no duplicates
   const uniqueHighlights = allHighlights.reduce((acc, h) => {
-    if (!acc.find((uh) => uh.value === h.value)) {
+    if (!acc.find((uh) => uh.value === h.value && uh.key === h.key)) {
       acc.push(h);
     }
     return acc;

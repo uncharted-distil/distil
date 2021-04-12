@@ -206,7 +206,10 @@ export default Vue.extend({
     getHighlightValues(): { from: number; to: number }[] {
       return this.highlights.reduce(
         (acc, highlight) =>
-          highlight.value && highlight.value.to && highlight.value.from
+          highlight.key === this.summary.key &&
+          highlight.value &&
+          highlight.value.to &&
+          highlight.value.from
             ? [...acc, highlight.value]
             : acc,
         []
