@@ -108,6 +108,14 @@ func VariableSummaryHandler(metaCtor api.MetadataStorageCtor, ctorStorage api.Da
 			return
 		}
 
+		// Add distilRole from the MetaStorage
+		variableMeta, err := meta.FetchVariable(dataset, variable)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		summary.DistilRole = variableMeta.DistilRole
+
 		// marshal output into JSON
 		err = handleJSON(w, SummaryResult{
 			Summary: summary,

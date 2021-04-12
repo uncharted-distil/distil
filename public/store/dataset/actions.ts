@@ -46,6 +46,7 @@ import {
   MULTIBAND_IMAGE_TYPE,
   UNKNOWN_TYPE,
   MultiBandImagePackRequest,
+  DISTIL_ROLES,
 } from "../../util/types";
 import { getters as routeGetters } from "../route/module";
 import store, { DistilState } from "../store";
@@ -87,7 +88,7 @@ async function getVariables(dataset: string): Promise<Variable[]> {
   }));
 }
 
-// Return the best variable name of a dataset for outlier detection
+/** Return the best variable name of a dataset needed for the outlier detection. */
 function getOutlierVariableName(): string {
   const variables = getters.getVariables(store) ?? [];
   const target = routeGetters.getTargetVariable(store) ?? ({} as Variable);
@@ -112,6 +113,16 @@ function getOutlierVariableName(): string {
     remoteSensingVariable?.grouping.idCol ??
     groupingVariables[0]?.grouping.idCol ??
     target.key
+  );
+}
+
+/** Check is the outlier variable has already been performed. */
+function isOutlierExist(): boolean {
+  const variables = getters.getVariables(store) ?? [];
+  return variables.some(
+    (variable) =>
+      variable.distilRole === DISTIL_ROLES.Augmented &&
+      variable.key === "_outlier"
   );
 }
 
@@ -156,9 +167,7 @@ export const actions = {
     }
     try {
       // delete dataset
-      const response = await axios.post(
-        `/distil/delete-dataset/${payload.dataset}`
-      );
+      await axios.post(`/distil/delete-dataset/${payload.dataset}`);
       // update current list of datasets
       await actions.searchDatasets(context, payload.terms);
     } catch (err) {
@@ -205,10 +214,9 @@ export const actions = {
     }
   },
 
-  async geocodeVariable(
-    context: DatasetContext,
-    args: { dataset: string; field: string }
-  ): Promise<any> {
+  async geocodeVariable(): /*context: DatasetContext,
+    args: { dataset: string; field: string }*/
+  Promise<any> {
     return null;
     /* TODO
      * Disabled because the current solution is not responsive enough:
@@ -391,15 +399,15 @@ export const actions = {
       });
   },
 
-  async fetchOutliers(context: DatasetContext, args: { dataset: string }) {
+  /** Request the outlier detection results for a specific dataset. */
+  async fetchOutliers(context: DatasetContext, dataset: string) {
     // Check if the outlier detection has already been applied.
-    if (routeGetters.isOutlierApplied(store)) return;
+    if (routeGetters.isOutlierApplied(store) || isOutlierExist()) return;
 
-    const { dataset } = args;
     const variableName = getOutlierVariableName();
 
     // Create the request.
-    let status;
+    let status: DatasetPendingRequestStatus;
     const request: OutlierPendingRequest = {
       id: _.uniqueId(),
       dataset,
@@ -413,25 +421,64 @@ export const actions = {
 
     // Run the outlier detection
     try {
-      await axios.get(`/distil/outlier-detection/${dataset}/${variableName}`);
       status = DatasetPendingRequestStatus.RESOLVED;
+      const url = `/distil/outlier-detection/${dataset}/${variableName}`;
+      const response = await axios.get(url);
+
+      // If we received no data, or the outlier has no results.
+      if (!response.data || !response.data.success) {
+        throw "The outlier detection has no results";
+      }
     } catch (error) {
-      console.error(error);
       status = DatasetPendingRequestStatus.ERROR;
+      console.error(error);
     }
 
     // Update the pending request status
     mutations.updatePendingRequests(context, { ...request, status });
   },
 
-  async applyOutliers(context: DatasetContext, dataset: string) {
+  /** Add the outliers data has an unselectable variable to a dataset. */
+  async applyOutliers(
+    context: DatasetContext,
+    dataset: string
+  ): Promise<boolean> {
+    let result = false;
     const variableName = getOutlierVariableName();
 
+    // Create the request.
+    let status: DatasetPendingRequestStatus;
+    const request: OutlierPendingRequest = {
+      id: _.uniqueId(),
+      dataset,
+      type: DatasetPendingRequestType.OUTLIER,
+      status,
+    };
+
+    // Set the request status as pending.
+    status = DatasetPendingRequestStatus.PENDING;
+    mutations.updatePendingRequests(context, { ...request, status });
+
     try {
-      await axios.get(`/distil/outlier-results/${dataset}/${variableName}`);
+      status = DatasetPendingRequestStatus.RESOLVED;
+      const url = `/distil/outlier-results/${dataset}/${variableName}`;
+      const response = await axios.get(url);
+
+      // If we received no data, or the outlier has no results.
+      if (!response.data || !response.data.success) {
+        throw "The outlier detection has no results";
+      }
+
+      result = response.data.success;
     } catch (error) {
+      status = DatasetPendingRequestStatus.ERROR;
       console.error(error);
     }
+
+    // Update the pending request status
+    mutations.updatePendingRequests(context, { ...request, status });
+
+    return result;
   },
 
   async uploadDataFile(

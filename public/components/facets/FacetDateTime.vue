@@ -44,7 +44,7 @@
         round-caps="true"
       />
       <div
-        v-if="this.html"
+        v-if="displayFooter"
         v-child="computeCustomHTML()"
         class="facet-footer-custom-html"
       />
@@ -67,7 +67,7 @@ import {
   facetTypeChangeState,
 } from "../../util/facets";
 import { DATETIME_FILTER } from "../../util/filters";
-import { numToDate, dateToNum } from "../../util/types";
+import { numToDate, dateToNum, DISTIL_ROLES } from "../../util/types";
 import _ from "lodash";
 
 export default Vue.extend({
@@ -179,6 +179,9 @@ export default Vue.extend({
         highlightAsSelection.push(buckets.length);
       }
       return highlightAsSelection.length > 0 ? highlightAsSelection : null;
+    },
+    displayFooter(): boolean {
+      return !!this.html && this.summary.distilRole != DISTIL_ROLES.Augmented;
     },
   },
 

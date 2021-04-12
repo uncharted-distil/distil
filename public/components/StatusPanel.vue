@@ -75,6 +75,7 @@ import {
   getters as appGetters,
 } from "../store/app/module";
 import { getters as routeGetters } from "../store/route/module";
+import { actions as viewActions } from "../store/view/module";
 import { StatusPanelState, StatusPanelContentType } from "../store/app";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { overlayRouteEntry, varModesToString } from "../util/routes";
@@ -122,27 +123,26 @@ export default Vue.extend({
       return this.statusPanelState.contentType;
     },
     requestData(): DatasetPendingRequest {
-      const request = datasetGetters
+      return datasetGetters
         .getPendingRequests(this.$store)
         .find(
           (request) =>
             request.dataset === this.dataset && request.type === this.statusType
         );
-      return request;
     },
     isPending(): boolean {
-      return this.requestData.status === DatasetPendingRequestStatus.PENDING;
+      return this.requestData?.status === DatasetPendingRequestStatus.PENDING;
     },
     isResolved(): boolean {
       return (
-        this.requestData.status === DatasetPendingRequestStatus.RESOLVED ||
-        this.requestData.status === DatasetPendingRequestStatus.REVIEWED
+        this.requestData?.status === DatasetPendingRequestStatus.RESOLVED ||
+        this.requestData?.status === DatasetPendingRequestStatus.REVIEWED
       );
     },
     isError(): boolean {
       return (
-        this.requestData.status === DatasetPendingRequestStatus.ERROR ||
-        this.requestData.status === DatasetPendingRequestStatus.ERROR_REVIEWED
+        this.requestData?.status === DatasetPendingRequestStatus.ERROR ||
+        this.requestData?.status === DatasetPendingRequestStatus.ERROR_REVIEWED
       );
     },
     contentData(): {
@@ -254,16 +254,12 @@ export default Vue.extend({
 
     applyVariableRankingChange() {
       const variableRequest = <VariableRankingPendingRequest>this.requestData;
-      datasetActions.updateVariableRankings(this.$store, {
-        dataset: variableRequest.dataset,
-        rankings: variableRequest.rankings,
-      });
+      const { dataset, rankings } = variableRequest;
+      datasetActions.updateVariableRankings(this.$store, { dataset, rankings });
 
       // Update the route to know that the training variables have been ranked.
-      const varRankedEntry = overlayRouteEntry(this.$route, {
-        varRanked: "1",
-      });
-      this.$router.push(varRankedEntry).catch((err) => console.warn(err));
+      const entry = overlayRouteEntry(this.$route, { varRanked: "1" });
+      this.$router.push(entry).catch((err) => console.warn(err));
 
       this.clearData();
     },
@@ -282,14 +278,23 @@ export default Vue.extend({
 
     async applyOutlierChange() {
       this.clearData();
-      await datasetActions.applyOutliers(this.$store, this.dataset);
+      const success = await datasetActions.applyOutliers(
+        this.$store,
+        this.dataset
+      );
+      if (!success) return;
 
       // Update the variables, which should now include the outlier variable.
-      datasetActions.fetchVariables(this.$store, { dataset: this.dataset });
+      await datasetActions.fetchVariables(this.$store, {
+        dataset: this.dataset,
+      });
+      await viewActions.updateVariableSummaries(this.$store);
 
       // Update the route to know that the outlier has been applied.
       const entry = overlayRouteEntry(this.$route, { outlier: "1" });
       this.$router.push(entry).catch((err) => console.warn(err));
+
+      this.close();
     },
 
     // Applies clustering changes and refetches update variable summaries

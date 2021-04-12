@@ -270,9 +270,7 @@ const fetchClusters = createCacheable(
 const fetchOutliers = createCacheable(
   ParamCacheKey.OUTLIERS,
   (context, args) => {
-    datasetActions.fetchOutliers(store, {
-      dataset: args.dataset,
-    });
+    datasetActions.fetchOutliers(store, args.dataset);
   }
 );
 
@@ -537,6 +535,17 @@ export const actions = {
       datasetActions.fetchIncludedTableData(store, tableDataArgs),
       datasetActions.fetchExcludedTableData(store, tableDataArgs),
     ]);
+  },
+
+  async updateVariableSummaries(context: ViewContext) {
+    const args = {
+      dataset: context.getters.getRouteDataset,
+      filterParams: context.getters
+        .getDecodedSolutionRequestFilterParams as FilterParams,
+      highlights: context.getters.getDecodedHighlights as Highlight[],
+      varModes: context.getters.getDecodedVarModes,
+    };
+    await fetchVariableSummaries(context, args);
   },
 
   updateLabelData(context: ViewContext) {

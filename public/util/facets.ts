@@ -34,6 +34,7 @@ import {
   COUNTRY_TYPE,
   DATE_TIME_LOWER_TYPE,
   DATE_TIME_TYPE,
+  DISTIL_ROLES,
   EMAIL_TYPE,
   GEOCOORDINATE_TYPE,
   IMAGE_TYPE,
@@ -130,6 +131,7 @@ export interface Group {
 }
 
 export function getGroupIcon(summary: VariableSummary): string {
+  if (summary.distilRole === DISTIL_ROLES.Augmented) return "fa fa-code-fork";
   switch (summary.varType) {
     case CATEGORICAL_TYPE:
     case ORDINAL_TYPE:

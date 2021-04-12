@@ -75,4 +75,5 @@ export const actions = {
   updateBaselinePredictions: dispatch(moduleActions.updateBaselinePredictions),
   updatePrediction: dispatch(moduleActions.updatePredictions),
   updateAreaOfInterest: dispatch(moduleActions.updateAreaOfInterest),
+  updateVariableSummaries: dispatch(moduleActions.updateVariableSummaries),
 };

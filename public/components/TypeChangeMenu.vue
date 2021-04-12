@@ -403,7 +403,7 @@ export default Vue.extend({
           return null;
         })
         .then(() => {
-          return datasetActions.fetchOutliers(this.$store, { dataset });
+          return datasetActions.fetchOutliers(this.$store, dataset);
         });
     },
   },

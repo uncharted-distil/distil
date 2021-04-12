@@ -50,7 +50,7 @@
         </div>
       </div>
       <div
-        v-if="html"
+        v-if="displayFooter"
         v-child="computeCustomHTML()"
         class="facet-footer-custom-html"
       />
@@ -77,6 +77,7 @@ import {
   viewLessData,
   facetTypeChangeState,
 } from "../../util/facets";
+import { DISTIL_ROLES } from "../../util/types";
 
 export default Vue.extend({
   name: "FacetCategorical",
@@ -189,6 +190,9 @@ export default Vue.extend({
     },
     hasLess(): boolean {
       return this.moreNumToDisplay > 0;
+    },
+    displayFooter(): boolean {
+      return !!this.html && this.summary.distilRole != DISTIL_ROLES.Augmented;
     },
   },
 

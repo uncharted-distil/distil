@@ -33,7 +33,7 @@ require (
 	github.com/russross/blackfriday v2.0.0+incompatible
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/stretchr/testify v1.6.1
-	github.com/uncharted-distil/distil-compute v0.0.0-20210324134107-faa7b2560099
+	github.com/uncharted-distil/distil-compute v0.0.0-20210408144449-48dcce788ef8
 	github.com/uncharted-distil/distil-image-upscale v0.0.0-20210223142454-e2adf2b3dbb6
 	github.com/uncharted-distil/gdal v0.0.0-20200504224203-25f2e6a0dc2a
 	github.com/unchartedsoftware/plog v0.0.0-20200807135627-83d59e50ced5

@@ -26,20 +26,18 @@ import (
 	"goji.io/v3/pat"
 )
 
+// OutlierOutput represents a outlier response for a variable.
+type OutlierOutput struct {
+	Success bool `json:"success"`
+}
+
 const (
 	outlierVarName     = "_outlier"
 	outlierDisplayName = "Outlier"
 )
 
-// OutlierResult represents a outlier response for a variable.
-type OutlierResult struct {
-	OutlierSuccess bool   `json:"success"`
-	OutlierField   string `json:"outlier"`
-}
-
-// OutlierDetectionHandler generates a route handler that enables outlier detection
-// for either remote sensing or tabular data.
-// Return the name of the variable if the detection has run successfully.
+// OutlierDetectionHandler generates a route handler that enables outlier detection for either
+// remote sensing or tabular data. Return a boolean if the detection was successful.
 func OutlierDetectionHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		config, err := env.LoadConfig()
@@ -75,36 +73,35 @@ func OutlierDetectionHandler(metaCtor api.MetadataStorageCtor) func(http.Respons
 		}
 
 		// find the outliers in the dataset
-		outlierData, err := task.OutlierDetection(datasetMeta, variable)
+		points, err := task.OutlierDetection(datasetMeta, variable)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		// create a result
-		result := OutlierResult{
-			OutlierSuccess: false,
+		// create an output
+		output := OutlierOutput{
+			Success: false,
 		}
 
-		if outlierData != nil {
-			result = OutlierResult{
-				OutlierSuccess: true,
-				OutlierField:   outlierVarName,
+		// update the output with the results if it exists.
+		if points != nil {
+			output = OutlierOutput{
+				Success: true,
 			}
 		}
 
 		// marshal output into JSON
-		err = handleJSON(w, result)
+		err = handleJSON(w, output)
 		if err != nil {
-			handleError(w, errors.Wrap(err, "unable marshal outlier variable name into JSON"))
+			handleError(w, errors.Wrap(err, "unable to marshal outlier detection results into a JSON"))
 			return
 		}
 	}
 }
 
-// OutlierResultsHandler generates a route handler that enables outlier results to be saved as
-// a variable and the creation of the new column to hold the cluster label.
-// Return the name of the variable.
+// OutlierResultsHandler generates a route handler that enables outlier detection for either
+// remote sensing or tabular data. Return a boolean and add the data to the dataset.
 func OutlierResultsHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
@@ -131,7 +128,7 @@ func OutlierResultsHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataSt
 		storageName := datasetMeta.StorageName
 
 		// find the outliers in the dataset
-		outlierData, err := task.OutlierDetection(datasetMeta, variable)
+		points, err := task.OutlierDetection(datasetMeta, variable)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -151,10 +148,15 @@ func OutlierResultsHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataSt
 			return
 		}
 
+		// create an output
+		output := OutlierOutput{
+			Success: false,
+		}
+
 		if !(outlierVarMetaExist && outlierVarExistData) {
 
 			// add Variable to MetaData
-			err = metaStorage.AddVariable(dataset, outlierVarName, outlierDisplayName, model.CategoricalType, model.VarDistilRoleMetadata)
+			err = metaStorage.AddVariable(dataset, outlierVarName, outlierDisplayName, model.CategoricalType, model.VarDistilRoleAugmented)
 			if err != nil {
 				handleError(w, err)
 				return
@@ -169,8 +171,8 @@ func OutlierResultsHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataSt
 
 			// build the data for batching
 			outlierBatch := make(map[string]string)
-			for _, outlier := range outlierData {
-				outlierBatch[outlier.D3MIndex] = outlier.Label
+			for _, point := range points {
+				outlierBatch[point.D3MIndex] = point.Label
 			}
 
 			// update the batches
@@ -179,15 +181,16 @@ func OutlierResultsHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataSt
 				handleError(w, err)
 				return
 			}
+
+			output = OutlierOutput{
+				Success: true,
+			}
 		}
 
 		// marshal output into JSON
-		err = handleJSON(w, OutlierResult{
-			OutlierSuccess: true,
-			OutlierField:   outlierVarName,
-		})
+		err = handleJSON(w, output)
 		if err != nil {
-			handleError(w, errors.Wrap(err, "unable marshal outlier variable name into JSON"))
+			handleError(w, errors.Wrap(err, "unable to marshal outlier detection results into a JSON"))
 			return
 		}
 	}

@@ -54,6 +54,7 @@ type VariableSummary struct {
 	Label            string     `json:"label"`
 	Key              string     `json:"key"`
 	Description      string     `json:"description"`
+	DistilRole       string     `json:"distilRole"`
 	Type             string     `json:"type"`
 	VarType          string     `json:"varType"`
 	Dataset          string     `json:"dataset"`

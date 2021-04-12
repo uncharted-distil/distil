@@ -29,10 +29,10 @@
       enable-highlighting
       enable-search
       enable-type-change
-      :facetCount="availableVariables && availableVariables.length"
+      :facet-count="availableVariables && availableVariables.length"
       :html="html"
-      :isAvailableFeatures="true"
-      :isFeaturesToModel="false"
+      :is-available-features="true"
+      :isfeatures-to-model="false"
       :instance-name="instanceName"
       :pagination="
         availableVariables && availableVariables.length > numRowsPerPage
@@ -46,11 +46,14 @@
         <div>
           {{ subtitle }}
         </div>
-        <div v-if="availableVariableSummaries.length > 0">
-          <b-button size="sm" variant="outline-secondary" @click="addAll">
-            Add All
-          </b-button>
-        </div>
+        <b-button
+          v-if="displayAddAll"
+          size="sm"
+          variant="outline-secondary"
+          @click="addAll"
+        >
+          Add All
+        </b-button>
       </div>
     </variable-facets>
   </div>
@@ -76,9 +79,10 @@ import { Group } from "../util/facets";
 import VariableFacets from "./facets/VariableFacets.vue";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
+import { DISTIL_ROLES } from "../util/types";
 
 export default Vue.extend({
-  name: "available-training-variables",
+  name: "AvailableTrainingVariables",
 
   components: {
     VariableFacets,
@@ -116,6 +120,16 @@ export default Vue.extend({
       return currentSummaries;
     },
 
+    availableVariableSummariesForTraining(): VariableSummary[] {
+      return this.availableVariableSummaries.filter(
+        (variable) => variable.distilRole != DISTIL_ROLES.Augmented
+      );
+    },
+
+    displayAddAll(): boolean {
+      return this.availableVariableSummariesForTraining.length > 0;
+    },
+
     availableVariables(): Variable[] {
       return searchVariables(
         routeGetters.getAvailableVariables(this.$store),
@@ -128,7 +142,9 @@ export default Vue.extend({
     },
 
     subtitle(): string {
-      return `${this.availableVariables.length} features available`;
+      const total = this.availableVariableSummariesForTraining?.length ?? 0;
+      if (total < 1) return;
+      return `${total} features available`;
     },
 
     numRowsPerPage(): number {
@@ -232,6 +248,7 @@ export default Vue.extend({
       );
 
       this.availableVariables.forEach((variable) => {
+        if (variable.distilRole === DISTIL_ROLES.Augmented) return;
         training.push(variable.key);
       });
       const dataset = routeGetters.getRouteDataset(this.$store);
