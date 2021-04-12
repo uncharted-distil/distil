@@ -172,7 +172,11 @@ func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec,
 		return "", nil, errors.Errorf("missing parameter 'datasetBColumn'")
 	}
 	rightCol := params["datasetBColumn"].(string)
-
+	if params["accuracy"] == nil {
+		return "", nil, errors.Errorf("missing parameter 'accuracy'")
+	}
+	tmp := params["accuracy"].(float64)
+	accuracy := float32(tmp)
 	// need to read variables from disk for the variable list
 	metaLeft, err := getDiskMetadata(joinLeft.DatasetID, metaStorage)
 	if err != nil {
@@ -187,7 +191,7 @@ func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec,
 	joinLeft.ExistingMetadata = metaLeft
 	joinRight.ExistingMetadata = metaRight
 
-	path, data, err := task.JoinDistil(joinLeft, joinRight, leftCol, rightCol)
+	path, data, err := task.JoinDistil(joinLeft, joinRight, leftCol, rightCol, accuracy)
 	if err != nil {
 		return "", nil, err
 	}

@@ -76,8 +76,9 @@ export function getVariableSummaries(
   const routeKey = minimumRouteKey();
   const result = [] as VariableSummary[];
   variables.forEach((v) => {
-    if (summaries[v.key])
-      if (summaries[v.key][routeKey]) result.push(summaries[v.key][routeKey]);
+    if (summaries[v.key + dataset])
+      if (summaries[v.key + dataset][routeKey])
+        result.push(summaries[v.key + dataset][routeKey]);
   });
   return result;
 }
