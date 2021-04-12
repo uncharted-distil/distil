@@ -491,11 +491,12 @@ export const getters = {
   getTargetVariableSummaries(state: Route, getters: any): VariableSummary[] {
     const target = getters.getRouteTargetVariable;
     const include = getters.getRouteInclude;
+    const dataset = getters.getRouteDataset;
     const minKey = minimumRouteKey();
     const summaries = include
       ? getters.getIncludedVariableSummariesDictionary
       : getters.getExcludedVariableSummariesDictionary;
-    const targetVariableSummary = summaries?.[target]?.[minKey];
+    const targetVariableSummary = summaries?.[target + dataset]?.[minKey];
     if (targetVariableSummary) {
       return [targetVariableSummary];
     } else {
