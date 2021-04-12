@@ -150,11 +150,11 @@ export default Vue.extend({
   flex-direction: column;
   flex: none;
 }
-.two-slots .results-data-slot {
+.two-slots {
   padding-top: 10px;
   height: 50%;
 }
-.one-slot .results-data-slot {
+.one-slot {
   height: 100%;
 }
 .layer-button {
