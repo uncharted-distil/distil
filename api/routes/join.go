@@ -175,8 +175,7 @@ func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec,
 	if params["accuracy"] == nil {
 		return "", nil, errors.Errorf("missing parameter 'accuracy'")
 	}
-	tmp := params["accuracy"].(float64)
-	accuracy := float32(tmp)
+	accuracy := params["accuracy"].(float32)
 	// need to read variables from disk for the variable list
 	metaLeft, err := getDiskMetadata(joinLeft.DatasetID, metaStorage)
 	if err != nil {
