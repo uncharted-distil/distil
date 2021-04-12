@@ -878,12 +878,14 @@ export default Vue.extend({
       if (this.isClustering && this.map.getZoom() < this.zoomThreshold) {
         this.currentState = this.clusterState;
         this.updateMapState();
+        this.tileRenderer.draw();
         this.renderer.draw();
         return;
       }
       if (!this.isClustering && this.map.getZoom() < this.zoomThreshold) {
         this.currentState = this.pointState;
         this.updateMapState();
+        this.tileRenderer.draw();
         this.renderer.draw();
       }
     },
@@ -1354,6 +1356,7 @@ export default Vue.extend({
       // must happen to refresh webgl
       this.overlay.refresh(); // clips the geometry
       this.renderer.refreshBuffers(); // rebuilds webgl buffers
+      this.tileRenderer.draw();
       this.renderer.draw(); // draw the newly rebuilt buffers
       // don't show exit button
       this.showExit = false;
