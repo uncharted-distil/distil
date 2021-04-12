@@ -343,7 +343,7 @@ export default Vue.extend({
     },
 
     items() {
-      if (!this.initialized && this.items.length) {
+      if (!this.initialized && this.items?.length) {
         this.fetchTimeseries();
         this.initialized = true;
       }

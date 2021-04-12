@@ -165,6 +165,7 @@ import {
   PointInfo,
   VertexPrimitive,
   Coordinate,
+  updateVertexPrimitiveColor,
 } from "../util/rendering/coordinates";
 
 const SINGLE_FIELD = 1;
@@ -209,6 +210,7 @@ interface MapState {
   vertices(): VertexPrimitive[]; // get quads for rendering
   init(): void; // called when state becomes current state -- essentially put any inits stuff here
   drawMode(): any; // returns DRAW_MODES
+  layerId(): string;
 }
 interface LumoPoint {
   x: number;
@@ -240,6 +242,8 @@ export default Vue.extend({
   props: {
     instanceName: String as () => string,
     dataItems: { type: Array as () => any[], default: [] },
+    baselineItems: { type: Array as () => TableRow[], default: [] },
+    baselineMap: { type: Object as () => Dictionary<number>, default: null },
     dataFields: Object as () => Dictionary<TableColumn>,
     summaries: {
       type: Array as () => VariableSummary[],
@@ -269,6 +273,7 @@ export default Vue.extend({
         return undefined;
       },
     },
+    isExclude: { type: Boolean as () => boolean, default: false },
   },
 
   data() {
@@ -287,6 +292,8 @@ export default Vue.extend({
       imageUrl: null,
       item: null,
       quadLayerId: "quad-layer",
+      pointLayerId: "point-layer",
+      clusterLayerId: "cluster-layer",
       toastTitle: "",
       hoverItem: null,
       toastImg: "",
@@ -317,6 +324,8 @@ export default Vue.extend({
       isSatelliteView: false,
       tileAreaThreshold: 170, // area in pixels
       boundsInitialized: false,
+      areas: [],
+      debounceKey: null,
     };
   },
 
@@ -332,7 +341,7 @@ export default Vue.extend({
       return routeGetters.getRouteTargetVariable(this.$store);
     },
     dataHasConfidence(): boolean {
-      if (!this.dataItems.length) {
+      if (!this.dataItems?.length) {
         return false;
       }
       return (
@@ -519,14 +528,6 @@ export default Vue.extend({
       return routeGetters.getRouteTargetVariable(this.$store);
     },
 
-    /* Data with multiple geocordinates to be displayed as an area on the map. */
-    areas(): Area[] {
-      if (!this.dataItems) {
-        return [];
-      }
-      return this.tableDataToAreas(this.dataItems);
-    },
-
     highlights(): Highlight[] {
       return routeGetters.getDecodedHighlights(this.$store);
     },
@@ -612,6 +613,9 @@ export default Vue.extend({
         drawMode: () => {
           return DRAW_MODES.TRIANGLES;
         },
+        layerId: () => {
+          return this.quadLayerId;
+        },
       };
     },
 
@@ -651,6 +655,9 @@ export default Vue.extend({
         drawMode: () => {
           return DRAW_MODES.TRIANGLES;
         },
+        layerId: () => {
+          return this.clusterLayerId;
+        },
       };
     },
 
@@ -682,6 +689,9 @@ export default Vue.extend({
         drawMode: () => {
           return DRAW_MODES.POINTS;
         },
+        layerId: () => {
+          return this.pointLayerId;
+        },
       };
     },
 
@@ -694,15 +704,19 @@ export default Vue.extend({
     dataItems() {
       this.onNewData();
     },
-    summaries(cur, prev) {
-      if (!prev.length && this.isClustering) {
-        if (this.map.getZoom() < this.zoomThreshold) {
-          this.currentState = this.clusterState;
-          this.updateMapState();
-        }
-      } else {
+    rowSelection() {
+      clearTimeout(this.debounceKey);
+      this.debounceKey = setTimeout(() => {
         this.onNewData();
+      }, 2000);
+    },
+    baselineItems() {
+      if (this.baselineItems && !this.areas.length) {
+        this.areas = this.tableDataToAreas(this.baselineItems);
       }
+    },
+    colorScale() {
+      this.onNewData();
     },
     areaOfInterestItems() {
       // if null return
@@ -745,13 +759,39 @@ export default Vue.extend({
   },
 
   methods: {
+    addPrimitives() {
+      let vertices = this.tileState.vertices();
+      if (vertices.length) {
+        this.overlay.addQuad(
+          this.tileState.layerId(),
+          vertices,
+          this.tileState.drawMode()
+        );
+      }
+      vertices = this.pointState.vertices();
+      this.overlay.addQuad(
+        this.pointState.layerId(),
+        vertices,
+        this.pointState.drawMode()
+      );
+      this.renderer.setDrawList([
+        this.currentState.layerId(),
+        this.selectionToolId,
+      ]);
+      vertices = this.clusterState.vertices();
+      this.overlay.addQuad(
+        this.clusterState.layerId(),
+        vertices,
+        this.clusterState.drawMode()
+      );
+    },
     createLumoMap() {
       // create map
       this.map = new lumo.Plot("#" + this.mapID, {
         continuousZoom: true,
         inertia: true,
         wraparound: true,
-        zoom: this.maxZoom,
+        zoom: 2,
         maxZoom: this.maxZoom,
       });
       this.createMapLayers();
@@ -759,17 +799,12 @@ export default Vue.extend({
       this.currentState = this.pointState;
       this.map.on(lumo.ZOOM_END, this.onZoom);
       this.currentState.init();
+      this.areas = this.tableDataToAreas(this.baselineItems);
       if (!this.areas.length) {
         return; // no data
       }
-      const vertices = this.currentState.vertices();
-      // get quad set bounds
-      const mapBounds = this.getBounds(vertices);
-      this.overlay.addQuad(
-        this.quadLayerId,
-        vertices,
-        this.currentState.drawMode()
-      );
+
+      this.addPrimitives();
 
       // add listener for clicks on quads
       this.renderer.addListener(
@@ -780,9 +815,8 @@ export default Vue.extend({
         EVENT_TYPES.MOUSE_HOVER,
         this.currentState.onHover
       );
-      this.map.fitToBounds(mapBounds);
     },
-    createMapLayers() {
+    createMapLayers(createOverlay = true) {
       // WebGL CARTO Image Layer
       this.tileRenderer = new lumo.TileLayer({
         renderer: new lumo.ImageTileRenderer(),
@@ -794,11 +828,13 @@ export default Vue.extend({
         lumo.loadImage(url, done); // load the image to the map
       };
       this.map.add(this.tileRenderer);
-      // Quad layer
-      this.overlay = new BatchQuadOverlay();
-      this.renderer = new BatchQuadOverlayRenderer();
-      this.overlay.setRenderer(this.renderer);
-      this.map.add(this.overlay);
+      if (createOverlay) {
+        // Quad layer
+        this.overlay = new BatchQuadOverlay();
+        this.renderer = new BatchQuadOverlayRenderer();
+        this.overlay.setRenderer(this.renderer);
+        this.map.add(this.overlay);
+      }
     },
     getInterestBounds(area: Area): LatLngBoundsLiteral {
       const xDistance = (this.drillDownState.numCols - 1) / 2;
@@ -830,7 +866,8 @@ export default Vue.extend({
       this.isSatelliteView = !this.isSatelliteView;
       this.map.remove(this.tileRenderer); // remove old tile renderer to destroy the buffers hold the previous tile set
       this.map.remove(this.overlay);
-      this.createMapLayers();
+      this.createMapLayers(false);
+      this.map.add(this.overlay);
       this.updateMapState(); // trigger a tile render
     },
     /**
@@ -841,11 +878,15 @@ export default Vue.extend({
       if (this.isClustering && this.map.getZoom() < this.zoomThreshold) {
         this.currentState = this.clusterState;
         this.updateMapState();
+        this.tileRenderer.draw();
+        this.renderer.draw();
         return;
       }
       if (!this.isClustering && this.map.getZoom() < this.zoomThreshold) {
         this.currentState = this.pointState;
         this.updateMapState();
+        this.tileRenderer.draw();
+        this.renderer.draw();
       }
     },
     /**
@@ -853,13 +894,11 @@ export default Vue.extend({
      */
     toggleConfidenceColoring() {
       this.isColoringByConfidence = !this.isColoringByConfidence;
-      if (this.isColoringByConfidence) {
-        this.confidenceIconClass = "toggled-confidence-icon";
-        this.updateMapState();
-        return;
-      }
-      this.confidenceIconClass = "confidence-icon";
+      this.confidenceIconClass = this.isColoringByConfidence
+        ? "toggled-confidence-icon"
+        : "confidence-icon";
       this.updateMapState();
+      this.onNewData();
     },
     /**
      * on selection tool toggle disable or enable the quad interactions such as click or hover
@@ -879,7 +918,6 @@ export default Vue.extend({
       // enable interactions
       this.renderer.enableInteractions();
       this.map.enablePanning();
-      this.map.enableZooming();
     },
     // mouse move clear and redraw quad with new point
     selectionToolDraw(e) {
@@ -894,6 +932,10 @@ export default Vue.extend({
         ),
         DRAW_MODES.TRIANGLES
       );
+      this.renderer.setDrawList([
+        this.currentState.layerId(),
+        this.selectionToolId,
+      ]);
     },
     // register mousemouve and up callbacks to draw the selection quad
     selectionToolDown(e) {
@@ -933,6 +975,7 @@ export default Vue.extend({
       const maxY = Math.max(p1.lat, p2.lat);
       // send selection to PostGis
       this.createHighlight({ minX, minY, maxX, maxY });
+      this.overlay.removeQuad(this.selectionToolId);
     },
     getBounds(quads: VertexPrimitive[]) {
       // set mapBounds to a single tile to start
@@ -1086,6 +1129,9 @@ export default Vue.extend({
       if (this.getCoordinateType === CoordinateType.PointBased) {
         return this.pointGroups(tableData);
       }
+      if (!tableData) {
+        return [];
+      }
       const areas = tableData.map((item, i) => {
         const imageUrl = this.isMultiBandImage
           ? item[this.multibandImageGroupColumn].value
@@ -1150,14 +1196,13 @@ export default Vue.extend({
     },
     // called after state changes and map needs to update
     updateMapState() {
-      this.overlay.removeQuad(this.quadLayerId);
+      //this.overlay.removeQuad(this.quadLayerId);
       this.renderer.clearListeners();
       this.currentState.init();
-      this.overlay.addQuad(
-        this.quadLayerId,
-        this.currentState.vertices(),
-        this.currentState.drawMode()
-      );
+      this.renderer.setDrawList([
+        this.currentState.layerId(),
+        this.selectionToolId,
+      ]);
       this.renderer.addListener(
         EVENT_TYPES.MOUSE_CLICK,
         this.currentState.onClick
@@ -1263,7 +1308,7 @@ export default Vue.extend({
     },
 
     tileColor(item: any, idx: number) {
-      let color = "#255DCC"; // Default
+      let color = this.isExclude ? "#000000" : "#255DCC"; // Default
       if (this.rowSelectionMap.has(item.d3mIndex)) {
         return "#ff0067";
       }
@@ -1291,27 +1336,30 @@ export default Vue.extend({
       return color;
     },
     onNewData() {
-      // clear quads
-      this.overlay.clearQuads();
-      // don't show exit button
-      this.showExit = false;
-      // create quads from latlng
-      const quads = this.currentState.vertices();
-      if (!quads.length) {
+      if (!this.overlay.getQuad(this.currentState.layerId())) {
         return;
       }
-      // add the batched quads to a single layer on the overlay
-      this.overlay.addQuad(
-        this.quadLayerId,
-        quads,
-        this.currentState.drawMode()
+      updateVertexPrimitiveColor(
+        this.overlay.getQuad(this.tileState.layerId()),
+        this.dataItems,
+        this.tileColor.bind(this),
+        this.areas.length,
+        this.baselineMap
       );
-
-      if (!this.boundsInitialized) {
-        const mapBounds = this.getBounds(quads);
-        this.map.fitToBounds(mapBounds);
-        this.boundsInitialized = true;
-      }
+      updateVertexPrimitiveColor(
+        this.overlay.getQuad(this.pointState.layerId()),
+        this.dataItems,
+        this.tileColor.bind(this),
+        this.areas.length,
+        this.baselineMap
+      );
+      // must happen to refresh webgl
+      this.overlay.refresh(); // clips the geometry
+      this.renderer.refreshBuffers(); // rebuilds webgl buffers
+      this.tileRenderer.draw();
+      this.renderer.draw(); // draw the newly rebuilt buffers
+      // don't show exit button
+      this.showExit = false;
     },
   },
 });
@@ -1323,8 +1371,9 @@ export default Vue.extend({
   position: relative;
   z-index: 0;
   width: 100%;
-  max-height: 100%;
+  height: 98%;
   bottom: 0;
+  max-height: 98%;
 }
 
 .geo-plot-container .selection-toggle {

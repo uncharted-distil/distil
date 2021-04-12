@@ -16,7 +16,11 @@
 -->
 
 <template>
-  <div class="d-flex justify-content-center flex-column">
+  <div
+    class="d-flex justify-content-center flex-column position-relative"
+    @mouseenter="setIsMouseOnCanvas(true)"
+    @mouseleave="setIsMouseOnCanvas(false)"
+  >
     <canvas
       id="canvas-image-transformer"
       ref="canvas"
@@ -31,11 +35,17 @@
       @mouseover="setMouseDown(false)"
       @mousewheel="onScroll"
     />
-    <div class="d-flex justify-content-center p-1">
-      <b-button @click="resetIdentity" title="Reset the Image Position">
-        <i class="fa fa-refresh" aria-hidden="true" />
-      </b-button>
-    </div>
+    <transition name="fade">
+      <div
+        v-if="mouseOnCanvas"
+        class="d-flex justify-content-center p-1 position-absolute"
+        :style="refreshStyle"
+      >
+        <b-button @click="resetIdentity" title="Reset the Image Position">
+          <i class="fa fa-refresh" aria-hidden="true" />
+        </b-button>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -53,6 +63,7 @@ export default Vue.extend({
       mouseDown: false,
       start: { x: 0, y: 0 },
       imgs: [],
+      isMouseOnCanvas: false,
     };
   },
   watch: {
@@ -70,6 +81,15 @@ export default Vue.extend({
     canvas(): HTMLCanvasElement {
       return this.$refs.canvas as HTMLCanvasElement;
     },
+    refreshStyle(): string {
+      const bottomPadding = 45;
+      return `top: ${this.size.height - bottomPadding}px; left: ${
+        this.size.width / 2 - 16
+      }px;z-index:1;`;
+    },
+    mouseOnCanvas(): boolean {
+      return this.isMouseOnCanvas;
+    },
   },
   mounted() {
     this.initImages();
@@ -81,6 +101,9 @@ export default Vue.extend({
     },
     setMouseDown(val: boolean) {
       this.mouseDown = val;
+    },
+    setIsMouseOnCanvas(val: boolean) {
+      this.isMouseOnCanvas = val;
     },
     initImages() {
       if (!this.imgSrcs.length) {
@@ -166,3 +189,13 @@ export default Vue.extend({
   },
 });
 </script>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s;
+}
+.fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
+  opacity: 0;
+}
+</style>

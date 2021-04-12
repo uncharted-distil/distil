@@ -82,9 +82,6 @@ export const getters = {
   getFullIncludedResultTableDataItems(state: ResultsState): TableRow[] {
     return getTableDataItems(state.fullIncludedResultTableData);
   },
-  getFullExcludedResultTableDataItems(state: ResultsState): TableRow[] {
-    return getTableDataItems(state.fullExcludedResultTableData);
-  },
   getNumOfRecords(state: ResultsState) {
     const table = state.includedResultTableData ??
       state.excludedResultTableData ?? { numRows: 0 };

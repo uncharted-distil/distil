@@ -43,6 +43,7 @@ import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as requestGetters } from "../store/requests/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as resultGetters } from "../store/results/module";
+import { getters as predictGetters } from "../store/predictions/module";
 import LabelAnnotation from "./labelingComponents/LabelAnnotation.vue";
 import _ from "lodash";
 import { minimumRouteKey } from "../util/data";
@@ -68,38 +69,36 @@ export default Vue.extend({
   },
 
   props: {
-    includedActive: Boolean as () => boolean,
+    dataFields: {
+      type: Object as () => Dictionary<TableColumn>,
+      default: () => {
+        return {} as Dictionary<TableColumn>;
+      },
+    },
+    includedActive: {
+      type: Boolean as () => boolean,
+      default: false,
+    },
     item: Object as () => TableRow,
     shortenLabels: {
       type: Boolean as () => boolean,
-      default: false,
+      default: true,
     },
     alignHorizontal: {
       type: Boolean as () => boolean,
       default: false,
     },
-    isResult: { type: Boolean as () => boolean, default: false },
     labelFeatureName: { type: String, default: "" },
   },
 
   computed: {
-    fields(): Dictionary<TableColumn> {
-      if (this.isResult) {
-        return this.includedActive
-          ? resultGetters.getIncludedResultTableDataFields(this.$store)
-          : resultGetters.getExcludedResultTableDataFields(this.$store);
-      }
-      return this.includedActive
-        ? datasetGetters.getIncludedTableDataFields(this.$store)
-        : datasetGetters.getExcludedTableDataFields(this.$store);
-    },
     labels(): Label[] {
       const labels: Label[] = [];
       let status: string;
       if (!this.item) {
         return [];
       }
-      for (const key in this.fields) {
+      for (const key in this.dataFields) {
         status = null;
 
         // If we're showing error, we want to show
@@ -168,11 +167,15 @@ export default Vue.extend({
       // find the target variable and get the prediction labels
       if (this.showError) {
         summary = resultGetters.getTargetSummary(this.$store);
+      } else if (this.predictedField !== "") {
+        const dict = predictGetters.getPredictionSummaries(this.$store);
+        summary = dict.find((pSum) => {
+          return pSum.key === this.predictedField;
+        });
       } else {
         const minKey = minimumRouteKey();
-        summary = datasetGetters.getVariableSummariesDictionary(this.$store)[
-          this.targetField
-        ][minKey];
+        const dict = datasetGetters.getVariableSummariesDictionary(this.$store);
+        summary = dict[this.targetField][minKey];
       }
       const bucketNames = summary?.baseline?.buckets.map((b) => b.key);
       // If this isn't categorical, don't generate the table.

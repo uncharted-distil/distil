@@ -58,8 +58,9 @@
         :has-confidence="hasConfidence"
         :label-feature-name="labelFeatureName"
         :label-score-name="labelScoreName"
+        :dataset="dataset"
         pagination
-        includedActive
+        included-active
       />
     </div>
   </div>
@@ -83,7 +84,7 @@ import {
 } from "../../store/dataset/index";
 import { getters as datasetGetters } from "../../store/dataset/module";
 import { getters as routeGetters } from "../../store/route/module";
-import { LowShotLabels, getAllDataItems } from "../../util/data";
+import { LowShotLabels } from "../../util/data";
 import { createFiltersFromHighlights } from "../../util/highlights";
 import { Filter, INCLUDE_FILTER } from "../../util/filters";
 import LabelHeaderButtons from "./LabelHeaderButtons.vue";
@@ -97,7 +98,7 @@ interface DataView {
   selectAll: () => void;
 }
 export default Vue.extend({
-  name: "labeling-data-slot",
+  name: "LabelingDataSlot",
   components: {
     ViewTypeToggle,
     LabelGeoPlot,
@@ -107,8 +108,18 @@ export default Vue.extend({
     FilterBadge,
   },
   props: {
-    variables: Array as () => Variable[],
-    summaries: Array as () => VariableSummary[],
+    variables: {
+      type: Array as () => Variable[],
+      default: () => {
+        return [] as Variable[];
+      },
+    },
+    summaries: {
+      type: Array as () => VariableSummary[],
+      default: () => {
+        return [] as Variable[];
+      },
+    },
     instanceName: { type: String, default: "label" },
     hasConfidence: { type: Boolean as () => boolean, default: false },
     labelFeatureName: { type: String, default: "" },
@@ -153,11 +164,7 @@ export default Vue.extend({
       return !orderBy ? false : orderBy.includes(this.labelScoreName);
     },
     dataItems(): TableRow[] {
-      const items =
-        this.viewTypeModel === GEO_VIEW
-          ? getAllDataItems(true)
-          : datasetGetters.getIncludedTableDataItems(this.$store);
-      return items;
+      return datasetGetters.getIncludedTableDataItems(this.$store);
     },
     numItems(): number {
       return this.dataItems?.length;

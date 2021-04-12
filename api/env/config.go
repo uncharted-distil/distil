@@ -33,8 +33,9 @@ type Config struct {
 	BatchSubFolder             string  `env:"BATCH_SUBFOLDER" envDefault:"batch"`
 	ClassificationOutputPath   string  `env:"CLASSIFICATION_OUTPUT_PATH" envDefault:"classification.json"`
 	ClassificationEnabled      bool    `env:"CLASSIFICATION_ENABLED" envDefault:"true"`
-	ClusteringEnabled          bool    `env:"CLUSTERING_ENABLED" envDefault:"true"`
+	ClusteringEnabled          bool    `env:"CLUSTERING_ENABLED" envDefault:"true"` // This clustering is used during ingest
 	ClusteringKMeans           bool    `env:"CLUSTERING_KMEANS" envDefault:"true"`
+	ClusteringRouteEnabled     bool    `env:"CLUSTERING_ROUTE_ENABLED" envDefault:"true"` // This disables select view clustering see routes/clustering.go
 	D3MInputDir                string  `env:"D3MINPUTDIR" envDefault:"datasets"`
 	D3MOutputDir               string  `env:"D3MOUTPUTDIR" envDefault:"outputs"`
 	DatamartURIISI             string  `env:"DATAMART_ISI_URL" envDefault:"https://dsbox02.isi.edu:9000"`
@@ -60,6 +61,7 @@ type Config struct {
 	MinTrainingRows            int     `env:"MIN_TRAINING_ROWS" envDefault:"100"`
 	MinTestRows                int     `env:"MIN_TEST_ROWS" envDefault:"100"`
 	ModelType                  int     `env:"MODEL_TYPE" envDefault:"1"` // 0 is NOISE_CANCEL x2, 1 is GAN x4
+	OutlierDetectionEnabled    bool    `env:"OUTLIER_DETECTION_ENABLED" envDefault:"true"`
 	PipelineCacheEnabled       bool    `env:"PIPELINE_CACHE_ENABLED" envDefault:"true"`
 	PipelineCacheFilename      string  `env:"PIPELINE_CACHE_FILENAME" envDefault:"cache.bin"`
 	PipelineQueueSize          int     `env:"PIPELINE_QUEUE_SIZE" envDefault:"10"`

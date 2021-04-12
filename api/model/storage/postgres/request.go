@@ -60,27 +60,31 @@ func (s *Storage) PersistRequestFilters(requestID string, filters *api.FilterPar
 		"INSERT INTO %s (request_id, feature_name, filter_type, filter_mode, filter_min, filter_max, filter_min_x, filter_max_x, filter_min_y, filter_max_y, filter_categories, filter_indices) "+
 			"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12);", postgres.RequestFilterTableName)
 
-	for _, filter := range filters.Filters.List {
-		switch filter.Type {
-		case model.NumericalFilter:
-			_, err := s.client.Exec(sql, requestID, filter.Key, model.NumericalFilter, filter.Mode, filter.Min, filter.Max, 0, 0, 0, 0, "", "")
-			if err != nil {
-				return errors.Wrap(err, "failed to persist numerical filter")
-			}
-		case model.BivariateFilter, model.GeoBoundsFilter:
-			_, err := s.client.Exec(sql, requestID, filter.Key, filter.Type, filter.Mode, 0, 0, filter.Bounds.MinX, filter.Bounds.MaxX, filter.Bounds.MinY, filter.Bounds.MaxY, "", "")
-			if err != nil {
-				return errors.Wrap(err, "failed to persist bivariate filter")
-			}
-		case model.CategoricalFilter, model.TextFilter:
-			_, err := s.client.Exec(sql, requestID, filter.Key, filter.Type, filter.Mode, 0, 0, 0, 0, 0, 0, strings.Join(filter.Categories, ","), "")
-			if err != nil {
-				return errors.Wrap(err, "failed to persist categorical filter")
-			}
-		case model.RowFilter:
-			_, err := s.client.Exec(sql, requestID, "", model.RowFilter, filter.Mode, 0, 0, 0, 0, 0, 0, "", strings.Join(filter.D3mIndices, ","))
-			if err != nil {
-				return errors.Wrap(err, "failed to persist row filter")
+	for _, filterSet := range filters.Filters {
+		for _, filterFeatures := range filterSet.FeatureFilters {
+			for _, filter := range filterFeatures.List {
+				switch filter.Type {
+				case model.NumericalFilter:
+					_, err := s.client.Exec(sql, requestID, filter.Key, model.NumericalFilter, filter.Mode, filter.Min, filter.Max, 0, 0, 0, 0, "", "")
+					if err != nil {
+						return errors.Wrap(err, "failed to persist numerical filter")
+					}
+				case model.BivariateFilter, model.GeoBoundsFilter:
+					_, err := s.client.Exec(sql, requestID, filter.Key, filter.Type, filter.Mode, 0, 0, filter.Bounds.MinX, filter.Bounds.MaxX, filter.Bounds.MinY, filter.Bounds.MaxY, "", "")
+					if err != nil {
+						return errors.Wrap(err, "failed to persist bivariate filter")
+					}
+				case model.CategoricalFilter, model.TextFilter:
+					_, err := s.client.Exec(sql, requestID, filter.Key, filter.Type, filter.Mode, 0, 0, 0, 0, 0, 0, strings.Join(filter.Categories, ","), "")
+					if err != nil {
+						return errors.Wrap(err, "failed to persist categorical filter")
+					}
+				case model.RowFilter:
+					_, err := s.client.Exec(sql, requestID, "", model.RowFilter, filter.Mode, 0, 0, 0, 0, 0, 0, "", strings.Join(filter.D3mIndices, ","))
+					if err != nil {
+						return errors.Wrap(err, "failed to persist row filter")
+					}
+				}
 			}
 		}
 	}
@@ -239,10 +243,7 @@ func (s *Storage) FetchRequestFilters(requestID string, features []*api.Feature)
 		defer rows.Close()
 	}
 
-	filters := &api.FilterParams{
-		Size: model.DefaultFilterSize,
-	}
-
+	filters := []*model.Filter{}
 	for rows.Next() {
 		var requestID string
 		var featureName string
@@ -264,26 +265,26 @@ func (s *Storage) FetchRequestFilters(requestID string, features []*api.Feature)
 
 		switch filterType {
 		case model.CategoricalFilter:
-			filters.Filters.List = append(filters.Filters.List, model.NewCategoricalFilter(
+			filters = append(filters, model.NewCategoricalFilter(
 				featureName,
 				filterMode,
 				strings.Split(filterCategories, ","),
 			))
 		case model.TextFilter:
-			filters.Filters.List = append(filters.Filters.List, model.NewTextFilter(
+			filters = append(filters, model.NewTextFilter(
 				featureName,
 				filterMode,
 				strings.Split(filterCategories, ","),
 			))
 		case model.NumericalFilter:
-			filters.Filters.List = append(filters.Filters.List, model.NewNumericalFilter(
+			filters = append(filters, model.NewNumericalFilter(
 				featureName,
 				filterMode,
 				filterMin,
 				filterMax,
 			))
 		case model.BivariateFilter:
-			filters.Filters.List = append(filters.Filters.List, model.NewBivariateFilter(
+			filters = append(filters, model.NewBivariateFilter(
 				featureName,
 				filterMode,
 				filterMinX,
@@ -292,7 +293,7 @@ func (s *Storage) FetchRequestFilters(requestID string, features []*api.Feature)
 				filterMaxY,
 			))
 		case model.GeoBoundsFilter:
-			filters.Filters.List = append(filters.Filters.List, model.NewGeoBoundsFilter(
+			filters = append(filters, model.NewGeoBoundsFilter(
 				featureName,
 				filterMode,
 				filterMinX,
@@ -301,7 +302,7 @@ func (s *Storage) FetchRequestFilters(requestID string, features []*api.Feature)
 				filterMaxY,
 			))
 		case model.RowFilter:
-			filters.Filters.List = append(filters.Filters.List, model.NewRowFilter(
+			filters = append(filters, model.NewRowFilter(
 				filterMode,
 				strings.Split(filterIndices, ","),
 			))
@@ -312,11 +313,13 @@ func (s *Storage) FetchRequestFilters(requestID string, features []*api.Feature)
 		return nil, errors.Wrapf(err, "error reading data from postgres")
 	}
 
+	filterParams := api.NewFilterParamsFromFilters(filters)
+
 	for _, feature := range features {
-		filters.Variables = append(filters.Variables, feature.FeatureName)
+		filterParams.Variables = append(filterParams.Variables, feature.FeatureName)
 	}
 
-	return filters, nil
+	return filterParams, nil
 }
 
 // FetchRequestByDatasetTarget pulls requests associated with a given dataset and target from postgres.

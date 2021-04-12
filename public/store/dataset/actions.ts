@@ -28,7 +28,7 @@ import {
   validateArgs,
 } from "../../util/data";
 import { Dictionary } from "../../util/dict";
-import { FilterParams } from "../../util/filters";
+import { EXCLUDE_FILTER, FilterParams } from "../../util/filters";
 import {
   addHighlightToFilterParams,
   cloneFilters,
@@ -1014,20 +1014,21 @@ export const actions = {
     const promises = [];
 
     args.variables.forEach((variable) => {
+      const compositeKey = variable.key + variable.datasetName;
       const existingVariableSummary =
-        summariesByVariable?.[variable.key]?.[routeKey];
+        summariesByVariable?.[compositeKey]?.[routeKey];
 
       if (existingVariableSummary) {
         promises.push(existingVariableSummary);
       } else {
-        if (summariesByVariable[variable.key]) {
+        if (summariesByVariable[compositeKey]) {
           // if we have any saved state for that variable
           // use that as placeholder due to vue lifecycle
           const tempVariableSummaryKey = Object.keys(
-            summariesByVariable[variable.key]
+            summariesByVariable[compositeKey]
           )[0];
           promises.push(
-            summariesByVariable[variable.key][tempVariableSummaryKey]
+            summariesByVariable[compositeKey][tempVariableSummaryKey]
           );
         } else {
           // add a loading placeholder if nothing exists for that variable
@@ -1524,17 +1525,14 @@ export const actions = {
       filterParams: FilterParams;
       highlights: Highlight[];
       dataMode: DataMode;
-      include: boolean;
     }
   ) {
-    const mutator = args.include
-      ? mutations.setBaselineIncludeTableData
-      : mutations.setBaselineExcludeTableData;
+    const mutator = mutations.setBaselineIncludeTableData;
     const data = await actions.fetchTableData(context, {
       dataset: args.dataset,
       filterParams: args.filterParams,
       highlights: args.highlights,
-      include: args.include,
+      include: true,
       dataMode: args.dataMode,
     });
     mutator(context, data);

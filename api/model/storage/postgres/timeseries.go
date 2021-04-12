@@ -593,19 +593,37 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 		}
 	}
 
-	// split the filters to make sure the result based filters can be applied properly
-	filtersSplit := splitFilters(filterParams)
+	genericfilters := &api.FilterParams{
+		Size:      filterParams.Size,
+		Variables: filterParams.Variables,
+		DataMode:  filterParams.DataMode,
+		Filters:   []*api.FilterSet{},
+	}
 	joins := make([]*joinDefinition, 0)
 	wheres := []string{}
 	params := []interface{}{}
-	if len(filtersSplit.residualFilters.List) > 0 {
-		for _, residualFilter := range filtersSplit.residualFilters.List {
-			wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, residualFilter)
-			if err != nil {
-				return nil, err
-			}
+	for _, filterSet := range filterParams.Filters {
+		// split the filters to make sure the result based filters can be applied properly
+		filtersSplit, err := splitFilters(filterSet)
+		if err != nil {
+			return nil, err
 		}
 
+		if len(filtersSplit.residualFilters) > 0 {
+			clauses := []string{}
+			for _, residualFilter := range filtersSplit.residualFilters {
+				wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, residualFilter)
+				if err != nil {
+					return nil, err
+				}
+			}
+			wheres = append(wheres, combineClauses(filterSet.Mode, clauses, "AND"))
+		}
+
+		// combine the generic filters together into a single one
+		genericfilters.MergeFilterObjects(filtersSplit.genericFilters)
+	}
+	if len(wheres) > 0 {
 		joins = append(joins, &joinDefinition{
 			baseAlias:  baseTableAlias,
 			baseColumn: f.IDCol,
@@ -616,11 +634,6 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 		},
 		)
 	}
-
-	// reset the filter params since the residual filter has been handled already
-	filterParamsClone := filterParams.Clone()
-	filterParamsClone.Highlights = api.FilterObject{List: []*model.Filter{}, Invert: false}
-	filterParamsClone.Filters = filtersSplit.genericFilters
 
 	// clear filters since they are used in subselect
 	wheres = []string{}
@@ -639,7 +652,8 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 	if err != nil {
 		return nil, err
 	}
-	timeline, err := timelineField.fetchHistogramWithJoins(filterParamsClone, api.MaxNumBuckets, joins, wheres, params)
+
+	timeline, err := timelineField.fetchHistogramWithJoins(genericfilters, api.MaxNumBuckets, joins, wheres, params)
 	if err != nil {
 		return nil, err
 	}

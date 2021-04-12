@@ -18,6 +18,7 @@ package task
 import (
 	"path"
 
+	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
@@ -50,6 +51,10 @@ func OutlierDetection(dataset *api.Dataset, variable string) ([]*OutlierPoint, e
 		} else if v.Key == variable {
 			targetVar = v
 		}
+	}
+
+	if targetVar == nil {
+		return nil, errors.Errorf("target '%s' not found in dataset '%s' and so outlier detection is impossible", variable, dataset.ID)
 	}
 
 	var step *description.FullySpecifiedPipeline

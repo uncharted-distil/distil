@@ -27,14 +27,14 @@
       <b-nav-item
         class="font-weight-bold"
         :active="includedActive"
-        @click="setIncludedActive"
+        @click="setIncludedActive(true)"
       >
         Samples to Model From
       </b-nav-item>
       <b-nav-item
         class="font-weight-bold mr-auto"
         :active="!includedActive"
-        @click="setExcludedActive"
+        @click="setIncludedActive(false)"
       >
         Excluded Samples
       </b-nav-item>
@@ -102,6 +102,9 @@
         :is="viewComponent"
         :included-active="includedActive"
         :instance-name="instanceName"
+        :dataset="dataset"
+        :data-items="items"
+        :data-fields="fields"
       />
     </div>
   </div>
@@ -117,7 +120,6 @@ import SearchBar from "../components/layout/SearchBar.vue";
 import SelectTimeseriesView from "./SelectTimeseriesView.vue";
 import SelectGeoPlot from "./SelectGeoPlot.vue";
 import SelectGraphView from "./SelectGraphView.vue";
-import FilterBadge from "./FilterBadge.vue";
 import ViewTypeToggle from "./ViewTypeToggle.vue";
 import LayerSelection from "./LayerSelection.vue";
 import { overlayRouteEntry } from "../util/routes";
@@ -130,6 +132,7 @@ import {
   Variable,
   Highlight,
   RowSelection,
+  TableColumn,
 } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
 import {
@@ -155,6 +158,7 @@ import {
 import { actions as appActions } from "../store/app/module";
 import { actions as viewActions } from "../store/view/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
+import { Dictionary } from "lodash";
 
 const GEO_VIEW = "geo";
 const GRAPH_VIEW = "graph";
@@ -186,6 +190,7 @@ export default Vue.extend({
       IMAGE_VIEW: IMAGE_VIEW,
       TABLE_VIEW: TABLE_VIEW,
       TIMESERIES_VIEW: TIMESERIES_VIEW,
+      includedActive: true,
     };
   },
 
@@ -209,9 +214,6 @@ export default Vue.extend({
     },
     trainingVariables(): Variable[] {
       return routeGetters.getTrainingVariables(this.$store);
-    },
-    includedActive(): boolean {
-      return routeGetters.getRouteInclude(this.$store);
     },
 
     highlights(): Highlight[] {
@@ -251,6 +253,14 @@ export default Vue.extend({
           ? datasetGetters.getIncludedTableDataLength(this.$store)
           : datasetGetters.getExcludedTableDataLength(this.$store)
         : 0;
+    },
+
+    fields(): Dictionary<TableColumn> {
+      return this.hasData
+        ? this.includedActive
+          ? datasetGetters.getIncludedTableDataFields(this.$store)
+          : datasetGetters.getExcludedTableDataFields(this.$store)
+        : {};
     },
 
     // return as filters for easier comparison in setting include/exclude state options.
@@ -394,22 +404,8 @@ export default Vue.extend({
       });
     },
 
-    setIncludedActive() {
-      const entry = overlayRouteEntry(this.$route, {
-        include: "true",
-      });
-      this.$router.push(entry).catch((err) => console.warn(err));
-
-      clearRowSelection(this.$router);
-    },
-
-    setExcludedActive() {
-      const entry = overlayRouteEntry(this.$route, {
-        include: "false",
-      });
-      this.$router.push(entry).catch((err) => console.warn(err));
-
-      clearRowSelection(this.$router);
+    setIncludedActive(val: boolean) {
+      this.includedActive = val;
     },
 
     /* When the user request to fetch a different size of data. */

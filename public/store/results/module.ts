@@ -68,9 +68,6 @@ export const getters = {
   getExcludedResultTableDataCount: read(
     moduleGetters.getExcludedResultTableDataCount
   ),
-  getFullExcludedResultTableDataItems: read(
-    moduleGetters.getFullExcludedResultTableDataItems
-  ),
   getFullIncludedResultTableDataItems: read(
     moduleGetters.getFullIncludedResultTableDataItems
   ),
@@ -158,9 +155,6 @@ export const mutations = {
   ),
   setExcludedResultTableData: commit(
     moduleMutations.setExcludedResultTableData
-  ),
-  setFullExcludedResultTableData: commit(
-    moduleMutations.setFullExcludeResultTableData
   ),
   setFullIncludedResultTableData: commit(
     moduleMutations.setFullIncludeResultTableData

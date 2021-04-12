@@ -18,7 +18,7 @@
 "use strict";
 
 import defaultTo from "lodash/defaultTo";
-import VertexBuffer from "lumo/src/webgl/vertex/VertexBuffer";
+import DistilVertexBuffer from "./DistilVertexBuffer";
 import WebGLOverlayRenderer from "lumo/src/renderer/overlay/WebGLOverlayRenderer";
 
 // Constants
@@ -149,21 +149,33 @@ const POINT_PICKING_SHADER = {
 		}
 		`,
 };
+export const VERTEX_LAYOUT = {
+  x: 0,
+  y: 1,
+  r: 2,
+  g: 3,
+  b: 4,
+  a: 5,
+  iR: 6,
+  iG: 7,
+  iB: 8,
+  iA: 9,
+};
 // create inline float array of all the vertex data: position, color, id
 const getVertexArray = function (points) {
   const numOfAttrs = 10;
   const vertices = new Float32Array(points.length * numOfAttrs);
   for (let i = 0; i < points.length; i++) {
-    vertices[i * numOfAttrs] = points[i].x;
-    vertices[i * numOfAttrs + 1] = points[i].y;
-    vertices[i * numOfAttrs + 2] = points[i].r;
-    vertices[i * numOfAttrs + 3] = points[i].g;
-    vertices[i * numOfAttrs + 4] = points[i].b;
-    vertices[i * numOfAttrs + 5] = points[i].a;
-    vertices[i * numOfAttrs + 6] = points[i].iR;
-    vertices[i * numOfAttrs + 7] = points[i].iG;
-    vertices[i * numOfAttrs + 8] = points[i].iB;
-    vertices[i * numOfAttrs + 9] = points[i].iA;
+    vertices[i * numOfAttrs + VERTEX_LAYOUT.x] = points[i].x;
+    vertices[i * numOfAttrs + VERTEX_LAYOUT.y] = points[i].y;
+    vertices[i * numOfAttrs + VERTEX_LAYOUT.r] = points[i].r;
+    vertices[i * numOfAttrs + VERTEX_LAYOUT.g] = points[i].g;
+    vertices[i * numOfAttrs + VERTEX_LAYOUT.b] = points[i].b;
+    vertices[i * numOfAttrs + VERTEX_LAYOUT.a] = points[i].a;
+    vertices[i * numOfAttrs + VERTEX_LAYOUT.iR] = points[i].iR;
+    vertices[i * numOfAttrs + VERTEX_LAYOUT.iG] = points[i].iG;
+    vertices[i * numOfAttrs + VERTEX_LAYOUT.iB] = points[i].iB;
+    vertices[i * numOfAttrs + VERTEX_LAYOUT.iA] = points[i].iA;
   }
   return vertices;
 };
@@ -174,7 +186,7 @@ const createBuffers = function (renderer, points, key) {
   const vertSize = 2; // x,y
   const colorSize = 4;
   const idSize = 4;
-  const vertexBuffer = new VertexBuffer(
+  const vertexBuffer = new DistilVertexBuffer(
     renderer.gl,
     vertices,
     {
@@ -195,6 +207,7 @@ const createBuffers = function (renderer, points, key) {
       }, // id pointer
     },
     {
+      layerId: key,
       mode: renderer.overlay.drawModeMap.get(key),
       count: vertices.length / (vertSize + colorSize + idSize), // number of vertices to draw vertices has x,y therefore /2
     }
@@ -248,6 +261,7 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     this.boundOnMouseLeave = this.onMouseLeave.bind(this);
     this.drawMode = defaultTo(options.drawMode, DRAW_MODES.TRIANGLES);
     this.pointSize = defaultTo(options.pointSize, 1);
+    this.renderList = new Map();
   }
   /**
    * Executed when the overlay is attached to a plot.
@@ -338,6 +352,9 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     // for each quad buffer
     quads.forEach((buffer) => {
+      if (!this.renderList.get(buffer.vertex.options.layerId)) {
+        return;
+      }
       const shader =
         buffer.vertex.mode === DRAW_MODES.TRIANGLES
           ? this.shader
@@ -382,6 +399,9 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     // Clear the canvas AND the depth buffer.
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     quads.forEach((buffer) => {
+      if (!this.renderList.get(buffer.vertex.options.layerId)) {
+        return;
+      }
       const shader =
         buffer.vertex.mode === DRAW_MODES.TRIANGLES
           ? this.pickingShader
@@ -631,5 +651,17 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     const y = point.y; // invert y because the normalized functions inverts it
     const latRad = Math.atan(Math.sinh(Math.PI * (1 - 2 * y)));
     return { lat: -(latRad * (180 / Math.PI)), lng: point.x * 360 - 180 };
+  }
+  setDrawList(layerIds) {
+    const keys = this.renderList.keys();
+    for (const key of keys) {
+      this.renderList.set(key, false);
+    }
+    layerIds.forEach((layerId) => {
+      this.renderList.set(layerId, true);
+    });
+  }
+  addDrawLayer(layerId, render = false) {
+    this.renderList.set(layerId, render);
   }
 }

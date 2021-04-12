@@ -26,7 +26,7 @@
 
     <div class="row flex-1 pb-3">
       <div
-        class="variable-summaries col-12 col-md-3 border-gray-right results-variable-summaries"
+        class="variable-summaries col-12 col-md-3 border-gray-right results-variable-summaries h-100"
       >
         <p class="nav-link font-weight-bold">Feature Summaries</p>
         <variable-facets
@@ -171,8 +171,9 @@ export default Vue.extend({
     },
   },
 
-  beforeMount() {
-    viewActions.fetchResultsData(this.$store);
+  async beforeMount() {
+    await viewActions.fetchResultsData(this.$store);
+    viewActions.updateResultBaseline(this.$store);
   },
   mounted() {
     this.runMi();
@@ -197,6 +198,7 @@ export default Vue.extend({
     },
     solutionId() {
       viewActions.updateResultsSolution(this.$store);
+      viewActions.updateResultBaseline(this.$store);
     },
     resultTrainingVarsPage() {
       viewActions.updateResultsSummaries(this.$store);

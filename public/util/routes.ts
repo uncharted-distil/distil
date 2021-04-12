@@ -16,10 +16,10 @@
  */
 
 import _ from "lodash";
-import { Route, Location } from "vue-router";
-import { Dictionary } from "./dict";
+import { Location, Route } from "vue-router";
 import { SummaryMode } from "../store/dataset";
 import { ColorScaleNames } from "./data";
+import { Dictionary } from "./dict";
 // TODO: should really have a separate definition for each route
 export interface RouteArgs {
   clustering?: string;
@@ -39,8 +39,9 @@ export interface RouteArgs {
   joinColumnA?: string;
   joinColumnB?: string;
   joinAccuracy?: string;
-  baseColumnSuggestions?: string; // suggested base join columns
-  joinColumnSuggestions?: string; // suggested target join columns
+  joinPairs?: string[];
+  baseColumnSuggestions?: string[]; // suggested base join columns
+  joinColumnSuggestions?: string[]; // suggested target join columns
   groupingType?: string;
   // added page & search args directly since we can't use the consts as names
   availableTargetVarsPage?: number;
@@ -113,9 +114,21 @@ export function overlayRouteEntry(
 ): Location {
   const path = route.path;
   const query = _.merge({}, route.query, validateQueryArgs(args));
+
   return { path, query };
 }
-
+export function overlayRouteReplace(
+  route: Route,
+  args: RouteArgs = {}
+): Location {
+  const path = route.path;
+  const keys = Object.keys(args);
+  const query = _.cloneDeep(route.query);
+  keys.forEach((key) => {
+    query[key] = args[key];
+  });
+  return { path, query };
+}
 export function getRouteFacetPage(key: string, route: Route): number {
   const page = route.query[key] as string;
   return page ? parseInt(page) : 1;

@@ -17,7 +17,7 @@
 
 <template>
   <div class="search-input">
-    <header>Filters</header>
+    <header>{{ headerTitle }}</header>
     <main>
       <filter-badge
         v-for="(filter, index) in filters"
@@ -47,7 +47,9 @@ export default Vue.extend({
   components: {
     FilterBadge,
   },
-
+  props: {
+    headerTitle: { type: String as () => string, default: "Filters" },
+  },
   computed: {
     filters(): Filter[] {
       return routeGetters

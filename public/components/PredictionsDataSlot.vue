@@ -56,9 +56,11 @@
         :is="viewComponent"
         :data-fields="dataFields"
         :data-items="dataItems"
+        :baseline-items="baselineItems"
         :instance-name="instanceName"
         :summaries="summaries"
-        :areaOfInterestItems="{ inner: inner, outer: outer }"
+        :area-of-interest-items="{ inner: inner, outer: outer }"
+        :dataset="dataset"
         @tileClicked="onTileClick"
       />
     </div>
@@ -104,6 +106,7 @@ import { getVariableSummariesByState } from "../util/data";
 import { updateHighlight, UPDATE_ALL } from "../util/highlights";
 import { lexQueryToFiltersAndHighlight } from "../util/lex";
 import { resultSummariesToVariables } from "../util/summaries";
+import { overlayRouteEntry } from "../util/routes";
 const TABLE_VIEW = "table";
 const IMAGE_VIEW = "image";
 const GRAPH_VIEW = "graph";
@@ -156,7 +159,7 @@ export default Vue.extend({
       return requestGetters.getActivePredictionTrainingVariables(this.$store);
     },
     dataset(): string {
-      return routeGetters.getRouteDataset(this.$store);
+      return routeGetters.getRoutePredictionsDataset(this.$store);
     },
     allVariables(): Variable[] {
       let predictionVariables = [];
@@ -182,7 +185,14 @@ export default Vue.extend({
     produceRequestId(): string {
       return routeGetters.getRouteProduceRequestId(this.$store);
     },
-
+    baselineItems(): TableRow[] {
+      const result = predictionsGetters.getBaselinePredictionTableDataItems(
+        this.$store
+      );
+      return result?.sort((a, b) => {
+        return a.d3mIndex - b.d3mIndex;
+      });
+    },
     dataItems(): TableRow[] {
       return predictionsGetters.getIncludedPredictionTableDataItems(
         this.$store
@@ -302,11 +312,14 @@ export default Vue.extend({
     },
     /* When the user request to fetch a different size of data. */
     onDataSizeSubmit(dataSize: number) {
+      const entry = overlayRouteEntry(this.$route, { dataSize });
+      this.$router.push(entry).catch((err) => console.warn(err));
       predictionsActions.fetchPredictionTableData(this.$store, {
         dataset: this.dataset,
         highlights: this.highlights,
         produceRequestId: this.produceRequestId,
         size: dataSize,
+        isBaseline: false,
       });
     },
   },

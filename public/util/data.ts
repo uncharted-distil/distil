@@ -17,8 +17,18 @@
 
 import axios from "axios";
 import sha1 from "crypto-js/sha1";
+import {
+  interpolateInferno,
+  interpolateMagma,
+  interpolatePlasma,
+  interpolateTurbo,
+  interpolateViridis,
+} from "d3-scale-chromatic";
 import _ from "lodash";
+import localStorage from "store";
 import Vue from "vue";
+import { Location } from "vue-router";
+import router from "../router/router";
 import {
   D3M_INDEX_FIELD,
   DatasetPendingRequestType,
@@ -38,15 +48,15 @@ import {
 } from "../store/dataset/module";
 import { PredictionContext } from "../store/predictions/actions";
 import {
+  getters as predictionsGetters,
+  mutations as predictionsMutations,
+} from "../store/predictions/module";
+import {
   Predictions,
   PredictStatus,
   Solution,
   SolutionStatus,
 } from "../store/requests/index";
-import {
-  getters as predictionsGetters,
-  mutations as predictionsMutations,
-} from "../store/predictions/module";
 import { getters as requestGetters } from "../store/requests/module";
 import { ResultsContext } from "../store/results/actions";
 import {
@@ -58,12 +68,13 @@ import { getters as routeGetters } from "../store/route/module";
 import store from "../store/store";
 import {
   CLUSTER_PREFIX,
+  DISTIL_ROLES,
   formatValue,
   hasComputedVarPrefix,
   IMAGE_TYPE,
   isGeoLocatedType,
-  isIntegerType,
   isImageType,
+  isIntegerType,
   isLatitudeGroupType,
   isListType,
   isLongitudeGroupType,
@@ -74,21 +85,10 @@ import {
   LONGITUDE_TYPE,
   MULTIBAND_IMAGE_TYPE,
   TIMESERIES_TYPE,
-  DISTIL_ROLES,
 } from "../util/types";
 import { Dictionary } from "./dict";
 import { FilterParams } from "./filters";
 import { overlayRouteEntry } from "./routes";
-import { Location } from "vue-router";
-import {
-  interpolateTurbo,
-  interpolateViridis,
-  interpolateInferno,
-  interpolateMagma,
-  interpolatePlasma,
-} from "d3-scale-chromatic";
-import router from "../router/router";
-import localStorage from "store";
 
 // Postfixes for special variable names
 export const PREDICTED_SUFFIX = "_predicted";
@@ -110,6 +110,10 @@ export const FILE_PROVENANCE = "file";
 export const IMPORTANT_VARIABLE_RANKING_THRESHOLD = 0.5;
 export const LOW_SHOT_SCORE_COLUMN_PREFIX = "__query_";
 
+export interface JoinPair {
+  first: string;
+  second: string;
+}
 // LowShotLabels enum for labeling data in a binary classification
 export enum LowShotLabels {
   positive = "positive",
@@ -442,13 +446,15 @@ export function updateSummariesPerVariable(
 ) {
   const routeKey = minimumRouteKey();
   const summaryKey = summary.key;
+  const dataset = summary.dataset;
+  const compositeKey = summaryKey + dataset;
   // check for existing summaries for that variable, if not, instantiate
-  if (!variableSummaryDictionary[summaryKey]) {
-    Vue.set(variableSummaryDictionary, summaryKey, {});
+  if (!variableSummaryDictionary[compositeKey]) {
+    Vue.set(variableSummaryDictionary, compositeKey, {});
   }
   // freezing the return to prevent slow, unnecessary deep reactivity.
   Vue.set(
-    variableSummaryDictionary[summaryKey],
+    variableSummaryDictionary[compositeKey],
     routeKey,
     Object.freeze(summary)
   );
@@ -557,6 +563,21 @@ export function formatFieldsAsArray(
   fields: Dictionary<TableColumn>
 ): TableColumn[] {
   return _.map(fields, (field) => field);
+}
+
+export function sameData(old: TableRow[], cur: TableRow[]): boolean {
+  if (old === null || cur === null) {
+    return false;
+  }
+  if (old.length !== cur.length) {
+    return false;
+  }
+  for (let i = 0; i < old.length; ++i) {
+    if (old[i][D3M_INDEX_FIELD] !== cur[i][D3M_INDEX_FIELD]) {
+      return false;
+    }
+  }
+  return true;
 }
 
 export function createPendingSummary(
@@ -769,12 +790,13 @@ export function getVariableSummariesByState(
   pageSize: number,
   variables: Variable[],
   summaryDictionary: Dictionary<Dictionary<VariableSummary>>,
-  isSorted = false
+  isSorted = false,
+  dataset = ""
 ) {
   const routeKey = minimumRouteKey();
   const ranked =
     routeGetters.getRouteIsTrainingVariablesRanked(store) || isSorted;
-
+  const ds = dataset.length ? dataset : routeGetters.getRouteDataset(store);
   if (!(Object.keys(summaryDictionary).length > 0 && variables.length > 0)) {
     return [];
   }
@@ -794,7 +816,7 @@ export function getVariableSummariesByState(
 
   // map them back to the variable summary dictionary for the current route key
   const currentSummaries = sortedVariables.reduce((cs, vn) => {
-    if (!summaryDictionary[vn.key]) {
+    if (!summaryDictionary[vn.key + ds]) {
       const placeholder = createPendingSummary(
         vn.key,
         vn.colDisplayName,
@@ -803,13 +825,13 @@ export function getVariableSummariesByState(
       );
       cs.push(placeholder);
     } else {
-      if (summaryDictionary[vn.key][routeKey]) {
-        cs.push(summaryDictionary[vn.key][routeKey]);
+      if (summaryDictionary[vn.key + ds][routeKey]) {
+        cs.push(summaryDictionary[vn.key + ds][routeKey]);
       } else {
         const tempVariableSummaryKey = Object.keys(
-          summaryDictionary[vn.key]
+          summaryDictionary[vn.key + ds]
         )[0];
-        cs.push(summaryDictionary[vn.key][tempVariableSummaryKey]);
+        cs.push(summaryDictionary[vn.key + ds][tempVariableSummaryKey]);
       }
     }
     return cs;
@@ -943,18 +965,9 @@ export function fetchLowShotScores() {
 /** Create the method to get the scale [0, 1] of a TableValue 
     to visually display its ranking or confidence. */
 function getConfidenceScale(dataLength: number): Function {
-  const solutionId = requestGetters.getActiveSolution(store)?.solutionId;
-  const rankSummary = resultsGetters
-    .getRankingSummaries(store)
-    .filter((rank) => rank.solutionId === solutionId)[0];
-
-  // The max value is either the ranking summary max value,
-  // or the length of the dataset.
-  const max = rankSummary?.baseline.extrema.max ?? dataLength;
-
   // Create the scale that uses ranking before confidence.
   return function (value: TableValue): number {
-    if (value.rank !== undefined) return value.rank / max;
+    if (value.rank !== undefined) return value.rank / dataLength;
     if (value.confidence !== undefined) return value.confidence;
     return;
   };

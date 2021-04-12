@@ -46,7 +46,7 @@
         </div>
 
         <predictions-data-slot
-          class="col-12 col-md-6 d-flex flex-column predictions-predictions-data"
+          class="mh-100 col-12 col-md-6 d-flex flex-column predictions-predictions-data"
         ></predictions-data-slot>
 
         <prediction-summaries
@@ -117,7 +117,9 @@ export default Vue.extend({
         this.trainingVarsPage,
         this.rowsPerPage,
         this.trainingVariables,
-        summaryDictionary
+        summaryDictionary,
+        false,
+        routeGetters.getRoutePredictionsDataset(this.$store)
       );
     },
     trainingSummariesByImportance(): VariableSummary[] {
@@ -130,7 +132,8 @@ export default Vue.extend({
         this.trainingVariables.length,
         this.trainingVariables,
         summaryDictionary,
-        true
+        true,
+        routeGetters.getRoutePredictionsDataset(this.$store)
       );
 
       return filterArrayByPage(
@@ -156,15 +159,17 @@ export default Vue.extend({
     },
   },
 
-  beforeMount() {
-    viewActions.fetchPredictionsData(this.$store);
+  async beforeMount() {
+    await viewActions.fetchPredictionsData(this.$store);
     datasetActions.fetchClusters(this.$store, { dataset: this.dataset });
     datasetActions.fetchOutliers(this.$store, this.dataset);
+    viewActions.updateBaselinePredictions(this.$store);
   },
 
   watch: {
     produceRequestId() {
       viewActions.updatePrediction(this.$store);
+      viewActions.updateBaselinePredictions(this.$store);
     },
     highlightString() {
       viewActions.updatePrediction(this.$store);

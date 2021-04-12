@@ -136,7 +136,7 @@ export default Vue.extend({
 .join-data-container {
   display: flex;
   background-color: white;
-  overflow: auto;
+  overflow: hidden;
   flex-flow: wrap;
   height: 100%;
   width: 100%;

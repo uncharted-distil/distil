@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/pkg/errors"
 	"goji.io/v3/pat"
 
@@ -38,6 +39,16 @@ type ClusteringResult struct {
 // of a variable and the creation of the new column to hold the cluster label.
 func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCtor, config env.Config) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// check if route is enabled
+		if !config.ClusteringRouteEnabled {
+			// return empty result
+			err := handleJSON(w, empty.Empty{})
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable marshal clustering result into JSON"))
+				return
+			}
+			return
+		}
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
 		// get variable name
@@ -211,16 +222,13 @@ func ClusteringExplainHandler(solutionCtor api.SolutionStorageCtor, metaCtor api
 
 		// update the batches
 		// TODO: THIS HAS WAY TOO MUCH KNOWLEDGE OF THE DATABASE BAKED INTO IT
-		filters := &api.FilterParams{
-			Filters: api.FilterObject{List: []*model.Filter{
-				{Key: "result_id",
-					Type:       model.CategoricalFilter,
-					Categories: []string{result.ResultURI},
-					Mode:       model.IncludeFilter,
-				},
+		filters := api.NewFilterParamsFromFilters([]*model.Filter{
+			{Key: "result_id",
+				Type:       model.CategoricalFilter,
+				Categories: []string{result.ResultURI},
+				Mode:       model.IncludeFilter,
 			},
-			},
-		}
+		})
 		err = dataStorage.UpdateData(result.Dataset, fmt.Sprintf("%s_explain", datasetMeta.StorageName), clusterVarName, clusteredData, filters)
 		if err != nil {
 			handleError(w, err)

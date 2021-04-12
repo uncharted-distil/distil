@@ -32,7 +32,7 @@ import (
 	"github.com/uncharted-distil/distil/api/util"
 )
 
-func filterData(client *compute.Client, ds *api.Dataset, filterParams *api.FilterParams, dataStorage api.DataStorage) (string, *api.FilterParams, error) {
+func filterData(client *compute.Client, ds *api.Dataset, filterParams *api.FilterParamsRaw, dataStorage api.DataStorage) (string, *api.FilterParamsRaw, error) {
 	inputPath := ds.GetLearningFolder()
 
 	log.Infof("checking if solution search for dataset %s found in '%s' needs prefiltering", ds.ID, inputPath)
@@ -99,7 +99,7 @@ func filterData(client *compute.Client, ds *api.Dataset, filterParams *api.Filte
 	return outputFolder, updatedParams, nil
 }
 
-func mapFilterKeys(dataset string, filters *api.FilterParams, variables []*model.Variable) *api.FilterParams {
+func mapFilterKeys(dataset string, filters *api.FilterParamsRaw, variables []*model.Variable) *api.FilterParamsRaw {
 	filtersUpdated := filters.Clone()
 
 	varsMapped := api.MapVariables(variables, func(variable *model.Variable) string { return variable.Key })
@@ -116,11 +116,11 @@ func mapFilterKeys(dataset string, filters *api.FilterParams, variables []*model
 	return filtersUpdated
 }
 
-func hashFilter(schemaFile string, filterParams *api.FilterParams) (uint64, error) {
+func hashFilter(schemaFile string, filterParams *api.FilterParamsRaw) (uint64, error) {
 	// generate the hash from the params
 	hashStruct := struct {
 		Schema       string
-		FilterParams *api.FilterParams
+		FilterParams *api.FilterParamsRaw
 	}{
 		Schema:       schemaFile,
 		FilterParams: filterParams,
@@ -132,7 +132,7 @@ func hashFilter(schemaFile string, filterParams *api.FilterParams) (uint64, erro
 	return hash, nil
 }
 
-func getPreFiltering(ds *api.Dataset, filterParams *api.FilterParams) (*api.FilterParams, *api.FilterParams) {
+func getPreFiltering(ds *api.Dataset, filterParams *api.FilterParamsRaw) (*api.FilterParamsRaw, *api.FilterParamsRaw) {
 	vars := map[string]*model.Variable{}
 	for _, v := range ds.Variables {
 		vars[v.Key] = v
@@ -141,7 +141,7 @@ func getPreFiltering(ds *api.Dataset, filterParams *api.FilterParams) (*api.Filt
 	// filter if a clustering or outlier detection metadata feature exist
 	// remove pre filters from the rest of the filters since they should not be in the main pipeline
 	// TODO: NEED TO HANDLE OUTLIER FILTERS!
-	preFilters := &api.FilterParams{
+	preFilters := &api.FilterParamsRaw{
 		Filters: api.FilterObject{List: []*model.Filter{}, Invert: false},
 	}
 	filters := clone.Filters
