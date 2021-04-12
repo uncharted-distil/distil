@@ -46,8 +46,8 @@ func OutlierDetectionHandler(metaCtor api.MetadataStorageCtor) func(http.Respons
 			return
 		}
 		if !config.OutlierDetectionEnabled {
-			err := handleJSON(w, OutlierResult{
-				OutlierSuccess: false,
+			err := handleJSON(w, OutlierOutput{
+				Success: false,
 			})
 			if err != nil {
 				handleError(w, errors.Wrap(err, "unable marshal outlier variable name into JSON"))
