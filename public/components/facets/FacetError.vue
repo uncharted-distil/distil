@@ -40,7 +40,7 @@ import Vue from "vue";
 import "@uncharted.software/facets-core";
 import { VariableSummary } from "../../store/dataset";
 import { facetTypeChangeState } from "../../util/facets";
-import TypeChangeMenu from "../TypeChangeMenu";
+import TypeChangeMenu from "../TypeChangeMenu.vue";
 
 export default Vue.extend({
   name: "FacetError",
