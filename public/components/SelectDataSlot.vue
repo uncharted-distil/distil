@@ -27,14 +27,14 @@
       <b-nav-item
         class="font-weight-bold"
         :active="includedActive"
-        @click="setIncludedActive"
+        @click="setIncludedActive(true)"
       >
         Samples to Model From
       </b-nav-item>
       <b-nav-item
         class="font-weight-bold mr-auto"
         :active="!includedActive"
-        @click="setExcludedActive"
+        @click="setIncludedActive(false)"
       >
         Excluded Samples
       </b-nav-item>
@@ -190,6 +190,7 @@ export default Vue.extend({
       IMAGE_VIEW: IMAGE_VIEW,
       TABLE_VIEW: TABLE_VIEW,
       TIMESERIES_VIEW: TIMESERIES_VIEW,
+      includedActive: true,
     };
   },
 
@@ -213,9 +214,6 @@ export default Vue.extend({
     },
     trainingVariables(): Variable[] {
       return routeGetters.getTrainingVariables(this.$store);
-    },
-    includedActive(): boolean {
-      return routeGetters.getRouteInclude(this.$store);
     },
 
     highlights(): Highlight[] {
@@ -406,22 +404,8 @@ export default Vue.extend({
       });
     },
 
-    setIncludedActive() {
-      const entry = overlayRouteEntry(this.$route, {
-        include: "true",
-      });
-      this.$router.push(entry).catch((err) => console.warn(err));
-
-      clearRowSelection(this.$router);
-    },
-
-    setExcludedActive() {
-      const entry = overlayRouteEntry(this.$route, {
-        include: "false",
-      });
-      this.$router.push(entry).catch((err) => console.warn(err));
-
-      clearRowSelection(this.$router);
+    setIncludedActive(val: boolean) {
+      this.includedActive = val;
     },
 
     /* When the user request to fetch a different size of data. */

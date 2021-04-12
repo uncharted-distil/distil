@@ -965,18 +965,9 @@ export function fetchLowShotScores() {
 /** Create the method to get the scale [0, 1] of a TableValue 
     to visually display its ranking or confidence. */
 function getConfidenceScale(dataLength: number): Function {
-  const solutionId = requestGetters.getActiveSolution(store)?.solutionId;
-  const rankSummary = resultsGetters
-    .getRankingSummaries(store)
-    .filter((rank) => rank.solutionId === solutionId)[0];
-
-  // The max value is either the ranking summary max value,
-  // or the length of the dataset.
-  const max = rankSummary?.baseline.extrema.max ?? dataLength;
-
   // Create the scale that uses ranking before confidence.
   return function (value: TableValue): number {
-    if (value.rank !== undefined) return value.rank / max;
+    if (value.rank !== undefined) return value.rank / dataLength;
     if (value.confidence !== undefined) return value.confidence;
     return;
   };
