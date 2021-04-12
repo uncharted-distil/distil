@@ -25,18 +25,11 @@
         </header>
         <div class="prediction-group-body">
           <!-- we need the new facets in here-->
-          <component
-            enable-highlighting
-            :summary="summary"
-            :key="summary.key"
-            :is="getFacetByType(summary.type)"
+          <prediction-group
+            :confidenceSummary="confidenceSummaries[summary.produceRequestId]"
+            :predictedSummary="summary"
+            :rankingSummary="rankSummaries[summary.produceRequestId]"
             :highlights="highlights"
-            :enabled-type-changes="[]"
-            :row-selection="rowSelection"
-            :instanceName="instanceName"
-            @facet-click="onCategoricalClick"
-            @numerical-click="onNumericalClick"
-            @range-change="onRangeChange"
           />
         </div>
       </div>
@@ -95,6 +88,7 @@ import Vue from "vue";
 import FileUploader from "../components/FileUploader.vue";
 import FacetNumerical from "../components/facets/FacetNumerical.vue";
 import FacetCategorical from "../components/facets/FacetCategorical.vue";
+import PredictionGroup from "./PredictionGroup.vue";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
 import { actions as predictionActions } from "../store/predictions/module";
@@ -108,9 +102,15 @@ import {
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { getFacetByType } from "../util/facets";
 import { overlayRouteEntry } from "../util/routes";
-import { getPredictionResultSummary, getIDFromKey } from "../util/summaries";
+import {
+  getPredictionResultSummary,
+  getIDFromKey,
+  getConfidenceSummary,
+  getRankingSummary,
+} from "../util/summaries";
 import { getPredictionsById } from "../util/predictions";
 import { updateHighlight, clearHighlight } from "../util/highlights";
+import { Dictionary } from "vue-router/types/router";
 
 export default Vue.extend({
   name: "prediction-summaries",
@@ -119,6 +119,7 @@ export default Vue.extend({
     FacetNumerical,
     FacetCategorical,
     FileUploader,
+    PredictionGroup,
   },
 
   data() {
@@ -139,7 +140,26 @@ export default Vue.extend({
     instanceName(): string {
       return requestGetters.getActivePredictions(this.$store).feature;
     },
-
+    rankSummaries(): Dictionary<VariableSummary> {
+      const result = {};
+      requestGetters.getRelevantPredictions(this.$store).forEach((p) => {
+        const rank = getRankingSummary(p.requestId);
+        if (!!rank) {
+          result[p.requestId] = rank;
+        }
+      });
+      return result;
+    },
+    confidenceSummaries(): Dictionary<VariableSummary> {
+      const result = {};
+      requestGetters.getRelevantPredictions(this.$store).forEach((p) => {
+        const rank = getConfidenceSummary(p.requestId);
+        if (!!rank) {
+          result[p.requestId] = rank;
+        }
+      });
+      return result;
+    },
     summaries(): VariableSummary[] {
       // get the list of variable summaries, sorting by timestamp
       return requestGetters
