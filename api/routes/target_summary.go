@@ -119,7 +119,7 @@ func TargetSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.Sol
 		}
 
 		// fetch summary histogram
-		summary, err := data.FetchSummaryByResult(dataset, storageName, target, result.ResultURI, filterParams, extrema, api.SummaryMode(mode))
+		summary, err := data.FetchSummaryByResult(dataset, storageName, target, result.ResultURI, api.NewFilterParamsFromRaw(filterParams), extrema, api.SummaryMode(mode))
 		if err != nil {
 			handleError(w, err)
 			return

@@ -91,7 +91,7 @@ func (s *Storage) fetchExplainHistogram(dataset string, storageName string, targ
 	}
 
 	// filter info derived from the sub select function
-	filterParams.Filters.List = append(filterParams.Filters.List, model.NewCategoricalFilter("result_key", model.IncludeFilter, []string{resultURI}))
+	filterParams.AddFilter(model.NewCategoricalFilter("result_key", model.IncludeFilter, []string{resultURI}))
 
 	return field.fetchHistogramByResult(resultURI, filterParams, extrema, 20)
 }

@@ -83,7 +83,7 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 		storageName := ds.StorageName
 
 		// replace any grouped variables in filter params with the group's
-		expandedFilterParams, err := api.ExpandFilterParams(dataset, filterParams, false, metaStore)
+		expandedFilterParams, err := api.ExpandFilterParams(dataset, api.NewFilterParamsFromRaw(filterParams), false, metaStore)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to expand filter params"))
 			return

@@ -128,7 +128,7 @@ func TrainingSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.S
 			filterParams.Filters.List = append(filterParams.Filters.List, boundsFilter)
 		}
 		// fetch summary histogram
-		summary, err := data.FetchSummaryByResult(dataset, storageName, variable, result.ResultURI, filterParams, nil, api.SummaryMode(mode))
+		summary, err := data.FetchSummaryByResult(dataset, storageName, variable, result.ResultURI, api.NewFilterParamsFromRaw(filterParams), nil, api.SummaryMode(mode))
 		if err != nil {
 			handleError(w, err)
 			return

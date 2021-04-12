@@ -140,11 +140,11 @@ func ExportResultHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.Data
 			handleError(w, err)
 			return
 		}
-		filterParams := &api.FilterParams{
+		filterParamsRaw := &api.FilterParamsRaw{
 			Size: rowCount,
 		}
-		filterParams.Merge(req.Filters)
-		filterParams, err = api.ExpandFilterParams(dataset, filterParams, false, meta)
+		req.Filters.Merge(filterParamsRaw)
+		filterParams, err := api.ExpandFilterParams(dataset, req.Filters, false, meta)
 		if err != nil {
 			handleError(w, err)
 			return

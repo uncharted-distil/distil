@@ -144,7 +144,7 @@ func PredictionResultSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCt
 			filterParams.Filters.List = append(filterParams.Filters.List, boundsFilter)
 		}
 		// fetch summary histogram
-		summary, err := data.FetchPredictedSummary(prediction.Dataset, storageName, res.ResultURI, filterParams, extrema, api.SummaryMode(mode))
+		summary, err := data.FetchPredictedSummary(prediction.Dataset, storageName, res.ResultURI, api.NewFilterParamsFromRaw(filterParams), extrema, api.SummaryMode(mode))
 		if err != nil {
 			handleError(w, err)
 			return

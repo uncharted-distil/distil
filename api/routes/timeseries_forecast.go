@@ -59,9 +59,9 @@ func TimeseriesForecastHandler(metaCtor api.MetadataStorageCtor, dataCtor api.Da
 		}
 
 		// get variable names and ranges out of the params
-		var filterParams *model.FilterParams
+		var filterParamsRaw *model.FilterParamsRaw
 		if params.FilterParams != nil {
-			filterParams, err = api.ParseFilterParamsFromJSONRaw(params.FilterParams)
+			filterParamsRaw, err = api.ParseFilterParamsFromJSONRaw(params.FilterParams)
 			if err != nil {
 				handleError(w, err)
 				return
@@ -125,6 +125,7 @@ func TimeseriesForecastHandler(metaCtor api.MetadataStorageCtor, dataCtor api.Da
 			}
 
 			// fetch timeseries and forecast
+			filterParams := api.NewFilterParamsFromRaw(filterParamsRaw)
 			timeseriesData, err := data.FetchTimeseries(truthDataset, truthStorageName, t.VarKey, variable.Grouping.GetIDCol(),
 				xColName, yColName, []string{t.SeriesID}, operation, filterParams)
 			if err != nil {

@@ -27,7 +27,7 @@ import (
 type QueryRequest struct {
 	DatasetID string
 	Target    string
-	Filters   *api.FilterParams
+	Filters   *api.FilterParamsRaw
 
 	requestChannel chan QueryStatus
 	finished       chan error

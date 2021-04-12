@@ -71,12 +71,12 @@ func ExpandFilterParams(dataset string, filterParams *FilterParams, includeHidde
 	for _, variable := range variables {
 		// Check if the highlight variable is a group variable, and if it has associated cluster data.
 		// If it does, update the filter key to use the highlight column.
-
-		for _, h := range updatedFilterParams.Highlights.List {
-			UpdateFilterKey(metaStore, dataset, updatedFilterParams.DataMode, h, variable)
-		}
-		for _, f := range updatedFilterParams.Filters.List {
-			UpdateFilterKey(metaStore, dataset, updatedFilterParams.DataMode, f, variable)
+		for _, fo := range updatedFilterParams.Filters {
+			for _, fl := range fo.FeatureFilters {
+				for _, f := range fl.List {
+					UpdateFilterKey(metaStore, dataset, updatedFilterParams.DataMode, f, variable)
+				}
+			}
 		}
 	}
 

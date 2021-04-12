@@ -81,7 +81,7 @@ type SolutionRequest struct {
 	Quality              string
 	ProblemType          string
 	Metrics              []string
-	Filters              *api.FilterParams
+	Filters              *api.FilterParamsRaw
 	DatasetAugmentations []*model.DatasetOrigin
 	TrainTestSplit       float64
 	CancelFuncs          map[string]context.CancelFunc
@@ -302,7 +302,7 @@ func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.
 	}
 
 	// replace any grouped variables in filter params with the group's
-	expandedFilters, err := api.ExpandFilterParams(s.Dataset, s.Filters, true, metaStorage)
+	expandedFilters, err := api.ExpandFilterParams(s.Dataset, api.NewFilterParamsFromRaw(s.Filters), true, metaStorage)
 	if err != nil {
 		return nil, err
 	}
@@ -634,7 +634,16 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionStorage api.SolutionStorage, metaStorage api.MetadataStorage, dataStorage api.DataStorage) error {
 
 	// NOTE: D3M index field is needed in the persisted data.
-	s.Filters.AddVariable(model.D3MIndexFieldName)
+	d3mIndexIncluded := false
+	for _, v := range s.Filters.Variables {
+		if v == model.D3MIndexFieldName {
+			d3mIndexIncluded = true
+			break
+		}
+	}
+	if !d3mIndexIncluded {
+		s.Filters.Variables = append(s.Filters.Variables, model.D3MIndexFieldName)
+	}
 
 	// fetch the dataset variables
 	variables, err := metaStorage.FetchVariables(s.Dataset, true, true, false)
@@ -819,7 +828,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// store request filters
-	err = solutionStorage.PersistRequestFilters(requestID, s.Filters)
+	err = solutionStorage.PersistRequestFilters(requestID, api.NewFilterParamsFromRaw(s.Filters))
 	if err != nil {
 		return err
 	}

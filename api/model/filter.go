@@ -49,9 +49,20 @@ func DataModeFromString(s string) (DataMode, error) {
 	}
 }
 
-// FilterParams defines the set of numeric range and categorical filters. Variables
-// with no range or category filters are also allowed.
+// FilterParams defines the set of filters to use. Note that this is to be used
+// by the server only, and not the client. Filters are gathered by mode (include/exclude),
+// with each mode being a list of features that are used as filters.
 type FilterParams struct {
+	Size      int          `json:"size"`
+	Filters   []*FilterSet `json:"filters"`
+	Variables []string     `json:"variables"`
+	DataMode  DataMode     `json:"dataMode"`
+	Invert    bool         `json:"invert"`
+}
+
+// FilterParamsRaw defines the set of numeric range and categorical filters. Variables
+// with no range or category filters are also allowed.
+type FilterParamsRaw struct {
 	Size       int          `json:"size"`
 	Highlights FilterObject `json:"highlights"`
 	Filters    FilterObject `json:"filters"`
@@ -65,6 +76,68 @@ type FilterObject struct {
 	Invert bool            `json:"invert"`
 }
 
+// FilterSet captures a set of filters representing one subset of data.
+type FilterSet struct {
+	FeatureFilters []FilterObject `json:"featureFilters"`
+	Mode           string         `json:"mode"`
+}
+
+// NewFilterParamsFromFilters creates a wrapping container for all filters.
+func NewFilterParamsFromFilters(filters []*model.Filter) *FilterParams {
+	// group filters by feature and mode
+	params := &FilterParams{
+		Filters: []*FilterSet{},
+	}
+
+	// add filters to the params
+	for _, f := range filters {
+		params.AddFilter(f)
+	}
+
+	return params
+}
+
+// NewFilterParamsFromRaw creates a wrapping container from raw filter params.
+func NewFilterParamsFromRaw(raw *FilterParamsRaw) *FilterParams {
+	rawClone := raw.Clone()
+
+	params := &FilterParams{
+		Size:      rawClone.Size,
+		Variables: rawClone.Variables,
+		DataMode:  rawClone.DataMode,
+		Filters:   []*FilterSet{},
+	}
+
+	// add filters and highlights to the params
+	for _, f := range rawClone.Filters.List {
+		params.AddFilter(f)
+	}
+	for _, h := range rawClone.Highlights.List {
+		params.AddFilter(h)
+	}
+	// TODO: FIGURE OUT A NICE WAY TO INVERT THINGS!
+	if len(rawClone.Filters.List) > 0 {
+		for _, set := range params.Filters {
+			if set.Mode == rawClone.Filters.List[0].Mode {
+				for i := range set.FeatureFilters {
+					set.FeatureFilters[i].Invert = rawClone.Filters.Invert
+				}
+			}
+		}
+	}
+	if len(rawClone.Highlights.List) > 0 {
+		for _, set := range params.Filters {
+			if set.Mode == rawClone.Highlights.List[0].Mode {
+				for i := range set.FeatureFilters {
+					set.FeatureFilters[i].Invert = rawClone.Highlights.Invert
+				}
+			}
+		}
+	}
+
+	return params
+}
+
 // GetBaselineFilter returns a filter params that only has the baseline filters.
 func GetBaselineFilter(filterParam *FilterParams) *FilterParams {
 	if filterParam == nil {
@@ -72,10 +145,25 @@ func GetBaselineFilter(filterParam *FilterParams) *FilterParams {
 	}
 
 	// highlights should not be applied to the baseline
-	clone := &FilterParams{}
-	for _, filter := range filterParam.Filters.List {
-		if filter.IsBaselineFilter {
-			clone.Filters.List = append(clone.Filters.List, filter)
+	clone := &FilterParams{
+		Filters: []*FilterSet{},
+	}
+	for _, filters := range filterParam.Filters {
+		baselineFilters := []FilterObject{}
+		for _, f := range filters.FeatureFilters {
+			baseline := f.getBaselineFilter()
+			if len(baseline) > 0 {
+				baselineFilters = append(baselineFilters, FilterObject{
+					Invert: f.Invert,
+					List:   f.getBaselineFilter(),
+				})
+			}
+		}
+		if len(baselineFilters) > 0 {
+			clone.Filters = append(clone.Filters, &FilterSet{
+				FeatureFilters: baselineFilters,
+				Mode:           filters.Mode,
+			})
 		}
 	}
 	clone.Variables = append(clone.Variables, filterParam.Variables...)
@@ -84,8 +172,115 @@ func GetBaselineFilter(filterParam *FilterParams) *FilterParams {
 	return clone
 }
 
+func (f FilterObject) getBaselineFilter() []*model.Filter {
+	baseline := []*model.Filter{}
+	for _, filter := range f.List {
+		if filter.IsBaselineFilter {
+			baseline = append(baseline, filter)
+		}
+	}
+
+	return baseline
+}
+
+// Clone returns a deep copy of the filter params.
+func (f *FilterParams) Clone() *FilterParams {
+	clone := &FilterParams{
+		Filters: []*FilterSet{},
+	}
+	for _, filters := range f.Filters {
+		featureSet := &FilterSet{
+			Mode:           filters.Mode,
+			FeatureFilters: []FilterObject{},
+		}
+		for _, fo := range filters.FeatureFilters {
+			cloneFilterObject := FilterObject{
+				Invert: fo.Invert,
+				List:   []*model.Filter{},
+			}
+			for _, f := range fo.List {
+				c := *f
+				cloneFilterObject.List = append(cloneFilterObject.List, &c)
+			}
+			featureSet.FeatureFilters = append(featureSet.FeatureFilters, cloneFilterObject)
+		}
+		clone.Filters = append(clone.Filters, featureSet)
+	}
+	clone.Invert = f.Invert
+	clone.Variables = append(clone.Variables, f.Variables...)
+	clone.Size = f.Size
+	clone.DataMode = f.DataMode
+	return clone
+}
+
+// AddFilter adds a filter to the filter params, inserting it in the proper collection.
+func (f *FilterParams) AddFilter(filter *model.Filter) {
+	// currently assume all include filters are one filter set, and exclude another
+	// need to add it to the right mode (include, exclude)
+	for _, set := range f.Filters {
+		if set.Mode == filter.Mode {
+			// find the list of filters for that feature
+			for i, feature := range set.FeatureFilters {
+				if feature.List[0].Key == filter.Key {
+					set.FeatureFilters[i].List = append(set.FeatureFilters[i].List, filter)
+					return
+				}
+			}
+
+			// feature not filtered yet
+			set.FeatureFilters = append(set.FeatureFilters, FilterObject{
+				Invert: false,
+				List:   []*model.Filter{filter},
+			})
+			return
+		}
+	}
+	// no filter for that mode exists yet
+	f.Filters = append(f.Filters, &FilterSet{
+		Mode: filter.Mode,
+		FeatureFilters: []FilterObject{{
+			Invert: false,
+			List:   []*model.Filter{filter},
+		}},
+	})
+}
+
 // Empty returns if the filter set is empty.
 func (f *FilterParams) Empty(ignoreBaselineFilters bool) bool {
+	for _, set := range f.Filters {
+		for _, filters := range set.FeatureFilters {
+			for _, filter := range filters.List {
+				if !filter.IsBaselineFilter || !ignoreBaselineFilters {
+					return false
+				}
+			}
+		}
+	}
+	return true
+}
+
+// AddVariable adds a variable, preventing duplicates
+func (f *FilterParams) AddVariable(nv string) {
+	for _, v := range f.Variables {
+		if v == nv {
+			return
+		}
+	}
+	f.Variables = append(f.Variables, nv)
+}
+
+// InvertFilters inverts filters and highlights.
+func (f *FilterParams) InvertFilters() {
+	for _, set := range f.Filters {
+		for _, fo := range set.FeatureFilters {
+			fo.Invert = !fo.Invert
+		}
+	}
+	f.Invert = !f.Invert
+}
+
+// Empty returns if the filter set is empty.
+func (f *FilterParamsRaw) Empty(ignoreBaselineFilters bool) bool {
 	for _, filter := range f.Filters.List {
 		if !filter.IsBaselineFilter || !ignoreBaselineFilters {
 			return false
@@ -100,8 +295,8 @@ func (f *FilterParams) Empty(ignoreBaselineFilters bool) bool {
 }
 
 // Clone returns a deep copy of the filter params.
-func (f *FilterParams) Clone() *FilterParams {
-	clone := &FilterParams{}
+func (f *FilterParamsRaw) Clone() *FilterParamsRaw {
+	clone := &FilterParamsRaw{}
 
 	for _, h := range f.Highlights.List {
 		c := *h
@@ -119,26 +314,11 @@ func (f *FilterParams) Clone() *FilterParams {
 	return clone
 }
 
-// Invert inverts filters and highlights.
-func (f *FilterParams) Invert() {
-	f.Filters.Invert = !f.Filters.Invert
-	f.Highlights.Invert = !f.Highlights.Invert
-}
-
-// AddVariable adds a variable, preventing duplicates
-func (f *FilterParams) AddVariable(nv string) {
-	for _, v := range f.Variables {
-		if v == nv {
-			return
-		}
-	}
-	f.Variables = append(f.Variables, nv)
-}
-
 func filtersEqual(first *model.Filter, second *model.Filter) bool {
 	baseEquals := first.Key == second.Key &&
 		first.Min == second.Min &&
-		first.Max == second.Max
+		first.Max == second.Max &&
+		first.Mode == second.Mode
 	boundsEquals := (first.Bounds == nil && second.Bounds == nil) ||
 		(first.Bounds != nil && second.Bounds != nil &&
 			first.Bounds.MinX == second.Bounds.MinX &&
@@ -151,38 +331,52 @@ func filtersEqual(first *model.Filter, second *model.Filter) bool {
 
 // Merge merges another set of filter params into this set, expanding all
 // properties.
-func (f *FilterParams) Merge(other *FilterParams) {
+func (f *FilterParams) Merge(other *FilterParamsRaw) {
 
 	// If the filters has a nil or negative value, we use the value use by default on distil-model
 	// https://github.com/uncharted-distil/distil/blob/master/api/model/storage/postgres/request.go#L239
-	if f.Size < 0 {
+	if other.Size >= 0 {
 		f.Size = other.Size
 	}
 
 	for _, highlight := range other.Highlights.List {
 		found := false
-		for _, currentHighlight := range f.Highlights.List {
-			if filtersEqual(highlight, currentHighlight) {
-				found = true
-				break
+		for _, set := range f.Filters {
+			if set.Mode == highlight.Mode {
+				for _, filters := range set.FeatureFilters {
+					for _, currentFilter := range filters.List {
+						if filtersEqual(highlight, currentFilter) {
+							found = true
+							break
+						}
+					}
+				}
 			}
 		}
 		if !found {
-			f.Highlights.List = append(f.Highlights.List, highlight)
+			f.AddFilter(highlight)
 		}
 	}
+
 	for _, filter := range other.Filters.List {
 		found := false
-		for _, currentFilter := range f.Filters.List {
-			if filtersEqual(filter, currentFilter) {
-				found = true
-				break
+		for _, set := range f.Filters {
+			if set.Mode == filter.Mode {
+				for _, filters := range set.FeatureFilters {
+					for _, currentFilter := range filters.List {
+						if filtersEqual(filter, currentFilter) {
+							found = true
+							break
+						}
+					}
+				}
 			}
 		}
 		if !found {
-			f.Filters.List = append(f.Filters.List, filter)
+			f.AddFilter(filter)
 		}
 	}
+
 	for _, variable := range other.Variables {
 		found := false
 		for _, currentVariable := range f.Variables {
@@ -193,6 +387,75 @@ func (f *FilterParams) Merge(other *FilterParams) {
 		}
 		if !found {
 			f.Variables = append(f.Variables, variable)
+		}
+	}
+}
+
+// MergeParams merges another set of filter params into this set, expanding all
+// properties.
+func (f *FilterParams) MergeParams(other *FilterParams) {
+
+	// If the filters has a nil or negative value, we use the value use by default on distil-model
+	// https://github.com/uncharted-distil/distil/blob/master/api/model/storage/postgres/request.go#L239
+	if other.Size >= 0 {
+		f.Size = other.Size
+	}
+
+	for _, set := range other.Filters {
+		for _, features := range set.FeatureFilters {
+			for _, filter := range features.List {
+				found := false
+				for _, setOther := range f.Filters {
+					if setOther.Mode == set.Mode {
+						for _, filters := range setOther.FeatureFilters {
+							for _, currentFilter := range filters.List {
+								if filtersEqual(filter, currentFilter) {
+									found = true
+									break
+								}
+							}
+						}
+					}
+				}
+				if !found {
+					f.AddFilter(filter)
+				}
+			}
+		}
+	}
+
+	for _, variable := range other.Variables {
+		found := false
+		for _, currentVariable := range f.Variables {
+			if variable == currentVariable {
+				found = true
+				break
+			}
+		}
+		if !found {
+			f.Variables = append(f.Variables, variable)
+		}
+	}
+}
+
+// MergeFilterObjects merges a slice of filter objects with the existing filter params.
+func (f *FilterParams) MergeFilterObjects(filters []FilterObject) {
+	for _, features := range filters {
+		for _, filter := range features.List {
+			found := false
+			for _, setOther := range f.Filters {
+				for _, filters := range setOther.FeatureFilters {
+					for _, currentFilter := range filters.List {
+						if filtersEqual(filter, currentFilter) {
+							found = true
+							break
+						}
+					}
+				}
+			}
+			if !found {
+				f.AddFilter(filter)
+			}
 		}
 	}
 }
@@ -417,7 +680,7 @@ func parseFilter(filter map[string]interface{}) (*model.Filter, error) {
 }
 
 // ParseFilterParamsFromJSONRaw parses filter parameters out of a json.RawMessage
-func ParseFilterParamsFromJSONRaw(raw encoding.RawMessage) (*FilterParams, error) {
+func ParseFilterParamsFromJSONRaw(raw encoding.RawMessage) (*FilterParamsRaw, error) {
 	filterParamsMap, err := json.Unmarshal(raw)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to parse raw filter params")
@@ -426,14 +689,14 @@ func ParseFilterParamsFromJSONRaw(raw encoding.RawMessage) (*FilterParams, error
 }
 
 // ParseFilterParamsFromJSON parses filter parameters out of a map[string]interface{}
-func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, error) {
+func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParamsRaw, error) {
 	dataMode := json.StringDefault(params, "default", "dataMode")
 	dataModeParsed, err := DataModeFromString(dataMode)
 	if err != nil {
 		return nil, err
 	}
 
-	filterParams := &FilterParams{
+	filterParams := &FilterParamsRaw{
 		Size:     json.IntDefault(params, model.DefaultFilterSize, "size"),
 		DataMode: dataModeParsed,
 	}

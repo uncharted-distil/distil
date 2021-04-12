@@ -114,7 +114,7 @@ func ConfidenceSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api
 			filterParams.Filters.List = append(filterParams.Filters.List, boundsFilter)
 		}
 		// fetch summary histogram
-		summary, err := data.FetchConfidenceSummary(dataset, storageName, res.ResultURI, filterParams, api.SummaryMode(mode))
+		summary, err := data.FetchConfidenceSummary(dataset, storageName, res.ResultURI, api.NewFilterParamsFromRaw(filterParams), api.SummaryMode(mode))
 		if err != nil {
 			handleError(w, err)
 			return
