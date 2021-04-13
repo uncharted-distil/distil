@@ -131,6 +131,7 @@ import {
 import {
   Variable,
   VariableSummary,
+  VariableSummaryKey,
   TableRow,
   TableColumn,
 } from "../store/dataset/index";
@@ -138,7 +139,12 @@ import VariableFacets from "../components/facets/VariableFacets.vue";
 import SaveDataset from "../components/labelingComponents/SaveDataset.vue";
 import CreateLabelingForm from "../components/labelingComponents/CreateLabelingForm.vue";
 import LabelingDataSlot from "../components/labelingComponents/LabelingDataSlot.vue";
-import { EXCLUDE_FILTER, Filter, INCLUDE_FILTER } from "../util/filters";
+import {
+  EXCLUDE_FILTER,
+  Filter,
+  INCLUDE_FILTER,
+  emptyFilterParamsObject,
+} from "../util/filters";
 import { Dictionary } from "vue-router/types/router";
 import {
   updateHighlight,
@@ -242,7 +248,9 @@ export default Vue.extend({
       const summaryDictionary = datasetGetters.getVariableSummariesDictionary(
         this.$store
       );
-      return summaryDictionary ? summaryDictionary[this.labelName] : null;
+      return summaryDictionary
+        ? summaryDictionary[VariableSummaryKey(this.labelName, this.dataset)]
+        : null;
     },
     dataItems(): TableRow[] {
       return datasetGetters.getIncludedTableDataItems(this.$store);
@@ -379,7 +387,7 @@ export default Vue.extend({
       const res = (await requestActions.createQueryRequest(this.$store, {
         datasetId: this.dataset,
         target: this.labelName,
-        filters: null,
+        filters: emptyFilterParamsObject(),
       })) as { success: boolean; error: string };
       if (!res.success) {
         this.$bvToast.toast(res.error, {

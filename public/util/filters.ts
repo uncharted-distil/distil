@@ -139,6 +139,14 @@ export interface FilterParams {
   isHighlight?: boolean;
 }
 
+export function emptyFilterParamsObject(): FilterParams {
+  return {
+    highlights: { list: [], invert: false },
+    variables: [],
+    filters: { list: [], invert: false },
+  };
+}
+
 /**
  * Decodes the filters from the route string into an array.
  *

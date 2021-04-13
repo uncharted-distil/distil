@@ -31,7 +31,11 @@ import {
   VARIABLE_SUMMARY_CONFIDENCE,
   VARIABLE_SUMMARY_RANKING,
 } from "../../util/data";
-import { EXCLUDE_FILTER, Filter } from "../../util/filters";
+import {
+  EXCLUDE_FILTER,
+  Filter,
+  emptyFilterParamsObject,
+} from "../../util/filters";
 import { addHighlightToFilterParams } from "../../util/highlights";
 import {
   getSolutionById,
@@ -161,11 +165,7 @@ export const actions = {
       return null;
     }
 
-    const filterParamsBlank = {
-      highlights: { list: [], invert: false },
-      variables: [],
-      filters: { list: [], invert: false },
-    };
+    const filterParamsBlank = emptyFilterParamsObject();
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
       args.highlights
@@ -245,11 +245,7 @@ export const actions = {
       );
     }
 
-    const filterParamsBlank = {
-      highlights: { list: [], invert: false },
-      variables: [],
-      filters: { list: [], invert: false },
-    };
+    const filterParamsBlank = emptyFilterParamsObject();
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
       args.highlights
@@ -295,11 +291,7 @@ export const actions = {
       return null;
     }
 
-    const filterParamsBlank = {
-      highlights: { list: [], invert: false },
-      variables: [],
-      filters: { list: [], invert: false },
-    };
+    const filterParamsBlank = emptyFilterParamsObject();
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
       args.highlights
@@ -349,11 +341,7 @@ export const actions = {
       return null;
     }
 
-    const filterParamsBlank = {
-      highlights: { list: [], invert: false },
-      variables: [],
-      filters: { list: [], invert: false },
-    };
+    const filterParamsBlank = emptyFilterParamsObject();
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
       args.highlights,
@@ -404,11 +392,7 @@ export const actions = {
       return null;
     }
 
-    const filterParamsBlank = {
-      highlights: { list: [], invert: false },
-      variables: [],
-      filters: { list: [], invert: false },
-    };
+    const filterParamsBlank = emptyFilterParamsObject();
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
       args.highlights
@@ -456,11 +440,7 @@ export const actions = {
       return null;
     }
 
-    const filterParamsBlank = {
-      highlights: { list: [], invert: false },
-      variables: [],
-      filters: { list: [], invert: false },
-    };
+    const filterParamsBlank = emptyFilterParamsObject();
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
       args.highlights,
@@ -584,11 +564,7 @@ export const actions = {
       return null;
     }
 
-    const filterParamsBlank = {
-      highlights: { list: [], invert: false },
-      variables: [],
-      filters: { list: [], invert: false },
-    };
+    const filterParamsBlank = emptyFilterParamsObject();
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
       args.highlights
@@ -688,11 +664,7 @@ export const actions = {
       return null;
     }
 
-    const filterParamsBlank = {
-      highlights: { list: [], invert: false },
-      variables: [],
-      filters: { list: [], invert: false },
-    };
+    const filterParamsBlank = emptyFilterParamsObject();
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
       args.highlights
@@ -778,11 +750,7 @@ export const actions = {
       return null;
     }
 
-    const filterParamsBlank = {
-      highlights: { list: [], invert: false },
-      variables: [],
-      filters: { list: [], invert: false },
-    };
+    const filterParamsBlank = emptyFilterParamsObject();
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
       args.highlights
@@ -875,11 +843,7 @@ export const actions = {
       return null;
     }
 
-    const filterParamsBlank = {
-      highlights: { list: [], invert: false },
-      variables: [],
-      filters: { list: [], invert: false },
-    };
+    const filterParamsBlank = emptyFilterParamsObject();
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
       args.highlights
@@ -971,11 +935,7 @@ export const actions = {
       return null;
     }
 
-    const filterParamsBlank = {
-      highlights: { list: [], invert: false },
-      variables: [],
-      filters: { list: [], invert: false },
-    };
+    const filterParamsBlank = emptyFilterParamsObject();
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
       args.highlights
