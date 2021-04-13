@@ -16,20 +16,23 @@
 -->
 
 <template>
-  <div class="prediction-summaries">
+  <div class="prediction-summaries mh-100">
     <p class="nav-link font-weight-bold">Predictions for Dataset</p>
-    <div v-for="summary in summaries" :key="summary.key">
-      <div :class="active(summary.key)" @click="onClick(summary.key)">
-        <header class="prediction-group-title" :title="summary.dataset">
-          {{ summary.dataset }}
+    <div v-for="meta in metaSummaries" :key="meta.summary.key">
+      <div :class="active(meta.summary.key)" @click="onClick(meta.summary.key)">
+        <header class="prediction-group-title" :title="meta.summary.dataset">
+          {{ meta.summary.dataset }}
         </header>
         <div class="prediction-group-body">
           <!-- we need the new facets in here-->
           <prediction-group
-            :confidenceSummary="confidenceSummaries[summary.produceRequestId]"
-            :predictedSummary="summary"
-            :rankingSummary="rankSummaries[summary.produceRequestId]"
+            :confidenceSummary="meta.confidence"
+            :predictedSummary="meta.summary"
+            :rankingSummary="meta.rank"
             :highlights="highlights"
+            @categorical-click="onCategoricalClick"
+            @numerical-click="onNumericalClick"
+            @range-change="onRangeChange"
           />
         </div>
       </div>
@@ -105,8 +108,8 @@ import { overlayRouteEntry } from "../util/routes";
 import {
   getPredictionResultSummary,
   getIDFromKey,
-  getConfidenceSummary,
-  getRankingSummary,
+  getPredictionConfidenceSummary,
+  getPredictionRankSummary,
 } from "../util/summaries";
 import { getPredictionsById } from "../util/predictions";
 import { updateHighlight, clearHighlight } from "../util/highlights";
@@ -140,23 +143,22 @@ export default Vue.extend({
     instanceName(): string {
       return requestGetters.getActivePredictions(this.$store).feature;
     },
-    rankSummaries(): Dictionary<VariableSummary> {
-      const result = {};
+    metaSummaries(): Array<{
+      rank: VariableSummary;
+      confidence: VariableSummary;
+      summary: VariableSummary;
+    }> {
+      const result = [];
       requestGetters.getRelevantPredictions(this.$store).forEach((p) => {
-        const rank = getRankingSummary(p.requestId);
-        if (!!rank) {
-          result[p.requestId] = rank;
+        const meta = {
+          rank: getPredictionRankSummary(p.resultId),
+          confidence: getPredictionConfidenceSummary(p.resultId),
+          summary: getPredictionResultSummary(p.requestId),
+        };
+        if (!meta.rank && !meta.confidence && !meta.summary) {
+          return;
         }
-      });
-      return result;
-    },
-    confidenceSummaries(): Dictionary<VariableSummary> {
-      const result = {};
-      requestGetters.getRelevantPredictions(this.$store).forEach((p) => {
-        const rank = getConfidenceSummary(p.requestId);
-        if (!!rank) {
-          result[p.requestId] = rank;
-        }
+        result.push(meta);
       });
       return result;
     },
@@ -203,97 +205,103 @@ export default Vue.extend({
       }
     },
 
-    onCategoricalClick(
-      context: string,
-      key: string,
-      value: string,
-      dataset: string
-    ) {
-      if (key && value) {
+    onCategoricalClick(args: {
+      context: string;
+      key: string;
+      value: string;
+      dataset: string;
+    }) {
+      if (args.key && args.value) {
         // If this isn't the currently selected prediction set, first update it.
         // Note that the key is of the form <requestId>:predicted and so needs to be
         // parsed.
-        if (this.summaries && this.produceRequestId !== getIDFromKey(key)) {
-          this.onClick(key);
+        if (
+          this.summaries &&
+          this.produceRequestId !== getIDFromKey(args.key)
+        ) {
+          this.onClick(args.key);
         }
 
         // extract the var name from the key
         updateHighlight(this.$router, {
-          context: context,
-          dataset: dataset,
-          key: key,
-          value: value,
+          context: args.context,
+          dataset: args.dataset,
+          key: args.key,
+          value: args.value,
         });
       } else {
-        clearHighlight(this.$router, key);
+        clearHighlight(this.$router, args.key);
       }
       appActions.logUserEvent(this.$store, {
         feature: Feature.CHANGE_HIGHLIGHT,
         activity: Activity.PREDICTION_ANALYSIS,
         subActivity: SubActivity.MODEL_PREDICTIONS,
-        details: { key: key, value: value },
+        details: { key: args.key, value: args.value },
       });
     },
 
-    onNumericalClick(
-      context: string,
-      key: string,
-      value: { from: number; to: number },
-      dataset: string
-    ) {
+    onNumericalClick(args: {
+      context: string;
+      key: string;
+      value: { from: number; to: number };
+      dataset: string;
+    }) {
       const uniqueHighlight = this.highlights.reduce(
-        (acc, highlight) => highlight.key !== key || acc,
+        (acc, highlight) => highlight.key !== args.key || acc,
         false
       );
       if (uniqueHighlight) {
         // If this isn't the currently selected prediction set, first update it.
         // Note that the key is of the form <requestId>:predicted and so needs to be
         // parsed.
-        if (this.summaries && this.produceRequestId !== getIDFromKey(key)) {
-          this.onClick(key);
+        if (
+          this.summaries &&
+          this.produceRequestId !== getIDFromKey(args.key)
+        ) {
+          this.onClick(args.key);
         }
-        if (key && value) {
+        if (args.key && args.value) {
           updateHighlight(this.$router, {
-            context: context,
-            dataset: dataset,
-            key: key,
-            value: value,
+            context: args.context,
+            dataset: args.dataset,
+            key: args.key,
+            value: args.value,
           });
         } else {
-          clearHighlight(this.$router, key);
+          clearHighlight(this.$router, args.key);
         }
         appActions.logUserEvent(this.$store, {
           feature: Feature.CHANGE_HIGHLIGHT,
           activity: Activity.PREDICTION_ANALYSIS,
           subActivity: SubActivity.MODEL_EXPLANATION,
-          details: { key: key, value: value },
+          details: { key: args.key, value: args.value },
         });
       }
     },
 
-    onRangeChange(
-      context: string,
-      key: string,
-      value: { from: { label: string[] }; to: { label: string[] } },
-      dataset: string
-    ) {
-      if (key && value) {
+    onRangeChange(args: {
+      context: string;
+      key: string;
+      value: { from: { label: string[] }; to: { label: string[] } };
+      dataset: string;
+    }) {
+      if (args.key && args.value) {
         updateHighlight(this.$router, {
-          context: context,
-          dataset: dataset,
-          key: key,
-          value: value,
+          context: args.context,
+          dataset: args.dataset,
+          key: args.key,
+          value: args.value,
         });
       } else {
-        clearHighlight(this.$router, key);
+        clearHighlight(this.$router, args.key);
       }
       appActions.logUserEvent(this.$store, {
         feature: Feature.CHANGE_HIGHLIGHT,
         activity: Activity.PREDICTION_ANALYSIS,
         subActivity: SubActivity.MODEL_EXPLANATION,
-        details: { key: key, value: value },
+        details: { key: args.key, value: args.value },
       });
-      this.$emit("range-change", key, value);
+      this.$emit("range-change", args.key, args.value);
     },
 
     active(summaryKey: string): string {

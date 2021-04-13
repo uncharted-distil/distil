@@ -25,6 +25,7 @@ import {
   Highlight,
   SummaryMode,
   VariableSummary,
+  DataMode,
 } from "../dataset/index";
 import { mutations } from "./module";
 import { PredictionState } from "./index";
@@ -36,12 +37,16 @@ import {
   fetchSummaryExemplars,
   minimumRouteKey,
   createPendingSummary,
+  fetchResultExemplars,
+  VARIABLE_SUMMARY_CONFIDENCE,
+  VARIABLE_SUMMARY_RANKING,
 } from "../../util/data";
 import {
   getters as predictionGetters,
   mutations as predictionMutations,
 } from "../predictions/module";
 import { getPredictionsById } from "../../util/predictions";
+import { filter } from "vue/types/umd";
 
 export type PredictionContext = ActionContext<PredictionState, DistilState>;
 
@@ -396,7 +401,89 @@ export const actions = {
       )
     );
   },
-
+  async fetchRankSummary(
+    context: PredictionContext,
+    args: {
+      highlights: Highlight[];
+      dataset: string;
+      solutionId: string;
+      dataMode: DataMode;
+      varMode: SummaryMode;
+      target: string;
+    }
+  ) {
+    return actions.fetchPredictionMetaSummary(context, {
+      endpoint: "confidence-summary",
+      predictionProperty: VARIABLE_SUMMARY_RANKING,
+      ...args,
+      mutator: mutations.updateRankSummary,
+    });
+  },
+  async fetchConfidenceSummary(
+    context: PredictionContext,
+    args: {
+      highlights: Highlight[];
+      dataset: string;
+      solutionId: string;
+      dataMode: DataMode;
+      varMode: SummaryMode;
+      target: string;
+    }
+  ) {
+    return actions.fetchPredictionMetaSummary(context, {
+      endpoint: "confidence-summary",
+      predictionProperty: VARIABLE_SUMMARY_CONFIDENCE,
+      ...args,
+      mutator: mutations.updateConfidenceSummary,
+    });
+  },
+  async fetchPredictionMetaSummary(
+    context: PredictionContext,
+    args: {
+      highlights: Highlight[];
+      dataset: string;
+      solutionId: string;
+      dataMode: DataMode;
+      varMode: SummaryMode;
+      target: string;
+      endpoint: string;
+      predictionProperty: string;
+      mutator: (arg: PredictionContext, summary: VariableSummary) => void;
+    }
+  ) {
+    const filterParamsBlank = {
+      highlights: { list: [], invert: false },
+      variables: [],
+      filters: { list: [], invert: false },
+    };
+    const filterParams = addHighlightToFilterParams(
+      filterParamsBlank,
+      args.highlights
+    );
+    try {
+      const response = await axios.post(
+        `/distil/${args.endpoint}/${args.dataset}/${args.solutionId}/${args.varMode}`,
+        filterParams
+      );
+      const summary = response.data[args.predictionProperty];
+      if (!summary) {
+        return;
+      }
+      await fetchResultExemplars(
+        args.dataset,
+        args.target,
+        args.predictionProperty,
+        args.solutionId,
+        summary
+      );
+      summary.solutionId = args.solutionId;
+      summary.dataset = args.dataset;
+      args.mutator(context, summary);
+    } catch (error) {
+      console.error(error);
+      // args.mutator(context, createErrorSummary());
+    }
+  },
   async fetchForecastedTimeseries(
     context: PredictionContext,
     args: {

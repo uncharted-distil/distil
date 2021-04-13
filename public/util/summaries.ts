@@ -94,7 +94,17 @@ export function getPredictionResultSummary(requestId: string): VariableSummary {
     .getPredictionSummaries(store)
     .find((s) => getIDFromKey(s.key) === requestId);
 }
-
+export function getPredictionConfidenceSummary(
+  requestId: string
+): VariableSummary {
+  const sums = predictionGetters.getConfidenceSummaries(store);
+  return sums.find((s) => s.solutionId === requestId);
+}
+export function getPredictionRankSummary(requestId: string): VariableSummary {
+  return predictionGetters
+    .getRankSummaries(store)
+    .find((s) => s.solutionId === requestId);
+}
 export function getConfidenceSummary(solutionID: string): VariableSummary {
   return resultGetters
     .getConfidenceSummaries(store)

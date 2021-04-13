@@ -78,7 +78,12 @@ export const getters = {
   getPredictionSummaries(state: PredictionState): VariableSummary[] {
     return state.predictedSummaries;
   },
-
+  getConfidenceSummaries(state: PredictionState): VariableSummary[] {
+    return state.confidenceSummaries;
+  },
+  getRankSummaries(state: PredictionState): VariableSummary[] {
+    return state.rankSummaries;
+  },
   getTrainingSummariesDictionary(
     state: PredictionState
   ): Dictionary<Dictionary<VariableSummary>> {

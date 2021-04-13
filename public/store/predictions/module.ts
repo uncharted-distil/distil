@@ -72,7 +72,8 @@ export const getters = {
   getTrainingSummariesDictionary: read(
     moduleGetters.getTrainingSummariesDictionary
   ),
-
+  getConfidenceSummaries: read(moduleGetters.getConfidenceSummaries),
+  getRankSummaries: read(moduleGetters.getRankSummaries),
   // result table data
   getPredictionDataNumRows: read(moduleGetters.getPredictionDataNumRows),
 
@@ -98,7 +99,8 @@ export const actions = {
   // predicted value summary
   fetchPredictedSummary: dispatch(moduleActions.fetchPredictionSummary),
   fetchPredictedSummaries: dispatch(moduleActions.fetchPredictionSummaries),
-
+  fetchConfidenceSummary: dispatch(moduleActions.fetchConfidenceSummary),
+  fetchRankSummary: dispatch(moduleActions.fetchRankSummary),
   // time series forecast data
   fetchForecastedTimeseries: dispatch(moduleActions.fetchForecastedTimeseries),
   // csv export data
@@ -127,6 +129,8 @@ export const mutations = {
   setBaselinePredictionTableData: commit(
     moduleMutations.setBaselinePredictionTableData
   ),
+  updateConfidenceSummary: commit(moduleMutations.updateConfidenceSummary),
+  updateRankSummary: commit(moduleMutations.updateRankSummary),
   // forecasts
   updatePredictedTimeseries: commit(moduleMutations.updatePredictedTimeseries),
   bulkUpdatePredictedTimeseries: commit(
