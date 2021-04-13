@@ -45,7 +45,7 @@ type JoinSpec struct {
 	DatasetFolder    string
 	DatasetSource    ingestMetadata.DatasetSource
 	ExistingMetadata *model.Metadata
-	Variables        []*model.Variable
+	UpdatedVariables []*model.Variable
 }
 
 // JoinDatamart will make all your dreams come true.
@@ -70,9 +70,9 @@ func JoinDistil(joinLeft *JoinSpec, joinRight *JoinSpec, leftCol string, rightCo
 	if err != nil {
 		return "", nil, err
 	}
-	varsLeftMap := apiModel.MapVariables(joinLeft.Variables, func(variable *model.Variable) string { return variable.Key })
-	varsRightMap := apiModel.MapVariables(joinRight.Variables, func(variable *model.Variable) string { return variable.Key })
-	pipelineDesc, err := description.CreateJoinPipeline("Joiner", "Join existing data", varsLeftMap[leftCol], varsRightMap[rightCol], accuracy)
+	varsLeftMapUpdated := apiModel.MapVariables(joinLeft.UpdatedVariables, func(variable *model.Variable) string { return variable.Key })
+	varsRightMapUpdated := apiModel.MapVariables(joinRight.UpdatedVariables, func(variable *model.Variable) string { return variable.Key })
+	pipelineDesc, err := description.CreateJoinPipeline("Joiner", "Join existing data", varsLeftMapUpdated[leftCol], varsRightMapUpdated[rightCol], accuracy)
 	if err != nil {
 		return "", nil, err
 	}
@@ -127,7 +127,7 @@ func createDatasetFromCSV(config *env.Config, csvFile string, datasetName string
 	metadata := model.NewMetadata(datasetName, datasetName, datasetName, storageName)
 	dataResource := model.NewDataResource(compute.DefaultResourceID, compute.D3MResourceType, map[string][]string{compute.D3MResourceFormat: {"csv"}})
 
-	mergedVariables, referencedResources := joinMetadataVariables(inputData[0], joinLeft.Variables, joinLeft.ExistingMetadata, joinRight.Variables, joinRight.ExistingMetadata)
+	mergedVariables, referencedResources := joinMetadataVariables(inputData[0], joinLeft.ExistingMetadata, joinRight.ExistingMetadata)
 	dataResource.Variables = mergedVariables
 	inputData[0] = dataResource.GenerateHeader()
 
@@ -240,11 +240,10 @@ func denormVariableName(variable *model.Variable) string {
 	return variable.HeaderName
 }
 
-func joinMetadataVariables(headerNames []string, leftVariables []*model.Variable, leftMetadata *model.Metadata,
-	rightVariables []*model.Variable, rightMetadata *model.Metadata) ([]*model.Variable, []*model.DataResource) {
+func joinMetadataVariables(headerNames []string, leftMetadata *model.Metadata, rightMetadata *model.Metadata) ([]*model.Variable, []*model.DataResource) {
 	// map the variables using the header names
-	leftMap := apiModel.MapVariables(leftVariables, denormVariableName)
-	rightMap := apiModel.MapVariables(rightVariables, denormVariableName)
+	leftMap := apiModel.MapVariables(leftMetadata.GetMainDataResource().Variables, denormVariableName)
+	rightMap := apiModel.MapVariables(rightMetadata.GetMainDataResource().Variables, denormVariableName)
 
 	// left dataset takes priority in case of conflict
 	mergedVariables := make([]*model.Variable, len(headerNames))

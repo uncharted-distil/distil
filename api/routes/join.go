@@ -159,6 +159,17 @@ func join(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, varsLeft []*model.V
 		return joinDistil(joinLeft, joinRight, params, metaStorage)
 	}
 
+	joinLeft.ExistingMetadata = &model.Metadata{
+		DataResources: []*model.DataResource{{
+			Variables: varsLeft,
+		}},
+	}
+	joinRight.ExistingMetadata = &model.Metadata{
+		DataResources: []*model.DataResource{{
+			Variables: varsRight,
+		}},
+	}
+
 	return joinDatamart(joinLeft, joinRight, varsLeft, varsRight, datasetRight, params)
 }
 
@@ -186,8 +197,18 @@ func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec,
 	if err != nil {
 		return "", nil, err
 	}
-	joinLeft.Variables = metaLeft.GetMainDataResource().Variables
-	joinRight.Variables = metaRight.GetMainDataResource().Variables
+
+	dsLeft, err := metaStorage.FetchDataset(joinLeft.DatasetID, true, true, true)
+	if err != nil {
+		return "", nil, err
+	}
+	dsRight, err := metaStorage.FetchDataset(joinRight.DatasetID, true, true, true)
+	if err != nil {
+		return "", nil, err
+	}
+
+	joinLeft.UpdatedVariables = dsLeft.Variables
+	joinRight.UpdatedVariables = dsRight.Variables
 	joinLeft.ExistingMetadata = metaLeft
 	joinRight.ExistingMetadata = metaRight
 
@@ -228,8 +249,8 @@ func joinDatamart(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, varsLeft []
 	if err != nil {
 		return "", nil, errors.Wrap(err, "Unable to parse join origin from JSON")
 	}
-	joinLeft.Variables = varsLeft
-	joinRight.Variables = varsRight
+	joinLeft.UpdatedVariables = varsLeft
+	joinRight.UpdatedVariables = varsRight
 
 	// run joining pipeline
 	path, data, err := task.JoinDatamart(joinLeft, joinRight, &targetOriginModel)
