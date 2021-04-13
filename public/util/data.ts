@@ -415,10 +415,12 @@ export function updateSummaries(
   summaries: VariableSummary[]
 ) {
   const index = _.findIndex(summaries, (s) => {
+    const solutionIdAvailable =
+      !s.solutionId || s.solutionId === summary.solutionId;
     return (
       s.dataset === summary.dataset &&
       s.key === summary.key &&
-      s.solutionId === summary.solutionId
+      solutionIdAvailable
     );
   });
   if (index >= 0) {

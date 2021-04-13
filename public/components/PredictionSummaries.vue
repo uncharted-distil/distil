@@ -18,27 +18,31 @@
 <template>
   <div class="prediction-summaries mh-100">
     <p class="nav-link font-weight-bold">Predictions for Dataset</p>
-    <div v-for="meta in metaSummaries" :key="meta.summary.key">
-      <div :class="active(meta.summary.key)" @click="onClick(meta.summary.key)">
-        <header class="prediction-group-title" :title="meta.summary.dataset">
-          {{ meta.summary.dataset }}
-        </header>
-        <div class="prediction-group-body">
-          <!-- we need the new facets in here-->
-          <prediction-group
-            :confidenceSummary="meta.confidence"
-            :predictedSummary="meta.summary"
-            :rankingSummary="meta.rank"
-            :highlights="highlights"
-            @categorical-click="onCategoricalClick"
-            @numerical-click="onNumericalClick"
-            @range-change="onRangeChange"
-          />
+    <div class="prediction-group-container overflow-auto">
+      <div v-for="meta in metaSummaries" :key="meta.summary.key">
+        <div
+          :class="active(meta.summary.key)"
+          @click="onClick(meta.summary.key)"
+        >
+          <header class="prediction-group-title" :title="meta.summary.dataset">
+            {{ meta.summary.dataset }}
+          </header>
+          <div class="prediction-group-body">
+            <!-- we need the new facets in here-->
+            <prediction-group
+              :confidenceSummary="meta.confidence"
+              :predictedSummary="meta.summary"
+              :rankingSummary="meta.rank"
+              :highlights="highlights"
+              @categorical-click="onCategoricalClick"
+              @numerical-click="onNumericalClick"
+              @range-change="onRangeChange"
+            />
+          </div>
         </div>
       </div>
     </div>
-
-    <b-button v-b-modal.save> Create Dataset </b-button>
+    <b-button v-b-modal.save class="mt-3"> Create Dataset </b-button>
 
     <b-modal id="save" title="Create Dataset" @ok="createDataset">
       <div class="check-message-container d-flex justify-content-around">
@@ -55,7 +59,7 @@
       </div>
     </b-modal>
 
-    <b-button variant="primary" class="float-right mt-2" v-b-modal.export>
+    <b-button variant="primary" class="float-right mt-3" v-b-modal.export>
       Export Predictions
     </b-button>
 
@@ -424,5 +428,8 @@ export default Vue.extend({
   border-width: 1px;
   border-radius: 2px;
   padding-bottom: 10px;
+}
+.prediction-group-container {
+  max-height: 87%;
 }
 </style>
