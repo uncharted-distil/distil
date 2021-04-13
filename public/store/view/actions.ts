@@ -40,6 +40,7 @@ import {
   SummaryMode,
   TaskTypes,
   Variable,
+  VariableSummaryKey,
 } from "../dataset";
 import {
   actions as datasetActions,
@@ -569,7 +570,10 @@ export const actions = {
     ) {
       datasetMutations.clearVariableSummaries(store);
     } else {
-      datasetMutations.setVariableSummary(store, { key: label, summary: null });
+      datasetMutations.setVariableSummary(store, {
+        key: VariableSummaryKey(label, dataset),
+        summary: null,
+      });
     }
     return Promise.all([
       datasetActions.fetchIncludedVariableSummaries(store, {

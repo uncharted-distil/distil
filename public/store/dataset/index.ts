@@ -188,7 +188,9 @@ export interface VariableSummary {
   pending?: boolean;
   solutionId?: string;
 }
-
+export function VariableSummaryKey(label: string, dataset: string): string {
+  return label + dataset;
+}
 // Flags the display mode for a variable summary.  Generally Default is correct,
 // but in the case of something like a timeseries summary, we can display a sample
 // of the series set, or use cluster info to sample.

@@ -19,9 +19,7 @@
   <div class="form-container">
     <div>
       <b-button
-        :disabled="
-          isLoading || !minimumRequirementsMet || !annotationHasChanged
-        "
+        :disabled="isLoading || !minimumRequirementsMet"
         size="lg"
         @click="onEvent(applyEvent)"
         title="must have 1 positive and negative label"
@@ -79,13 +77,13 @@ export default Vue.extend({
     },
     minimumRequirementsMet(): boolean {
       const keys = new Map(
-        this.lowShotSummary?.baseline?.buckets.map((b) => [b.key, true])
+        this.lowShotSummary?.baseline?.buckets.map((b) => [b.key, b.count])
       );
       if (!keys) {
         return false;
       }
       return (
-        keys.has(LowShotLabels.positive) && keys.has(LowShotLabels.negative)
+        keys.has(LowShotLabels.positive) && keys.get(LowShotLabels.positive) > 0
       );
     },
     lowShotLabel(): Dictionary<VariableSummary> {

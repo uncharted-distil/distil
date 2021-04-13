@@ -19,7 +19,12 @@ import axios from "axios";
 import _ from "lodash";
 import { ActionContext } from "vuex";
 import { DistilState } from "../store";
-import { FilterParams, EXCLUDE_FILTER, Filter } from "../../util/filters";
+import {
+  FilterParams,
+  EXCLUDE_FILTER,
+  Filter,
+  emptyFilterParamsObject,
+} from "../../util/filters";
 import {
   Variable,
   Highlight,
@@ -147,11 +152,7 @@ export const actions = {
       filter: Filter; // the area of interest
     }
   ) {
-    const filterParamsBlank = {
-      highlights: { list: [], invert: false },
-      variables: [],
-      filters: { list: [], invert: false },
-    };
+    const filterParamsBlank = emptyFilterParamsObject();
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
       args.highlights
@@ -187,11 +188,7 @@ export const actions = {
       filter: Filter;
     }
   ) {
-    const filterParamsBlank = {
-      highlights: { list: [], invert: false },
-      variables: [],
-      filters: { list: [], invert: false },
-    };
+    const filterParamsBlank = emptyFilterParamsObject();
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
       args.highlights,
@@ -291,11 +288,7 @@ export const actions = {
       size?: number;
     }
   ) {
-    let filterParams = {
-      highlights: { list: [], invert: false },
-      variables: [],
-      filters: { list: [], invert: false },
-    } as FilterParams;
+    let filterParams = emptyFilterParamsObject();
     filterParams = addHighlightToFilterParams(filterParams, args.highlights);
     const mutator = args.isBaseline
       ? mutations.setBaselinePredictionTableData
@@ -357,11 +350,7 @@ export const actions = {
       return null;
     }
 
-    let filterParams = {
-      highlights: { list: [], invert: false },
-      variables: [],
-      filters: { list: [], invert: false },
-    } as FilterParams;
+    let filterParams = emptyFilterParamsObject();
     filterParams = addHighlightToFilterParams(filterParams, args.highlights);
 
     const endpoint = `/distil/prediction-result-summary`;
@@ -451,11 +440,7 @@ export const actions = {
       mutator: (arg: PredictionContext, summary: VariableSummary) => void;
     }
   ) {
-    const filterParamsBlank = {
-      highlights: { list: [], invert: false },
-      variables: [],
-      filters: { list: [], invert: false },
-    };
+    const filterParamsBlank = emptyFilterParamsObject();
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
       args.highlights

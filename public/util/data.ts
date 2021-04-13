@@ -40,6 +40,7 @@ import {
   TimeseriesGrouping,
   Variable,
   VariableSummary,
+  VariableSummaryKey,
 } from "../store/dataset/index";
 import {
   actions as datasetActions,
@@ -453,7 +454,7 @@ export function updateSummariesPerVariable(
   const routeKey = minimumRouteKey();
   const summaryKey = summary.key;
   const dataset = summary.dataset;
-  const compositeKey = summaryKey + dataset;
+  const compositeKey = VariableSummaryKey(summaryKey, dataset);
   // check for existing summaries for that variable, if not, instantiate
   if (!variableSummaryDictionary[compositeKey]) {
     Vue.set(variableSummaryDictionary, compositeKey, {});

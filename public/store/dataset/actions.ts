@@ -73,6 +73,7 @@ import {
   Task,
   Variable,
   VariableRankingPendingRequest,
+  VariableSummaryKey,
 } from "./index";
 import { getters, mutations } from "./module";
 import { TimeSeriesUpdate } from "./mutations";
@@ -1014,7 +1015,10 @@ export const actions = {
     const promises = [];
 
     args.variables.forEach((variable) => {
-      const compositeKey = variable.key + variable.datasetName;
+      const compositeKey = VariableSummaryKey(
+        variable.key,
+        variable.datasetName
+      );
       const existingVariableSummary =
         summariesByVariable?.[compositeKey]?.[routeKey];
 
