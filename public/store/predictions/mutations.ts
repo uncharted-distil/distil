@@ -60,7 +60,12 @@ export const mutations = {
   updatePredictedSummary(state: PredictionState, summary: VariableSummary) {
     updateSummaries(summary, state.predictedSummaries);
   },
-
+  updateConfidenceSummary(state: PredictionState, summary: VariableSummary) {
+    updateSummaries(summary, state.confidenceSummaries);
+  },
+  updateRankSummary(state: PredictionState, summary: VariableSummary) {
+    updateSummaries(summary, state.rankSummaries);
+  },
   clearPredictedSummary(state: PredictionState) {
     state.predictedSummaries = [];
   },

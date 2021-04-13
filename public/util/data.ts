@@ -415,7 +415,13 @@ export function updateSummaries(
   summaries: VariableSummary[]
 ) {
   const index = _.findIndex(summaries, (s) => {
-    return s.dataset === summary.dataset && s.key === summary.key;
+    const solutionIdAvailable =
+      !s.solutionId || s.solutionId === summary.solutionId;
+    return (
+      s.dataset === summary.dataset &&
+      s.key === summary.key &&
+      solutionIdAvailable
+    );
   });
   if (index >= 0) {
     // freezing the return to prevent slow, unnecessary deep reactivity.

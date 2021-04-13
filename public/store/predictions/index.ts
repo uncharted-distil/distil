@@ -33,6 +33,8 @@ export interface PredictionState {
   targetSummary: VariableSummary;
   // predicted
   predictedSummaries: VariableSummary[];
+  confidenceSummaries: VariableSummary[];
+  rankSummaries: VariableSummary[];
   // forecasts
   timeseries: Dictionary<TimeSeries>;
   forecasts: Dictionary<Forecast>;
@@ -51,6 +53,8 @@ export const state: PredictionState = {
   targetSummary: null,
   // predicted
   predictedSummaries: [],
+  confidenceSummaries: [],
+  rankSummaries: [],
   // forecasts
   timeseries: {},
   forecasts: {},

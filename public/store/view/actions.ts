@@ -944,7 +944,6 @@ export const actions = {
 
     const produceRequestId = context.getters.getRouteProduceRequestId as string;
     const fittedSolutionId = context.getters.getRouteFittedSolutionId;
-
     // fetch the predictions
     await fetchPredictions(context, {
       fittedSolutionId: fittedSolutionId,
@@ -1019,13 +1018,16 @@ export const actions = {
     // fetch new state
     const produceRequestId = context.getters.getRouteProduceRequestId as string;
     const fittedSolutionId = context.getters.getRouteFittedSolutionId as string;
-    const inferenceDataset = getPredictionsById(
+    const pred = getPredictionsById(
       context.getters.getPredictions,
       produceRequestId
-    ).dataset;
+    );
+    const inferenceDataset = pred.dataset;
     const highlights = context.getters.getDecodedHighlights as Highlight[];
     const size = routeGetters.getRouteDataSize(store);
-
+    const dataMode = context.getters.getDataMode;
+    const varMode = SummaryMode.Default;
+    // table data
     predictionActions.fetchPredictionTableData(store, {
       dataset: inferenceDataset,
       highlights: highlights,
@@ -1033,12 +1035,30 @@ export const actions = {
       size,
       isBaseline: false,
     });
-
+    // variable summaries
     actions.updatePredictionTrainingSummaries(context);
-
+    // this is where rank and confidence should get updated
     predictionActions.fetchPredictedSummaries(store, {
       highlights: highlights,
       fittedSolutionId: fittedSolutionId,
+    });
+    requestGetters.getRelevantPredictions(store).forEach((p) => {
+      predictionActions.fetchConfidenceSummary(store, {
+        dataset: inferenceDataset,
+        highlights: highlights,
+        solutionId: p.resultId,
+        dataMode,
+        varMode,
+        target: p.feature,
+      });
+      predictionActions.fetchRankSummary(store, {
+        dataset: inferenceDataset,
+        highlights: highlights,
+        solutionId: p.resultId,
+        dataMode,
+        varMode,
+        target: p.feature,
+      });
     });
   },
 };

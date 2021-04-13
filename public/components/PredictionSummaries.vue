@@ -16,33 +16,33 @@
 -->
 
 <template>
-  <div class="prediction-summaries">
+  <div class="prediction-summaries mh-100">
     <p class="nav-link font-weight-bold">Predictions for Dataset</p>
-    <div v-for="summary in summaries" :key="summary.key">
-      <div :class="active(summary.key)" @click="onClick(summary.key)">
-        <header class="prediction-group-title" :title="summary.dataset">
-          {{ summary.dataset }}
-        </header>
-        <div class="prediction-group-body">
-          <!-- we need the new facets in here-->
-          <component
-            enable-highlighting
-            :summary="summary"
-            :key="summary.key"
-            :is="getFacetByType(summary.type)"
-            :highlights="highlights"
-            :enabled-type-changes="[]"
-            :row-selection="rowSelection"
-            :instanceName="instanceName"
-            @facet-click="onCategoricalClick"
-            @numerical-click="onNumericalClick"
-            @range-change="onRangeChange"
-          />
+    <div class="prediction-group-container overflow-auto">
+      <div v-for="meta in metaSummaries" :key="meta.summary.key">
+        <div
+          :class="active(meta.summary.key)"
+          @click="onClick(meta.summary.key)"
+        >
+          <header class="prediction-group-title" :title="meta.summary.dataset">
+            {{ meta.summary.dataset }}
+          </header>
+          <div class="prediction-group-body">
+            <!-- we need the new facets in here-->
+            <prediction-group
+              :confidenceSummary="meta.confidence"
+              :predictedSummary="meta.summary"
+              :rankingSummary="meta.rank"
+              :highlights="highlights"
+              @categorical-click="onCategoricalClick"
+              @numerical-click="onNumericalClick"
+              @range-change="onRangeChange"
+            />
+          </div>
         </div>
       </div>
     </div>
-
-    <b-button v-b-modal.save> Create Dataset </b-button>
+    <b-button v-b-modal.save class="mt-3"> Create Dataset </b-button>
 
     <b-modal id="save" title="Create Dataset" @ok="createDataset">
       <div class="check-message-container d-flex justify-content-around">
@@ -59,7 +59,7 @@
       </div>
     </b-modal>
 
-    <b-button variant="primary" class="float-right mt-2" v-b-modal.export>
+    <b-button variant="primary" class="float-right mt-3" v-b-modal.export>
       Export Predictions
     </b-button>
 
@@ -95,6 +95,7 @@ import Vue from "vue";
 import FileUploader from "../components/FileUploader.vue";
 import FacetNumerical from "../components/facets/FacetNumerical.vue";
 import FacetCategorical from "../components/facets/FacetCategorical.vue";
+import PredictionGroup from "./PredictionGroup.vue";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
 import { actions as predictionActions } from "../store/predictions/module";
@@ -108,9 +109,15 @@ import {
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { getFacetByType } from "../util/facets";
 import { overlayRouteEntry } from "../util/routes";
-import { getPredictionResultSummary, getIDFromKey } from "../util/summaries";
+import {
+  getPredictionResultSummary,
+  getIDFromKey,
+  getPredictionConfidenceSummary,
+  getPredictionRankSummary,
+} from "../util/summaries";
 import { getPredictionsById } from "../util/predictions";
 import { updateHighlight, clearHighlight } from "../util/highlights";
+import { Dictionary } from "vue-router/types/router";
 
 export default Vue.extend({
   name: "prediction-summaries",
@@ -119,6 +126,7 @@ export default Vue.extend({
     FacetNumerical,
     FacetCategorical,
     FileUploader,
+    PredictionGroup,
   },
 
   data() {
@@ -139,7 +147,25 @@ export default Vue.extend({
     instanceName(): string {
       return requestGetters.getActivePredictions(this.$store).feature;
     },
-
+    metaSummaries(): Array<{
+      rank: VariableSummary;
+      confidence: VariableSummary;
+      summary: VariableSummary;
+    }> {
+      const result = [];
+      requestGetters.getRelevantPredictions(this.$store).forEach((p) => {
+        const meta = {
+          rank: getPredictionRankSummary(p.resultId),
+          confidence: getPredictionConfidenceSummary(p.resultId),
+          summary: getPredictionResultSummary(p.requestId),
+        };
+        if (!meta.rank && !meta.confidence && !meta.summary) {
+          return;
+        }
+        result.push(meta);
+      });
+      return result;
+    },
     summaries(): VariableSummary[] {
       // get the list of variable summaries, sorting by timestamp
       return requestGetters
@@ -183,97 +209,103 @@ export default Vue.extend({
       }
     },
 
-    onCategoricalClick(
-      context: string,
-      key: string,
-      value: string,
-      dataset: string
-    ) {
-      if (key && value) {
+    onCategoricalClick(args: {
+      context: string;
+      key: string;
+      value: string;
+      dataset: string;
+    }) {
+      if (args.key && args.value) {
         // If this isn't the currently selected prediction set, first update it.
         // Note that the key is of the form <requestId>:predicted and so needs to be
         // parsed.
-        if (this.summaries && this.produceRequestId !== getIDFromKey(key)) {
-          this.onClick(key);
+        if (
+          this.summaries &&
+          this.produceRequestId !== getIDFromKey(args.key)
+        ) {
+          this.onClick(args.key);
         }
 
         // extract the var name from the key
         updateHighlight(this.$router, {
-          context: context,
-          dataset: dataset,
-          key: key,
-          value: value,
+          context: args.context,
+          dataset: args.dataset,
+          key: args.key,
+          value: args.value,
         });
       } else {
-        clearHighlight(this.$router, key);
+        clearHighlight(this.$router, args.key);
       }
       appActions.logUserEvent(this.$store, {
         feature: Feature.CHANGE_HIGHLIGHT,
         activity: Activity.PREDICTION_ANALYSIS,
         subActivity: SubActivity.MODEL_PREDICTIONS,
-        details: { key: key, value: value },
+        details: { key: args.key, value: args.value },
       });
     },
 
-    onNumericalClick(
-      context: string,
-      key: string,
-      value: { from: number; to: number },
-      dataset: string
-    ) {
+    onNumericalClick(args: {
+      context: string;
+      key: string;
+      value: { from: number; to: number };
+      dataset: string;
+    }) {
       const uniqueHighlight = this.highlights.reduce(
-        (acc, highlight) => highlight.key !== key || acc,
+        (acc, highlight) => highlight.key !== args.key || acc,
         false
       );
       if (uniqueHighlight) {
         // If this isn't the currently selected prediction set, first update it.
         // Note that the key is of the form <requestId>:predicted and so needs to be
         // parsed.
-        if (this.summaries && this.produceRequestId !== getIDFromKey(key)) {
-          this.onClick(key);
+        if (
+          this.summaries &&
+          this.produceRequestId !== getIDFromKey(args.key)
+        ) {
+          this.onClick(args.key);
         }
-        if (key && value) {
+        if (args.key && args.value) {
           updateHighlight(this.$router, {
-            context: context,
-            dataset: dataset,
-            key: key,
-            value: value,
+            context: args.context,
+            dataset: args.dataset,
+            key: args.key,
+            value: args.value,
           });
         } else {
-          clearHighlight(this.$router, key);
+          clearHighlight(this.$router, args.key);
         }
         appActions.logUserEvent(this.$store, {
           feature: Feature.CHANGE_HIGHLIGHT,
           activity: Activity.PREDICTION_ANALYSIS,
           subActivity: SubActivity.MODEL_EXPLANATION,
-          details: { key: key, value: value },
+          details: { key: args.key, value: args.value },
         });
       }
     },
 
-    onRangeChange(
-      context: string,
-      key: string,
-      value: { from: { label: string[] }; to: { label: string[] } },
-      dataset: string
-    ) {
-      if (key && value) {
+    onRangeChange(args: {
+      context: string;
+      key: string;
+      value: { from: { label: string[] }; to: { label: string[] } };
+      dataset: string;
+    }) {
+      if (args.key && args.value) {
         updateHighlight(this.$router, {
-          context: context,
-          dataset: dataset,
-          key: key,
-          value: value,
+          context: args.context,
+          dataset: args.dataset,
+          key: args.key,
+          value: args.value,
         });
       } else {
-        clearHighlight(this.$router, key);
+        clearHighlight(this.$router, args.key);
       }
       appActions.logUserEvent(this.$store, {
         feature: Feature.CHANGE_HIGHLIGHT,
         activity: Activity.PREDICTION_ANALYSIS,
         subActivity: SubActivity.MODEL_EXPLANATION,
-        details: { key: key, value: value },
+        details: { key: args.key, value: args.value },
       });
-      this.$emit("range-change", key, value);
+      this.$emit("range-change", args.key, args.value);
     },
 
     active(summaryKey: string): string {
@@ -396,5 +428,8 @@ export default Vue.extend({
   border-width: 1px;
   border-radius: 2px;
   padding-bottom: 10px;
+}
+.prediction-group-container {
+  max-height: 87%;
 }
 </style>
