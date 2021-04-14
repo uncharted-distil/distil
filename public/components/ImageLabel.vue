@@ -38,7 +38,12 @@
 <script lang="ts">
 import Vue from "vue";
 import { Dictionary } from "../util/dict";
-import { TableRow, TableColumn, VariableSummary } from "../store/dataset/index";
+import {
+  TableRow,
+  TableColumn,
+  VariableSummary,
+  VariableSummaryKey,
+} from "../store/dataset/index";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as requestGetters } from "../store/requests/module";
 import { getters as routeGetters } from "../store/route/module";
@@ -174,8 +179,9 @@ export default Vue.extend({
         });
       } else {
         const minKey = minimumRouteKey();
+        const dataset = routeGetters.getRouteDataset(this.$store);
         const dict = datasetGetters.getVariableSummariesDictionary(this.$store);
-        summary = dict[this.targetField][minKey];
+        summary = dict[VariableSummaryKey(this.targetField, dataset)][minKey];
       }
       const bucketNames = summary?.baseline?.buckets.map((b) => b.key);
       // If this isn't categorical, don't generate the table.

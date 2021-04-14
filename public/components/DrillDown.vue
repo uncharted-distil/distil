@@ -47,6 +47,9 @@
                 :overlapped-urls="
                   renderTiles[i][j].overlapped.map((o) => o.imageUrl)
                 "
+                :shouldFetchImage="false"
+                :shouldCleanUp="false"
+                :uniqueTrail="uniqueTrail"
                 @click="onImageClick"
               />
               <overlap-selection
@@ -87,6 +90,10 @@ import { getters as routeGetters } from "../store/route/module";
 import { LatLngBounds, LatLngBoundsLiteral } from "leaflet";
 import OverlapSelection from "./OverlapSelection.vue";
 import { CoordinateInfo, Coordinate } from "../util/rendering/coordinates";
+import {
+  actions as datasetActions,
+  mutations as datasetMutations,
+} from "../store/dataset/module";
 
 interface Tile {
   imageUrl: string;
@@ -134,6 +141,8 @@ export default Vue.extend({
   data() {
     return {
       renderTiles: [] as RenderTile[][],
+      imagesToFetch: [] as string[],
+      uniqueTrail: "drill-down",
     };
   },
 
@@ -161,19 +170,37 @@ export default Vue.extend({
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
     },
+    dataset(): string {
+      return routeGetters.getRouteDataset(this.$store);
+    },
+    band(): string {
+      return routeGetters.getBandCombinationId(this.$store);
+    },
   },
 
   watch: {
     tiles() {
       this.renderTiles = this.spatialSort();
+      this.fetchImagePack();
     },
   },
 
   mounted() {
     this.renderTiles = this.spatialSort();
+    this.fetchImagePack();
   },
 
   methods: {
+    fetchImagePack() {
+      datasetActions.fetchImagePack(this.$store, {
+        multiBandImagePackRequest: {
+          imageIds: this.imagesToFetch,
+          dataset: this.dataset,
+          band: this.band,
+        },
+        uniqueTrail: this.uniqueTrail,
+      });
+    },
     getIndex(x: number, y: number): SpatialIndex {
       const minX = this.bounds[0][1];
       const minY = this.bounds[1][0];
@@ -219,12 +246,18 @@ export default Vue.extend({
         const invertY = this.rows - 1 - indices.y;
         result[invertY][indices.x].selected = t;
         result[invertY][indices.x].overlapped.push(t);
+        this.imagesToFetch.push(t.imageUrl);
       });
       // normalize coordinates
       return result;
     },
     onExitClicked() {
       this.$emit("close");
+      datasetMutations.bulkRemoveFiles(this.$store, {
+        urls: this.imagesToFetch.map((i) => {
+          return `${i}/${this.uniqueTrail}`;
+        }),
+      });
       clearAreaOfInterest();
     },
     onImageClick(event: any) {

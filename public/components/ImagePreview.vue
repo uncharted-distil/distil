@@ -17,6 +17,7 @@
 
 <template>
   <div
+    v-if="!!imageUrl"
     v-observe-visibility="visibilityChanged"
     :class="{ 'is-hidden': !isVisible && !preventHiding }"
     :style="{
@@ -108,7 +109,6 @@ export default Vue.extend({
 
   data() {
     return {
-      getImage: null,
       hasRendered: false,
       hasRequested: false,
       imageAttentionHasRendered: false,
@@ -251,9 +251,13 @@ export default Vue.extend({
       if (newUrl === null) return;
       if (newUrl !== oldUrl) {
         this.cleanUp();
+        if (this.image) {
+          this.injectImage();
+          return;
+        }
         this.hasRendered = false;
         this.hasRequested = false;
-        this.getImage();
+        this.requestImage();
       }
     },
     async hasImageAttention() {
@@ -279,7 +283,7 @@ export default Vue.extend({
         this.hasRendered = false;
         this.hasRequested = false;
         if (this.isVisible) {
-          this.getImage();
+          this.requestImage();
         }
       }
     },
@@ -297,10 +301,6 @@ export default Vue.extend({
     }
   },
 
-  created() {
-    this.getImage = this.requestImage;
-  },
-
   destroyed() {
     this.cleanUp();
   },
@@ -313,7 +313,7 @@ export default Vue.extend({
     async visibilityChanged(isVisible: boolean) {
       this.isVisible = isVisible;
       if (this.isVisible && !this.hasRequested) {
-        this.getImage();
+        this.requestImage();
         await this.handleImageAttention();
         return;
       }
