@@ -72,7 +72,8 @@ func JoinDistil(joinLeft *JoinSpec, joinRight *JoinSpec, leftCol string, rightCo
 	}
 	varsLeftMapUpdated := apiModel.MapVariables(joinLeft.UpdatedVariables, func(variable *model.Variable) string { return variable.Key })
 	varsRightMapUpdated := apiModel.MapVariables(joinRight.UpdatedVariables, func(variable *model.Variable) string { return variable.Key })
-	pipelineDesc, err := description.CreateJoinPipeline("Joiner", "Join existing data", varsLeftMapUpdated[leftCol], varsRightMapUpdated[rightCol], accuracy)
+	pipelineDesc, err := description.CreateJoinPipeline("Joiner", "Join existing data",
+		[]*model.Variable{varsLeftMapUpdated[leftCol]}, []*model.Variable{varsRightMapUpdated[rightCol]}, accuracy)
 	if err != nil {
 		return "", nil, err
 	}
