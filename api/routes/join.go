@@ -175,17 +175,20 @@ func join(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, varsLeft []*model.V
 
 func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec,
 	params map[string]interface{}, metaStorage api.MetadataStorage) (string, *api.FilteredData, error) {
-	if params["datasetAColumn"] == nil {
-		return "", nil, errors.Errorf("missing parameter 'datasetAColumn'")
+	if params["joinPairs"] == nil {
+		return "", nil, errors.Errorf("missing parameter 'joinPairs'")
 	}
-	leftCol := params["datasetAColumn"].(string)
-	if params["datasetBColumn"] == nil {
-		return "", nil, errors.Errorf("missing parameter 'datasetBColumn'")
+	joinPairs, ok := json.Array(params, "joinPairs")
+	if !ok {
+		return "", nil, errors.Errorf("joinPairs not a list of join pairs")
 	}
-	rightCol := params["datasetBColumn"].(string)
-	if params["accuracy"] == nil {
-		return "", nil, errors.Errorf("missing parameter 'accuracy'")
+	leftCols := make([]string, len(joinPairs))
+	rightCols := make([]string, len(joinPairs))
+	for i, p := range joinPairs {
+		leftCols[i] = p["first"].(string)
+		rightCols[i] = p["second"].(string)
 	}
+
 	tmp := params["accuracy"].(float64)
 	accuracy := float32(tmp)
 	// need to read variables from disk for the variable list
@@ -212,7 +215,7 @@ func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec,
 	joinLeft.ExistingMetadata = metaLeft
 	joinRight.ExistingMetadata = metaRight
 
-	path, data, err := task.JoinDistil(joinLeft, joinRight, leftCol, rightCol, accuracy)
+	path, data, err := task.JoinDistil(joinLeft, joinRight, leftCols, rightCols, accuracy)
 	if err != nil {
 		return "", nil, err
 	}
