@@ -78,7 +78,7 @@ func JoinDistil(joinLeft *JoinSpec, joinRight *JoinSpec, leftCols []string, righ
 	for i, v := range leftCols {
 		leftVars[i] = varsLeftMapUpdated[v]
 	}
-	for i, v := range leftCols {
+	for i, v := range rightCols {
 		rightVars[i] = varsRightMapUpdated[v]
 	}
 
