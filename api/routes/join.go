@@ -159,22 +159,45 @@ func join(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, varsLeft []*model.V
 		return joinDistil(joinLeft, joinRight, params, metaStorage)
 	}
 
+	joinLeft.ExistingMetadata = &model.Metadata{
+		DataResources: []*model.DataResource{{
+			Variables: varsLeft,
+		}},
+	}
+	joinRight.ExistingMetadata = &model.Metadata{
+		DataResources: []*model.DataResource{{
+			Variables: varsRight,
+		}},
+	}
+
 	return joinDatamart(joinLeft, joinRight, varsLeft, varsRight, datasetRight, params)
 }
 
 func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec,
 	params map[string]interface{}, metaStorage api.MetadataStorage) (string, *api.FilteredData, error) {
-	if params["datasetAColumn"] == nil {
-		return "", nil, errors.Errorf("missing parameter 'datasetAColumn'")
+	if params["joinPairs"] == nil {
+		return "", nil, errors.Errorf("missing parameter 'joinPairs'")
 	}
-	leftCol := params["datasetAColumn"].(string)
-	if params["datasetBColumn"] == nil {
-		return "", nil, errors.Errorf("missing parameter 'datasetBColumn'")
+	joinPairs, ok := json.Array(params, "joinPairs")
+	if !ok {
+		return "", nil, errors.Errorf("joinPairs not a list of join pairs")
 	}
-	rightCol := params["datasetBColumn"].(string)
-	if params["accuracy"] == nil {
-		return "", nil, errors.Errorf("missing parameter 'accuracy'")
+	leftCols := make([]string, len(joinPairs))
+	rightCols := make([]string, len(joinPairs))
+	for i, p := range joinPairs {
+		colName, ok := p["first"].(string)
+		if !ok {
+			return "", nil, errors.Errorf("join pair 'first' value is not a string")
+		}
+		leftCols[i] = colName
+
+		colName, ok = p["second"].(string)
+		if !ok {
+			return "", nil, errors.Errorf("join pair 'second' value is not a string")
+		}
+		rightCols[i] = colName
 	}
+
 	tmp := params["accuracy"].(float64)
 	accuracy := float32(tmp)
 	// need to read variables from disk for the variable list
@@ -186,12 +209,22 @@ func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec,
 	if err != nil {
 		return "", nil, err
 	}
-	joinLeft.Variables = metaLeft.GetMainDataResource().Variables
-	joinRight.Variables = metaRight.GetMainDataResource().Variables
+
+	dsLeft, err := metaStorage.FetchDataset(joinLeft.DatasetID, true, true, true)
+	if err != nil {
+		return "", nil, err
+	}
+	dsRight, err := metaStorage.FetchDataset(joinRight.DatasetID, true, true, true)
+	if err != nil {
+		return "", nil, err
+	}
+
+	joinLeft.UpdatedVariables = dsLeft.Variables
+	joinRight.UpdatedVariables = dsRight.Variables
 	joinLeft.ExistingMetadata = metaLeft
 	joinRight.ExistingMetadata = metaRight
 
-	path, data, err := task.JoinDistil(joinLeft, joinRight, leftCol, rightCol, accuracy)
+	path, data, err := task.JoinDistil(joinLeft, joinRight, leftCols, rightCols, accuracy)
 	if err != nil {
 		return "", nil, err
 	}
@@ -228,8 +261,8 @@ func joinDatamart(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, varsLeft []
 	if err != nil {
 		return "", nil, errors.Wrap(err, "Unable to parse join origin from JSON")
 	}
-	joinLeft.Variables = varsLeft
-	joinRight.Variables = varsRight
+	joinLeft.UpdatedVariables = varsLeft
+	joinRight.UpdatedVariables = varsRight
 
 	// run joining pipeline
 	path, data, err := task.JoinDatamart(joinLeft, joinRight, &targetOriginModel)

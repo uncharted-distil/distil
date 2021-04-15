@@ -24,6 +24,7 @@ import {
   createPendingSummary,
   DatasetUpdate,
   fetchSummaryExemplars,
+  JoinPair,
   minimumRouteKey,
   validateArgs,
 } from "../../util/data";
@@ -732,8 +733,7 @@ export const actions = {
       datasetB: Dataset;
       joinAccuracy: number;
       joinSuggestionIndex?: number;
-      datasetAColumn?: string;
-      datasetBColumn?: string;
+      joinPairs?: JoinPair[];
     }
   ): Promise<any> {
     if (!validateArgs(args, ["datasetA", "datasetB", "joinAccuracy"])) {
@@ -752,8 +752,7 @@ export const actions = {
       accuracy: args.joinAccuracy,
       datasetLeft: args.datasetA,
       datasetRight: datasetBrevised,
-      datasetAColumn: args.datasetAColumn,
-      datasetBColumn: args.datasetBColumn,
+      joinPairs: args.joinPairs,
       searchResultIndex: args.joinSuggestionIndex,
     });
     return response.data;

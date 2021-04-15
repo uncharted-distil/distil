@@ -93,17 +93,27 @@ func TestJoin(t *testing.T) {
 	assert.NoError(t, env.Initialize(&cfg))
 
 	leftJoin := &JoinSpec{
-		DatasetID:     "test_1",
-		DatasetFolder: "test_1_TRAIN",
-		DatasetSource: "contrib",
-		Variables:     varsLeft,
+		DatasetID:        "test_1",
+		DatasetFolder:    "test_1_TRAIN",
+		DatasetSource:    "contrib",
+		UpdatedVariables: varsLeft,
+		ExistingMetadata: &model.Metadata{
+			DataResources: []*model.DataResource{{
+				Variables: varsLeft,
+			}},
+		},
 	}
 
 	rightJoin := &JoinSpec{
-		DatasetID:     "test_2",
-		DatasetFolder: "test_2_TRAIN",
-		DatasetSource: "contrib",
-		Variables:     varsRight,
+		DatasetID:        "test_2",
+		DatasetFolder:    "test_2_TRAIN",
+		DatasetSource:    "contrib",
+		UpdatedVariables: varsRight,
+		ExistingMetadata: &model.Metadata{
+			DataResources: []*model.DataResource{{
+				Variables: varsRight,
+			}},
+		},
 	}
 
 	rightOrigin := &model.DatasetOrigin{
