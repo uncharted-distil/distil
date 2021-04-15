@@ -21,11 +21,11 @@ import {
   Lex,
   NumericEntryState,
   RelationState,
+  StateTemplate,
   TextEntryState,
   TransitionFactory,
   ValueState,
   ValueStateValue,
-  StateTemplate,
 } from "@uncharted.software/lex";
 import { Highlight, Variable } from "../store/dataset";
 import { Dictionary } from "./dict";
@@ -154,7 +154,7 @@ export function distilCategoryEntryBuilder(
   categorySuggestions.forEach((suggestion) => {
     const labelSuggestions =
       catVarLexSuggestions[suggestion.meta.variable.key] ?? [];
-    const branch = Lex.from("value_0", ValueState, {
+    let branch = Lex.from("value_0", ValueState, {
       allowUnknown: false,
       icon: "",
       name: "Type for suggestions",
@@ -165,16 +165,18 @@ export function distilCategoryEntryBuilder(
       },
     });
     for (let i = 1; i < suggestion.meta.count; ++i) {
-      branch.to(LabelState, { label: "OR" }).to(`value_${i}`, ValueState, {
-        allowUnknown: false,
-        icon: "",
-        name: "Type for suggestions",
-        fetchSuggestions: (hint) => {
-          return labelSuggestions.filter((cat) => {
-            return cat["key"].toLowerCase().indexOf(hint.toLowerCase()) > -1;
-          });
-        },
-      });
+      branch = branch
+        .to(LabelState, { label: "OR" })
+        .to(`value_${i}`, ValueState, {
+          allowUnknown: false,
+          icon: "",
+          name: "Type for suggestions",
+          fetchSuggestions: (hint) => {
+            return labelSuggestions.filter((cat) => {
+              return cat["key"].toLowerCase().indexOf(hint.toLowerCase()) > -1;
+            });
+          },
+        });
     }
     categoryEntries.push(
       Lex.from("relation", DistilRelationState, {
@@ -199,13 +201,13 @@ export function distilNumericalEntryBuilder(
   // loop through each suggestion
   numericalSuggestions.forEach((suggestion) => {
     // build the base branch this is what the user will see if typing into the lexbar
-    const branch = Lex.from(LabelState, { label: "From" })
+    let branch = Lex.from(LabelState, { label: "From" })
       .to("min_0", NumericEntryState, { name: "Enter lower bound" })
       .to(LabelState, { label: "To" })
       .to("max_0", NumericEntryState, { name: "Enter upper bound" });
     // adds the OR and the additional filter params if the count is > 0
     for (let i = 1; i < suggestion.meta.count; ++i) {
-      branch
+      branch = branch
         .to(LabelState, { label: "OR" })
         .to(LabelState, { label: "From" })
         .to(`min_${i}`, NumericEntryState, { name: "Enter lower bound" })
@@ -232,7 +234,7 @@ export function distilGeoBoundsEntryBuilder(
     return suggestion.meta.type === GEOBOUNDS_FILTER;
   });
   geoboundsSuggestions.forEach((suggestion) => {
-    const branch = Lex.from(LabelState, { label: "From Latitude" })
+    let branch = Lex.from(LabelState, { label: "From Latitude" })
       .to("minX_0", NumericEntryState, { name: "Enter lower bound" })
       .to(LabelState, { label: "To" })
       .to("maxX_0", NumericEntryState, { name: "Enter upper bound" })
@@ -241,7 +243,7 @@ export function distilGeoBoundsEntryBuilder(
       .to(LabelState, { label: "To" })
       .to("maxY_0", NumericEntryState, { name: "Enter upper bound" });
     for (let i = 1; i < suggestion.meta.count; ++i) {
-      branch
+      branch = branch
         .to(LabelState, { label: "OR" })
         .to(LabelState, { label: "From Latitude" })
         .to(`minX_${i}`, NumericEntryState, { name: "Enter lower bound" })
@@ -273,7 +275,7 @@ export function distilDateTimeEntryBuilder(
     return suggestion.meta.type === DATETIME_FILTER;
   });
   dateSuggestions.forEach((suggestion) => {
-    const branch = Lex.from(LabelState, { label: "From" })
+    let branch = Lex.from(LabelState, { label: "From" })
       .to("min_0", DateTimeEntryState, {
         enableTime: true,
         enableCalendar: true,
@@ -288,7 +290,7 @@ export function distilDateTimeEntryBuilder(
         hilightedDate: new Date(suggestion.meta.variable.max * 1000),
       });
     for (let i = 1; i < suggestion.meta.count; ++i) {
-      branch
+      branch = branch
         .to(LabelState, { label: "OR" })
         .to(LabelState, { label: "From" })
         .to(`min_${i}`, DateTimeEntryState, {
