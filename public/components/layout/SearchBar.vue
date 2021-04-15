@@ -28,7 +28,12 @@ import _ from "lodash";
 import { h } from "preact";
 import { Lex } from "@uncharted.software/lex";
 import { Variable } from "../../store/dataset/index";
-import { variablesToLexLanguage, filterParamsToLexQuery } from "../../util/lex";
+import {
+  variablesToLexLanguage,
+  filterParamsToLexQuery,
+  variableAggregation,
+  TemplateInfo,
+} from "../../util/lex";
 import "../../../node_modules/@uncharted.software/lex/dist/lex.css";
 import "../../../node_modules/flatpickr/dist/flatpickr.min.css";
 
@@ -53,7 +58,13 @@ export default Vue.extend({
 
   computed: {
     language(): Lex {
-      return variablesToLexLanguage(this.variables);
+      return variablesToLexLanguage(
+        this.templateInfo.activeVariables,
+        this.variables
+      );
+    },
+    templateInfo(): TemplateInfo {
+      return variableAggregation(this.filters, this.highlights, this.variables);
     },
   },
 
@@ -98,11 +109,7 @@ export default Vue.extend({
 
     setQuery(): void {
       if (!this.lex || !(this.filters || this.highlights)) return;
-      const lexQuery = filterParamsToLexQuery(
-        this.filters,
-        this.highlights,
-        this.variables
-      );
+      const lexQuery = filterParamsToLexQuery(this.templateInfo);
       this.lex.setQuery(lexQuery, false);
     },
   },
