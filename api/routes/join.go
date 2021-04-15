@@ -185,8 +185,17 @@ func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec,
 	leftCols := make([]string, len(joinPairs))
 	rightCols := make([]string, len(joinPairs))
 	for i, p := range joinPairs {
-		leftCols[i] = p["first"].(string)
-		rightCols[i] = p["second"].(string)
+		colName, ok := p["first"].(string)
+		if !ok {
+			return "", nil, errors.Errorf("join pair 'first' value is not a string")
+		}
+		leftCols[i] = colName
+
+		colName, ok = p["second"].(string)
+		if !ok {
+			return "", nil, errors.Errorf("join pair 'second' value is not a string")
+		}
+		rightCols[i] = colName
 	}
 
 	tmp := params["accuracy"].(float64)
