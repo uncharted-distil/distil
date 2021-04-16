@@ -44,8 +44,14 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		datasetIDSource := pat.Param(r, "datasetID")
 		sourceParsed := metadata.DatasetSource(pat.Param(r, "source"))
 		provenance := pat.Param(r, "provenance")
-		isSampling := true // Flag to sample imported dataset
-		sourceLearningDataset := ""
+		isSampling := true          // Flag to sample imported dataset
+		sourceLearningDataset := "" // prefeaturized dataset folder
+
+		// updateDatasetID is the ID of the dataset to use to sync a prefeaturized
+		// dataset. Note that it will be one of two datasets joined, whichever is NOT
+		// prefeaturized. This is used instead of using the joined dataset because we do
+		// NOT want to sync the data that is already prefeaturized!
+		updateDatasetID := ""
 
 		ingestSteps := &task.IngestSteps{
 			ClassificationOverwrite: false,
@@ -107,9 +113,11 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 					} else if originalLearningDataset != "" {
 						ingestSteps.SkipFeaturization = true
 						sourceLearningDataset = originalLearningDataset
+						updateDatasetID = joinedDataset["id"].(string)
 					} else if joinedLearningDataset != "" {
 						ingestSteps.SkipFeaturization = true
 						sourceLearningDataset = joinedLearningDataset
+						updateDatasetID = originalDataset["id"].(string)
 					}
 
 					// combine the origin and joined dateset into an array of structs
@@ -208,7 +216,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 
 		// if there is a source learning dataset, then sync it properly with the newly imported dataset
 		// this will occur when the import is of a joined dataset
-		err = syncPrefeaturizedDataset(ingestResult.DatasetID, ingestParams.Path, sourceLearningDataset, esMetaCtor)
+		err = syncPrefeaturizedDataset(ingestResult.DatasetID, updateDatasetID, sourceLearningDataset, esMetaCtor)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -419,10 +427,13 @@ func getVariablesDefault(datasetID string, metaStorage api.MetadataStorage) []*m
 	return ds.Variables
 }
 
-func syncPrefeaturizedDataset(datasetID string, sourceDataset string, sourceLearningDataset string, metaCtor api.MetadataStorageCtor) error {
+func syncPrefeaturizedDataset(datasetID string, updateDatasetID string, sourceLearningDataset string, metaCtor api.MetadataStorageCtor) error {
+	// make sure there is a prefeaturized dataset to sync
 	if sourceLearningDataset == "" {
 		return nil
 	}
+	log.Infof("syncing prefeaturized dataset '%s' using prefeaturized data found at '%s' and updating with data from dataset '%s'",
+		datasetID, sourceLearningDataset, updateDatasetID)
 
 	metaStorage, err := metaCtor()
 	if err != nil {
@@ -430,6 +441,11 @@ func syncPrefeaturizedDataset(datasetID string, sourceDataset string, sourceLear
 	}
 
 	ds, err := metaStorage.FetchDataset(datasetID, true, true, true)
+	if err != nil {
+		return err
+	}
+
+	dsUpdate, err := metaStorage.FetchDataset(updateDatasetID, true, true, true)
 	if err != nil {
 		return err
 	}
@@ -442,16 +458,18 @@ func syncPrefeaturizedDataset(datasetID string, sourceDataset string, sourceLear
 	if err != nil {
 		return err
 	}
+	log.Infof("copied prefeaturized data to '%s'", joinedLearningDataset)
 
 	// sync the dataset on disk
 	// read the unfeaturized dataset from disk
-	dsDiskSource, err := api.LoadDiskDatasetFromFolder(sourceDataset)
+	dsDiskUpdate, err := api.LoadDiskDatasetFromFolder(dsUpdate.GetLearningFolder())
 	if err != nil {
 		return err
 	}
 
 	// update the featurized dataset using the unfeaturized data
-	err = dsDisk.UpdateOnDisk(ds, dsDiskSource.Dataset.Data, true)
+	log.Infof("updating dataset on disk using data from '%s'", dsUpdate.GetLearningFolder())
+	err = dsDisk.UpdateOnDisk(ds, dsDiskUpdate.Dataset.Data, true)
 	if err != nil {
 		return err
 	}
@@ -462,6 +480,8 @@ func syncPrefeaturizedDataset(datasetID string, sourceDataset string, sourceLear
 	if err != nil {
 		return err
 	}
+
+	log.Infof("done syncing prefeaturized dataset '%s' on disk", datasetID)
 
 	return nil
 }
