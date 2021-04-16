@@ -307,14 +307,14 @@ export function distilDateTimeEntryBuilder(
         enableTime: true,
         enableCalendar: true,
         timezone: "Greenwich",
-        hilightedDate: new Date(suggestion.meta.variable.min * 1000),
+        hilightedDate: new Date(suggestion.meta.variable.variable.min * 1000),
       })
       .to(LabelState, { label: "To", vkey: "operator" })
       .to("max_0", DateTimeEntryState, {
         enableTime: true,
         enableCalendar: true,
         timezone: "Greenwich",
-        hilightedDate: new Date(suggestion.meta.variable.max * 1000),
+        hilightedDate: new Date(suggestion.meta.variable.variable.max * 1000),
       });
     for (let i = 1; i < suggestion.meta.count; ++i) {
       branch = branch
@@ -324,14 +324,14 @@ export function distilDateTimeEntryBuilder(
           enableTime: true,
           enableCalendar: true,
           timezone: "Greenwich",
-          hilightedDate: new Date(suggestion.meta.variable.min * 1000),
+          hilightedDate: new Date(suggestion.meta.variable.variable.min * 1000),
         })
         .to(LabelState, { label: "To", vkey: "operator" })
         .to(`max_${i}`, DateTimeEntryState, {
           enableTime: true,
           enableCalendar: true,
           timezone: "Greenwich",
-          hilightedDate: new Date(suggestion.meta.variable.max * 1000),
+          hilightedDate: new Date(suggestion.meta.variable.variable.max * 1000),
         });
     }
     // default with
@@ -339,7 +339,7 @@ export function distilDateTimeEntryBuilder(
       Lex.from("relation", DistilRelationState, {
         ...TransitionFactory.valueMetaCompare({
           type: DATETIME_FILTER,
-          name: suggestion.meta.variable.colName,
+          name: suggestion.meta.variable.variable.colName,
           count: suggestion.meta.count,
         }),
       }).branch(branch)
