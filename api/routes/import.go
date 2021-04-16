@@ -208,7 +208,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 
 		// if there is a source learning dataset, then sync it properly with the newly imported dataset
 		// this will occur when the import is of a joined dataset
-		err = syncPrefeaturizedDataset(ingestResult.DatasetID, ingestParams.Path, sourceLearningDataset, meta)
+		err = syncPrefeaturizedDataset(ingestResult.DatasetID, ingestParams.Path, sourceLearningDataset, esMetaCtor)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -419,9 +419,14 @@ func getVariablesDefault(datasetID string, metaStorage api.MetadataStorage) []*m
 	return ds.Variables
 }
 
-func syncPrefeaturizedDataset(datasetID string, sourceDataset string, sourceLearningDataset string, metaStorage api.MetadataStorage) error {
+func syncPrefeaturizedDataset(datasetID string, sourceDataset string, sourceLearningDataset string, metaCtor api.MetadataStorageCtor) error {
 	if sourceLearningDataset == "" {
 		return nil
+	}
+
+	metaStorage, err := metaCtor()
+	if err != nil {
+		return err
 	}
 
 	ds, err := metaStorage.FetchDataset(datasetID, true, true, true)
@@ -431,6 +436,7 @@ func syncPrefeaturizedDataset(datasetID string, sourceDataset string, sourceLear
 
 	// TODO: CHECK UNIQUENESS!!!!
 	joinedLearningDataset := task.CreateFeaturizedDatasetID(datasetID)
+	joinedLearningDataset = env.ResolvePath(ds.Source, joinedLearningDataset)
 
 	dsDisk, err := task.CopyDiskDataset(sourceLearningDataset, joinedLearningDataset, ds.ID, ds.StorageName)
 	if err != nil {
@@ -445,7 +451,7 @@ func syncPrefeaturizedDataset(datasetID string, sourceDataset string, sourceLear
 	}
 
 	// update the featurized dataset using the unfeaturized data
-	err = dsDisk.UpdateOnDisk(ds, dsDiskSource.Dataset.Data)
+	err = dsDisk.UpdateOnDisk(ds, dsDiskSource.Dataset.Data, true)
 	if err != nil {
 		return err
 	}
