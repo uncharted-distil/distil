@@ -151,7 +151,15 @@ export function distilCategoryEntryBuilder(
   const categorySuggestions = suggestions.filter((suggestion) => {
     return suggestion.meta.type === CATEGORICAL_FILTER;
   });
-  categorySuggestions.forEach((suggestion) => {
+  const uniqueMetaCount = {};
+  const uniqueSuggestion = categorySuggestions.filter((v) => {
+    if (!uniqueMetaCount[v.meta.count]) {
+      uniqueMetaCount[v.meta.count] = true;
+      return true;
+    }
+    return false;
+  });
+  uniqueSuggestion.forEach((suggestion) => {
     const labelSuggestions =
       catVarLexSuggestions[suggestion.meta.variable.key] ?? [];
     let branch = Lex.from("value_0", ValueState, {
@@ -166,7 +174,7 @@ export function distilCategoryEntryBuilder(
     });
     for (let i = 1; i < suggestion.meta.count; ++i) {
       branch = branch
-        .to(LabelState, { label: "OR" })
+        .to(LabelState, { label: "OR", vkey: "operator" })
         .to(`value_${i}`, ValueState, {
           allowUnknown: false,
           icon: "",
@@ -198,20 +206,28 @@ export function distilNumericalEntryBuilder(
   const numericalSuggestions = suggestions.filter((suggestion) => {
     return suggestion.meta.type === NUMERICAL_FILTER;
   });
+  const uniqueMetaCount = {};
+  const uniqueSuggestion = numericalSuggestions.filter((v) => {
+    if (!uniqueMetaCount[v.meta.count]) {
+      uniqueMetaCount[v.meta.count] = true;
+      return true;
+    }
+    return false;
+  });
   // loop through each suggestion
-  numericalSuggestions.forEach((suggestion) => {
+  uniqueSuggestion.forEach((suggestion) => {
     // build the base branch this is what the user will see if typing into the lexbar
-    let branch = Lex.from(LabelState, { label: "From" })
+    let branch = Lex.from(LabelState, { label: "From", vkey: "operator" })
       .to("min_0", NumericEntryState, { name: "Enter lower bound" })
-      .to(LabelState, { label: "To" })
+      .to(LabelState, { label: "To", vkey: "operator" })
       .to("max_0", NumericEntryState, { name: "Enter upper bound" });
     // adds the OR and the additional filter params if the count is > 0
     for (let i = 1; i < suggestion.meta.count; ++i) {
       branch = branch
-        .to(LabelState, { label: "OR" })
-        .to(LabelState, { label: "From" })
+        .to(LabelState, { label: "OR", vkey: "operator" })
+        .to(LabelState, { label: "From", vkey: "operator" })
         .to(`min_${i}`, NumericEntryState, { name: "Enter lower bound" })
-        .to(LabelState, { label: "To" })
+        .to(LabelState, { label: "To", vkey: "operator" })
         .to(`max_${i}`, NumericEntryState, { name: "Enter upper bound" });
     }
     // finished generating template
@@ -233,25 +249,36 @@ export function distilGeoBoundsEntryBuilder(
   const geoboundsSuggestions = suggestions.filter((suggestion) => {
     return suggestion.meta.type === GEOBOUNDS_FILTER;
   });
-  geoboundsSuggestions.forEach((suggestion) => {
-    let branch = Lex.from(LabelState, { label: "From Latitude" })
+  const uniqueMetaCount = {};
+  const uniqueSuggestion = geoboundsSuggestions.filter((v) => {
+    if (!uniqueMetaCount[v.meta.count]) {
+      uniqueMetaCount[v.meta.count] = true;
+      return true;
+    }
+    return false;
+  });
+  uniqueSuggestion.forEach((suggestion) => {
+    let branch = Lex.from(LabelState, {
+      label: "From Latitude",
+      vkey: "operator",
+    })
       .to("minX_0", NumericEntryState, { name: "Enter lower bound" })
-      .to(LabelState, { label: "To" })
+      .to(LabelState, { label: "To", vkey: "operator" })
       .to("maxX_0", NumericEntryState, { name: "Enter upper bound" })
       .to(LabelState, { label: "From Longitude" })
       .to("minY_0", NumericEntryState, { name: "Enter lower bound" })
-      .to(LabelState, { label: "To" })
+      .to(LabelState, { label: "To", vkey: "operator" })
       .to("maxY_0", NumericEntryState, { name: "Enter upper bound" });
     for (let i = 1; i < suggestion.meta.count; ++i) {
       branch = branch
-        .to(LabelState, { label: "OR" })
-        .to(LabelState, { label: "From Latitude" })
+        .to(LabelState, { label: "OR", vkey: "operator" })
+        .to(LabelState, { label: "From Latitude", vkey: "operator" })
         .to(`minX_${i}`, NumericEntryState, { name: "Enter lower bound" })
-        .to(LabelState, { label: "To" })
+        .to(LabelState, { label: "To", vkey: "operator" })
         .to(`maxX_${i}`, NumericEntryState, { name: "Enter upper bound" })
         .to(LabelState, { label: "From Longitude" })
         .to(`minY_${i}`, NumericEntryState, { name: "Enter lower bound" })
-        .to(LabelState, { label: "To" })
+        .to(LabelState, { label: "To", vkey: "operator" })
         .to(`maxY_${i}`, NumericEntryState, { name: "Enter upper bound" });
     }
     geoboundEntries.push(
@@ -275,14 +302,14 @@ export function distilDateTimeEntryBuilder(
     return suggestion.meta.type === DATETIME_FILTER;
   });
   dateSuggestions.forEach((suggestion) => {
-    let branch = Lex.from(LabelState, { label: "From" })
+    let branch = Lex.from(LabelState, { label: "From", vkey: "operator" })
       .to("min_0", DateTimeEntryState, {
         enableTime: true,
         enableCalendar: true,
         timezone: "Greenwich",
         hilightedDate: new Date(suggestion.meta.variable.min * 1000),
       })
-      .to(LabelState, { label: "To" })
+      .to(LabelState, { label: "To", vkey: "operator" })
       .to("max_0", DateTimeEntryState, {
         enableTime: true,
         enableCalendar: true,
@@ -291,15 +318,15 @@ export function distilDateTimeEntryBuilder(
       });
     for (let i = 1; i < suggestion.meta.count; ++i) {
       branch = branch
-        .to(LabelState, { label: "OR" })
-        .to(LabelState, { label: "From" })
+        .to(LabelState, { label: "OR", vkey: "operator" })
+        .to(LabelState, { label: "From", vkey: "operator" })
         .to(`min_${i}`, DateTimeEntryState, {
           enableTime: true,
           enableCalendar: true,
           timezone: "Greenwich",
           hilightedDate: new Date(suggestion.meta.variable.min * 1000),
         })
-        .to(LabelState, { label: "To" })
+        .to(LabelState, { label: "To", vkey: "operator" })
         .to(`max_${i}`, DateTimeEntryState, {
           enableTime: true,
           enableCalendar: true,
@@ -466,63 +493,67 @@ export function lexQueryToFiltersAndHighlight(
       const key = lq.field.meta.variable.key;
       const displayKey = lq.field.displayKey;
       const type = lq.field.meta.type;
-      const filter: Filter = {
-        mode: lq.relation.key,
-        displayName: displayKey,
-        type,
-        key,
-      };
+      for (let i = 0; i < lq.field.meta.count; ++i) {
+        const filter: Filter = {
+          mode: lq.relation.key,
+          displayName: displayKey,
+          type,
+          key,
+        };
 
-      if (type === GEOBOUNDS_FILTER || type === GEOCOORDINATE_FILTER) {
-        filter.key = filter.key;
-        filter.minX = parseFloat(lq.minX.key);
-        filter.maxX = parseFloat(lq.maxX.key);
-        filter.minY = parseFloat(lq.minY.key);
-        filter.maxY = parseFloat(lq.maxY.key);
-      } else if (type === DATETIME_FILTER) {
-        filter.min = dateToNum(lq.min);
-        filter.max = dateToNum(lq.max);
-      } else if (isNumericType(type)) {
-        filter.min = parseFloat(lq.min.key);
-        filter.max = parseFloat(lq.max.key);
-      } else {
-        filter.categories = [lq.value.key];
+        if (type === GEOBOUNDS_FILTER || type === GEOCOORDINATE_FILTER) {
+          filter.key = filter.key;
+          filter.minX = parseFloat(lq[`minX_${i}`].key);
+          filter.maxX = parseFloat(lq[`maxX_${i}`].key);
+          filter.minY = parseFloat(lq[`minY_${i}`].key);
+          filter.maxY = parseFloat(lq[`maxY_${i}`].key);
+        } else if (type === DATETIME_FILTER) {
+          filter.min = dateToNum(lq[`min_${i}`]);
+          filter.max = dateToNum(lq[`max_${i}`]);
+        } else if (isNumericType(type)) {
+          filter.min = parseFloat(lq[`min_${i}`].key);
+          filter.max = parseFloat(lq[`max_${i}`].key);
+        } else {
+          filter.categories = [lq[`value_${i}`].key];
+        }
+
+        filters.push(filter);
       }
-
-      filters.push(filter);
     } else {
-      const key = lq.field.meta.variable.key;
+      const key = lq.field.meta.variable.variable.key;
       const type = lq.field.meta.type;
-      const highlight = {
-        dataset,
-        context: "lex-bar",
-        key,
-        value: {},
-      } as Highlight;
+      for (let i = 0; i < lq.field.meta.count; ++i) {
+        const highlight = {
+          dataset,
+          context: "lex-bar",
+          key,
+          value: {},
+        } as Highlight;
 
-      if (
-        type === GEOBOUNDS_FILTER ||
-        type === GEOCOORDINATE_FILTER ||
-        type === BIVARIATE_FILTER
-      ) {
-        highlight.key = highlight.key;
-        highlight.value.minX = parseFloat(lq.minX.key);
-        highlight.value.maxX = parseFloat(lq.maxX.key);
-        highlight.value.minY = parseFloat(lq.minY.key);
-        highlight.value.maxY = parseFloat(lq.maxY.key);
-      } else if (type === DATETIME_FILTER) {
-        highlight.value.from = dateToNum(lq.min);
-        highlight.value.to = dateToNum(lq.max);
-        highlight.value.type = DATETIME_FILTER;
-      } else if (isNumericType(type)) {
-        highlight.value.from = parseFloat(lq.min.key);
-        highlight.value.to = parseFloat(lq.max.key);
-        highlight.value.type = NUMERICAL_FILTER;
-      } else {
-        highlight.value = lq.value.key;
+        if (
+          type === GEOBOUNDS_FILTER ||
+          type === GEOCOORDINATE_FILTER ||
+          type === BIVARIATE_FILTER
+        ) {
+          highlight.key = highlight.key;
+          highlight.value.minX = parseFloat(lq[`minX_${i}`].key);
+          highlight.value.maxX = parseFloat(lq[`maxX_${i}`].key);
+          highlight.value.minY = parseFloat(lq[`minY_${i}`].key);
+          highlight.value.maxY = parseFloat(lq[`maxY_${i}`].key);
+        } else if (type === DATETIME_FILTER) {
+          highlight.value.from = dateToNum(lq[`min_${i}`]);
+          highlight.value.to = dateToNum(lq[`max_${i}`]);
+          highlight.value.type = DATETIME_FILTER;
+        } else if (isNumericType(type)) {
+          highlight.value.from = parseFloat(lq[`min_${i}`].key);
+          highlight.value.to = parseFloat(lq[`max_${i}`].key);
+          highlight.value.type = NUMERICAL_FILTER;
+        } else {
+          highlight.value = lq[`value_${i}`].key;
+        }
+
+        highlights.push(highlight);
       }
-
-      highlights.push(highlight);
     }
   });
   return {

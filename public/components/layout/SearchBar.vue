@@ -125,9 +125,21 @@ header {
 <style>
 .lex-container div.lex-box button.btn {
   line-height: 1em !important;
+  right: 0px;
 }
 
 .lex-assistant-box {
   z-index: var(--z-index-lexbar-assistant);
+}
+.token-vkey-operator {
+  font-weight: bold !important;
+}
+.token {
+  white-space: normal !important;
+}
+.lex-box > *:not(:nth-last-child(-n + 2))::after {
+  content: "&";
+  font-weight: bolder;
+  font-size: 0.938rem;
 }
 </style>
