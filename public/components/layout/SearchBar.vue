@@ -141,5 +141,6 @@ header {
   content: "&";
   font-weight: bolder;
   font-size: 0.938rem;
+  margin-right: 9px;
 }
 </style>
