@@ -38,6 +38,7 @@ import {
   Filter,
   GEOBOUNDS_FILTER,
   GEOCOORDINATE_FILTER,
+  INCLUDE_FILTER,
   NUMERICAL_FILTER,
   TEXT_FILTER,
 } from "./filters";
@@ -87,6 +88,8 @@ export interface VariableInfo {
   variable: Variable;
   // number of times this variable exists (used for OR)
   count: number;
+  // mode used for background color
+  mode: string;
 }
 export interface TemplateInfo {
   // All of the variables that are present in the filters and highlights
@@ -119,7 +122,7 @@ export function variablesToLexLanguage(
   // this generates the base templates used for the user typing into the lexbar
   const baseSuggestion = variablesToLexSuggestions(
     filteredAllVariables.map((v) => {
-      return { variable: v, count: 1 };
+      return { variable: v, count: 1, mode: INCLUDE_FILTER };
     })
   );
 
@@ -153,8 +156,8 @@ export function distilCategoryEntryBuilder(
   });
   const uniqueMetaCount = {};
   const uniqueSuggestion = categorySuggestions.filter((v) => {
-    if (!uniqueMetaCount[v.meta.count]) {
-      uniqueMetaCount[v.meta.count] = true;
+    if (!uniqueMetaCount[v.meta.count + v.meta.mode]) {
+      uniqueMetaCount[v.meta.count + v.meta.mode] = true;
       return true;
     }
     return false;
@@ -171,6 +174,7 @@ export function distilCategoryEntryBuilder(
           return cat["key"].toLowerCase().indexOf(hint.toLowerCase()) > -1;
         });
       },
+      cssClasses: modeToColor(suggestion.meta.mode),
     });
     for (let i = 1; i < suggestion.meta.count; ++i) {
       branch = branch
@@ -191,6 +195,7 @@ export function distilCategoryEntryBuilder(
         ...TransitionFactory.valueMetaCompare({
           type: CATEGORICAL_TYPE,
           count: suggestion.meta.count,
+          mode: suggestion.meta.mode,
         }),
       }).branch(branch)
     );
@@ -208,8 +213,8 @@ export function distilNumericalEntryBuilder(
   });
   const uniqueMetaCount = {};
   const uniqueSuggestion = numericalSuggestions.filter((v) => {
-    if (!uniqueMetaCount[v.meta.count]) {
-      uniqueMetaCount[v.meta.count] = true;
+    if (!uniqueMetaCount[v.meta.count + v.meta.mode]) {
+      uniqueMetaCount[v.meta.count + v.meta.mode] = true;
       return true;
     }
     return false;
@@ -217,7 +222,11 @@ export function distilNumericalEntryBuilder(
   // loop through each suggestion
   uniqueSuggestion.forEach((suggestion) => {
     // build the base branch this is what the user will see if typing into the lexbar
-    let branch = Lex.from(LabelState, { label: "From", vkey: "operator" })
+    let branch = Lex.from(LabelState, {
+      label: "From",
+      vkey: "operator",
+      cssClasses: modeToColor(suggestion.meta.mode),
+    })
       .to("min_0", NumericEntryState, { name: "Enter lower bound" })
       .to(LabelState, { label: "To", vkey: "operator" })
       .to("max_0", NumericEntryState, { name: "Enter upper bound" });
@@ -236,6 +245,7 @@ export function distilNumericalEntryBuilder(
         ...TransitionFactory.valueMetaCompare({
           type: NUMERICAL_FILTER,
           count: suggestion.meta.count,
+          mode: suggestion.meta.mode,
         }),
       }).branch(branch)
     );
@@ -251,8 +261,8 @@ export function distilGeoBoundsEntryBuilder(
   });
   const uniqueMetaCount = {};
   const uniqueSuggestion = geoboundsSuggestions.filter((v) => {
-    if (!uniqueMetaCount[v.meta.count]) {
-      uniqueMetaCount[v.meta.count] = true;
+    if (!uniqueMetaCount[v.meta.count + v.meta.mode]) {
+      uniqueMetaCount[v.meta.count + v.meta.mode] = true;
       return true;
     }
     return false;
@@ -261,6 +271,7 @@ export function distilGeoBoundsEntryBuilder(
     let branch = Lex.from(LabelState, {
       label: "From Latitude",
       vkey: "operator",
+      cssClasses: modeToColor(suggestion.meta.mode),
     })
       .to("minX_0", NumericEntryState, { name: "Enter lower bound" })
       .to(LabelState, { label: "To", vkey: "operator" })
@@ -286,6 +297,7 @@ export function distilGeoBoundsEntryBuilder(
         ...TransitionFactory.valueMetaCompare({
           type: GEOBOUNDS_FILTER,
           count: suggestion.meta.count,
+          mode: suggestion.meta.mode,
         }),
       }).branch(branch)
     );
@@ -302,19 +314,23 @@ export function distilDateTimeEntryBuilder(
     return suggestion.meta.type === DATETIME_FILTER;
   });
   dateSuggestions.forEach((suggestion) => {
-    let branch = Lex.from(LabelState, { label: "From", vkey: "operator" })
+    let branch = Lex.from(LabelState, {
+      label: "From",
+      vkey: "operator",
+      cssClasses: modeToColor(suggestion.meta.mode),
+    })
       .to("min_0", DateTimeEntryState, {
         enableTime: true,
         enableCalendar: true,
         timezone: "Greenwich",
-        hilightedDate: new Date(suggestion.meta.variable.variable.min * 1000),
+        hilightedDate: new Date(suggestion.meta.variable.min * 1000),
       })
       .to(LabelState, { label: "To", vkey: "operator" })
       .to("max_0", DateTimeEntryState, {
         enableTime: true,
         enableCalendar: true,
         timezone: "Greenwich",
-        hilightedDate: new Date(suggestion.meta.variable.variable.max * 1000),
+        hilightedDate: new Date(suggestion.meta.variable.max * 1000),
       });
     for (let i = 1; i < suggestion.meta.count; ++i) {
       branch = branch
@@ -324,14 +340,14 @@ export function distilDateTimeEntryBuilder(
           enableTime: true,
           enableCalendar: true,
           timezone: "Greenwich",
-          hilightedDate: new Date(suggestion.meta.variable.variable.min * 1000),
+          hilightedDate: new Date(suggestion.meta.variable.min * 1000),
         })
         .to(LabelState, { label: "To", vkey: "operator" })
         .to(`max_${i}`, DateTimeEntryState, {
           enableTime: true,
           enableCalendar: true,
           timezone: "Greenwich",
-          hilightedDate: new Date(suggestion.meta.variable.variable.max * 1000),
+          hilightedDate: new Date(suggestion.meta.variable.max * 1000),
         });
     }
     // default with
@@ -339,8 +355,9 @@ export function distilDateTimeEntryBuilder(
       Lex.from("relation", DistilRelationState, {
         ...TransitionFactory.valueMetaCompare({
           type: DATETIME_FILTER,
-          name: suggestion.meta.variable.variable.colName,
+          name: suggestion.meta.variable.colName,
           count: suggestion.meta.count,
+          mode: suggestion.meta.mode,
         }),
       }).branch(branch)
     );
@@ -386,10 +403,10 @@ export function variableAggregation(
 
   let activeVariables = [
     ...Array.from(highlightVariables.values()).map((hv) => {
-      return { variable: hv[0], count: hv.length };
+      return { variable: hv[0], count: hv.length, mode: INCLUDE_FILTER };
     }),
     ...Array.from(filterVariables.values()).map((fv) => {
-      return { variable: fv[0], count: fv.length };
+      return { variable: fv[0], count: fv.length, mode: EXCLUDE_FILTER };
     }),
   ] as VariableInfo[];
   // remove timeseries
@@ -520,7 +537,7 @@ export function lexQueryToFiltersAndHighlight(
         filters.push(filter);
       }
     } else {
-      const key = lq.field.meta.variable.variable.key;
+      const key = lq.field.meta.variable.key;
       const type = lq.field.meta.type;
       for (let i = 0; i < lq.field.meta.count; ++i) {
         const highlight = {
@@ -572,6 +589,16 @@ function modeToRelation(mode: string): ValueStateValue {
       return distilRelationOptions[0];
   }
 }
+function modeToColor(mode: string): string[] {
+  switch (mode) {
+    case HIGHLIGHT:
+      return ["include-filter"];
+    case EXCLUDE_FILTER:
+      return ["exclude-filter"];
+    default:
+      return ["include-filter"];
+  }
+}
 
 /*
   Formats distil variables to Lex Suggestions AKA ValueStateValues so they can
@@ -587,9 +614,10 @@ function variablesToLexSuggestions(
     const name = v.variable.colName;
     const options = {
       type: colTypeToOptionType(v.variable.colType.toLowerCase()),
-      variable: v,
+      variable: v.variable,
       name,
       count: v.count,
+      mode: v.mode,
     };
     const config = {
       displayKey: v.variable.colDisplayName,

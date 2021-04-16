@@ -126,8 +126,11 @@ header {
 .lex-container div.lex-box button.btn {
   line-height: 1em !important;
   right: 0px;
+  color: var(--white) !important;
 }
-
+.lex-container div.lex-box button.btn:hover {
+  color: #999999 !important;
+}
 .lex-assistant-box {
   z-index: var(--z-index-lexbar-assistant);
 }
@@ -142,5 +145,13 @@ header {
   font-weight: bolder;
   font-size: 0.938rem;
   margin-right: 9px;
+}
+.include-filter {
+  color: var(--white) !important;
+  background-color: #255dcc !important;
+}
+.exclude-filter {
+  color: var(--white) !important;
+  background-color: #333333 !important;
 }
 </style>
