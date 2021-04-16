@@ -45,12 +45,14 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		sourceParsed := metadata.DatasetSource(pat.Param(r, "source"))
 		provenance := pat.Param(r, "provenance")
 		isSampling := true // Flag to sample imported dataset
+		sourceLearningDataset := ""
 
 		ingestSteps := &task.IngestSteps{
 			ClassificationOverwrite: false,
 			VerifyMetadata:          true,
 			FallbackMerged:          true,
 			CheckMatch:              true,
+			SkipFeaturization:       false,
 		}
 		ingestParams := &task.IngestParams{
 			Source:   sourceParsed,
@@ -96,6 +98,20 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 				originalDataset, okOriginal = params["originalDataset"].(map[string]interface{})
 				joinedDataset, okJoined = params["joinedDataset"].(map[string]interface{})
 				if okOriginal && okJoined {
+					// make sure only one of the datasets has a prefeaturized version
+					originalLearningDataset := originalDataset["learningDataset"].(string)
+					joinedLearningDataset := joinedDataset["learningDataset"].(string)
+					if originalLearningDataset != "" && joinedLearningDataset != "" {
+						handleError(w, errors.Errorf("joining datasets that both have learning datasets is not supported"))
+						return
+					} else if originalLearningDataset != "" {
+						ingestSteps.SkipFeaturization = true
+						sourceLearningDataset = originalLearningDataset
+					} else if joinedLearningDataset != "" {
+						ingestSteps.SkipFeaturization = true
+						sourceLearningDataset = joinedLearningDataset
+					}
+
 					// combine the origin and joined dateset into an array of structs
 					origins, err := getOriginsFromMaps(originalDataset, joinedDataset)
 					if err != nil {
@@ -185,6 +201,14 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 
 		log.Infof("Ingesting dataset '%s'", ingestParams.Path)
 		ingestResult, err := task.IngestDataset(ingestParams, ingestConfig, ingestSteps)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		// if there is a source learning dataset, then sync it properly with the newly imported dataset
+		// this will occur when the import is of a joined dataset
+		err = syncPrefeaturizedDataset(ingestResult.DatasetID, ingestParams.Path, sourceLearningDataset, meta)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -393,4 +417,45 @@ func getVariablesDefault(datasetID string, metaStorage api.MetadataStorage) []*m
 	}
 
 	return ds.Variables
+}
+
+func syncPrefeaturizedDataset(datasetID string, sourceDataset string, sourceLearningDataset string, metaStorage api.MetadataStorage) error {
+	if sourceLearningDataset == "" {
+		return nil
+	}
+
+	ds, err := metaStorage.FetchDataset(datasetID, true, true, true)
+	if err != nil {
+		return err
+	}
+
+	// TODO: CHECK UNIQUENESS!!!!
+	joinedLearningDataset := task.CreateFeaturizedDatasetID(datasetID)
+
+	dsDisk, err := task.CopyDiskDataset(sourceLearningDataset, joinedLearningDataset, ds.ID, ds.StorageName)
+	if err != nil {
+		return err
+	}
+
+	// sync the dataset on disk
+	// read the unfeaturized dataset from disk
+	dsDiskSource, err := api.LoadDiskDatasetFromFolder(sourceDataset)
+	if err != nil {
+		return err
+	}
+
+	// update the featurized dataset using the unfeaturized data
+	err = dsDisk.UpdateOnDisk(ds, dsDiskSource.Dataset.Data)
+	if err != nil {
+		return err
+	}
+
+	// update the metadata in ES
+	ds.LearningDataset = joinedLearningDataset
+	err = metaStorage.UpdateDataset(ds)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

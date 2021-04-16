@@ -106,16 +106,17 @@ func MapVariables(variables []*model.Variable, mapper func(variable *model.Varia
 	return mapped
 }
 
-// LoadDiskDataset loads a dataset from disk.
+// LoadDiskDataset loads a dataset from disk. It will load the learning dataset
+// as the featurized dataset.
 func LoadDiskDataset(ds *Dataset) (*DiskDataset, error) {
 	folder := env.ResolvePath(ds.Source, ds.Folder)
-	output, err := loadDiskDatasetFromFolder(folder)
+	output, err := LoadDiskDatasetFromFolder(folder)
 	if err != nil {
 		return nil, err
 	}
 
 	if ds.LearningDataset != "" {
-		pre, err := loadDiskDatasetFromFolder(ds.LearningDataset)
+		pre, err := LoadDiskDatasetFromFolder(ds.LearningDataset)
 		if err != nil {
 			return nil, err
 		}
@@ -125,7 +126,8 @@ func LoadDiskDataset(ds *Dataset) (*DiskDataset, error) {
 	return output, nil
 }
 
-func loadDiskDatasetFromFolder(folder string) (*DiskDataset, error) {
+// LoadDiskDatasetFromFolder loads a dataset from disk at the specified location.
+func LoadDiskDatasetFromFolder(folder string) (*DiskDataset, error) {
 	schemaPath := path.Join(folder, compute.D3MDataSchema)
 	dsDisk, err := serialization.ReadDataset(schemaPath)
 	if err != nil {

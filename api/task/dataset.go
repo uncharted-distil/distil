@@ -107,6 +107,22 @@ func CreateDataset(dataset string, datasetCtor DatasetConstructor, outputPath st
 	return dataset, formattedPath, nil
 }
 
+// CopyDiskDataset copies an existing dataset on disk to a new location,
+// updating the ID and the storage name.
+func CopyDiskDataset(existingURI string, newURI string, newDatasetID string, newStorageName string) (*api.DiskDataset, error) {
+	dsDisk, err := api.LoadDiskDatasetFromFolder(existingURI)
+	if err != nil {
+		return nil, err
+	}
+
+	dsDisk, err = dsDisk.Clone(newURI, newDatasetID, newStorageName)
+	if err != nil {
+		return nil, err
+	}
+
+	return dsDisk, nil
+}
+
 // ExportDataset extracts a dataset from the database and metadata storage, writing
 // it to disk in D3M dataset format.
 func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage api.DataStorage, filterParams *api.FilterParams) (string, string, error) {
@@ -335,7 +351,7 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 
 	// if the prediction data is prefeaturized, then update the target variable with the new values
 	if predictionDS.LearningDataset != "" {
-		targetFolder := env.ResolvePath(newDS.Source, createFeaturizedDatasetID(newDatasetName))
+		targetFolder := env.ResolvePath(newDS.Source, CreateFeaturizedDatasetID(newDatasetName))
 		err := util.Copy(predictionDS.GetLearningFolder(), targetFolder)
 		if err != nil {
 			return "", err

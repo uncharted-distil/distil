@@ -38,7 +38,8 @@ func submitForBatch(pip *description.FullySpecifiedPipeline) func(string) (strin
 	}
 }
 
-func createFeaturizedDatasetID(datasetID string) string {
+// CreateFeaturizedDatasetID creates a dataset id for a learning dataset.
+func CreateFeaturizedDatasetID(datasetID string) string {
 	return fmt.Sprintf("%s-featurized", datasetID)
 }
 
@@ -88,7 +89,7 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 	}
 
 	// create the dataset folder
-	featurizedDatasetID := createFeaturizedDatasetID(dataset)
+	featurizedDatasetID := CreateFeaturizedDatasetID(dataset)
 	featurizedDatasetID, err = GetUniqueOutputFolder(featurizedDatasetID, env.GetAugmentedPath())
 	if err != nil {
 		return "", "", err
