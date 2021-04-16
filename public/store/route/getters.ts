@@ -34,6 +34,7 @@ import {
   TaskTypes,
   Variable,
   VariableSummary,
+  VariableSummaryKey,
 } from "../dataset/index";
 import { ModelQuality } from "../requests/index";
 import {
@@ -496,11 +497,12 @@ export const getters = {
     const summaries = include
       ? getters.getIncludedVariableSummariesDictionary
       : getters.getExcludedVariableSummariesDictionary;
-    const targetVariableSummary = summaries?.[target + dataset]?.[minKey];
+    const targetVariableSummary =
+      summaries?.[VariableSummaryKey(target, dataset)]?.[minKey];
     if (targetVariableSummary) {
       return [targetVariableSummary];
     } else {
-      const currentVariable = summaries?.[target];
+      const currentVariable = summaries?.[VariableSummaryKey(target, dataset)];
       if (currentVariable) {
         const placeholderKey = Object.keys(currentVariable)[0];
         return [currentVariable[placeholderKey]];
