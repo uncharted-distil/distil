@@ -148,7 +148,7 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 }
 
 // SetGroups updates the dataset metadata (as stored) to capture group information.
-func SetGroups(datasetID string, rawGroupings []map[string]interface{}, meta api.MetadataStorage, config *IngestTaskConfig) error {
+func SetGroups(datasetID string, rawGroupings []map[string]interface{}, data api.DataStorage, meta api.MetadataStorage, config *IngestTaskConfig) error {
 	multiBandImageGrouping := getMultiBandImageGrouping(rawGroupings)
 	if multiBandImageGrouping != nil {
 		rsg := &model.MultiBandImageGrouping{}
@@ -172,7 +172,27 @@ func SetGroups(datasetID string, rawGroupings []map[string]interface{}, meta api
 		if err != nil {
 			return err
 		}
-		// Set the name of the expected cluster column - it doesn't necessarily exist.
+
+		ds, err := meta.FetchDataset(datasetID, true, true, true)
+		if err != nil {
+			return err
+		}
+
+		// confirm the existence of the underlying polygon field, creating it if necessary
+		// (less than ideal because it hides a pretty big side effect)
+		// (other option would be to error here and let calling code worry about it)
+		exists, err := data.DoesVariableExist(datasetID, ds.StorageName, grouping.PolygonCol)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			err = createGeoboundsField(datasetID, ds.StorageName, grouping.CoordinatesCol, grouping.PolygonCol, data)
+			if err != nil {
+				return err
+			}
+		}
+
+		// Set the name of the expected cluster column
 		varName := grouping.CoordinatesCol + "_group"
 		err = meta.AddGroupedVariable(datasetID, varName, "coordinates", model.GeoBoundsType, model.VarDistilRoleGrouping, grouping)
 		if err != nil {
@@ -215,4 +235,37 @@ func canFeaturize(datasetID string, meta api.MetadataStorage) bool {
 	}
 
 	return false
+}
+
+func createGeoboundsField(datasetID string, storageName string,
+	coordinateField string, geometryField string, data api.DataStorage) error {
+	// pull the coordinate data from the database
+	params := &api.FilterParams{Variables: []string{coordinateField}}
+	coordinateData, err := data.FetchData(datasetID, storageName, params, false, nil)
+	if err != nil {
+		return err
+	}
+
+	// add the field
+	err = data.AddField(datasetID, storageName, geometryField, model.GeoBoundsType, "")
+	if err != nil {
+		return err
+	}
+
+	// extract update data from the data fetched
+	// coordinate data should be d3m index & coordinate field
+	d3mIndexIndex := coordinateData.Columns[model.D3MIndexFieldName].Index
+	coordinateFieldIndex := (d3mIndexIndex + 1) % 2
+	updates := map[string]string{}
+	for _, row := range coordinateData.Values {
+		updates[row[d3mIndexIndex].Value.(string)] = util.CreatePolygonFromCoordinates(row[coordinateFieldIndex].Value.([]float64))
+	}
+
+	// update the field data
+	err = data.UpdateData(datasetID, storageName, geometryField, updates, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -63,14 +63,6 @@ type Dataset struct {
 	ParentDataset   string                 `json:"parentDataset"`
 }
 
-// QueriedDataset wraps dataset querying components into a single entity.
-type QueriedDataset struct {
-	Metadata *Dataset
-	Data     *FilteredData
-	Filters  *FilterParams
-	IsTrain  bool
-}
-
 // JoinSuggestion specifies potential joins between datasets.
 type JoinSuggestion struct {
 	BaseDataset   string               `json:"baseDataset"`
@@ -353,25 +345,6 @@ func ParseVariableUpdateList(data map[string]interface{}) ([]*VariableUpdate, er
 	}
 
 	return updatesParsed, nil
-}
-
-// FetchDataset builds a QueriedDataset from the needed parameters.
-func FetchDataset(dataset string, includeIndex bool, includeMeta bool, filterParams *FilterParams, storageMeta MetadataStorage, storageData DataStorage) (*QueriedDataset, error) {
-	metadata, err := storageMeta.FetchDataset(dataset, false, true, false)
-	if err != nil {
-		return nil, err
-	}
-
-	data, err := storageData.FetchData(dataset, metadata.StorageName, filterParams, false, nil)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to fetch data")
-	}
-
-	return &QueriedDataset{
-		Metadata: metadata,
-		Data:     data,
-		Filters:  filterParams,
-	}, nil
 }
 
 // GetD3MIndexVariable returns the D3M index variable.

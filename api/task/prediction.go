@@ -695,22 +695,14 @@ func CreateComposedVariable(metaStorage api.MetadataStorage, dataStorage api.Dat
 
 	// Create a map of the retreived fields to column number.  Store d3mIndex since it needs to be directly referenced
 	// further along.
-	d3mIndexFieldindex := -1
-	colNameToIdx := make(map[string]int)
-	for i, c := range rawData.Columns {
-		if c.Label == model.D3MIndexFieldName {
-			d3mIndexFieldindex = i
-		} else {
-			colNameToIdx[c.Label] = i
-		}
-	}
+	d3mIndexFieldindex := rawData.Columns[model.D3MIndexFieldName].Index
 
 	if len(sourceVarNames) > 0 {
 		// Loop over the fetched data, composing each column value into a single new column value using the
 		// separator.
 		for _, r := range rawData.Values {
 			// create the hash from the specified columns
-			composed := createComposedFields(r, sourceVarNames, colNameToIdx, DefaultSeparator)
+			composed := createComposedFields(r, sourceVarNames, rawData.Columns, DefaultSeparator)
 			composedData[fmt.Sprintf("%v", r[d3mIndexFieldindex].Value)] = composed
 		}
 	} else {
@@ -729,10 +721,10 @@ func CreateComposedVariable(metaStorage api.MetadataStorage, dataStorage api.Dat
 	return nil
 }
 
-func createComposedFields(data []*api.FilteredDataValue, fields []string, mappedFields map[string]int, separator string) string {
+func createComposedFields(data []*api.FilteredDataValue, fields []string, mappedFields map[string]*api.Column, separator string) string {
 	dataToJoin := make([]string, len(fields))
 	for i, field := range fields {
-		dataToJoin[i] = fmt.Sprintf("%v", data[mappedFields[field]].Value)
+		dataToJoin[i] = fmt.Sprintf("%v", data[mappedFields[field].Index].Value)
 	}
 	return strings.Join(dataToJoin, separator)
 }

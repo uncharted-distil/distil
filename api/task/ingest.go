@@ -255,7 +255,7 @@ func IngestDataset(params *IngestParams, config *IngestTaskConfig, steps *Ingest
 	// set the known grouping information
 	if params.RawGroupings != nil {
 		log.Infof("creating groupings in metadata")
-		err = SetGroups(datasetID, params.RawGroupings, metaStorage, config)
+		err = SetGroups(datasetID, params.RawGroupings, dataStorage, metaStorage, config)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to set grouping")
 		}

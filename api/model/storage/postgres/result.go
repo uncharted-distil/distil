@@ -410,7 +410,7 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 
 	// Parse the columns (skipping weights columns)
 	if rows != nil {
-		var columns []*api.Column
+		var columns map[string]*api.Column
 		var fields []pgproto3.FieldDescription
 		weightCount := 0
 		predictedCol := -1
@@ -419,7 +419,7 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 		for rows.Next() {
 			if columns == nil {
 				fields = rows.FieldDescriptions()
-				columns = make([]*api.Column, 0)
+				columns = make(map[string]*api.Column, 0)
 				for i := 0; i < len(fields); i++ {
 					key := string(fields[i].Name)
 					var label, typ string
@@ -447,11 +447,12 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 						}
 					}
 
-					columns = append(columns, &api.Column{
+					columns[key] = &api.Column{
 						Key:   key,
 						Label: label,
 						Type:  typ,
-					})
+						Index: len(columns),
+					}
 				}
 			}
 			columnValues, err := rows.Values()
@@ -478,7 +479,7 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 					weightedValues[varIndex] = &api.FilteredDataValue{
 						Value: parsedValue,
 					}
-				} else if columnValues[i] != nil && columns[varIndex-weightCount].Key != model.D3MIndexFieldName {
+				} else if columnValues[i] != nil && columns[model.D3MIndexFieldName].Index != (varIndex-weightCount) {
 					weightedValues[varIndex-weightCount].Weight = columnValues[i].(float64)
 				}
 				varIndex++
@@ -503,7 +504,7 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 		}
 		result.Columns = columns
 	} else {
-		result.Columns = make([]*api.Column, 0)
+		result.Columns = make(map[string]*api.Column, 0)
 	}
 
 	return result, nil

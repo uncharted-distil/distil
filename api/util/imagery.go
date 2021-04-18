@@ -509,6 +509,16 @@ func SplitMultiBandImage(dataset gdal.Dataset, outputFolder string, bandMapping 
 	return files, nil
 }
 
+// CreatePolygonFromCoordinates creates a string that captures the polygon defined
+// by the coordinates.
+func CreatePolygonFromCoordinates(coordinates []float64) string {
+	geometryString := ""
+	for i := 0; i < len(coordinates); i += 2 {
+		geometryString = fmt.Sprintf("%s,%f %f", geometryString, coordinates[i], coordinates[i+1])
+	}
+	return fmt.Sprintf("POLYGON((%s))", geometryString[1:])
+}
+
 func lerp(v0 float64, v1 float64, t float64) float64 {
 	return (1.0-t)*v0 + t*v1
 }

@@ -29,6 +29,14 @@ const (
 	orderBy = "orderBy"
 )
 
+// FilteredDataClient is the structure the client requires when fetching data.
+type FilteredDataClient struct {
+	NumRows         int                        `json:"numRows"`
+	NumRowsFiltered int                        `json:"numRowsFiltered"`
+	Columns         []*api.Column              `json:"columns"`
+	Values          [][]*api.FilteredDataValue `json:"values"`
+}
+
 // DataHandler creates a route that fetches filtered data from backing storage instance.
 func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -97,9 +105,10 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 		}
 
 		// replace NaNs with an empty string to make them JSON encodable
-		data = api.ReplaceNaNs(data, api.EmptyString)
+		dataTransformed := transformDataForClient(data, api.EmptyString)
+
 		// marshal output into JSON
-		bytes, err := json.Marshal(data)
+		bytes, err := json.Marshal(dataTransformed)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal filtered data result into JSON"))
 			return
@@ -112,4 +121,20 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 			return
 		}
 	}
+}
+
+func transformDataForClient(data *api.FilteredData, replacementType api.NaNReplacement) *FilteredDataClient {
+	data = api.ReplaceNaNs(data, replacementType)
+	dataTransformed := &FilteredDataClient{
+		NumRows:         data.NumRows,
+		NumRowsFiltered: data.NumRowsFiltered,
+		Values:          data.Values,
+		Columns:         make([]*api.Column, len(data.Columns)),
+	}
+
+	for _, c := range data.Columns {
+		dataTransformed.Columns[c.Index] = c
+	}
+
+	return dataTransformed
 }

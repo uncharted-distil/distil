@@ -466,6 +466,7 @@ type Column struct {
 	Key    string  `json:"key"`
 	Type   string  `json:"type"`
 	Weight float64 `json:"weight"`
+	Index  int     `json:"index"`
 }
 
 // FilteredDataValue represents a data value combined with an optional weight.
@@ -481,7 +482,7 @@ type FilteredDataValue struct {
 type FilteredData struct {
 	NumRows         int                    `json:"numRows"`
 	NumRowsFiltered int                    `json:"numRowsFiltered"`
-	Columns         []*Column              `json:"columns"`
+	Columns         map[string]*Column     `json:"columns"`
 	Values          [][]*FilteredDataValue `json:"values"`
 }
 
@@ -770,9 +771,9 @@ const (
 func ReplaceNaNs(data *FilteredData, replacementType NaNReplacement) *FilteredData {
 	// go does not marshal NaN values properly so make them empty
 	numericColumns := make([]int, 0)
-	for i, c := range data.Columns {
+	for _, c := range data.Columns {
 		if model.IsNumerical(c.Type) {
-			numericColumns = append(numericColumns, i)
+			numericColumns = append(numericColumns, 0)
 		}
 	}
 

@@ -188,13 +188,6 @@ func SolutionVariableFromModelVariable(variable *model.Variable, rank float64) *
 	}
 }
 
-// PredictionResult represents the output from a model prediction.
-type PredictionResult struct {
-	*FilteredData
-	FittedSolutionID string `json:"fittedSolutionId"`
-	ProduceRequestID string `json:"produceRequestId"`
-}
-
 // GetPredictedKey returns a solutions predicted col key.
 func GetPredictedKey(solutionID string) string {
 	return solutionID + ":predicted"
