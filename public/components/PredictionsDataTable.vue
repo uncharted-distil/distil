@@ -149,7 +149,7 @@ import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { Predictions } from "../store/requests/index";
 import { Dictionary } from "../util/dict";
-import { hasComputedVarPrefix, MULTIBAND_IMAGE_TYPE } from "../util/types";
+import { hasComputedVarPrefix, Field } from "../util/types";
 import {
   addRowSelection,
   removeRowSelection,
@@ -164,6 +164,8 @@ import {
   getImageFields,
   getListFields,
   removeTimeseries,
+  bulkRemoveImages,
+  debounceFetchImagePack,
 } from "../util/data";
 
 export default Vue.extend({
@@ -310,11 +312,11 @@ export default Vue.extend({
       });
     },
 
-    listFields(): { key: string; type: string }[] {
+    listFields(): Field[] {
       return getListFields(this.fields);
     },
 
-    imageFields(): { key: string; type: string }[] {
+    imageFields(): Field[] {
       return getImageFields(this.fields);
     },
 
@@ -357,38 +359,18 @@ export default Vue.extend({
 
   methods: {
     debounceImageFetch() {
-      clearTimeout(this.debounceKey);
-      this.debounceKey = setTimeout(() => {
-        this.removeImages();
-        this.fetchImagePack(this.visibleRows);
-      }, 1000);
-    },
-    removeImages() {
-      if (!this.imageFields.length) {
-        return;
-      }
-      const imageKey = this.imageFields[0].key;
-      datasetMutations.bulkRemoveFiles(this.$store, {
-        urls: this.visibleRows.map((item) => {
-          return `${item[imageKey].value}/${this.uniqueTrail}`;
-        }),
+      debounceFetchImagePack({
+        items: this.visibleRows,
+        imageFields: this.imageFields,
+        dataset: this.dataset,
+        uniqueTrail: this.uniqueTrail,
+        debounceKey: this.debounceKey,
       });
     },
-    fetchImagePack(items) {
-      if (!this.imageFields.length) {
-        return;
-      }
-      const key = this.imageFields[0].key;
-      const type = this.imageFields[0].type;
-      // if band is "" the route assumes it is an image not a multi-band image
-      datasetActions.fetchImagePack(this.$store, {
-        multiBandImagePackRequest: {
-          imageIds: items.map((item) => {
-            return item[key].value;
-          }),
-          dataset: this.dataset,
-          band: type === MULTIBAND_IMAGE_TYPE ? this.band : "",
-        },
+    removeImages() {
+      bulkRemoveImages({
+        items: this.visibleRows,
+        imageFields: this.imageFields,
         uniqueTrail: this.uniqueTrail,
       });
     },

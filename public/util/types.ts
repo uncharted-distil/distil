@@ -278,6 +278,10 @@ export const RANKABLE_VARIABLE_TYPES = new Set([
   COUNTRY_TYPE,
   COUNTRY_CODE_TYPE,
 ]);
+export interface Field {
+  key: string;
+  type: string;
+}
 export interface MultiBandImagePackRequest {
   dataset: string;
   band?: string;
