@@ -150,11 +150,11 @@ export function distilCategoryEntryBuilder(
   suggestions: ValueStateValue[],
   catVarLexSuggestions: Dictionary<unknown[]>
 ): StateTemplate[] {
-  const categoryEntries = [];
+  const categoryEntries = [] as ValueStateValue[];
   const categorySuggestions = suggestions.filter((suggestion) => {
     return suggestion.meta.type === CATEGORICAL_FILTER;
   });
-  const uniqueMetaCount = {};
+  const uniqueMetaCount = {} as Dictionary<boolean>;
   const uniqueSuggestion = categorySuggestions.filter((v) => {
     if (!uniqueMetaCount[v.meta.count + v.meta.mode]) {
       uniqueMetaCount[v.meta.count + v.meta.mode] = true;
@@ -206,12 +206,12 @@ export function distilNumericalEntryBuilder(
   suggestions: ValueStateValue[]
 ): StateTemplate[] {
   // returns all the templates for numerical types
-  const numericalEntries = [];
+  const numericalEntries = [] as ValueStateValue[];
   // we use the supplied suggestions to build our templates therefore we need to find the numerical suggestions
   const numericalSuggestions = suggestions.filter((suggestion) => {
     return suggestion.meta.type === NUMERICAL_FILTER;
   });
-  const uniqueMetaCount = {};
+  const uniqueMetaCount = {} as Dictionary<boolean>;
   const uniqueSuggestion = numericalSuggestions.filter((v) => {
     if (!uniqueMetaCount[v.meta.count + v.meta.mode]) {
       uniqueMetaCount[v.meta.count + v.meta.mode] = true;
@@ -255,11 +255,11 @@ export function distilNumericalEntryBuilder(
 export function distilGeoBoundsEntryBuilder(
   suggestions: ValueStateValue[]
 ): StateTemplate[] {
-  const geoboundEntries = [];
+  const geoboundEntries = [] as ValueStateValue[];
   const geoboundsSuggestions = suggestions.filter((suggestion) => {
     return suggestion.meta.type === GEOBOUNDS_FILTER;
   });
-  const uniqueMetaCount = {};
+  const uniqueMetaCount = {} as Dictionary<boolean>;
   const uniqueSuggestion = geoboundsSuggestions.filter((v) => {
     if (!uniqueMetaCount[v.meta.count + v.meta.mode]) {
       uniqueMetaCount[v.meta.count + v.meta.mode] = true;
@@ -309,7 +309,7 @@ export function distilGeoBoundsEntryBuilder(
 export function distilDateTimeEntryBuilder(
   suggestions: ValueStateValue[]
 ): StateTemplate[] {
-  const dateTimeEntries = [];
+  const dateTimeEntries = [] as ValueStateValue[];
   const dateSuggestions = suggestions.filter((suggestion) => {
     return suggestion.meta.type === DATETIME_FILTER;
   });
@@ -502,8 +502,8 @@ export function lexQueryToFiltersAndHighlight(
   lexQuery: any[][],
   dataset: string
 ): { filters: Filter[]; highlights: Highlight[] } {
-  const filters = [];
-  const highlights = [];
+  const filters = [] as Filter[];
+  const highlights = [] as Highlight[];
 
   lexQuery[0].forEach((lq) => {
     if (lq.relation.key !== HIGHLIGHT) {
