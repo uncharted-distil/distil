@@ -147,7 +147,7 @@ func (s *Storage) buildIncludeFilter(dataset string, wheres []string, params []i
 	case model.DatetimeFilter:
 		// datetime
 		// extract epoch for comparison
-		where := fmt.Sprintf("cast(extract(epoch from %s) as double precision) >= $%d AND cast(extract(epoch from %s) as double precision) < $%d", name, len(params)+1, name, len(params)+2)
+		where := fmt.Sprintf("cast(extract(epoch from %s::date) as double precision) >= $%d AND cast(extract(epoch from %s::date) as double precision) < $%d", name, len(params)+1, name, len(params)+2)
 		wheres = append(wheres, where)
 		params = append(params, *filter.Min)
 		params = append(params, *filter.Max)

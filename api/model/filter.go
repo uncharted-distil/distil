@@ -486,6 +486,11 @@ type FilteredData struct {
 	Values          [][]*FilteredDataValue `json:"values"`
 }
 
+// EmptyFilterData returns an empty FilteredData object
+func EmptyFilterData() *FilteredData {
+	return &FilteredData{NumRows: 0, NumRowsFiltered: 0, Columns: map[string]*Column{}, Values: [][]*FilteredDataValue{}}
+}
+
 // GetFilterVariables builds the filtered list of fields based on the filtering parameters.
 func GetFilterVariables(filterVariables []string, variables []*model.Variable) []*model.Variable {
 
@@ -523,7 +528,7 @@ func parseFilter(filter map[string]interface{}) (*model.Filter, error) {
 
 	// TODO: update to a switch statement with a default to error
 
-	// datetine
+	// datetime
 	if typ == model.DatetimeFilter {
 		key, ok := json.String(filter, "key")
 		if !ok {
