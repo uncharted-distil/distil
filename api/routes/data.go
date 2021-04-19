@@ -45,7 +45,8 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 			handleError(w, err)
 			return
 		}
-
+		var data *api.FilteredData
+		if !(len(filterParams.Filters.List) < 1 && filterParams.Filters.Invert) {
 		dataset := pat.Param(r, "dataset")
 		includeGroupingCol := pat.Param(r, "include-grouping-col")
 		includeGroupingColBool := parseBoolParam(includeGroupingCol)
@@ -90,7 +91,7 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 		}
 
 		// fetch filtered data based on the supplied search parameters
-		data, err := storage.FetchData(dataset, storageName, expandedFilterParams, includeGroupingColBool, orderByVar)
+		data, err = storage.FetchData(dataset, storageName, expandedFilterParams, includeGroupingColBool, orderByVar)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable fetch filtered data"))
 			return
@@ -98,6 +99,9 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 
 		// replace NaNs with an empty string to make them JSON encodable
 		data = api.ReplaceNaNs(data, api.EmptyString)
+	}else{
+		data = api.EmptyFilterData()
+	}
 		// marshal output into JSON
 		bytes, err := json.Marshal(data)
 		if err != nil {
