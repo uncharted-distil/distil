@@ -486,8 +486,15 @@ func (s *Storage) AddVariable(dataset string, storageName string, key string, va
 		if len(defaultVal) > 0 {
 			defaultClause = fmt.Sprintf(" Default '%s'", defaultVal)
 		}
+
+		// geometry is not stored as a text field
+		fieldType := "TEXT"
+		if model.IsGeoBounds(varType) {
+			fieldType = postgres.MapD3MTypeToPostgresType(varType)
+		}
+
 		// add the empty column to the base table and the explain table
-		sql := fmt.Sprintf("ALTER TABLE %s_base ADD COLUMN \"%s\" TEXT%s;", storageName, key, defaultClause)
+		sql := fmt.Sprintf("ALTER TABLE %s_base ADD COLUMN \"%s\" %s%s;", storageName, key, fieldType, defaultClause)
 
 		_, err = s.client.Exec(sql)
 		if err != nil {

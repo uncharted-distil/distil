@@ -419,7 +419,7 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 		for rows.Next() {
 			if columns == nil {
 				fields = rows.FieldDescriptions()
-				columns = make(map[string]*api.Column, 0)
+				columns = map[string]*api.Column{}
 				for i := 0; i < len(fields); i++ {
 					key := string(fields[i].Name)
 					var label, typ string
@@ -504,7 +504,7 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 		}
 		result.Columns = columns
 	} else {
-		result.Columns = make(map[string]*api.Column, 0)
+		result.Columns = map[string]*api.Column{}
 	}
 
 	return result, nil

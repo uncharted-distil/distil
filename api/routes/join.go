@@ -108,7 +108,7 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 		}
 
 		// marshal output into JSON
-		bytes, err := json.Marshal(map[string]interface{}{"path": path, "data": data})
+		bytes, err := json.Marshal(map[string]interface{}{"path": path, "data": transformDataForClient(data, api.EmptyString)})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal filtered data result into JSON"))
 			return

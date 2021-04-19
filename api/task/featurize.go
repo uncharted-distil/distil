@@ -186,7 +186,7 @@ func SetGroups(datasetID string, rawGroupings []map[string]interface{}, data api
 			return err
 		}
 		if !exists {
-			err = createGeoboundsField(datasetID, ds.StorageName, grouping.CoordinatesCol, grouping.PolygonCol, data)
+			err = createGeoboundsField(datasetID, ds.StorageName, grouping.CoordinatesCol, grouping.PolygonCol, data, meta)
 			if err != nil {
 				return err
 			}
@@ -237,8 +237,8 @@ func canFeaturize(datasetID string, meta api.MetadataStorage) bool {
 	return false
 }
 
-func createGeoboundsField(datasetID string, storageName string,
-	coordinateField string, geometryField string, data api.DataStorage) error {
+func createGeoboundsField(datasetID string, storageName string, coordinateField string,
+	geometryField string, data api.DataStorage, meta api.MetadataStorage) error {
 	// pull the coordinate data from the database
 	params := &api.FilterParams{Variables: []string{coordinateField}}
 	coordinateData, err := data.FetchData(datasetID, storageName, params, false, nil)
@@ -247,7 +247,7 @@ func createGeoboundsField(datasetID string, storageName string,
 	}
 
 	// add the field
-	err = data.AddField(datasetID, storageName, geometryField, model.GeoBoundsType, "")
+	err = data.AddVariable(datasetID, storageName, geometryField, model.GeoBoundsType, "")
 	if err != nil {
 		return err
 	}
@@ -258,11 +258,18 @@ func createGeoboundsField(datasetID string, storageName string,
 	coordinateFieldIndex := (d3mIndexIndex + 1) % 2
 	updates := map[string]string{}
 	for _, row := range coordinateData.Values {
-		updates[row[d3mIndexIndex].Value.(string)] = util.CreatePolygonFromCoordinates(row[coordinateFieldIndex].Value.([]float64))
+		d3mIndexString := fmt.Sprintf("%.0f", row[d3mIndexIndex].Value.(float64))
+		updates[d3mIndexString] = util.CreatePolygonFromCoordinates(row[coordinateFieldIndex].Value.([]float64))
 	}
 
 	// update the field data
-	err = data.UpdateData(datasetID, storageName, geometryField, updates, nil)
+	err = data.UpdateVariableBatch(storageName, geometryField, updates)
+	if err != nil {
+		return err
+	}
+
+	// add the field to the metadata
+	err = meta.AddVariable(datasetID, geometryField, coordinateField, model.GeoBoundsType, model.VarDistilRoleMetadata)
 	if err != nil {
 		return err
 	}

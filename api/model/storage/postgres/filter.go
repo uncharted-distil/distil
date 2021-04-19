@@ -122,7 +122,7 @@ func (s *Storage) parseFilteredData(dataset string, filterVariables []*model.Var
 			return nil, errors.Wrapf(err, "error reading data from postgres")
 		}
 	} else {
-		result.Columns = make(map[string]*api.Column, 0)
+		result.Columns = map[string]*api.Column{}
 	}
 
 	return result, nil
