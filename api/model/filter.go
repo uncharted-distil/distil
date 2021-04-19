@@ -773,7 +773,7 @@ func ReplaceNaNs(data *FilteredData, replacementType NaNReplacement) *FilteredDa
 	numericColumns := make([]int, 0)
 	for _, c := range data.Columns {
 		if model.IsNumerical(c.Type) {
-			numericColumns = append(numericColumns, 0)
+			numericColumns = append(numericColumns, c.Index)
 		}
 	}
 
