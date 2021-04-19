@@ -83,13 +83,18 @@ func MultiBandImagePackHandler(ctor api.MetadataStorageCtor, dataCtor api.DataSt
 		// channel for threads to communicate
 		result := make(chan chanStruct)
 		// ImageThreadPool is an environment variable defaults to 2 (works great with 6)
-		for i := 0; i < config.ImageThreadPool; i++ {
-			go funcPointer(params, i, config.ImageThreadPool, result, ctor, dataCtor)
+		numOfThreads := config.ImageThreadPool;
+		// reduce numOfThreads to the number of ImageIDs if it is lower than 6
+		if numOfThreads > len(params.ImageIDs) {
+			numOfThreads = len(params.ImageIDs)
+		}
+		for i := 0; i < numOfThreads; i++ {
+			go funcPointer(params, i, numOfThreads, result, ctor, dataCtor)
 		}
 		imagesBuffer := [][]byte{}
 		IDs := []string{}
 		errorIDs := []string{}
-		for i := 0; i < config.ImageThreadPool; i++ {
+		for i := 0; i < numOfThreads; i++ {
 			// no guaruntee of threads finishing in order so we supply the IDs back as well
 			r := <-result
 			imagesBuffer = append(imagesBuffer, r.data...)
