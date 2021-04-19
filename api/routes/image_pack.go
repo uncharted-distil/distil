@@ -83,7 +83,7 @@ func MultiBandImagePackHandler(ctor api.MetadataStorageCtor, dataCtor api.DataSt
 		// channel for threads to communicate
 		result := make(chan chanStruct)
 		// ImageThreadPool is an environment variable defaults to 2 (works great with 6)
-		numOfThreads := config.ImageThreadPool;
+		numOfThreads := config.ImageThreadPool
 		// reduce numOfThreads to the number of ImageIDs if it is lower than 6
 		if numOfThreads > len(params.ImageIDs) {
 			numOfThreads = len(params.ImageIDs)
