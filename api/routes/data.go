@@ -47,61 +47,61 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 		}
 		var data *api.FilteredData
 		if !(len(filterParams.Filters.List) < 1 && filterParams.Filters.Invert) {
-		dataset := pat.Param(r, "dataset")
-		includeGroupingCol := pat.Param(r, "include-grouping-col")
-		includeGroupingColBool := parseBoolParam(includeGroupingCol)
-		var orderByVar *model.Variable = nil
-		// get filter client
-		storage, err := storageCtor()
-		if err != nil {
-			handleError(w, err)
-			return
-		}
+			dataset := pat.Param(r, "dataset")
+			includeGroupingCol := pat.Param(r, "include-grouping-col")
+			includeGroupingColBool := parseBoolParam(includeGroupingCol)
+			var orderByVar *model.Variable = nil
+			// get filter client
+			storage, err := storageCtor()
+			if err != nil {
+				handleError(w, err)
+				return
+			}
 
-		metaStore, err := metaCtor()
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-		vars, err := metaStore.FetchVariables(dataset, true, true, true)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-		if params[orderBy] != nil {
-			for _, v := range vars {
-				if v.HeaderName == params[orderBy] {
-					orderByVar = v
-					break
+			metaStore, err := metaCtor()
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			vars, err := metaStore.FetchVariables(dataset, true, true, true)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			if params[orderBy] != nil {
+				for _, v := range vars {
+					if v.HeaderName == params[orderBy] {
+						orderByVar = v
+						break
+					}
 				}
 			}
-		}
-		ds, err := metaStore.FetchDataset(dataset, false, false, false)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-		storageName := ds.StorageName
+			ds, err := metaStore.FetchDataset(dataset, false, false, false)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			storageName := ds.StorageName
 
-		// replace any grouped variables in filter params with the group's
-		expandedFilterParams, err := api.ExpandFilterParams(dataset, api.NewFilterParamsFromRaw(filterParams), false, metaStore)
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to expand filter params"))
-			return
-		}
+			// replace any grouped variables in filter params with the group's
+			expandedFilterParams, err := api.ExpandFilterParams(dataset, api.NewFilterParamsFromRaw(filterParams), false, metaStore)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable to expand filter params"))
+				return
+			}
 
-		// fetch filtered data based on the supplied search parameters
-		data, err = storage.FetchData(dataset, storageName, expandedFilterParams, includeGroupingColBool, orderByVar)
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable fetch filtered data"))
-			return
-		}
+			// fetch filtered data based on the supplied search parameters
+			data, err = storage.FetchData(dataset, storageName, expandedFilterParams, includeGroupingColBool, orderByVar)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable fetch filtered data"))
+				return
+			}
 
-		// replace NaNs with an empty string to make them JSON encodable
-		data = api.ReplaceNaNs(data, api.EmptyString)
-	}else{
-		data = api.EmptyFilterData()
-	}
+			// replace NaNs with an empty string to make them JSON encodable
+			data = api.ReplaceNaNs(data, api.EmptyString)
+		} else {
+			data = api.EmptyFilterData()
+		}
 		// marshal output into JSON
 		bytes, err := json.Marshal(data)
 		if err != nil {

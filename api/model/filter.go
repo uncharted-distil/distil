@@ -484,10 +484,12 @@ type FilteredData struct {
 	Columns         []*Column              `json:"columns"`
 	Values          [][]*FilteredDataValue `json:"values"`
 }
+
 // EmptyFilterData returns an empty FilteredData object
 func EmptyFilterData() *FilteredData {
-	return &FilteredData{NumRows: 0, NumRowsFiltered:0, Columns:[]*Column{}, Values:[][]*FilteredDataValue{}}
+	return &FilteredData{NumRows: 0, NumRowsFiltered: 0, Columns: []*Column{}, Values: [][]*FilteredDataValue{}}
 }
+
 // GetFilterVariables builds the filtered list of fields based on the filtering parameters.
 func GetFilterVariables(filterVariables []string, variables []*model.Variable) []*model.Variable {
 
