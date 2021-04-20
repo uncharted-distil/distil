@@ -192,7 +192,7 @@ import {
   isTextType,
   hasComputedVarPrefix,
   TIMESERIES_TYPE,
-  MULTIBAND_IMAGE_TYPE,
+  Field,
 } from "../util/types";
 import {
   addRowSelection,
@@ -208,6 +208,8 @@ import {
   getListFields,
   removeTimeseries,
   getTimeseriesVariablesFromFields,
+  bulkRemoveImages,
+  debounceFetchImagePack,
 } from "../util/data";
 import { getSolutionIndex } from "../util/solutions";
 
@@ -414,7 +416,7 @@ export default Vue.extend({
       return getListFields(this.fields);
     },
 
-    imageFields(): { key: string; type: string }[] {
+    imageFields(): Field[] {
       return getImageFields(this.fields);
     },
 
@@ -468,40 +470,19 @@ export default Vue.extend({
 
   methods: {
     debounceImageFetch() {
-      clearTimeout(this.debounceKey);
-      this.debounceKey = setTimeout(() => {
-        this.removeImages();
-        this.fetchImagePack(this.visibleRows);
-      }, 1000);
-    },
-
-    removeImages() {
-      if (!this.imageFields.length) {
-        return;
-      }
-      const imageKey = this.imageFields[0].key;
-      datasetMutations.bulkRemoveFiles(this.$store, {
-        urls: this.visibleRows.map((item) => {
-          return `${item[imageKey].value}/${this.uniqueTrail}`;
-        }),
+      debounceFetchImagePack({
+        items: this.visibleRows,
+        imageFields: this.imageFields,
+        dataset: this.dataset,
+        uniqueTrail: this.uniqueTrail,
+        debounceKey: this.debounceKey,
       });
     },
 
-    fetchImagePack(items) {
-      if (!this.imageFields.length) {
-        return;
-      }
-      const key = this.imageFields[0].key;
-      const type = this.imageFields[0].type;
-      // if band is "" the route assumes it is an image not a multi-band image
-      datasetActions.fetchImagePack(this.$store, {
-        multiBandImagePackRequest: {
-          imageIds: items.map((item) => {
-            return item[key].value;
-          }),
-          dataset: this.dataset,
-          band: type === MULTIBAND_IMAGE_TYPE ? this.band : "",
-        },
+    removeImages() {
+      bulkRemoveImages({
+        items: this.visibleRows,
+        imageFields: this.imageFields,
         uniqueTrail: this.uniqueTrail,
       });
     },

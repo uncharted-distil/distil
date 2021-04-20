@@ -35,6 +35,7 @@
             enable-search
             enable-type-change
             enable-highlighting
+            :datasetName="topDataset"
             :instance-name="instanceName"
             :rows-per-page="numRowsPerPage"
             :summaries="topVariableSummaries"
@@ -45,6 +46,7 @@
             enable-search
             enable-type-change
             enable-highlighting
+            :datasetName="bottomDataset"
             :instance-name="instanceName"
             :rows-per-page="numRowsPerPage"
             :summaries="bottomVariableSummaries"

@@ -116,6 +116,7 @@ export default Vue.extend({
     enableHighlighting: Boolean as () => boolean,
     instanceName: String as () => string,
     rowSelection: Object as () => RowSelection,
+    datasetName: { type: String as () => string, default: null },
   },
 
   data() {
@@ -237,6 +238,7 @@ export default Vue.extend({
           preventHiding: true,
           imageUrl,
           type: this.summary.varType,
+          datasetName: this.datasetName,
         },
       });
       ip.$mount();

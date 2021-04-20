@@ -80,6 +80,7 @@
               :is-available-features="isAvailableFeatures"
               :is-features-to-model="isFeaturesToModel"
               :log-activity="logActivity"
+              :datasetName="datasetName"
               :expanded="expandGeoAndTimeseriesFacets"
               @histogram-numerical-click="onNumericalClick"
               @histogram-range-change="onRangeChange"
@@ -97,6 +98,7 @@
               :enable-highlighting="enableHighlighting"
               :ignore-highlights="ignoreHighlights"
               :instance-name="instanceName"
+              :datasetName="datasetName"
               @facet-click="onFacetClick"
             />
           </template>
@@ -258,6 +260,7 @@ export default Vue.extend({
     summaries: { type: Array as () => VariableSummary[], default: [] },
     subtitle: { type: String, default: null },
     rowsPerPage: { type: Number, default: 0 },
+    datasetName: { type: String as () => string, default: null },
   },
 
   data() {
@@ -281,7 +284,7 @@ export default Vue.extend({
     },
 
     dataset(): string {
-      return routeGetters.getRouteDataset(this.$store);
+      return this.datasetName ?? routeGetters.getRouteDataset(this.$store);
     },
 
     variables(): Variable[] {

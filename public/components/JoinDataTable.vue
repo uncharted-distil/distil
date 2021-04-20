@@ -17,6 +17,7 @@
 
 <template>
   <b-table
+    v-model="visibleRows"
     bordered
     hover
     small
@@ -34,9 +35,13 @@
       v-slot:[cellSlot(imageField.key)]="data"
     >
       <image-preview
+        :datasetName="dataset"
         :key="imageField.key"
         :type="imageField.type"
         :image-url="data.item[imageField.key].value"
+        :unique-trail="uniqueTrail"
+        :should-clean-up="false"
+        :should-fetch-image="false"
       ></image-preview>
     </template>
 
@@ -66,19 +71,20 @@ import { Dictionary } from "../util/dict";
 import {
   TableColumn,
   TableRow,
-  D3M_INDEX_FIELD,
-  Grouping,
   Variable,
   TimeseriesGrouping,
 } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as datasetGetters } from "../store/dataset/module";
-import { TIMESERIES_TYPE, isJoinable } from "../util/types";
+import { isJoinable, Field } from "../util/types";
 import {
   getTimeseriesGroupingsFromFields,
   formatFieldsAsArray,
   formatSlot,
   getImageFields,
+  debounceFetchImagePack,
+  bulkRemoveImages,
+  sameData,
 } from "../util/data";
 
 function findSuggestionIndex(columnSuggestions: string[], key: string): number {
@@ -105,7 +111,13 @@ export default Vue.extend({
     otherSelectedColumn: Object as () => TableColumn,
     instanceName: String as () => string,
   },
-
+  data() {
+    return {
+      debounceKey: null,
+      uniqueTrail: "join-table",
+      visibleRows: [],
+    };
+  },
   computed: {
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
@@ -224,7 +236,7 @@ export default Vue.extend({
       );
     },
 
-    imageFields(): { key: string; type: string }[] {
+    imageFields(): Field[] {
       return getImageFields(this.fields);
     },
 
@@ -232,8 +244,34 @@ export default Vue.extend({
       return getTimeseriesGroupingsFromFields(this.variables, this.fields);
     },
   },
-
+  mounted() {
+    this.debounceImageFetch();
+  },
+  watch: {
+    visibleRows(prev: TableRow[], cur: TableRow[]) {
+      if (sameData(prev, cur)) {
+        return;
+      }
+      this.debounceImageFetch();
+    },
+  },
   methods: {
+    debounceImageFetch() {
+      debounceFetchImagePack({
+        items: this.visibleRows,
+        imageFields: this.imageFields,
+        dataset: this.dataset,
+        uniqueTrail: this.uniqueTrail,
+        debounceKey: this.debounceKey,
+      });
+    },
+    removeImages() {
+      bulkRemoveImages({
+        imageFields: this.imageFields,
+        items: this.visibleRows,
+        uniqueTrail: this.uniqueTrail,
+      });
+    },
     onColumnClicked(key, field) {
       if (this.selectedColumn && this.selectedColumn.key === key) {
         this.$emit("col-clicked", null);

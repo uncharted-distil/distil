@@ -70,6 +70,7 @@ import store from "../store/store";
 import {
   CLUSTER_PREFIX,
   DISTIL_ROLES,
+  Field,
   formatValue,
   hasComputedVarPrefix,
   IMAGE_TYPE,
@@ -1283,4 +1284,64 @@ export function downloadFile(
 
   link.click(); // This will download the data file named "my_data.csv".
   return;
+}
+export function debounceFetchImagePack(args: {
+  items: TableRow[];
+  imageFields: Field[];
+  dataset?: string;
+  uniqueTrail?: string;
+  debounceKey: number;
+  timeout?: number;
+}) {
+  const timeout = args.timeout ?? 1000;
+  clearTimeout(args.debounceKey);
+  args.debounceKey = setTimeout(() => {
+    bulkRemoveImages(args);
+    FetchImagePack(args);
+  }, timeout);
+}
+export function bulkRemoveImages(args: {
+  imageFields: Field[];
+  items: TableRow[];
+  uniqueTrail?: string;
+}) {
+  if (!args.imageFields.length) {
+    return;
+  }
+  const imageKey = args.imageFields[0].key;
+  let imageUrlBuilder = (item: TableRow) => {
+    return `${item[imageKey].value}/${args.uniqueTrail}`;
+  };
+  if (!args.uniqueTrail) {
+    imageUrlBuilder = (item: TableRow) => {
+      return `${item[imageKey].value}`;
+    };
+  }
+  datasetMutations.bulkRemoveFiles(store, {
+    urls: args.items.map(imageUrlBuilder),
+  });
+}
+export function FetchImagePack(args: {
+  items: TableRow[];
+  imageFields: Field[];
+  dataset?: string;
+  uniqueTrail?: string;
+}) {
+  const band = routeGetters.getBandCombinationId(store);
+  if (!args.imageFields.length) {
+    return;
+  }
+  const key = args.imageFields[0].key;
+  const type = args.imageFields[0].type;
+  let dataset = args.dataset ?? routeGetters.getRouteDataset(store);
+  datasetActions.fetchImagePack(store, {
+    multiBandImagePackRequest: {
+      imageIds: args.items.map((item) => {
+        return item[key].value as string;
+      }),
+      dataset,
+      band: type === MULTIBAND_IMAGE_TYPE ? band : "",
+    },
+    uniqueTrail: args.uniqueTrail,
+  });
 }

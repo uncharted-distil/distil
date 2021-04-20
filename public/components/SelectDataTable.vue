@@ -141,7 +141,7 @@ import {
   TableValue,
 } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
-import { hasComputedVarPrefix, MULTIBAND_IMAGE_TYPE } from "../util/types";
+import { hasComputedVarPrefix, Field } from "../util/types";
 import {
   addRowSelection,
   removeRowSelection,
@@ -158,15 +158,12 @@ import {
   getListFields,
   removeTimeseries,
   sameData,
+  bulkRemoveImages,
+  debounceFetchImagePack,
 } from "../util/data";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import ImageLabel from "./ImageLabel.vue";
-
-interface Field {
-  key: string;
-  type: string;
-}
 
 export default Vue.extend({
   name: "SelectedDataTable",
@@ -363,18 +360,19 @@ export default Vue.extend({
   },
 
   mounted() {
-    this.removeImages();
-    this.fetchImagePack(this.pageItems);
+    this.debounceImageFetch();
     window.addEventListener("keyup", this.shiftRelease);
   },
 
   methods: {
     debounceImageFetch() {
-      clearTimeout(this.debounceKey);
-      this.debounceKey = setTimeout(() => {
-        this.removeImages();
-        this.fetchImagePack(this.visibleRows);
-      }, 1000);
+      debounceFetchImagePack({
+        items: this.visibleRows,
+        imageFields: this.imageFields,
+        dataset: this.dataset,
+        uniqueTrail: this.uniqueTrail,
+        debounceKey: this.debounceKey,
+      });
     },
 
     fetchTimeSeries() {
@@ -397,32 +395,9 @@ export default Vue.extend({
     },
 
     removeImages() {
-      if (!this.imageFields.length) {
-        return;
-      }
-      const imageKey = this.imageFields[0].key;
-      datasetMutations.bulkRemoveFiles(this.$store, {
-        urls: this.visibleRows.map((item) => {
-          return `${item[imageKey].value}/${this.uniqueTrail}`;
-        }),
-      });
-    },
-
-    fetchImagePack(items) {
-      if (!this.imageFields.length) {
-        return;
-      }
-      const key = this.imageFields[0].key;
-      const type = this.imageFields[0].type;
-      // if band is "" the route assumes it is an image not a multi-band image
-      datasetActions.fetchImagePack(this.$store, {
-        multiBandImagePackRequest: {
-          imageIds: items.map((item) => {
-            return item[key].value;
-          }),
-          dataset: this.dataset,
-          band: type === MULTIBAND_IMAGE_TYPE ? this.band : "",
-        },
+      bulkRemoveImages({
+        imageFields: this.imageFields,
+        items: this.visibleRows,
         uniqueTrail: this.uniqueTrail,
       });
     },

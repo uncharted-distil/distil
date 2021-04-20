@@ -159,6 +159,7 @@ export default Vue.extend({
     imageUrls: { type: Array as () => string[], default: () => [] as string[] },
     items: { type: Array as () => TableRow[], default: () => [] as TableRow[] },
     initialPosition: { type: Number as () => number, default: 0 },
+    datasetName: { type: String as () => string, default: null },
   },
 
   data() {
@@ -200,9 +201,10 @@ export default Vue.extend({
     },
     dataset(): string {
       const predDataset = routeGetters.getRoutePredictionsDataset(this.$store);
-      return !!predDataset
+      const result = !!predDataset
         ? predDataset
         : routeGetters.getRouteDataset(this.$store);
+      return this.datasetName ?? result;
     },
     files(): Dictionary<any> {
       return datasetGetters.getFiles(this.$store);

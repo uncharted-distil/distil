@@ -85,13 +85,13 @@ import {
   isRowSelected,
   bulkRowSelectionUpdate,
 } from "../util/row";
-import { MULTIBAND_IMAGE_TYPE } from "../util/types";
-import { getImageFields, sameData } from "../util/data";
-
-interface Field {
-  key: string;
-  type: string;
-}
+import { Field } from "../util/types";
+import {
+  getImageFields,
+  sameData,
+  bulkRemoveImages,
+  debounceFetchImagePack,
+} from "../util/data";
 
 export default Vue.extend({
   name: "ImageMosaic",
@@ -187,18 +187,19 @@ export default Vue.extend({
   },
 
   mounted() {
-    this.removeImages();
-    this.fetchImagePack(this.paginatedItems);
+    this.debounceImageFetch();
     window.addEventListener("keyup", this.shiftRelease);
   },
 
   methods: {
     debounceImageFetch() {
-      clearTimeout(this.debounceKey);
-      this.debounceKey = setTimeout(() => {
-        this.removeImages();
-        this.fetchImagePack(this.paginatedItems);
-      }, 1000);
+      debounceFetchImagePack({
+        items: this.paginatedItems,
+        imageFields: this.imageFields,
+        dataset: this.dataset,
+        uniqueTrail: this.uniqueTrail,
+        debounceKey: this.debounceKey,
+      });
     },
 
     selectAll() {
@@ -211,32 +212,9 @@ export default Vue.extend({
     },
 
     removeImages() {
-      if (!this.imageFields.length) {
-        return;
-      }
-      const imageKey = this.imageFields[0].key;
-      datasetMutations.bulkRemoveFiles(this.$store, {
-        urls: this.paginatedItems.map((item) => {
-          return `${item[imageKey].value}/${this.uniqueTrail}`;
-        }),
-      });
-    },
-
-    fetchImagePack(items: TableRow[]) {
-      if (!this.imageFields.length) {
-        return;
-      }
-      const key = this.imageFields[0].key;
-      const type = this.imageFields[0].type;
-      // if band is "" the route assumes it is an image not a multi-band image
-      datasetActions.fetchImagePack(this.$store, {
-        multiBandImagePackRequest: {
-          imageIds: items.map((item) => {
-            return item[key].value;
-          }),
-          dataset: this.dataset,
-          band: type === MULTIBAND_IMAGE_TYPE ? this.band : "",
-        },
+      bulkRemoveImages({
+        items: this.paginatedItems,
+        imageFields: this.imageFields,
         uniqueTrail: this.uniqueTrail,
       });
     },
