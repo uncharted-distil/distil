@@ -57,6 +57,7 @@
       :type="type"
       :url="imageUrl"
       :visible="!!zoomImage"
+      :datasetName="dataset"
       @hide="hideZoomImage"
     />
   </div>
@@ -105,6 +106,7 @@ export default Vue.extend({
     gray: { type: Number, default: 0 }, // support for graying images.
     shouldCleanUp: { type: Boolean as () => boolean, default: true },
     shouldFetchImage: { type: Boolean as () => boolean, default: true },
+    datasetName: { type: String as () => string, default: null },
   },
 
   data() {
@@ -208,7 +210,7 @@ export default Vue.extend({
       if (dataset) {
         return dataset;
       }
-      return routeGetters.getRouteDataset(this.$store);
+      return this.datasetName ?? routeGetters.getRouteDataset(this.$store);
     },
 
     rowSelection(): RowSelection {

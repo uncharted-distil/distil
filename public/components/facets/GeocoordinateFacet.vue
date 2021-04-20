@@ -171,6 +171,7 @@ export default Vue.extend({
       default: Activity.DATA_PREPARATION,
     },
     expanded: { type: Boolean, default: false },
+    datasetName: { type: String as () => string, default: null },
   },
 
   data() {
@@ -192,7 +193,7 @@ export default Vue.extend({
 
   computed: {
     dataset(): string {
-      return routeGetters.getRouteDataset(this.$store);
+      return this.datasetName ?? routeGetters.getRouteDataset(this.$store);
     },
 
     latSummary(): VariableSummary {
@@ -260,7 +261,7 @@ export default Vue.extend({
     },
 
     instanceName(): string {
-      return "unique-map";
+      return `-facet-${this.target}-${this.dataset}`;
     },
 
     mapID(): string {
@@ -683,7 +684,7 @@ export default Vue.extend({
 
       // update task based on the current training data
       const taskResponse = await datasetActions.fetchTask(this.$store, {
-        dataset: routeGetters.getRouteDataset(this.$store),
+        dataset: this.dataset,
         targetName: routeGetters.getRouteTargetVariable(this.$store),
         variableNames: training,
       });
@@ -726,7 +727,7 @@ export default Vue.extend({
 
       // update task based on the current training data
       const taskResponse = await datasetActions.fetchTask(this.$store, {
-        dataset: routeGetters.getRouteDataset(this.$store),
+        dataset: this.dataset,
         targetName: routeGetters.getRouteTargetVariable(this.$store),
         variableNames: training,
       });

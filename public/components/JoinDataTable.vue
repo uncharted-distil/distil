@@ -35,6 +35,7 @@
       v-slot:[cellSlot(imageField.key)]="data"
     >
       <image-preview
+        :datasetName="dataset"
         :key="imageField.key"
         :type="imageField.type"
         :image-url="data.item[imageField.key].value"
@@ -235,7 +236,7 @@ export default Vue.extend({
       );
     },
 
-    imageFields(): { key: string; type: string }[] {
+    imageFields(): Field[] {
       return getImageFields(this.fields);
     },
 
