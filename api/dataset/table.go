@@ -18,6 +18,7 @@ package dataset
 import (
 	"bytes"
 	"encoding/csv"
+	"fmt"
 	"path"
 	"strings"
 	"unicode"
@@ -77,6 +78,7 @@ func (t *Table) CreateDataset(rootDataPath string, datasetName string, config *e
 	if t.flagIndex {
 		header := t.CSVData[0]
 		for i, c := range header {
+			c = strings.TrimSpace(c)
 			if c == model.D3MIndexFieldName {
 				d3mIndexVar := model.NewVariable(i, model.D3MIndexFieldName, model.D3MIndexFieldName,
 					model.D3MIndexFieldName, model.D3MIndexFieldName, model.IntegerType, model.IntegerType, "D3M index",
@@ -84,6 +86,14 @@ func (t *Table) CreateDataset(rootDataPath string, datasetName string, config *e
 				dr.Variables = []*model.Variable{d3mIndexVar}
 				dr.ResType = model.ResTypeTable
 			}
+
+			// default the field name in the header if empty
+			if c == "" {
+				c = fmt.Sprintf("column_%d", i)
+			}
+
+			// set the header values
+			t.CSVData[0][i] = c
 		}
 	}
 
