@@ -21,11 +21,11 @@ import {
   Lex,
   NumericEntryState,
   RelationState,
+  StateTemplate,
   TextEntryState,
   TransitionFactory,
   ValueState,
   ValueStateValue,
-  StateTemplate,
 } from "@uncharted.software/lex";
 import { Highlight, Variable } from "../store/dataset";
 import { Dictionary } from "./dict";
@@ -38,6 +38,7 @@ import {
   Filter,
   GEOBOUNDS_FILTER,
   GEOCOORDINATE_FILTER,
+  INCLUDE_FILTER,
   NUMERICAL_FILTER,
   TEXT_FILTER,
 } from "./filters";
@@ -82,7 +83,22 @@ class DistilRelationState extends RelationState {
     super(config);
   }
 }
-
+export interface VariableInfo {
+  // basic Variable
+  variable: Variable;
+  // number of times this variable exists (used for OR)
+  count: number;
+  // mode used for background color
+  mode: string;
+}
+export interface TemplateInfo {
+  // All of the variables that are present in the filters and highlights
+  activeVariables: VariableInfo[];
+  // highlightMap based on filter.key (its a collection of all the duplicate filters)
+  highlightMap: Map<string, Filter[]>;
+  // filterMap based on filter.key (its a collection of all the duplicate filters)
+  filterMap: Map<string, Filter[]>;
+}
 /*
   This is the core function that actually generates a Lex Bar language. It takes
   a list of distil variables, converts them to an array of Lex Suggestions, then
@@ -91,103 +107,269 @@ class DistilRelationState extends RelationState {
   variable types with distinct entry needs, we can extend this function and the
   functions it depends on to support it in the Lex Bar language.
 */
-export function variablesToLexLanguage(variables: Variable[]): Lex {
+export function variablesToLexLanguage(
+  variables: VariableInfo[],
+  allVariables: Variable[]
+): Lex {
   // remove timeseries
   const filteredVariables = variables.filter((v) => {
+    return v.variable.colType !== TIMESERIES_TYPE;
+  });
+  const filteredAllVariables = allVariables.filter((v) => {
     return v.colType !== TIMESERIES_TYPE;
   });
   const suggestions = variablesToLexSuggestions(filteredVariables);
-  const catVarLexSuggestions = perCategoricalVariableLexSuggestions(
-    filteredVariables
+  // this generates the base templates used for the user typing into the lexbar
+  const baseSuggestion = variablesToLexSuggestions(
+    filteredAllVariables.map((v) => {
+      return { variable: v, count: 1, mode: INCLUDE_FILTER };
+    })
   );
+
+  const catVarLexSuggestions = perCategoricalVariableLexSuggestions(
+    filteredAllVariables.map((v) => {
+      return v;
+    })
+  );
+  const allSuggestions = [...suggestions, ...baseSuggestion];
   return Lex.from("field", ValueState, {
     name: "Choose a variable to search on",
     icon: '<i class="fa fa-filter" />',
-    suggestions: suggestions,
+    suggestions: allSuggestions,
   }).branch(
     Lex.from("relation", DistilRelationState, {
       ...TransitionFactory.valueMetaCompare({ type: TEXT_FILTER }),
     }).branch(Lex.from("value", TextEntryState)),
-    Lex.from("relation", DistilRelationState, {
-      ...TransitionFactory.valueMetaCompare({ type: CATEGORICAL_TYPE }),
-    }).branch(
-      Lex.from("value", ValueState, {
-        allowUnknown: false,
-        icon: "",
-        name: "Type for suggestions",
-        fetchSuggestions: (hint, lexDefintion) => {
-          return catVarLexSuggestions[lexDefintion.field.key]
-            ? catVarLexSuggestions[lexDefintion.field.key].filter((cat) => {
-                return cat.key.toLowerCase().indexOf(hint.toLowerCase()) > -1;
-              })
-            : [];
-        },
-      })
-    ),
-    Lex.from("relation", DistilRelationState, {
-      ...TransitionFactory.valueMetaCompare({ type: NUMERICAL_FILTER }),
-    }).branch(
-      Lex.from(LabelState, { label: "From" })
-        .to("min", NumericEntryState, { name: "Enter lower bound" })
-        .to(LabelState, { label: "To" })
-        .to("max", NumericEntryState, { name: "Enter upper bound" })
-    ),
-    ...distilDateTimeEntryBuilder(suggestions),
-    Lex.from("relation", DistilRelationState, {
-      ...TransitionFactory.valueMetaCompare({ type: GEOBOUNDS_FILTER }),
-    }).branch(
-      Lex.from(LabelState, { label: "From Latitude" })
-        .to("minX", NumericEntryState, { name: "Enter lower bound" })
-        .to(LabelState, { label: "To" })
-        .to("maxX", NumericEntryState, { name: "Enter upper bound" })
-        .to(LabelState, { label: "From Longitude" })
-        .to("minY", NumericEntryState, { name: "Enter lower bound" })
-        .to(LabelState, { label: "To" })
-        .to("maxY", NumericEntryState, { name: "Enter upper bound" })
-    )
+    ...distilCategoryEntryBuilder(allSuggestions, catVarLexSuggestions),
+    ...distilNumericalEntryBuilder(allSuggestions),
+    ...distilDateTimeEntryBuilder(allSuggestions),
+    ...distilGeoBoundsEntryBuilder(allSuggestions)
   );
+}
+export function distilCategoryEntryBuilder(
+  suggestions: ValueStateValue[],
+  catVarLexSuggestions: Dictionary<unknown[]>
+): StateTemplate[] {
+  const categoryEntries = [] as ValueStateValue[];
+  const categorySuggestions = suggestions.filter((suggestion) => {
+    return suggestion.meta.type === CATEGORICAL_FILTER;
+  });
+  const uniqueMetaCount = {} as Dictionary<boolean>;
+  const uniqueSuggestion = categorySuggestions.filter((v) => {
+    if (!uniqueMetaCount[v.meta.count + v.meta.mode]) {
+      uniqueMetaCount[v.meta.count + v.meta.mode] = true;
+      return true;
+    }
+    return false;
+  });
+  uniqueSuggestion.forEach((suggestion) => {
+    const labelSuggestions =
+      catVarLexSuggestions[suggestion.meta.variable.key] ?? [];
+    let branch = Lex.from("value_0", ValueState, {
+      allowUnknown: false,
+      icon: "",
+      name: "Type for suggestions",
+      fetchSuggestions: (hint) => {
+        return labelSuggestions.filter((cat) => {
+          return cat["key"].toLowerCase().indexOf(hint.toLowerCase()) > -1;
+        });
+      },
+      cssClasses: modeToColor(suggestion.meta.mode),
+    });
+    for (let i = 1; i < suggestion.meta.count; ++i) {
+      branch = branch
+        .to(LabelState, { label: "OR", vkey: "operator" })
+        .to(`value_${i}`, ValueState, {
+          allowUnknown: false,
+          icon: "",
+          name: "Type for suggestions",
+          fetchSuggestions: (hint) => {
+            return labelSuggestions.filter((cat) => {
+              return cat["key"].toLowerCase().indexOf(hint.toLowerCase()) > -1;
+            });
+          },
+        });
+    }
+    categoryEntries.push(
+      Lex.from("relation", DistilRelationState, {
+        ...TransitionFactory.valueMetaCompare({
+          type: CATEGORICAL_TYPE,
+          count: suggestion.meta.count,
+          mode: suggestion.meta.mode,
+        }),
+      }).branch(branch)
+    );
+  });
+  return categoryEntries;
+}
+export function distilNumericalEntryBuilder(
+  suggestions: ValueStateValue[]
+): StateTemplate[] {
+  // returns all the templates for numerical types
+  const numericalEntries = [] as ValueStateValue[];
+  // we use the supplied suggestions to build our templates therefore we need to find the numerical suggestions
+  const numericalSuggestions = suggestions.filter((suggestion) => {
+    return suggestion.meta.type === NUMERICAL_FILTER;
+  });
+  const uniqueMetaCount = {} as Dictionary<boolean>;
+  const uniqueSuggestion = numericalSuggestions.filter((v) => {
+    if (!uniqueMetaCount[v.meta.count + v.meta.mode]) {
+      uniqueMetaCount[v.meta.count + v.meta.mode] = true;
+      return true;
+    }
+    return false;
+  });
+  // loop through each suggestion
+  uniqueSuggestion.forEach((suggestion) => {
+    // build the base branch this is what the user will see if typing into the lexbar
+    let branch = Lex.from(LabelState, {
+      label: "From",
+      vkey: "operator",
+      cssClasses: modeToColor(suggestion.meta.mode),
+    })
+      .to("min_0", NumericEntryState, { name: "Enter lower bound" })
+      .to(LabelState, { label: "To", vkey: "operator" })
+      .to("max_0", NumericEntryState, { name: "Enter upper bound" });
+    // adds the OR and the additional filter params if the count is > 0
+    for (let i = 1; i < suggestion.meta.count; ++i) {
+      branch = branch
+        .to(LabelState, { label: "OR", vkey: "operator" })
+        .to(LabelState, { label: "From", vkey: "operator" })
+        .to(`min_${i}`, NumericEntryState, { name: "Enter lower bound" })
+        .to(LabelState, { label: "To", vkey: "operator" })
+        .to(`max_${i}`, NumericEntryState, { name: "Enter upper bound" });
+    }
+    // finished generating template
+    numericalEntries.push(
+      Lex.from("relation", DistilRelationState, {
+        ...TransitionFactory.valueMetaCompare({
+          type: NUMERICAL_FILTER,
+          count: suggestion.meta.count,
+          mode: suggestion.meta.mode,
+        }),
+      }).branch(branch)
+    );
+  });
+  return numericalEntries;
+}
+export function distilGeoBoundsEntryBuilder(
+  suggestions: ValueStateValue[]
+): StateTemplate[] {
+  const geoboundEntries = [] as ValueStateValue[];
+  const geoboundsSuggestions = suggestions.filter((suggestion) => {
+    return suggestion.meta.type === GEOBOUNDS_FILTER;
+  });
+  const uniqueMetaCount = {} as Dictionary<boolean>;
+  const uniqueSuggestion = geoboundsSuggestions.filter((v) => {
+    if (!uniqueMetaCount[v.meta.count + v.meta.mode]) {
+      uniqueMetaCount[v.meta.count + v.meta.mode] = true;
+      return true;
+    }
+    return false;
+  });
+  uniqueSuggestion.forEach((suggestion) => {
+    let branch = Lex.from(LabelState, {
+      label: "From Latitude",
+      vkey: "operator",
+      cssClasses: modeToColor(suggestion.meta.mode),
+    })
+      .to("minX_0", NumericEntryState, { name: "Enter lower bound" })
+      .to(LabelState, { label: "To", vkey: "operator" })
+      .to("maxX_0", NumericEntryState, { name: "Enter upper bound" })
+      .to(LabelState, { label: "From Longitude" })
+      .to("minY_0", NumericEntryState, { name: "Enter lower bound" })
+      .to(LabelState, { label: "To", vkey: "operator" })
+      .to("maxY_0", NumericEntryState, { name: "Enter upper bound" });
+    for (let i = 1; i < suggestion.meta.count; ++i) {
+      branch = branch
+        .to(LabelState, { label: "OR", vkey: "operator" })
+        .to(LabelState, { label: "From Latitude", vkey: "operator" })
+        .to(`minX_${i}`, NumericEntryState, { name: "Enter lower bound" })
+        .to(LabelState, { label: "To", vkey: "operator" })
+        .to(`maxX_${i}`, NumericEntryState, { name: "Enter upper bound" })
+        .to(LabelState, { label: "From Longitude" })
+        .to(`minY_${i}`, NumericEntryState, { name: "Enter lower bound" })
+        .to(LabelState, { label: "To", vkey: "operator" })
+        .to(`maxY_${i}`, NumericEntryState, { name: "Enter upper bound" });
+    }
+    geoboundEntries.push(
+      Lex.from("relation", DistilRelationState, {
+        ...TransitionFactory.valueMetaCompare({
+          type: GEOBOUNDS_FILTER,
+          count: suggestion.meta.count,
+          mode: suggestion.meta.mode,
+        }),
+      }).branch(branch)
+    );
+  });
+  return geoboundEntries;
 }
 // distilDateTimeEntryBuilder creates an array of DateTimeEntry based on the supplied variables
 // this allows us to specify min and max dates
 export function distilDateTimeEntryBuilder(
   suggestions: ValueStateValue[]
 ): StateTemplate[] {
-  const dateTimeEntries = [];
+  const dateTimeEntries = [] as ValueStateValue[];
   const dateSuggestions = suggestions.filter((suggestion) => {
     return suggestion.meta.type === DATETIME_FILTER;
   });
   dateSuggestions.forEach((suggestion) => {
+    let branch = Lex.from(LabelState, {
+      label: "From",
+      vkey: "operator",
+      cssClasses: modeToColor(suggestion.meta.mode),
+    })
+      .to("min_0", DateTimeEntryState, {
+        enableTime: true,
+        enableCalendar: true,
+        timezone: "Greenwich",
+        hilightedDate: new Date(suggestion.meta.variable.min * 1000),
+      })
+      .to(LabelState, { label: "To", vkey: "operator" })
+      .to("max_0", DateTimeEntryState, {
+        enableTime: true,
+        enableCalendar: true,
+        timezone: "Greenwich",
+        hilightedDate: new Date(suggestion.meta.variable.max * 1000),
+      });
+    for (let i = 1; i < suggestion.meta.count; ++i) {
+      branch = branch
+        .to(LabelState, { label: "OR", vkey: "operator" })
+        .to(LabelState, { label: "From", vkey: "operator" })
+        .to(`min_${i}`, DateTimeEntryState, {
+          enableTime: true,
+          enableCalendar: true,
+          timezone: "Greenwich",
+          hilightedDate: new Date(suggestion.meta.variable.min * 1000),
+        })
+        .to(LabelState, { label: "To", vkey: "operator" })
+        .to(`max_${i}`, DateTimeEntryState, {
+          enableTime: true,
+          enableCalendar: true,
+          timezone: "Greenwich",
+          hilightedDate: new Date(suggestion.meta.variable.max * 1000),
+        });
+    }
+    // default with
     dateTimeEntries.push(
       Lex.from("relation", DistilRelationState, {
         ...TransitionFactory.valueMetaCompare({
           type: DATETIME_FILTER,
-          name: suggestion.meta.variable.colDisplayName,
+          name: suggestion.meta.variable.colName,
+          count: suggestion.meta.count,
+          mode: suggestion.meta.mode,
         }),
-      }).branch(
-        Lex.from(LabelState, { label: "From" })
-          .to("min", DateTimeEntryState, {
-            enableTime: true,
-            enableCalendar: true,
-            timezone: "Greenwich",
-            hilightedDate: new Date(suggestion.meta.variable.min * 1000),
-          })
-          .to(LabelState, { label: "To" })
-          .to("max", DateTimeEntryState, {
-            enableTime: true,
-            enableCalendar: true,
-            timezone: "Greenwich",
-            hilightedDate: new Date(suggestion.meta.variable.max * 1000),
-          })
-      )
+      }).branch(branch)
     );
   });
   return dateTimeEntries;
 }
-export function filterParamsToLexQuery(
+// aggregates all the variables for highlight and filter into VariableInfo in over to generate templates
+export function variableAggregation(
   filter: string,
   highlight: string,
   allVariables: Variable[]
-) {
+): TemplateInfo {
   const decodedFilters = decodeFilters(filter).list.filter(
     (f) => f.type !== "row"
   );
@@ -197,79 +379,120 @@ export function filterParamsToLexQuery(
   );
 
   const variableDict = buildVariableDictionary(allVariables);
-  const filterVariables = [];
+  const filterVariables = new Map<string, Variable[]>();
+  // check that the filter variables exist
   decodedFilters.forEach((f) => {
     if (variableDict[f.key]) {
-      filterVariables.push(variableDict[f.key]);
+      if (filterVariables.has(f.key)) {
+        filterVariables.get(f.key).push(variableDict[f.key]);
+        return;
+      }
+      filterVariables.set(f.key, [variableDict[f.key]]);
     }
   });
-  const highlightVariables = [];
+  const highlightVariables = new Map<string, Variable[]>();
   decodedHighlights.forEach((h) => {
     if (variableDict[h.key]) {
-      highlightVariables.push(variableDict[h.key]);
+      if (highlightVariables.has(h.key)) {
+        highlightVariables.get(h.key).push(variableDict[h.key]);
+        return;
+      }
+      highlightVariables.set(h.key, [variableDict[h.key]]);
     }
   });
 
   let activeVariables = [
-    ...highlightVariables,
-    ...filterVariables,
-  ] as Variable[];
+    ...Array.from(highlightVariables.values()).map((hv) => {
+      return { variable: hv[0], count: hv.length, mode: INCLUDE_FILTER };
+    }),
+    ...Array.from(filterVariables.values()).map((fv) => {
+      return { variable: fv[0], count: fv.length, mode: EXCLUDE_FILTER };
+    }),
+  ] as VariableInfo[];
   // remove timeseries
   activeVariables = activeVariables.filter((v) => {
-    return v.colType !== TIMESERIES_TYPE;
+    return v.variable.colType !== TIMESERIES_TYPE;
   });
   const activeVariablesMap = new Map(
     activeVariables.map((v) => {
-      return [v.key, true];
+      return [v.variable.key, true];
     })
   );
-  // remove highlight if variable does not exist
-  const lexableElements = [
-    ...decodedHighlights.filter((el) => {
-      return activeVariablesMap.has(el.key);
-    }),
-    ...decodedFilters.filter((el) => {
-      return activeVariablesMap.has(el.key);
-    }),
-  ];
-  const suggestions = variablesToLexSuggestions(activeVariables);
-  const lexQuery = lexableElements.map((f, i) => {
-    if (f.type === GEOBOUNDS_FILTER || f.type === BIVARIATE_FILTER) {
-      return {
-        field: suggestions[i],
-        minX: new ValueStateValue(f.minX),
-        maxX: new ValueStateValue(f.maxX),
-        minY: new ValueStateValue(f.minY),
-        maxY: new ValueStateValue(f.maxY),
-        relation: modeToRelation(f.mode),
-      };
-    } else if (f.type === DATETIME_FILTER) {
-      return {
-        field: suggestions[i],
-        min: new Date(f.min * 1000),
-        max: new Date(f.max * 1000),
-        relation: modeToRelation(f.mode),
-      };
-    } else if (isNumericType(f.type)) {
-      return {
-        field: suggestions[i],
-        min: new ValueStateValue(f.min),
-        max: new ValueStateValue(f.max),
-        relation: modeToRelation(f.mode),
-      };
-    } else {
-      return {
-        field: suggestions[i],
-        value: new ValueStateValue(f.categories[0], null, {
-          displayKey: f.categories[0],
-        }),
-        relation: modeToRelation(f.mode),
-      };
+  const highlightMap = new Map<string, Filter[]>();
+  const filterMap = new Map<string, Filter[]>();
+  decodedHighlights.forEach((el) => {
+    if (activeVariablesMap.has(el.key)) {
+      if (highlightMap.has(el.key)) {
+        highlightMap.get(el.key).push(el);
+        return;
+      }
+      highlightMap.set(el.key, [el]);
     }
   });
+  decodedFilters.forEach((el) => {
+    if (activeVariablesMap.has(el.key)) {
+      if (filterMap.has(el.key)) {
+        filterMap.get(el.key).push(el);
+        return;
+      }
+      filterMap.set(el.key, [el]);
+    }
+  });
+  return { activeVariables, highlightMap, filterMap };
+}
+export function filterParamsToLexQuery(templateInfo: TemplateInfo) {
+  // remove highlight if variable does not exist
+  const lexableElements = [
+    ...templateInfo.highlightMap.values(),
+    ...templateInfo.filterMap.values(),
+  ];
+  const suggestions = variablesToLexSuggestions(templateInfo.activeVariables);
+  const lexQuery = filtersToValueState(lexableElements, suggestions);
   return lexQuery;
 }
-
+export function filtersToValueState(
+  filters: Filter[][],
+  suggestions: unknown[]
+) {
+  return filters.map((f, i) => {
+    const filterGroupType = f[0].type;
+    const result = {
+      field: suggestions[i],
+      relation: modeToRelation(f[0].mode),
+    };
+    if (
+      filterGroupType === GEOBOUNDS_FILTER ||
+      filterGroupType === BIVARIATE_FILTER
+    ) {
+      for (let i = 0; i < f.length; ++i) {
+        result[`minX_${i}`] = new ValueStateValue(f[i].minX);
+        result[`maxX_${i}`] = new ValueStateValue(f[i].maxX);
+        result[`minY_${i}`] = new ValueStateValue(f[i].minY);
+        result[`maxY_${i}`] = new ValueStateValue(f[i].maxY);
+      }
+      return result;
+    } else if (filterGroupType === DATETIME_FILTER) {
+      for (let i = 0; i < f.length; ++i) {
+        result[`min_${i}`] = new Date(f[i].min * 1000);
+        result[`max_${i}`] = new Date(f[i].max * 1000);
+      }
+      return result;
+    } else if (isNumericType(filterGroupType)) {
+      for (let i = 0; i < f.length; ++i) {
+        result[`min_${i}`] = new ValueStateValue(f[i].min);
+        result[`max_${i}`] = new ValueStateValue(f[i].max);
+      }
+      return result;
+    } else {
+      for (let i = 0; i < f.length; ++i) {
+        result[`value_${i}`] = new ValueStateValue(f[i].categories[0], null, {
+          displayKey: f[i].categories[0],
+        });
+      }
+      return result;
+    }
+  });
+}
 /*
   This translates a lex query's relation and value states to generate a new
   highlight and filter state so that it can be used to update the route and so
@@ -279,71 +502,75 @@ export function lexQueryToFiltersAndHighlight(
   lexQuery: any[][],
   dataset: string
 ): { filters: Filter[]; highlights: Highlight[] } {
-  const filters = [];
-  const highlights = [];
+  const filters = [] as Filter[];
+  const highlights = [] as Highlight[];
 
   lexQuery[0].forEach((lq) => {
     if (lq.relation.key !== HIGHLIGHT) {
       const key = lq.field.meta.variable.key;
       const displayKey = lq.field.displayKey;
       const type = lq.field.meta.type;
-      const filter: Filter = {
-        mode: lq.relation.key,
-        displayName: displayKey,
-        type,
-        key,
-      };
+      for (let i = 0; i < lq.field.meta.count; ++i) {
+        const filter: Filter = {
+          mode: lq.relation.key,
+          displayName: displayKey,
+          type,
+          key,
+        };
 
-      if (type === GEOBOUNDS_FILTER || type === GEOCOORDINATE_FILTER) {
-        filter.key = filter.key;
-        filter.minX = parseFloat(lq.minX.key);
-        filter.maxX = parseFloat(lq.maxX.key);
-        filter.minY = parseFloat(lq.minY.key);
-        filter.maxY = parseFloat(lq.maxY.key);
-      } else if (type === DATETIME_FILTER) {
-        filter.min = dateToNum(lq.min);
-        filter.max = dateToNum(lq.max);
-      } else if (isNumericType(type)) {
-        filter.min = parseFloat(lq.min.key);
-        filter.max = parseFloat(lq.max.key);
-      } else {
-        filter.categories = [lq.value.key];
+        if (type === GEOBOUNDS_FILTER || type === GEOCOORDINATE_FILTER) {
+          filter.key = filter.key;
+          filter.minX = parseFloat(lq[`minX_${i}`].key);
+          filter.maxX = parseFloat(lq[`maxX_${i}`].key);
+          filter.minY = parseFloat(lq[`minY_${i}`].key);
+          filter.maxY = parseFloat(lq[`maxY_${i}`].key);
+        } else if (type === DATETIME_FILTER) {
+          filter.min = dateToNum(lq[`min_${i}`]);
+          filter.max = dateToNum(lq[`max_${i}`]);
+        } else if (isNumericType(type)) {
+          filter.min = parseFloat(lq[`min_${i}`].key);
+          filter.max = parseFloat(lq[`max_${i}`].key);
+        } else {
+          filter.categories = [lq[`value_${i}`].key];
+        }
+
+        filters.push(filter);
       }
-
-      filters.push(filter);
     } else {
       const key = lq.field.meta.variable.key;
       const type = lq.field.meta.type;
-      const highlight = {
-        dataset,
-        context: "lex-bar",
-        key,
-        value: {},
-      } as Highlight;
+      for (let i = 0; i < lq.field.meta.count; ++i) {
+        const highlight = {
+          dataset,
+          context: "lex-bar",
+          key,
+          value: {},
+        } as Highlight;
 
-      if (
-        type === GEOBOUNDS_FILTER ||
-        type === GEOCOORDINATE_FILTER ||
-        type === BIVARIATE_FILTER
-      ) {
-        highlight.key = highlight.key;
-        highlight.value.minX = parseFloat(lq.minX.key);
-        highlight.value.maxX = parseFloat(lq.maxX.key);
-        highlight.value.minY = parseFloat(lq.minY.key);
-        highlight.value.maxY = parseFloat(lq.maxY.key);
-      } else if (type === DATETIME_FILTER) {
-        highlight.value.from = dateToNum(lq.min);
-        highlight.value.to = dateToNum(lq.max);
-        highlight.value.type = DATETIME_FILTER;
-      } else if (isNumericType(type)) {
-        highlight.value.from = parseFloat(lq.min.key);
-        highlight.value.to = parseFloat(lq.max.key);
-        highlight.value.type = NUMERICAL_FILTER;
-      } else {
-        highlight.value = lq.value.key;
+        if (
+          type === GEOBOUNDS_FILTER ||
+          type === GEOCOORDINATE_FILTER ||
+          type === BIVARIATE_FILTER
+        ) {
+          highlight.key = highlight.key;
+          highlight.value.minX = parseFloat(lq[`minX_${i}`].key);
+          highlight.value.maxX = parseFloat(lq[`maxX_${i}`].key);
+          highlight.value.minY = parseFloat(lq[`minY_${i}`].key);
+          highlight.value.maxY = parseFloat(lq[`maxY_${i}`].key);
+        } else if (type === DATETIME_FILTER) {
+          highlight.value.from = dateToNum(lq[`min_${i}`]);
+          highlight.value.to = dateToNum(lq[`max_${i}`]);
+          highlight.value.type = DATETIME_FILTER;
+        } else if (isNumericType(type)) {
+          highlight.value.from = parseFloat(lq[`min_${i}`].key);
+          highlight.value.to = parseFloat(lq[`max_${i}`].key);
+          highlight.value.type = NUMERICAL_FILTER;
+        } else {
+          highlight.value = lq[`value_${i}`].key;
+        }
+
+        highlights.push(highlight);
       }
-
-      highlights.push(highlight);
     }
   });
   return {
@@ -362,6 +589,16 @@ function modeToRelation(mode: string): ValueStateValue {
       return distilRelationOptions[0];
   }
 }
+function modeToColor(mode: string): string[] {
+  switch (mode) {
+    case HIGHLIGHT:
+      return ["include-filter"];
+    case EXCLUDE_FILTER:
+      return ["exclude-filter"];
+    default:
+      return ["include-filter"];
+  }
+}
 
 /*
   Formats distil variables to Lex Suggestions AKA ValueStateValues so they can
@@ -369,17 +606,21 @@ function modeToRelation(mode: string): ValueStateValue {
   lex query. Also ungroups some variables such that we can use them in lex
   queries as that reflects the current filter/highlight behavior.
 */
-function variablesToLexSuggestions(variables: Variable[]): ValueStateValue[] {
+function variablesToLexSuggestions(
+  variables: VariableInfo[]
+): ValueStateValue[] {
   if (!variables) return;
   return variables.reduce((a, v) => {
-    const name = v.colDisplayName;
+    const name = v.variable.colName;
     const options = {
-      type: colTypeToOptionType(v.colType.toLowerCase()),
-      variable: v,
+      type: colTypeToOptionType(v.variable.colType.toLowerCase()),
+      variable: v.variable,
       name,
+      count: v.count,
+      mode: v.mode,
     };
     const config = {
-      displayKey: v.colDisplayName,
+      displayKey: v.variable.colDisplayName,
     };
     a.push(new ValueStateValue(name, options, config));
     return a;

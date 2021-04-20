@@ -41,7 +41,7 @@ type Config struct {
 	DatamartURIISI             string  `env:"DATAMART_ISI_URL" envDefault:"https://dsbox02.isi.edu:9000"`
 	DatamartURINYU             string  `env:"DATAMART_NYU_URL" envDefault:"https://auctus.vida-nyu.org"`
 	DatamartISIEnabled         bool    `env:"DATAMART_ISI_ENABLED" envDefault:"false"`
-	DatamartNYUEnabled         bool    `env:"DATAMART_NYU_ENABLED" envDefault:"true"`
+	DatamartNYUEnabled         bool    `env:"DATAMART_NYU_ENABLED" envDefault:"false"`
 	DatamartImportFolder       string  `env:"DATAMART_IMPORT_FOLDER" envDefault:"datamart"`
 	DatasetBatchSize           int     `env:"DATASET_BATCH_SIZE" envDefault:"10000"`
 	ElasticEndpoint            string  `env:"ES_ENDPOINT" envDefault:"http://localhost:9200"`

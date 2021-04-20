@@ -406,6 +406,8 @@ export default Vue.extend({
 
     setIncludedActive(val: boolean) {
       this.includedActive = val;
+      const entry = overlayRouteEntry(this.$route, { include: `${val}` });
+      this.$router.push(entry).catch((err) => console.warn(err));
     },
 
     /* When the user request to fetch a different size of data. */
