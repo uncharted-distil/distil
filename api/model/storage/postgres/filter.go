@@ -67,25 +67,27 @@ func (s *Storage) parseFilteredData(dataset string, filterVariables []*model.Var
 		// (timeries variables that use the same grouping column) so we iterate over the filter variable
 		// list to find any that map.
 		fields := rows.FieldDescriptions()
-		columns := []*api.Column{}
+		columns := map[string]*api.Column{}
 		fieldIndexMap := []int{}
 		for _, variable := range filterVariables {
 			// loop through the filter vars and find the key associated with each
 			for fieldIdx, f := range fields {
 				fieldKey := string(f.Name)
 				if variable.IsGrouping() && variable.Grouping.GetIDCol() == fieldKey {
-					columns = append(columns, &api.Column{
+					columns[variable.Key] = &api.Column{
 						Key:   variable.Key,
 						Label: variable.DisplayName,
 						Type:  variable.Type,
-					})
+						Index: len(columns),
+					}
 					fieldIndexMap = append(fieldIndexMap, fieldIdx)
 				} else if fieldKey == variable.Key && (includeGroupingCol || variable.DistilRole != model.VarDistilRoleGrouping) {
-					columns = append(columns, &api.Column{
+					columns[variable.Key] = &api.Column{
 						Key:   variable.Key,
 						Label: variable.DisplayName,
 						Type:  variable.Type,
-					})
+						Index: len(columns),
+					}
 					fieldIndexMap = append(fieldIndexMap, fieldIdx)
 				}
 			}
@@ -120,7 +122,7 @@ func (s *Storage) parseFilteredData(dataset string, filterVariables []*model.Var
 			return nil, errors.Wrapf(err, "error reading data from postgres")
 		}
 	} else {
-		result.Columns = make([]*api.Column, 0)
+		result.Columns = map[string]*api.Column{}
 	}
 
 	return result, nil

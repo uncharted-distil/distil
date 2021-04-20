@@ -177,22 +177,21 @@ func getBandMapping(ds *api.Dataset, groupKeys []string, dataStorage api.DataSto
 	}
 
 	// cycle through results to build the band mapping
-	outputColumns := map[string]int{}
-	for i, c := range data.Columns {
-		outputColumns[c.Key] = i
-	}
-	fileColumn, ok := outputColumns[fileCol.Key]
+	fileVariable, ok := data.Columns[fileCol.Key]
 	if !ok {
 		return nil, errors.Errorf("no file column found in stored data")
 	}
-	bandColumn, ok := outputColumns[bandCol.Key]
+	bandVariable, ok := data.Columns[bandCol.Key]
 	if !ok {
 		return nil, errors.Errorf("no band column found in stored data")
 	}
-	groupColumn, ok := outputColumns[groupingCol.Key]
+	groupVariable, ok := data.Columns[groupingCol.Key]
 	if !ok {
 		return nil, errors.Errorf("no group column found in stored data")
 	}
+	fileColumn := fileVariable.Index
+	bandColumn := bandVariable.Index
+	groupColumn := groupVariable.Index
 
 	mapping := map[string]map[string]string{}
 	for _, r := range data.Values {

@@ -72,6 +72,7 @@ type IngestSteps struct {
 	FallbackMerged          bool
 	CreateMetadataTables    bool
 	CheckMatch              bool
+	SkipFeaturization       bool
 }
 
 // NewDefaultClient creates a new client to use when submitting pipelines.
@@ -254,7 +255,7 @@ func IngestDataset(params *IngestParams, config *IngestTaskConfig, steps *Ingest
 	// set the known grouping information
 	if params.RawGroupings != nil {
 		log.Infof("creating groupings in metadata")
-		err = SetGroups(datasetID, params.RawGroupings, metaStorage, config)
+		err = SetGroups(datasetID, params.RawGroupings, dataStorage, metaStorage, config)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to set grouping")
 		}
@@ -262,7 +263,7 @@ func IngestDataset(params *IngestParams, config *IngestTaskConfig, steps *Ingest
 	}
 
 	// featurize dataset for downstream efficiencies
-	if config.FeaturizationEnabled && canFeaturize(params.ID, metaStorage) {
+	if config.FeaturizationEnabled && !steps.SkipFeaturization && canFeaturize(params.ID, metaStorage) {
 		_, featurizedDatasetPath, err := FeaturizeDataset(originalSchemaFile, latestSchemaOutput, params.ID, metaStorage, config)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to featurize dataset")

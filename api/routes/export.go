@@ -157,10 +157,10 @@ func ExportResultHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.Data
 		}
 
 		// replace any NaN values with an empty string
-		results = api.ReplaceNaNs(results, api.EmptyString)
+		resultsTransformed := transformDataForClient(results, api.EmptyString)
 
 		// write out the result to CSV
-		contentType, extension, output, err := createExportedData(req.TargetFeature(), format, results)
+		contentType, extension, output, err := createExportedData(req.TargetFeature(), format, resultsTransformed)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -176,7 +176,7 @@ func ExportResultHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.Data
 	}
 }
 
-func createExportedData(target string, format string, results *api.FilteredData) (string, string, []byte, error) {
+func createExportedData(target string, format string, results *FilteredDataClient) (string, string, []byte, error) {
 	switch format {
 	case "csv":
 		return exportCSV(results)
@@ -187,13 +187,13 @@ func createExportedData(target string, format string, results *api.FilteredData)
 	}
 }
 
-func exportCSV(results *api.FilteredData) (string, string, []byte, error) {
+func exportCSV(results *FilteredDataClient) (string, string, []byte, error) {
 	outputBuffer := &bytes.Buffer{}
 	wr := csv.NewWriter(outputBuffer)
 
 	header := make([]string, len(results.Columns))
-	for i, c := range results.Columns {
-		header[i] = c.Label
+	for _, c := range results.Columns {
+		header[c.Index] = c.Label
 	}
 	err := wr.Write(header)
 	if err != nil {
@@ -217,18 +217,18 @@ func exportCSV(results *api.FilteredData) (string, string, []byte, error) {
 	return "text/csv", "csv", outputBuffer.Bytes(), nil
 }
 
-func exportGeoJSON(target string, results *api.FilteredData) (string, string, []byte, error) {
+func exportGeoJSON(target string, results *FilteredDataClient) (string, string, []byte, error) {
 	if !canExportGeoJSON(results) {
 		return "", "", nil, errors.Errorf("unable to export results to geo json")
 	}
 
 	coordinateColumnIndex := -1
 	predictionColumnIndex := -1
-	for i, c := range results.Columns {
+	for _, c := range results.Columns {
 		if model.IsVector(c.Type) {
-			coordinateColumnIndex = i
+			coordinateColumnIndex = c.Index
 		} else if strings.Contains(c.Key, ":predicted") {
-			predictionColumnIndex = i
+			predictionColumnIndex = c.Index
 		}
 	}
 
@@ -259,7 +259,7 @@ func getPointsFromVector(polygon []float64) [][]float64 {
 	return points
 }
 
-func canExportGeoJSON(results *api.FilteredData) bool {
+func canExportGeoJSON(results *FilteredDataClient) bool {
 	// would expect a multiband image and a real vector
 	types := map[string]bool{}
 	for _, c := range results.Columns {

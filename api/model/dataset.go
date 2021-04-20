@@ -63,14 +63,6 @@ type Dataset struct {
 	ParentDataset   string                 `json:"parentDataset"`
 }
 
-// QueriedDataset wraps dataset querying components into a single entity.
-type QueriedDataset struct {
-	Metadata *Dataset
-	Data     *FilteredData
-	Filters  *FilterParams
-	IsTrain  bool
-}
-
 // JoinSuggestion specifies potential joins between datasets.
 type JoinSuggestion struct {
 	BaseDataset   string               `json:"baseDataset"`
@@ -106,16 +98,17 @@ func MapVariables(variables []*model.Variable, mapper func(variable *model.Varia
 	return mapped
 }
 
-// LoadDiskDataset loads a dataset from disk.
+// LoadDiskDataset loads a dataset from disk. It will load the learning dataset
+// as the featurized dataset.
 func LoadDiskDataset(ds *Dataset) (*DiskDataset, error) {
 	folder := env.ResolvePath(ds.Source, ds.Folder)
-	output, err := loadDiskDatasetFromFolder(folder)
+	output, err := LoadDiskDatasetFromFolder(folder)
 	if err != nil {
 		return nil, err
 	}
 
 	if ds.LearningDataset != "" {
-		pre, err := loadDiskDatasetFromFolder(ds.LearningDataset)
+		pre, err := LoadDiskDatasetFromFolder(ds.LearningDataset)
 		if err != nil {
 			return nil, err
 		}
@@ -125,7 +118,8 @@ func LoadDiskDataset(ds *Dataset) (*DiskDataset, error) {
 	return output, nil
 }
 
-func loadDiskDatasetFromFolder(folder string) (*DiskDataset, error) {
+// LoadDiskDatasetFromFolder loads a dataset from disk at the specified location.
+func LoadDiskDatasetFromFolder(folder string) (*DiskDataset, error) {
 	schemaPath := path.Join(folder, compute.D3MDataSchema)
 	dsDisk, err := serialization.ReadDataset(schemaPath)
 	if err != nil {
@@ -145,11 +139,11 @@ func UpdateDiskDataset(ds *Dataset, data [][]string) error {
 	if err != nil {
 		return err
 	}
-	return dsDisk.UpdateOnDisk(ds, data)
+	return dsDisk.UpdateOnDisk(ds, data, false)
 }
 
 // UpdateOnDisk updates a disk dataset to have the new and updated data.
-func (d *DiskDataset) UpdateOnDisk(ds *Dataset, data [][]string) error {
+func (d *DiskDataset) UpdateOnDisk(ds *Dataset, data [][]string, updateImmutable bool) error {
 	// use the header row to determine the variables to update
 	varMap := MapVariables(ds.Variables, func(variable *model.Variable) string { return variable.HeaderName })
 	d3mIndexIndex := -1
@@ -163,7 +157,7 @@ func (d *DiskDataset) UpdateOnDisk(ds *Dataset, data [][]string) error {
 
 			// if source var doesnt exist, then no update possible
 			// (prefeaturized datasets have all the featurized values that dont exist outside of the disk version)
-			if sourceVar == nil || sourceVar.Immutable {
+			if sourceVar == nil || (!updateImmutable && sourceVar.Immutable) {
 				continue
 			}
 			headerMap[sourceVar.HeaderName] = i
@@ -351,25 +345,6 @@ func ParseVariableUpdateList(data map[string]interface{}) ([]*VariableUpdate, er
 	}
 
 	return updatesParsed, nil
-}
-
-// FetchDataset builds a QueriedDataset from the needed parameters.
-func FetchDataset(dataset string, includeIndex bool, includeMeta bool, filterParams *FilterParams, storageMeta MetadataStorage, storageData DataStorage) (*QueriedDataset, error) {
-	metadata, err := storageMeta.FetchDataset(dataset, false, true, false)
-	if err != nil {
-		return nil, err
-	}
-
-	data, err := storageData.FetchData(dataset, metadata.StorageName, filterParams, false, nil)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to fetch data")
-	}
-
-	return &QueriedDataset{
-		Metadata: metadata,
-		Data:     data,
-		Filters:  filterParams,
-	}, nil
 }
 
 // GetD3MIndexVariable returns the D3M index variable.

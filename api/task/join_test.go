@@ -150,24 +150,32 @@ func TestJoin(t *testing.T) {
 		assert.ElementsMatch(t, records[i], expected[i])
 	}
 
-	assert.ElementsMatch(t, result.Columns, []*apiModel.Column{
+	actualColumns := []*apiModel.Column{
+		result.Columns["d3mIndex"],
+		result.Columns["alpha"],
+		result.Columns["charlie"],
+	}
+	assert.ElementsMatch(t, actualColumns, []*apiModel.Column{
 		{
 			Label:  "D3M Index",
 			Key:    "d3mIndex",
 			Type:   model.IntegerType,
 			Weight: float64(0),
+			Index:  0,
 		},
 		{
 			Label:  "Alpha",
 			Key:    "alpha",
 			Type:   model.RealType,
 			Weight: float64(0),
+			Index:  1,
 		},
 		{
 			Label:  "Charlie",
 			Key:    "charlie",
 			Type:   model.CategoricalType,
 			Weight: float64(0),
+			Index:  2,
 		},
 	})
 

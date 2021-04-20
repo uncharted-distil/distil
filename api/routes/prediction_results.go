@@ -25,6 +25,13 @@ import (
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
+// PredictionResult represents the output from a model prediction.
+type PredictionResult struct {
+	*FilteredDataClient
+	FittedSolutionID string `json:"fittedSolutionId"`
+	ProduceRequestID string `json:"produceRequestId"`
+}
+
 // PredictionResultsHandler fetches a solution's test prediction, or the output of a prediction run against a fitted model.
 func PredictionResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -121,12 +128,12 @@ func PredictionResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api
 		}
 
 		// replace any NaN values with an empty string
-		results = api.ReplaceNaNs(results, api.EmptyString)
+		resultsTransformed := transformDataForClient(results, api.EmptyString)
 
-		outputs := &api.PredictionResult{
-			FilteredData:     results,
-			FittedSolutionID: predictResult.FittedSolutionID,
-			ProduceRequestID: predictResult.ProduceRequestID,
+		outputs := &PredictionResult{
+			FilteredDataClient: resultsTransformed,
+			FittedSolutionID:   predictResult.FittedSolutionID,
+			ProduceRequestID:   predictResult.ProduceRequestID,
 		}
 		// marshal data and sent the response back
 		err = handleJSON(w, outputs)
