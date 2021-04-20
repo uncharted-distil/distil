@@ -166,12 +166,14 @@ export const mutations = {
     const dataset = state.datasets.find((d) => d.name === args.dataset);
     if (dataset) {
       const target = dataset.variables.findIndex((v) => v.key === args.field);
-
+      const stateTarget = state.variables.findIndex(
+        (v) => v.key === args.field && v.datasetName === args.dataset
+      );
       if (target > -1) {
         Vue.set(dataset.variables[target], "colType", args.type);
-        Vue.set(state.variables[target], "colType", args.type);
+        Vue.set(state.variables[stateTarget], "colType", args.type);
         Vue.set(
-          state.variables[target],
+          state.variables[stateTarget],
           "values",
           args.variables[target].values
         );

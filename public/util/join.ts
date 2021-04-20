@@ -53,11 +53,9 @@ export function loadJoinView(
   datasetB: string
 ) {
   const sourceRoute = routeGetters.getRoutePath(store);
-  const target = routeGetters.getRouteTargetVariable(store);
   const entry = createRouteEntry(JOIN_DATASETS_ROUTE, {
     joinDatasets: datasetA + "," + datasetB,
     priorRoute: sourceRoute,
-    target: target,
   });
   router.push(entry).catch((err) => console.warn(err));
 }
