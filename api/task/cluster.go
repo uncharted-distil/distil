@@ -28,10 +28,6 @@ import (
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
-const (
-	slothResultFieldName = "cluster_labels"
-)
-
 // ClusterPoint contains data that has been clustered.
 type ClusterPoint struct {
 	D3MIndex    string
