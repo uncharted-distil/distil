@@ -19,11 +19,9 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
-	"github.com/uncharted-distil/distil-compute/primitive/compute/result"
 
 	sr "github.com/uncharted-distil/distil/api/compute"
 )
@@ -62,111 +60,14 @@ func submitPipeline(datasets []string, step *description.FullySpecifiedPipeline,
 	return sr.SubmitPipeline(client, datasets, nil, nil, step, nil, shouldCache)
 }
 
-func appendFeature(dataset string, d3mIndexField int, hasHeader bool, feature *FeatureRequest, lines [][]string) ([][]string, error) {
-	datasetURI, err := submitPipeline([]string{dataset}, feature.Step, true)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to run pipeline primitive")
-	}
-
-	// parse primitive response (new field contains output)
-	res, err := result.ParseResultCSV(datasetURI)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to parse pipeline primitive result")
-	}
-
-	// find the field with the feature output
-	labelIndex := 1
-	for i, f := range res[0] {
-		if f == feature.OutputVariableName {
-			labelIndex = i
-		}
-	}
-
-	// build the lookup for the new field
-	features := make(map[string]string)
-	for i, v := range res {
-		// skip header
-		if i > 0 {
-			d3mIndex := v[0].(string)
-			label := v[labelIndex].(string)
-			if feature.Clustering {
-				label = createFriendlyLabel(label)
-			}
-			labels := label
-			features[d3mIndex] = labels
-		}
-	}
-
-	// add the new feature to the raw data
-	for i, line := range lines {
-		if i > 0 || !hasHeader {
-			d3mIndex := line[d3mIndexField]
-			feature := features[d3mIndex]
-			line = append(line, feature)
-			lines[i] = line
-		}
-	}
-
-	return lines, nil
-}
-
-func getClusterVariables(meta *model.Metadata, prefix string) ([]*FeatureRequest, error) {
-	mainDR := meta.GetMainDataResource()
-	features := make([]*FeatureRequest, 0)
-	for _, v := range mainDR.Variables {
-		if v.RefersTo != nil && v.RefersTo["resID"] != nil {
-			// get the refered DR
-			resID := v.RefersTo["resID"].(string)
-
-			res := getDataResource(meta, resID)
-
-			// check if needs to be featurized
-			if res.ResType == "timeseries" {
-				// create the new resource to hold the featured output
-				indexName := fmt.Sprintf("%s%s", prefix, v.Key)
-
-				// add the feature variable
-				v := model.NewVariable(len(mainDR.Variables), indexName, "group", v.Key, v.Key, model.CategoricalType,
-					model.CategoricalType, "", []string{"attribute"}, model.VarDistilRoleMetadata, nil, mainDR.Variables, false)
-
-				// create the required pipeline
-				var step *description.FullySpecifiedPipeline
-				var err error
-				outputName := ""
-				if colNames, ok := getTimeValueCols(res); ok {
-					step, err = description.CreateSlothPipeline("time series clustering",
-						"k-means time series clustering", colNames.timeCol, colNames.valueCol, nil, res.Variables)
-					outputName = slothResultFieldName
-				}
-
-				if err != nil {
-					return nil, errors.Wrap(err, "unable to create step pipeline")
-				}
-
-				features = append(features, &FeatureRequest{
-					SourceVariableName:  denormFieldName,
-					FeatureVariableName: indexName,
-					OutputVariableName:  outputName,
-					Variable:            v,
-					Step:                step,
-					Clustering:          true,
-				})
-			}
-		}
-	}
-
-	return features, nil
-}
-
 func getD3MIndexField(dr *model.DataResource) int {
-	d3mIndexField := -1
 	for _, v := range dr.Variables {
 		if v.Key == model.D3MIndexFieldName {
-			d3mIndexField = v.Index
+			return v.Index
 		}
 	}
 
-	return d3mIndexField
+	return -1
 }
 
 func getDataResource(meta *model.Metadata, resID string) *model.DataResource {
@@ -178,39 +79,6 @@ func getDataResource(meta *model.Metadata, resID string) *model.DataResource {
 	}
 
 	return nil
-}
-
-type timeValueCols struct {
-	timeCol  string
-	valueCol string
-}
-
-func getTimeValueCols(dr *model.DataResource) (*timeValueCols, bool) {
-	// find the first column marked as a time and the first that is an
-	// attribute and use those as series values
-	var timeCol string
-	var valueCol string
-	if dr.ResType == "timeseries" {
-		// find a suitable time column and value column - we take the first that works in each
-		// case
-		for _, v := range dr.Variables {
-			for _, r := range v.Role {
-				if r == "timeIndicator" && timeCol == "" {
-					timeCol = v.Key
-				}
-				if r == "attribute" && valueCol == "" {
-					valueCol = v.Key
-				}
-			}
-		}
-		if timeCol != "" && valueCol != "" {
-			return &timeValueCols{
-				timeCol:  timeCol,
-				valueCol: valueCol,
-			}, true
-		}
-	}
-	return nil, false
 }
 
 func mapHeaderFields(meta *model.Metadata) map[string]*model.Variable {

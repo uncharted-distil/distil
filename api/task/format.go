@@ -115,10 +115,8 @@ func addD3MIndex(schemaFile string, meta *model.Metadata, data [][]string) (*mod
 func checkD3MIndexExists(meta *model.Metadata) bool {
 	// check all variables for a d3m index
 	for _, dr := range meta.DataResources {
-		for _, v := range dr.Variables {
-			if v.Key == model.D3MIndexFieldName {
-				return true
-			}
+		if getD3MIndexField(dr) >= 0 {
+			return true
 		}
 	}
 

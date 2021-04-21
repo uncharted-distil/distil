@@ -134,7 +134,7 @@ func ClusterExplainOutput(variable string, resultURI string, explainURI string, 
 		LearningDataset: meta.LearningDataset,
 	}
 
-	addMeta, clustered, err := Cluster(dsCreated, variable, true)
+	addMeta, clustered, err := Cluster(dsCreated, variable, config.ClusteringKMeans)
 	if err != nil {
 		return false, nil, err
 	}
