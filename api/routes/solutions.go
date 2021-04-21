@@ -127,7 +127,7 @@ func SolutionsHandler(solutionCtor api.SolutionStorageCtor, metadataCtor api.Met
 }
 
 // SolutionHandler fetches a solution by its ID.
-func SolutionHandler(solutionCtor api.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
+func SolutionHandler(solutionCtor api.SolutionStorageCtor, metadataCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		solutionID := pat.Param(r, "solution-id")
@@ -143,13 +143,26 @@ func SolutionHandler(solutionCtor api.SolutionStorageCtor) func(http.ResponseWri
 			handleError(w, err)
 			return
 		}
-
+		meta, err := metadataCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
 		req, err := solution.FetchRequest(sol.RequestID)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-
+		// create a variable lookup to get the feature label
+		ds, err := meta.FetchDataset(req.Dataset, true, true, true)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		varMap := map[string]*model.Variable{}
+		for _, v := range ds.Variables {
+			varMap[v.Key] = v
+		}
 		resultID := ""
 		fittedSolutionID := ""
 		if len(sol.Results) > 0 {
@@ -163,6 +176,7 @@ func SolutionHandler(solutionCtor api.SolutionStorageCtor) func(http.ResponseWri
 			Dataset:   req.Dataset,
 			Feature:   req.TargetFeature(),
 			Features:  req.Features,
+			FeatureLabel: varMap[req.TargetFeature()].DisplayName,
 			Filters:   req.Filters,
 			// solution
 			SolutionID:       sol.SolutionID,
