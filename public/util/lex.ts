@@ -49,6 +49,7 @@ import {
   DATE_TIME_LOWER_TYPE,
   GEOBOUNDS_TYPE,
   GEOCOORDINATE_TYPE,
+  isCategoricalType,
   isNumericType,
   TIMESERIES_TYPE,
 } from "./types";
@@ -137,14 +138,48 @@ export function variablesToLexLanguage(
     icon: '<i class="fa fa-filter" />',
     suggestions: allSuggestions,
   }).branch(
-    Lex.from("relation", DistilRelationState, {
-      ...TransitionFactory.valueMetaCompare({ type: TEXT_FILTER }),
-    }).branch(Lex.from("value", TextEntryState)),
+    ...distilTextEntryBuilder(allSuggestions),
     ...distilCategoryEntryBuilder(allSuggestions, catVarLexSuggestions),
     ...distilNumericalEntryBuilder(allSuggestions),
     ...distilDateTimeEntryBuilder(allSuggestions),
     ...distilGeoBoundsEntryBuilder(allSuggestions)
   );
+}
+export function distilTextEntryBuilder(
+  suggestions: ValueStateValue[]
+): StateTemplate[] {
+  const textEntries = [] as ValueStateValue[];
+  const textSuggestions = suggestions.filter((suggestion) => {
+    return suggestion.meta.type === TEXT_FILTER;
+  });
+  const uniqueMetaCount = {} as Dictionary<boolean>;
+  const uniqueSuggestion = textSuggestions.filter((v) => {
+    if (!uniqueMetaCount[v.meta.count + v.meta.mode]) {
+      uniqueMetaCount[v.meta.count + v.meta.mode] = true;
+      return true;
+    }
+    return false;
+  });
+  uniqueSuggestion.forEach((suggestion) => {
+    let branch = Lex.from("value_0", TextEntryState, {
+      cssClasses: modeToColor(suggestion.meta.mode),
+    });
+    for (let i = 1; i < suggestion.meta.count; ++i) {
+      branch = branch
+        .to(LabelState, { label: "OR", vkey: "operator" })
+        .to(`value_${i}`, TextEntryState);
+    }
+    textEntries.push(
+      Lex.from("relation", DistilRelationState, {
+        ...TransitionFactory.valueMetaCompare({
+          type: TEXT_FILTER,
+          count: suggestion.meta.count,
+          mode: suggestion.meta.mode,
+        }),
+      }).branch(branch)
+    );
+  });
+  return textEntries;
 }
 export function distilCategoryEntryBuilder(
   suggestions: ValueStateValue[],
@@ -388,6 +423,9 @@ export function variableAggregation(
         return;
       }
       filterVariables.set(f.key, [variableDict[f.key]]);
+      if (isCategoricalType(f.type)) {
+        filterVariables.get(f.key).length = f.categories.length;
+      }
     }
   });
   const highlightVariables = new Map<string, Variable[]>();
@@ -398,6 +436,9 @@ export function variableAggregation(
         return;
       }
       highlightVariables.set(h.key, [variableDict[h.key]]);
+      if (isCategoricalType(h.type)) {
+        highlightVariables.get(h.key).length = h.categories.length;
+      }
     }
   });
 
@@ -484,9 +525,9 @@ export function filtersToValueState(
       }
       return result;
     } else {
-      for (let i = 0; i < f.length; ++i) {
-        result[`value_${i}`] = new ValueStateValue(f[i].categories[0], null, {
-          displayKey: f[i].categories[0],
+      for (let i = 0; i < f[0].categories.length; ++i) {
+        result[`value_${i}`] = new ValueStateValue(f[0].categories[i], null, {
+          displayKey: f[0].categories[i],
         });
       }
       return result;
@@ -531,7 +572,11 @@ export function lexQueryToFiltersAndHighlight(
           filter.min = parseFloat(lq[`min_${i}`].key);
           filter.max = parseFloat(lq[`max_${i}`].key);
         } else {
-          filter.categories = [lq[`value_${i}`].key];
+          const values: string[] = [];
+          for (i = 0; i < lq.field.meta.count; ++i) {
+            values.push(lq[`value_${i}`].key);
+          }
+          filter.categories = values;
         }
 
         filters.push(filter);
@@ -566,7 +611,11 @@ export function lexQueryToFiltersAndHighlight(
           highlight.value.to = parseFloat(lq[`max_${i}`].key);
           highlight.value.type = NUMERICAL_FILTER;
         } else {
-          highlight.value = lq[`value_${i}`].key;
+          const values: string[] = [];
+          for (i = 0; i < lq.field.meta.count; ++i) {
+            values.push(lq[`value_${i}`].key);
+          }
+          highlight.value = values;
         }
 
         highlights.push(highlight);

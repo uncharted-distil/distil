@@ -130,6 +130,9 @@ export function createFiltersFromHighlights(
 
     let type = getVarType(key);
     const displayName = variable?.colDisplayName;
+    const arrayCheck = (val) => {
+      return Array.isArray(val) ? val : [val];
+    };
     if (!type) {
       type = resultSummaryHighlight(highlight);
     }
@@ -138,7 +141,7 @@ export function createFiltersFromHighlights(
         key: key,
         type: CLUSTER_FILTER,
         mode: highlight.include ?? mode,
-        categories: [highlight.value],
+        categories: arrayCheck(highlight.value),
         displayName: displayName,
       };
     }
@@ -148,7 +151,7 @@ export function createFiltersFromHighlights(
         key: key,
         type: TEXT_FILTER,
         mode: highlight.include ?? mode,
-        categories: [highlight.value],
+        categories: arrayCheck(highlight.value),
         displayName: displayName,
       };
     }
@@ -158,7 +161,7 @@ export function createFiltersFromHighlights(
         key: key,
         type: CATEGORICAL_FILTER,
         mode: highlight.include ?? mode,
-        categories: [highlight.value],
+        categories: arrayCheck(highlight.value),
         displayName: displayName,
       };
     }
