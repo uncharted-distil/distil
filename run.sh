@@ -13,10 +13,10 @@ if [[ -z "${DATAMART_IMPORT_FOLDER}" ]]; then
 fi
 
 # Docker host IP for the services started by ./run_services.sh
-if [[ -z ${DOCKER_HOST} ]]; then 
+if [[ -z ${DOCKER_HOST} ]]; then
   export SOLUTION_COMPUTE_ENDPOINT=localhost:45042
   export ES_ENDPOINT=http://localhost:9200
-else 
+else
   export SOLUTION_COMPUTE_ENDPOINT="${DOCKER_HOST}:45042"
   export ES_ENDPOINT="http://${DOCKER_HOST}:9200"
   export PG_HOST="${DOCKER_HOST}"
@@ -28,7 +28,6 @@ export SOLUTION_SEARCH_MAX_TIME=30000
 export SOLUTION_COMPUTE_PULL_MAX=900000
 export SOLUTION_COMPUTE_PULL_TIMEOUT=60000
 export DATAMART_URL_NYU=https://auctus.vida-nyu.org
-export CLUSTERING_ENABLED=false # no image clustering on ingest
 export SUMMARY_ENABLED=false # no duke summarization on ingest
 export FEATURIZATION_ENABLED=true # featurize remote sensing imagery on ingest
 export CLUSTERING_KMEANS=true # 'true' if kmeans should be used for clustering 'false' if we should use hdbscan

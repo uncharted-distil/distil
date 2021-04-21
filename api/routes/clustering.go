@@ -40,7 +40,7 @@ type ClusteringResult struct {
 func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCtor, config env.Config) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// check if route is enabled
-		if !config.ClusteringRouteEnabled {
+		if !config.ClusteringEnabled {
 			// return empty result
 			err := handleJSON(w, empty.Empty{})
 			if err != nil {

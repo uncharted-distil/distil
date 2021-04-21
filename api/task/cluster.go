@@ -18,7 +18,6 @@ package task
 import (
 	"path"
 
-	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
@@ -27,7 +26,6 @@ import (
 
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
-	"github.com/uncharted-distil/distil/api/serialization"
 )
 
 const (
@@ -39,65 +37,6 @@ type ClusterPoint struct {
 	D3MIndex    string
 	SourceField string
 	Label       string
-}
-
-// ClusterDataset will cluster the dataset fields using a primitive.
-func ClusterDataset(schemaFile string, dataset string, config *IngestTaskConfig) (string, error) {
-	outputPath := createDatasetPaths(schemaFile, dataset, compute.D3MLearningData)
-
-	// load metadata from original schema
-	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile, true)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to load original schema file")
-	}
-	mainDR := meta.GetMainDataResource()
-
-	// add feature variables
-	features, err := getClusterVariables(meta, model.ClusterVarPrefix)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to get cluster variables")
-	}
-
-	d3mIndexField := getD3MIndexField(mainDR)
-
-	// open the input file
-	dataPath := model.GetResourcePath(schemaFile, mainDR)
-	storage := serialization.GetStorage(dataPath)
-	lines, err := storage.ReadData(dataPath)
-	if err != nil {
-		return "", errors.Wrap(err, "error reading raw data")
-	}
-	lines = lines[1:]
-
-	// add the cluster data to the raw data
-	for _, f := range features {
-		mainDR.Variables = append(mainDR.Variables, f.Variable)
-
-		// header already removed, lines does not have a header
-		lines, err = appendFeature(outputPath.outputFolder, d3mIndexField, false, f, lines)
-		if err != nil {
-			return "", errors.Wrap(err, "error appending clustered data")
-		}
-	}
-
-	// output the header
-	output := [][]string{mainDR.GenerateHeader()}
-	output = append(output, lines...)
-
-	datasetStorage := serialization.GetStorage(outputPath.outputData)
-	err = datasetStorage.WriteData(outputPath.outputData, output)
-	if err != nil {
-		return "", errors.Wrap(err, "error writing clustered output")
-	}
-	mainDR.ResPath = outputPath.outputData
-
-	// write the new schema to file
-	err = datasetStorage.WriteMetadata(outputPath.outputSchema, meta, true, false)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to store cluster schema")
-	}
-
-	return outputPath.outputSchema, nil
 }
 
 // Cluster will cluster the dataset fields using a primitive.

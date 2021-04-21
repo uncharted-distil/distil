@@ -42,8 +42,6 @@ const (
 type IngestTaskConfig struct {
 	DatasetBatchSize                 int
 	HasHeader                        bool
-	ClusteringEnabled                bool
-	ClusteringKMeans                 bool
 	FeaturizationEnabled             bool
 	GeocodingEnabled                 bool
 	ClassificationOutputPathRelative string
@@ -93,8 +91,6 @@ func NewConfig(config env.Config) *IngestTaskConfig {
 	return &IngestTaskConfig{
 		DatasetBatchSize:                 config.DatasetBatchSize,
 		HasHeader:                        true,
-		ClusteringEnabled:                config.ClusteringEnabled,
-		ClusteringKMeans:                 config.ClusteringKMeans,
 		FeaturizationEnabled:             config.FeaturizationEnabled,
 		GeocodingEnabled:                 config.GeocodingEnabled,
 		ClassificationOutputPathRelative: config.ClassificationOutputPath,
@@ -161,21 +157,7 @@ func IngestDataset(params *IngestParams, config *IngestTaskConfig, steps *Ingest
 	originalSchemaFile := params.getSchemaDocPath()
 	latestSchemaOutput := originalSchemaFile
 
-	var output string
-	if config.ClusteringEnabled {
-		output, err = ClusterDataset(latestSchemaOutput, params.ID, config)
-		if err != nil {
-			if config.HardFail {
-				return nil, errors.Wrap(err, "unable to cluster all data")
-			}
-			log.Errorf("unable to cluster all data: %v", err)
-		} else {
-			latestSchemaOutput = output
-		}
-		log.Infof("finished clustering the dataset")
-	}
-
-	output, err = Merge(latestSchemaOutput, params.ID, config)
+	output, err := Merge(latestSchemaOutput, params.ID, config)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to merge all data into a single file")
 	}
