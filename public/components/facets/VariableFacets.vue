@@ -131,7 +131,7 @@
               :enable-highlighting="enableHighlighting"
               :ignore-highlights="ignoreHighlights"
               :instance-name="instanceName"
-              @facet-click="onFacetClick"
+              @facet-click="onFacetCategoryClick"
             />
           </template>
           <template v-else-if="summary.type === 'numerical'">
@@ -147,7 +147,6 @@
               :ignore-highlights="ignoreHighlights"
               :instance-name="instanceName"
               @numerical-click="onNumericalClick"
-              @categorical-click="onCategoricalClick"
               @range-change="onRangeChange"
               @facet-click="onFacetClick"
             />
@@ -447,7 +446,46 @@ export default Vue.extend({
         details: { key: key, value: value },
       });
     },
-
+    onFacetCategoryClick(
+      context: string,
+      key: string,
+      value: string[],
+      dataset: string
+    ) {
+      if (this.enableHighlighting) {
+        let highlight = this.highlights.find((h) => {
+          return h.key === key;
+        });
+        const exists = highlight && highlight.value.some((v) => v === value[0]);
+        if (
+          key &&
+          value &&
+          Array.isArray(value) &&
+          value.length > 0 &&
+          !exists
+        ) {
+          highlight = highlight ?? {
+            context: context,
+            dataset: dataset,
+            key: key,
+            value: [],
+          };
+          highlight.value.push(...value);
+          updateHighlight(this.$router, highlight, UPDATE_FOR_KEY);
+        } else {
+          const idx = highlight.value.indexOf(value[0]);
+          highlight.value.splice(idx, 1);
+          updateHighlight(this.$router, highlight, UPDATE_FOR_KEY);
+        }
+        appActions.logUserEvent(this.$store, {
+          feature: Feature.CHANGE_HIGHLIGHT,
+          activity: this.logActivity,
+          subActivity: SubActivity.DATA_TRANSFORMATION,
+          details: { key: key, value: value },
+        });
+      }
+      this.$emit("facet-click", context, key, value);
+    },
     onFacetClick(
       context: string,
       key: string,

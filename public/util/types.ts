@@ -21,7 +21,7 @@ import { D3M_INDEX_FIELD } from "../store/dataset/index";
 import { getters as datasetGetters } from "../store/dataset/module";
 import store from "../store/store";
 import { Dictionary } from "./dict";
-import { BIVARIATE_FILTER } from "./filters";
+import { BIVARIATE_FILTER, TEXT_FILTER } from "./filters";
 
 export enum DISTIL_ROLES {
   Augmented = "augmented",
@@ -356,7 +356,19 @@ export function formatValue(colValue: any, colType: string): any {
   }
   return colValue.toFixed ? colValue.toFixed(4) : colValue;
 }
-
+export function isCategoricalType(type: string): boolean {
+  return [
+    ...META_TYPES.categorical,
+    ...META_TYPES.text,
+    ADDRESS_TYPE,
+    CITY_TYPE,
+    COUNTRY_TYPE,
+    POSTAL_CODE_TYPE,
+    STATE_TYPE,
+    UNKNOWN_TYPE,
+    TEXT_FILTER,
+  ].some((t) => t === type);
+}
 export function isNumericType(type: string): boolean {
   return NUMERIC_TYPES.indexOf(type) !== -1;
 }
