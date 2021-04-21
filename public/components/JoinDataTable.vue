@@ -24,6 +24,7 @@
     sticky-header="100%"
     :items="items"
     :fields="emphasizedFields"
+    class="distil-table mb-1"
     @head-clicked="onColumnClicked"
   >
     <template v-slot:cell()="data">

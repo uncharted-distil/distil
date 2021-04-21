@@ -136,6 +136,8 @@ import {
   NUM_PER_PAGE,
   getTableDataItems,
   getTableDataFields,
+  searchVariables,
+  getVariableSummariesByState,
 } from "../util/data";
 import { JOINED_VARS_INSTANCE } from "../store/route/index";
 import { actions as viewActions } from "../store/view/module";
@@ -168,13 +170,55 @@ export default Vue.extend({
       if (!this.variableSummaries.has(this.topDataset)) {
         return [];
       }
-      return this.variableSummaries.get(this.topDataset);
+      const topVarMap = new Map(
+        this.topVariables.map((tv) => {
+          return [tv.key, tv];
+        })
+      );
+      return this.variableSummaries.get(this.topDataset).filter((vs) => {
+        return topVarMap.has(vs.key);
+      });
     },
     bottomVariableSummaries(): VariableSummary[] {
       if (!this.variableSummaries.has(this.bottomDataset)) {
         return [];
       }
-      return this.variableSummaries.get(this.bottomDataset);
+      const bottomVarMap = new Map(
+        this.bottomVariables.map((bv) => {
+          return [bv.key, bv];
+        })
+      );
+      return this.variableSummaries.get(this.bottomDataset).filter((vs) => {
+        return bottomVarMap.has(vs.key);
+      });
+    },
+    variables(): Map<string, Variable[]> {
+      const variables = datasetGetters.getVariables(this.$store);
+      const result = new Map<string, Variable[]>();
+      this.joinDatasets.forEach((jd) => {
+        result.set(
+          jd,
+          variables.filter((v) => {
+            return v.datasetName === jd;
+          })
+        );
+      });
+      return result;
+    },
+    topVariables(): Variable[] {
+      return searchVariables(
+        this.variables.get(this.topDataset),
+        this.joinVarsSearch
+      );
+    },
+    bottomVariables(): Variable[] {
+      return searchVariables(
+        this.variables.get(this.bottomDataset),
+        this.joinVarsSearch
+      );
+    },
+    joinVarsSearch(): string {
+      return routeGetters.getRouteJoinDatasetsVarsSearch(this.$store);
     },
     numRowsPerPage(): number {
       return NUM_PER_PAGE;
