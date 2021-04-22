@@ -36,7 +36,7 @@
             enable-type-change
             enable-highlighting
             :datasetName="topDataset"
-            :instance-name="instanceName"
+            :instance-name="topFacetName"
             :rows-per-page="numRowsPerPage"
             :summaries="topVariableSummaries"
           />
@@ -47,7 +47,7 @@
             enable-type-change
             enable-highlighting
             :datasetName="bottomDataset"
-            :instance-name="instanceName"
+            :instance-name="bottomFacetName"
             :rows-per-page="numRowsPerPage"
             :summaries="bottomVariableSummaries"
           />
@@ -139,7 +139,7 @@ import {
   searchVariables,
   getVariableSummariesByState,
 } from "../util/data";
-import { JOINED_VARS_INSTANCE } from "../store/route/index";
+import { TOP_VARS_INSTANCE, BOTTOM_VARS_INSTANCE } from "../store/route/index";
 import { actions as viewActions } from "../store/view/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as datasetGetters } from "../store/dataset/module";
@@ -208,23 +208,29 @@ export default Vue.extend({
     topVariables(): Variable[] {
       return searchVariables(
         this.variables.get(this.topDataset),
-        this.joinVarsSearch
+        this.joinTopVarsSearch
       );
     },
     bottomVariables(): Variable[] {
       return searchVariables(
         this.variables.get(this.bottomDataset),
-        this.joinVarsSearch
+        this.joinBottomVarsSearch
       );
     },
-    joinVarsSearch(): string {
-      return routeGetters.getRouteJoinDatasetsVarsSearch(this.$store);
+    joinBottomVarsSearch(): string {
+      return routeGetters.getRouteBottomVarsSearch(this.$store);
+    },
+    joinTopVarsSearch(): string {
+      return routeGetters.getRouteTopVarsSearch(this.$store);
     },
     numRowsPerPage(): number {
       return NUM_PER_PAGE;
     },
-    instanceName(): string {
-      return JOINED_VARS_INSTANCE;
+    bottomFacetName(): string {
+      return BOTTOM_VARS_INSTANCE;
+    },
+    topFacetName(): string {
+      return TOP_VARS_INSTANCE;
     },
     highlightString(): string {
       return routeGetters.getRouteHighlight(this.$store);

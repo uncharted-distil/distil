@@ -42,13 +42,13 @@ import {
   AVAILABLE_TARGET_VARS_INSTANCE_SEARCH,
   AVAILABLE_TRAINING_VARS_INSTANCE_PAGE,
   AVAILABLE_TRAINING_VARS_INSTANCE_SEARCH,
+  BOTTOM_VARS_INSTANCE_SEARCH,
   DATA_EXPLORER_ROUTE,
   DATA_EXPLORER_VARS_INSTANCE_PAGE,
   DATA_EXPLORER_VARS_INSTANCE_SEARCH,
   DATA_SIZE_DEFAULT,
   DATA_SIZE_REMOTE_SENSING_DEFAULT,
   JOINED_VARS_INSTANCE_PAGE,
-  JOINED_VARS_INSTANCE_SEARCH,
   JOIN_DATASETS_ROUTE,
   LABEL_FEATURE_VARS_INSTANCE_PAGE,
   RESULTS_ROUTE,
@@ -56,6 +56,7 @@ import {
   RESULT_TRAINING_VARS_INSTANCE_SEARCH,
   SELECT_TARGET_ROUTE,
   SELECT_TRAINING_ROUTE,
+  TOP_VARS_INSTANCE_SEARCH,
   TRAINING_VARS_INSTANCE_PAGE,
   TRAINING_VARS_INSTANCE_SEARCH,
 } from "../route/index";
@@ -291,12 +292,14 @@ export const getters = {
     pages[RESULTS_ROUTE] = [getters.getRouteResultTrainingVarsPage];
     return pages;
   },
-
-  getRouteJoinDatasetsVarsSearch(state: Route): string {
-    const searchVar = JOINED_VARS_INSTANCE_SEARCH;
+  getRouteTopVarsSearch(state: Route): string {
+    const searchVar = TOP_VARS_INSTANCE_SEARCH;
     return state.query[searchVar] ? _.toString(state.query[searchVar]) : "";
   },
-
+  getRouteBottomVarsSearch(state: Route): string {
+    const searchVar = BOTTOM_VARS_INSTANCE_SEARCH;
+    return state.query[searchVar] ? _.toString(state.query[searchVar]) : "";
+  },
   getRouteAvailableTargetVarsSearch(state: Route): string {
     const searchVar = AVAILABLE_TARGET_VARS_INSTANCE_SEARCH;
     return state.query[searchVar] ? _.toString(state.query[searchVar]) : "";
@@ -337,8 +340,6 @@ export const getters = {
 
   getAllSearchesByQueryString(state: Route, getters: any): Object {
     const searches = {};
-    searches[JOINED_VARS_INSTANCE_SEARCH] =
-      getters.getRouteJoinDatasetsVarsSearch;
     searches[AVAILABLE_TARGET_VARS_INSTANCE_SEARCH] =
       getters.getRouteAvailableTargetVarsSearch;
     searches[AVAILABLE_TRAINING_VARS_INSTANCE_SEARCH] =
