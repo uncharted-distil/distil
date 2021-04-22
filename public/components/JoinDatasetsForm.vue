@@ -149,7 +149,7 @@ export default Vue.extend({
       return datasetGetters.getDatasets(this.$store);
     },
     target(): string {
-      return routeGetters.getRouteTargetVariable(this.$store);
+      return routeGetters.getRoutePreviousTarget(this.$store);
     },
     returnPath(): string {
       return routeGetters.getPriorPath(this.$store);
