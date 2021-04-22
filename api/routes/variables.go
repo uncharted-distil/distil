@@ -69,8 +69,11 @@ func VariablesHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 					log.Warnf("defaulting extrema values due to error fetching extrema for '%s': %+v", v.Key, err)
 					extrema = getDefaultExtrema(v)
 				}
-				v.Min = extrema.Min
-				v.Max = extrema.Max
+				if extrema != nil {
+					// some times the extrema does not exist (ex: the target in a prediction dataset)
+					v.Min = extrema.Min
+					v.Max = extrema.Max
+				}
 			}
 		}
 		// marshal data

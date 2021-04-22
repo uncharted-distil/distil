@@ -172,12 +172,12 @@ func SolutionHandler(solutionCtor api.SolutionStorageCtor, metadataCtor api.Meta
 
 		solutionResponse := SolutionResponse{
 			// request
-			RequestID: req.RequestID,
-			Dataset:   req.Dataset,
-			Feature:   req.TargetFeature(),
-			Features:  req.Features,
+			RequestID:    req.RequestID,
+			Dataset:      req.Dataset,
+			Feature:      req.TargetFeature(),
+			Features:     req.Features,
 			FeatureLabel: varMap[req.TargetFeature()].DisplayName,
-			Filters:   req.Filters,
+			Filters:      req.Filters,
 			// solution
 			SolutionID:       sol.SolutionID,
 			Scores:           sol.Scores,
