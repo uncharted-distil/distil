@@ -98,6 +98,7 @@ export const getters = {
   getAllSearchesByQueryString: read(moduleGetters.getAllSearchesByQueryString),
   getRouteDataSize: read(moduleGetters.getRouteDataSize),
   getRouteTargetVariable: read(moduleGetters.getRouteTargetVariable),
+  getRoutePreviousTarget: read(moduleGetters.getRoutePreviousTarget),
   getRouteSolutionId: read(moduleGetters.getRouteSolutionId),
   getRouteFilters: read(moduleGetters.getRouteFilters),
   getRouteHighlight: read(moduleGetters.getRouteHighlight),

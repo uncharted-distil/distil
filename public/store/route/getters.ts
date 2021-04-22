@@ -292,6 +292,9 @@ export const getters = {
     pages[RESULTS_ROUTE] = [getters.getRouteResultTrainingVarsPage];
     return pages;
   },
+  getRoutePreviousTarget(state: Route): string {
+    return (state.query.previousTarget as string) ?? "";
+  },
   getRouteTopVarsSearch(state: Route): string {
     const searchVar = TOP_VARS_INSTANCE_SEARCH;
     return state.query[searchVar] ? _.toString(state.query[searchVar]) : "";
