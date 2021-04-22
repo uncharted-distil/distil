@@ -38,7 +38,6 @@ type downloadDataset func(datamart *Storage, id string, uri string) (string, err
 type Storage struct {
 	client         *rest.Client
 	outputPath     string
-	getFunction    string
 	searchFunction string
 	ingestConfig   *task.IngestTaskConfig
 	config         *env.Config
@@ -53,7 +52,6 @@ func NewNYUMetadataStorage(outputPath string, config *env.Config, ingestConfig *
 		return &Storage{
 			client:         clientCtor(),
 			outputPath:     outputPath,
-			getFunction:    nyuGetFunction,
 			searchFunction: nyuSearchFunction,
 			config:         config,
 			ingestConfig:   ingestConfig,
@@ -70,7 +68,6 @@ func NewISIMetadataStorage(outputPath string, config *env.Config, ingestConfig *
 		return &Storage{
 			client:         clientCtor(),
 			outputPath:     outputPath,
-			getFunction:    isiGetFunction,
 			searchFunction: isiSearchFunction,
 			config:         config,
 			ingestConfig:   ingestConfig,

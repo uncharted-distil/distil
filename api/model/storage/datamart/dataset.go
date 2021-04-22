@@ -30,8 +30,7 @@ const (
 	// ProvenanceNYU for NYU datamart
 	ProvenanceNYU = "NYU"
 	// ProvenanceISI for ISI datamart
-	ProvenanceISI   = "ISI"
-	getRESTFunction = "download"
+	ProvenanceISI = "ISI"
 )
 
 // SearchQuery contains the basic properties to query.
