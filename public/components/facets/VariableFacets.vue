@@ -475,7 +475,11 @@ export default Vue.extend({
         } else {
           const idx = highlight.value.indexOf(value[0]);
           highlight.value.splice(idx, 1);
-          updateHighlight(this.$router, highlight, UPDATE_FOR_KEY);
+          if (!highlight.value.length) {
+            clearHighlight(this.$router, highlight.key);
+          } else {
+            updateHighlight(this.$router, highlight, UPDATE_FOR_KEY);
+          }
         }
         appActions.logUserEvent(this.$store, {
           feature: Feature.CHANGE_HIGHLIGHT,
