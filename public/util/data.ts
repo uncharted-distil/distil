@@ -1305,10 +1305,13 @@ export function bulkRemoveImages(args: {
   items: TableRow[];
   uniqueTrail?: string;
 }) {
-  if (!args.imageFields.length) {
+  if (!args.imageFields.length || !args.items.length) {
     return;
   }
   const imageKey = args.imageFields[0].key;
+  if (!imageKey || !args.items[0][imageKey]) {
+    return;
+  }
   let imageUrlBuilder = (item: TableRow) => {
     return `${item[imageKey].value}/${args.uniqueTrail}`;
   };
@@ -1328,11 +1331,14 @@ export function FetchImagePack(args: {
   uniqueTrail?: string;
 }) {
   const band = routeGetters.getBandCombinationId(store);
-  if (!args.imageFields.length) {
+  if (!args.imageFields.length || !args.items.length) {
     return;
   }
   const key = args.imageFields[0].key;
   const type = args.imageFields[0].type;
+  if (!args.items[0][key]) {
+    return;
+  }
   let dataset = args.dataset ?? routeGetters.getRouteDataset(store);
   datasetActions.fetchImagePack(store, {
     multiBandImagePackRequest: {

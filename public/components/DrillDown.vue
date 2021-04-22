@@ -183,6 +183,10 @@ export default Vue.extend({
       this.renderTiles = this.spatialSort();
       this.fetchImagePack();
     },
+    band() {
+      this.clearImages();
+      this.fetchImagePack();
+    },
   },
 
   mounted() {
@@ -199,6 +203,13 @@ export default Vue.extend({
           band: this.band,
         },
         uniqueTrail: this.uniqueTrail,
+      });
+    },
+    clearImages() {
+      datasetMutations.bulkRemoveFiles(this.$store, {
+        urls: this.imagesToFetch.map((i) => {
+          return `${i}/${this.uniqueTrail}`;
+        }),
       });
     },
     getIndex(x: number, y: number): SpatialIndex {
@@ -253,11 +264,7 @@ export default Vue.extend({
     },
     onExitClicked() {
       this.$emit("close");
-      datasetMutations.bulkRemoveFiles(this.$store, {
-        urls: this.imagesToFetch.map((i) => {
-          return `${i}/${this.uniqueTrail}`;
-        }),
-      });
+      this.clearImages();
       clearAreaOfInterest();
     },
     onImageClick(event: any) {
