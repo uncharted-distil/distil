@@ -259,7 +259,7 @@ func materializeISIDataset(datamart *Storage, id string, uri string) (string, er
 	params := map[string]string{
 		"datamart_id": id,
 	}
-	data, err := datamart.client.Get(datamart.getFunction, params)
+	data, err := datamart.client.Get(isiGetFunction, params)
 	if err != nil {
 		return "", err
 	}

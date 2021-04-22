@@ -213,7 +213,7 @@ func parseNYUSearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 func materializeNYUDataset(datamart *Storage, id string, uri string) (string, error) {
 	name := path.Base(uri)
 	// get the compressed dataset
-	requestURI := fmt.Sprintf("%s/%s", getRESTFunction, id)
+	requestURI := fmt.Sprintf("%s/%s", nyuGetFunction, id)
 	params := map[string]string{
 		"format":         "d3m",
 		"format_version": "4.0.0",
