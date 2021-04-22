@@ -18,6 +18,7 @@
 import { Route } from "vue-router";
 import { Module } from "vuex";
 import { getStoreAccessors } from "vuex-typescript";
+import { modelModule } from "../model/module";
 import { DistilState } from "../store";
 import { getters as moduleGetters } from "./getters";
 
@@ -78,9 +79,8 @@ export const getters = {
     moduleGetters.getRouteDataExplorerVarsPage
   ),
   getAllRoutePages: read(moduleGetters.getAllRoutePages),
-  getRouteJoinDatasetsVarsSearch: read(
-    moduleGetters.getRouteJoinDatasetsVarsSearch
-  ),
+  getRouteTopVarsSearch: read(moduleGetters.getRouteTopVarsSearch),
+  getRouteBottomVarsSearch: read(moduleGetters.getRouteBottomVarsSearch),
   getRouteAvailableTargetVarsSearch: read(
     moduleGetters.getRouteAvailableTargetVarsSearch
   ),

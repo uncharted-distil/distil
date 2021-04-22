@@ -372,6 +372,8 @@ export const actions = {
       datasetActions.fetchJoinDatasetsVariables(store, {
         datasets: datasetIDs,
       }),
+      datasetActions.fetchMultiBandCombinations(store, { dataset: datasetIDA }),
+      datasetActions.fetchMultiBandCombinations(store, { dataset: datasetIDB }),
     ]).then(() => {
       return actions.updateJoinDatasetsData(context);
     });

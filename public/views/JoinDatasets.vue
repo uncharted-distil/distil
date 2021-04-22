@@ -36,7 +36,7 @@
             enable-type-change
             enable-highlighting
             :datasetName="topDataset"
-            :instance-name="instanceName"
+            :instance-name="topFacetName"
             :rows-per-page="numRowsPerPage"
             :summaries="topVariableSummaries"
           />
@@ -47,7 +47,7 @@
             enable-type-change
             enable-highlighting
             :datasetName="bottomDataset"
-            :instance-name="instanceName"
+            :instance-name="bottomFacetName"
             :rows-per-page="numRowsPerPage"
             :summaries="bottomVariableSummaries"
           />
@@ -136,8 +136,10 @@ import {
   NUM_PER_PAGE,
   getTableDataItems,
   getTableDataFields,
+  searchVariables,
+  getVariableSummariesByState,
 } from "../util/data";
-import { JOINED_VARS_INSTANCE } from "../store/route/index";
+import { TOP_VARS_INSTANCE, BOTTOM_VARS_INSTANCE } from "../store/route/index";
 import { actions as viewActions } from "../store/view/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as datasetGetters } from "../store/dataset/module";
@@ -168,19 +170,67 @@ export default Vue.extend({
       if (!this.variableSummaries.has(this.topDataset)) {
         return [];
       }
-      return this.variableSummaries.get(this.topDataset);
+      const topVarMap = new Map(
+        this.topVariables.map((tv) => {
+          return [tv.key, tv];
+        })
+      );
+      return this.variableSummaries.get(this.topDataset).filter((vs) => {
+        return topVarMap.has(vs.key);
+      });
     },
     bottomVariableSummaries(): VariableSummary[] {
       if (!this.variableSummaries.has(this.bottomDataset)) {
         return [];
       }
-      return this.variableSummaries.get(this.bottomDataset);
+      const bottomVarMap = new Map(
+        this.bottomVariables.map((bv) => {
+          return [bv.key, bv];
+        })
+      );
+      return this.variableSummaries.get(this.bottomDataset).filter((vs) => {
+        return bottomVarMap.has(vs.key);
+      });
+    },
+    variables(): Map<string, Variable[]> {
+      const variables = datasetGetters.getVariables(this.$store);
+      const result = new Map<string, Variable[]>();
+      this.joinDatasets.forEach((jd) => {
+        result.set(
+          jd,
+          variables.filter((v) => {
+            return v.datasetName === jd;
+          })
+        );
+      });
+      return result;
+    },
+    topVariables(): Variable[] {
+      return searchVariables(
+        this.variables.get(this.topDataset),
+        this.joinTopVarsSearch
+      );
+    },
+    bottomVariables(): Variable[] {
+      return searchVariables(
+        this.variables.get(this.bottomDataset),
+        this.joinBottomVarsSearch
+      );
+    },
+    joinBottomVarsSearch(): string {
+      return routeGetters.getRouteBottomVarsSearch(this.$store);
+    },
+    joinTopVarsSearch(): string {
+      return routeGetters.getRouteTopVarsSearch(this.$store);
     },
     numRowsPerPage(): number {
       return NUM_PER_PAGE;
     },
-    instanceName(): string {
-      return JOINED_VARS_INSTANCE;
+    bottomFacetName(): string {
+      return BOTTOM_VARS_INSTANCE;
+    },
+    topFacetName(): string {
+      return TOP_VARS_INSTANCE;
     },
     highlightString(): string {
       return routeGetters.getRouteHighlight(this.$store);

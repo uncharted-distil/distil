@@ -51,7 +51,8 @@ export interface RouteArgs {
   trainingVarsPage?: number;
   availableTargetVarsSearch?: string;
   availableTrainingVarsSearch?: string;
-  joinedVarsSearch?: string;
+  topVarsSearch?: string;
+  bottomVarsSearch?: string;
   resultTrainingVarsSearch?: string;
   trainingVarsSearch?: string;
   task?: string;
