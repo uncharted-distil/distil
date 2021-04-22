@@ -23,8 +23,8 @@ import (
 )
 
 const (
-	nyuSearchFunction       = "search"
-	nyuGetFunction          = "download"
+	nyuSearchFunction       = "api/v1/search"
+	nyuGetFunction          = "api/v1/download"
 	isiSearchFunction       = "search"
 	isiSearchFunctionNoData = "search_without_data"
 	isiGetFunction          = "new/materialize_data"
