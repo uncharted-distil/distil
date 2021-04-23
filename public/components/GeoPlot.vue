@@ -44,9 +44,15 @@
       :isClustering="isClustering"
       :isSatelliteView="isSatelliteView"
       :isSelectionMode="isSelectionMode"
+      :isHidingBaseline="isHidingBaseline"
+      :confidenceClass="confidenceClass"
+      :isColoringByConfidence="isColoringByConfidence"
+      :colorGradient="colorGradient"
+      @confidence-toggle="toggleConfidenceColoring"
       @map-toggle="mapToggle"
       @clustering-toggle="toggleClustering"
       @selection-tool-toggle="toggleSelectionTool"
+      @baseline-toggle="baselineToggle"
     />
     <b-toast
       :id="toastId"
@@ -243,11 +249,6 @@ export default Vue.extend({
       tileRenderer: null,
       overlay: null,
       renderer: null,
-      markers: null,
-      areasMeanLng: 0,
-      closeButton: null,
-      currentRect: null,
-      selectedRect: null,
       isSelectionMode: false,
       isImageDrilldown: false,
       imageUrl: null,
@@ -257,7 +258,6 @@ export default Vue.extend({
       clusterLayerId: "cluster-layer",
       toastTitle: "",
       hoverItem: null,
-      toastImg: "",
       hoverUrl: "",
       imageWidth: 128,
       imageHeight: 128,
@@ -285,6 +285,7 @@ export default Vue.extend({
       isSatelliteView: false,
       tileAreaThreshold: 170, // area in pixels
       boundsInitialized: false,
+      isHidingBaseline: false,
       areas: [],
       debounceKey: null,
     };
@@ -711,7 +712,13 @@ export default Vue.extend({
 
   mounted() {
     this.createLumoMap();
-
+    const maxVal = 255;
+    const color = Color("#999999").rgb().object();
+    this.renderer.setFragmentToDiscard([
+      color.r / maxVal,
+      color.g / maxVal,
+      color.b / maxVal,
+    ]);
     // Make the map container square to avoid webGl issue.
     // https://github.com/uncharted-distil/distil/issues/2015
     const container = this.$refs.geoPlotContainer as HTMLElement;
@@ -720,7 +727,12 @@ export default Vue.extend({
   },
 
   methods: {
-    baselineToggle() {},
+    baselineToggle() {
+      this.isHidingBaseline = !this.isHidingBaseline;
+      this.renderer.shouldDiscardFragment(this.isHidingBaseline);
+      this.tileRenderer.draw();
+      this.renderer.draw();
+    },
     addPrimitives() {
       let vertices = this.tileState.vertices();
       if (vertices.length) {
@@ -1336,33 +1348,6 @@ export default Vue.extend({
   height: 98%;
   bottom: 0;
   max-height: 98%;
-}
-.confidence-icon {
-  width: 30px;
-  height: 30px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  font-weight: bolder;
-  font-size: xx-large;
-}
-.toggled-confidence-icon {
-  width: 30px;
-  height: 30px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  font-weight: bolder;
-  font-size: xx-large;
-  background-size: 100%;
-  background-clip: text;
-  -webkit-background-clip: text;
-  -moz-background-clip: text;
-  background-image: linear-gradient(0deg, #f3ec78, #af4261);
-  -webkit-text-fill-color: transparent;
-  -moz-text-fill-color: transparent;
 }
 
 .geo-close-button {

@@ -137,7 +137,6 @@ import {
   getTableDataItems,
   getTableDataFields,
   searchVariables,
-  getVariableSummariesByState,
 } from "../util/data";
 import { TOP_VARS_INSTANCE, BOTTOM_VARS_INSTANCE } from "../store/route/index";
 import { actions as viewActions } from "../store/view/module";
