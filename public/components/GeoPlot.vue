@@ -733,7 +733,10 @@ export default Vue.extend({
     const width = container?.getBoundingClientRect().width ?? 500;
     container.style.height = width + "px";
   },
-
+  beforeDestroy() {
+    this.map.remove(this.overlay);
+    this.map.remove(this.tileRenderer);
+  },
   methods: {
     baselineToggle() {
       this.isHidingBaseline = !this.isHidingBaseline;
@@ -797,6 +800,9 @@ export default Vue.extend({
         EVENT_TYPES.MOUSE_HOVER,
         this.currentState.onHover
       );
+      if (this.dataItems.length) {
+        this.onNewData();
+      }
     },
     createMapLayers(createOverlay = true) {
       // WebGL CARTO Image Layer
