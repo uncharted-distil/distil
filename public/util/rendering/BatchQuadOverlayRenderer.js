@@ -49,9 +49,13 @@ const SHADER_GLSL = {
   frag: `
     precision highp float;
     uniform float uZoomOpacity;
+    uniform vec3 uFragmentToDiscard;
+    uniform bool uHideFragment;
     varying vec4 oColor;
 		void main() {
-      
+      if(uHideFragment && oColor.xyz == uFragmentToDiscard){
+        discard;
+      }
       gl_FragColor = oColor;
       gl_FragColor.rgb *= uZoomOpacity; // premultiplied alpha
       gl_FragColor.a = uZoomOpacity;
@@ -70,16 +74,24 @@ const PICKING_SHADER = {
   uniform mat4 uProjectionMatrix;
   uniform float uPointSize;
   varying vec4 oId;
+  varying vec4 oColor;
   void main() {
     vec2 wPosition = (aPosition * uScale) - uViewOffset;
     gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
     oId = id;
+    oColor=aColor;
     gl_PointSize = uPointSize;
   }`,
   frag: `
     precision highp float;
+    uniform bool uHideFragment;
+    uniform vec3 uFragmentToDiscard;
     varying vec4 oId;
+    varying vec4 oColor;
 		void main() {
+      if(uHideFragment && uFragmentToDiscard == oColor.xyz){
+        discard;
+      }
 			gl_FragColor = oId;
 		}
 		`,
@@ -105,8 +117,13 @@ const POINT_SHADER = {
   `,
   frag: `
   precision highp float;
+  uniform vec3 uFragmentToDiscard;
+  uniform bool uHideFragment;
   varying vec4 oColor;
   void main() {
+    if(uHideFragment && oColor.xyz == uFragmentToDiscard){
+      discard;
+    }
     float r = 0.0;
     vec2 cxy = 2.0 * gl_PointCoord - 1.0;
     r = dot(cxy, cxy);
@@ -129,16 +146,24 @@ const POINT_PICKING_SHADER = {
   uniform mat4 uProjectionMatrix;
   uniform float uPointSize;
   varying vec4 oId;
+  varying vec4 oColor;
   void main() {
     vec2 wPosition = (aPosition * uScale) - uViewOffset;
     gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
     oId = id;
+    oColor=aColor;
     gl_PointSize = uPointSize / uProjectionMatrix[1][1];
   }`,
   frag: `
     precision highp float;
+    uniform bool uHideFragment;
+    uniform vec3 uFragmentToDiscard;
     varying vec4 oId;
+    varying vec4 oColor;
 		void main() {
+      if(uHideFragment && uFragmentToDiscard == oColor.xyz){
+        discard;
+      }
       float r = 0.0;
       vec2 cxy = 2.0 * gl_PointCoord - 1.0;
       r = dot(cxy, cxy);
@@ -250,10 +275,9 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     this.fboDimensions = { width: 0, height: 0 };
     this.callbacks = { mousehover: [], mouseclick: [] };
     const secondsToMillis = 1000;
-    this.hoverThreshold = defaultTo(
-      options.hoverThreshold,
-      1 * secondsToMillis
-    ); // two seconds hover threshold
+    this.hoverThreshold = defaultTo(options.hoverThreshold, secondsToMillis); // two seconds hover threshold
+    this.hideFragment = false;
+    this.fragmentToDiscard = [0.0, 0.0, 0.0];
     this.BACKGROUND_ID = -1;
     this.hoverTimeoutId = null;
     this.boundOnMove = this.onMove.bind(this);
@@ -372,6 +396,8 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
       shader.setUniform("uViewOffset", [offset.x, offset.y]);
       shader.setUniform("uScale", scale);
       shader.setUniform("uPointSize", this.pointSize);
+      shader.setUniform("uHideFragment", this.hideFragment);
+      shader.setUniform("uFragmentToDiscard", this.fragmentToDiscard);
 
       // draw the points
       buffer.vertex.bind();
@@ -412,6 +438,8 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
       shader.setUniform("uViewOffset", [offset.x, offset.y]);
       shader.setUniform("uScale", scale);
       shader.setUniform("uPointSize", this.pointSize);
+      shader.setUniform("uHideFragment", this.hideFragment);
+      shader.setUniform("uFragmentToDiscard", this.fragmentToDiscard);
       buffer.vertex.bind();
       buffer.vertex.draw();
     });
@@ -560,6 +588,20 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
       cb(id);
     });
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
+  /**
+   *
+   * @param {boolean} bool
+   */
+  shouldDiscardFragment(bool) {
+    this.hideFragment = bool;
+  }
+  /**
+   *
+   * @param {Array<number>} fragment
+   */
+  setFragmentToDiscard(fragment) {
+    this.fragmentToDiscard = fragment;
   }
   /**
    *

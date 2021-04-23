@@ -39,52 +39,21 @@
       :bounds="drillDownState.bounds"
       @close="onFocusOut"
     />
-    <div
-      class="selection-toggle toggle"
-      :class="{ active: isSelectionMode }"
-      @click="toggleSelectionTool"
-    >
-      <a
-        class="selection-toggle-control"
-        title="Select area"
-        aria-label="Select area"
-      >
-        <icon-base width="100%" height="100%"> <icon-crop-free /> </icon-base>
-      </a>
-    </div>
-    <div
-      class="cluster-toggle toggle"
-      :class="{ active: isClustering }"
-      @click="toggleClustering"
-    >
-      <a class="cluster-icon" title="Cluster" aria-label="Cluster Tiles">
-        <i class="fa fa-object-group fa-lg" aria-hidden="true" />
-      </a>
-    </div>
-    <div
-      v-if="dataHasConfidence"
-      class="confidence-toggle toggle"
-      :class="{ active: isColoringByConfidence }"
-      @click="toggleConfidenceColoring"
-    >
-      <a
-        :class="confidenceClass"
-        title="confidence"
-        aria-label="Color by Confidence"
-        :style="colorGradient"
-      >
-        C
-      </a>
-    </div>
-    <div
-      class="map-toggle toggle"
-      :class="{ active: isSatelliteView }"
-      @click="mapToggle"
-    >
-      <a class="cluster-icon" title="Change Map" aria-label="Change Map">
-        <i class="fa fa-globe" aria-hidden="true" />
-      </a>
-    </div>
+    <geoplot-toggle-buttons
+      :dataHasConfidence="dataHasConfidence"
+      :isClustering="isClustering"
+      :isSatelliteView="isSatelliteView"
+      :isSelectionMode="isSelectionMode"
+      :isHidingBaseline="isHidingBaseline"
+      :confidenceClass="confidenceClass"
+      :isColoringByConfidence="isColoringByConfidence"
+      :colorGradient="colorGradient"
+      @confidence-toggle="toggleConfidenceColoring"
+      @map-toggle="mapToggle"
+      @clustering-toggle="toggleClustering"
+      @selection-tool-toggle="toggleSelectionTool"
+      @baseline-toggle="baselineToggle"
+    />
     <b-toast
       :id="toastId"
       :title="toastTitle"
@@ -117,9 +86,8 @@
 <script lang="ts">
 import _ from "lodash";
 import Vue from "vue";
-import IconBase from "./icons/IconBase.vue";
-import IconCropFree from "./icons/IconCropFree.vue";
 import ImageLabel from "./ImageLabel.vue";
+import GeoplotToggleButtons from "./GeoplotToggleButtons.vue";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as requestGetters } from "../store/requests/module";
 import { getters as routeGetters } from "../store/route/module";
@@ -157,7 +125,15 @@ import "leaflet/dist/leaflet.css";
 import "leaflet/dist/images/marker-icon.png";
 import "leaflet/dist/images/marker-icon-2x.png";
 import "leaflet/dist/images/marker-shadow.png";
-import { BLUE_PALETTE } from "../util/color";
+import {
+  BLUE_PALETTE,
+  GRAY,
+  BLUE,
+  SELECTION_RED,
+  BLACK,
+  RESULT_RED,
+  RESULT_GREEN,
+} from "../util/color";
 import DrillDown from "./DrillDown.vue";
 import {
   CoordinateInfo,
@@ -232,11 +208,10 @@ export default Vue.extend({
   name: "GeoPlot",
 
   components: {
-    IconBase,
-    IconCropFree,
     ImageLabel,
     ImagePreview,
     DrillDown,
+    GeoplotToggleButtons,
   },
 
   props: {
@@ -282,11 +257,6 @@ export default Vue.extend({
       tileRenderer: null,
       overlay: null,
       renderer: null,
-      markers: null,
-      areasMeanLng: 0,
-      closeButton: null,
-      currentRect: null,
-      selectedRect: null,
       isSelectionMode: false,
       isImageDrilldown: false,
       imageUrl: null,
@@ -296,7 +266,6 @@ export default Vue.extend({
       clusterLayerId: "cluster-layer",
       toastTitle: "",
       hoverItem: null,
-      toastImg: "",
       hoverUrl: "",
       imageWidth: 128,
       imageHeight: 128,
@@ -324,6 +293,7 @@ export default Vue.extend({
       isSatelliteView: false,
       tileAreaThreshold: 170, // area in pixels
       boundsInitialized: false,
+      isHidingBaseline: false,
       areas: [],
       debounceKey: null,
     };
@@ -750,7 +720,13 @@ export default Vue.extend({
 
   mounted() {
     this.createLumoMap();
-
+    const maxVal = 255;
+    const color = Color(GRAY).rgb().object();
+    this.renderer.setFragmentToDiscard([
+      color.r / maxVal,
+      color.g / maxVal,
+      color.b / maxVal,
+    ]);
     // Make the map container square to avoid webGl issue.
     // https://github.com/uncharted-distil/distil/issues/2015
     const container = this.$refs.geoPlotContainer as HTMLElement;
@@ -759,6 +735,12 @@ export default Vue.extend({
   },
 
   methods: {
+    baselineToggle() {
+      this.isHidingBaseline = !this.isHidingBaseline;
+      this.renderer.shouldDiscardFragment(this.isHidingBaseline);
+      this.tileRenderer.draw();
+      this.renderer.draw();
+    },
     addPrimitives() {
       let vertices = this.tileState.vertices();
       if (vertices.length) {
@@ -1308,12 +1290,12 @@ export default Vue.extend({
     },
 
     tileColor(item: any, idx: number) {
-      let color = this.isExclude ? "#000000" : "#255DCC"; // Default
+      let color = this.isExclude ? BLACK : BLUE; // Default
       if (this.rowSelectionMap.has(item.d3mIndex)) {
-        return "#ff0067";
+        return SELECTION_RED;
       }
       if (item.isExcluded) {
-        return "#999999";
+        return GRAY;
       }
       if (this.isColoringByConfidence) {
         if (
@@ -1329,8 +1311,8 @@ export default Vue.extend({
       if (item[this.targetField] && item[this.predictedField]) {
         color =
           item[this.targetField].value === item[this.predictedField].value
-            ? "#03c003" // Correct: green.
-            : "#be0000"; // Incorrect: red.
+            ? RESULT_GREEN // Correct: green.
+            : RESULT_RED; // Incorrect: red.
       }
 
       return color;
@@ -1376,162 +1358,6 @@ export default Vue.extend({
   max-height: 98%;
 }
 
-.geo-plot-container .selection-toggle {
-  position: absolute;
-  z-index: 999;
-  top: 80px;
-  left: 10px;
-  width: 34px;
-  height: 34px;
-  background-color: #fff;
-  border: 2px solid rgba(0, 0, 0, 0.2);
-  background-clip: padding-box;
-  text-align: center;
-  border-radius: 4px;
-}
-
-.cluster-toggle {
-  position: absolute;
-  z-index: 999;
-  top: 40px;
-  left: 10px;
-  width: 34px;
-  height: 34px;
-  background-color: #fff;
-  border: 2px solid rgba(0, 0, 0, 0.2);
-  background-clip: padding-box;
-  text-align: center;
-  border-radius: 4px;
-}
-.map-toggle {
-  position: absolute;
-  z-index: 999;
-  top: 120px;
-  left: 10px;
-  width: 34px;
-  height: 34px;
-  background-color: #fff;
-  border: 2px solid rgba(0, 0, 0, 0.2);
-  background-clip: padding-box;
-  text-align: center;
-  border-radius: 4px;
-}
-.confidence-toggle {
-  position: absolute;
-  z-index: 999;
-  top: 160px;
-  left: 10px;
-  width: 34px;
-  height: 34px;
-  background-color: #fff;
-  border: 2px solid rgba(0, 0, 0, 0.2);
-  background-clip: padding-box;
-  text-align: center;
-  border-radius: 4px;
-}
-.cluster-icon {
-  width: 30px;
-  height: 30px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-}
-.confidence-icon {
-  width: 30px;
-  height: 30px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  font-weight: bolder;
-  font-size: xx-large;
-}
-.toggled-confidence-icon {
-  width: 30px;
-  height: 30px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  font-weight: bolder;
-  font-size: xx-large;
-  background-size: 100%;
-  background-clip: text;
-  -webkit-background-clip: text;
-  -moz-background-clip: text;
-  background-image: linear-gradient(0deg, #f3ec78, #af4261);
-  -webkit-text-fill-color: transparent;
-  -moz-text-fill-color: transparent;
-}
-.confidence-toggle.active:hover::after {
-  content: "----Less Confidence";
-  position: absolute;
-  white-space: nowrap;
-  left: 30px;
-  top: 15px; /*works out to 4 pixels from bottom (this is based off the font size)*/
-  display: inline;
-  position: absolute;
-}
-.confidence-toggle.active:hover::before {
-  content: "----More Confidence";
-  white-space: nowrap;
-  left: 30px;
-  top: -7px; /*works out to 4 pixels from top (this is based off the font size)*/
-  display: inline;
-  position: absolute;
-}
-.toggle:hover {
-  background-color: #f4f4f4;
-}
-
-.toggle.active {
-  color: #26b8d1;
-}
-
-.geo-plot-container .selection-toggle-control {
-  text-decoration: none;
-  color: black;
-  cursor: pointer;
-}
-
-.geo-plot-container .selection-toggle-control:hover {
-  text-decoration: none;
-  color: black;
-}
-
-.geo-plot-container .selection-toggle.active {
-  position: absolute;
-}
-
-.geo-plot-container .selection-toggle.active .selection-toggle-control {
-  color: #26b8d1;
-}
-
-.geo-plot-container.selection-mode .geo-plot {
-  cursor: crosshair;
-}
-
-path.selected {
-  stroke-width: 2;
-  fill-opacity: 0.4;
-}
-
-.geo-plot .markerPoint:hover {
-  filter: brightness(1.2);
-}
-
-.geo-plot .markerPoint.selected {
-  filter: hue-rotate(150deg);
-}
-
-.leaflet-tooltip {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 300px !important;
-}
-
 .geo-close-button {
   position: absolute;
   width: 24px;
@@ -1550,11 +1376,6 @@ path.selected {
 
 .geo-close-button:hover {
   background-color: #f4f4f4;
-}
-.geo-toast {
-  position: absolute;
-  top: 0px;
-  right: 0px;
 }
 .image-label {
   position: absolute;
