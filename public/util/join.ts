@@ -22,7 +22,7 @@ import { JOIN_DATASETS_ROUTE } from "../store/route/index";
 import { getters as routeGetters } from "../store/route/module";
 import store from "../store/store";
 import { addRecentDataset, minimumRouteKey } from "./data";
-import { createRouteEntry } from "./routes";
+import { createRouteEntry, overlayRouteEntry } from "./routes";
 
 export function loadJoinedDataset(
   router: VueRouter,
@@ -57,6 +57,29 @@ export function loadJoinView(
     joinDatasets: datasetA + "," + datasetB,
     priorRoute: sourceRoute,
     previousTarget: routeGetters.getRouteTargetVariable(store),
+  });
+  router.push(entry).catch((err) => console.warn(err));
+}
+
+export function swapJoinView(router: VueRouter) {
+  const joinedDataset = routeGetters.getRouteJoinDatasets(store);
+  // swap the datasets themselves
+  const tmp = joinedDataset[1];
+  joinedDataset[1] = joinedDataset[0];
+  joinedDataset[0] = tmp;
+
+  const joinPairs = routeGetters.getJoinPairs(store);
+  const entry = overlayRouteEntry(routeGetters.getRoute(store), {
+    joinPairs: [
+      ...joinPairs.map((jp) => {
+        // swap the join pairs
+        const first = jp.first;
+        jp.first = jp.second;
+        jp.second = first;
+        return JSON.stringify(jp);
+      }),
+    ],
+    joinDatasets: joinedDataset.join(),
   });
   router.push(entry).catch((err) => console.warn(err));
 }

@@ -83,6 +83,11 @@
           />
         </div>
         <div class="row pb-5">
+          <div class="col-12 d-flex flex-column align-items-center">
+            <b-button variant="primary" @click="swapDatasets">
+              Swap Datasets
+            </b-button>
+          </div>
           <div
             class="join-accuracy-slider col-12 d-flex flex-column align-items-center"
           >
@@ -143,7 +148,7 @@ import { TOP_VARS_INSTANCE, BOTTOM_VARS_INSTANCE } from "../store/route/index";
 import { actions as viewActions } from "../store/view/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as datasetGetters } from "../store/dataset/module";
-import { getVariableSummaries } from "../util/join";
+import { getVariableSummaries, swapJoinView } from "../util/join";
 
 export default Vue.extend({
   name: "join-datasets",
@@ -402,6 +407,11 @@ export default Vue.extend({
         joinAccuracy: value.toString(),
       });
       this.$router.push(entry).catch((err) => console.warn(err));
+    },
+    swapDatasets() {
+      if (this.joinDatasets.length >= 2) {
+        swapJoinView(this.$router);
+      }
     },
   },
 });
