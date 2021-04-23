@@ -125,7 +125,15 @@ import "leaflet/dist/leaflet.css";
 import "leaflet/dist/images/marker-icon.png";
 import "leaflet/dist/images/marker-icon-2x.png";
 import "leaflet/dist/images/marker-shadow.png";
-import { BLUE_PALETTE } from "../util/color";
+import {
+  BLUE_PALETTE,
+  GRAY,
+  BLUE,
+  SELECTION_RED,
+  BLACK,
+  RESULT_RED,
+  RESULT_GREEN,
+} from "../util/color";
 import DrillDown from "./DrillDown.vue";
 import {
   CoordinateInfo,
@@ -713,7 +721,7 @@ export default Vue.extend({
   mounted() {
     this.createLumoMap();
     const maxVal = 255;
-    const color = Color("#999999").rgb().object();
+    const color = Color(GRAY).rgb().object();
     this.renderer.setFragmentToDiscard([
       color.r / maxVal,
       color.g / maxVal,
@@ -1282,12 +1290,12 @@ export default Vue.extend({
     },
 
     tileColor(item: any, idx: number) {
-      let color = this.isExclude ? "#000000" : "#255DCC"; // Default
+      let color = this.isExclude ? BLACK : BLUE; // Default
       if (this.rowSelectionMap.has(item.d3mIndex)) {
-        return "#ff0067";
+        return SELECTION_RED;
       }
       if (item.isExcluded) {
-        return "#999999";
+        return GRAY;
       }
       if (this.isColoringByConfidence) {
         if (
@@ -1303,8 +1311,8 @@ export default Vue.extend({
       if (item[this.targetField] && item[this.predictedField]) {
         color =
           item[this.targetField].value === item[this.predictedField].value
-            ? "#03c003" // Correct: green.
-            : "#be0000"; // Incorrect: red.
+            ? RESULT_GREEN // Correct: green.
+            : RESULT_RED; // Incorrect: red.
       }
 
       return color;

@@ -55,3 +55,14 @@ export const BLACK_PALETTE = [
   "#070707",
   "#000000",
 ];
+
+export const GRAY = "#999999";
+
+export const BLUE = "#255DCC";
+
+export const SELECTION_RED = "#ff0067";
+
+export const BLACK = "#000000";
+
+export const RESULT_RED = "#be0000";
+export const RESULT_GREEN = "#03c003";

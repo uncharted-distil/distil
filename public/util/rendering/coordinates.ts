@@ -20,6 +20,7 @@ type LatLngBoundsLiteral = import("leaflet").LatLngBoundsLiteral;
 import Color from "color";
 import { TableRow } from "../../store/dataset";
 import { Dictionary } from "../dict";
+import { GRAY } from "../color";
 export enum Coordinate {
   lat,
   lng,
@@ -191,7 +192,7 @@ export function updateVertexPrimitiveColor(
     return;
   }
   const maxVal = 255;
-  const gray = Color("#999999").rgb().object();
+  const gray = Color(GRAY).rgb().object();
   gray.r /= maxVal;
   gray.g /= maxVal;
   gray.b /= maxVal;
