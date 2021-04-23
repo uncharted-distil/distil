@@ -425,9 +425,12 @@ func UpdateExtremas(dataset string, varName string, storageMeta MetadataStorage,
 		}
 
 		// store the extrema to ES
-		err = storageMeta.SetExtrema(dataset, varName, extrema)
-		if err != nil {
-			return err
+		// empty columns will have a nil extrema (potential bad join or some other empty column)
+		if extrema != nil {
+			err = storageMeta.SetExtrema(dataset, varName, extrema)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
