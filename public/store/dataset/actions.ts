@@ -1562,11 +1562,6 @@ export const actions = {
         ? mutations.setAreaOfInterestExcludeInner
         : mutations.setAreaOfInterestExcludeOuter;
     }
-    // if is exclude and highlight is null there is nothing to invert
-    if (!args.mutatorIsInclude && !args.highlights.length) {
-      mutator(context, { values: [] });
-      return;
-    }
     const data = await actions.fetchTableData(context, {
       dataset: args.dataset,
       filterParams: args.filterParams,
