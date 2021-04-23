@@ -456,30 +456,17 @@ export default Vue.extend({
         let highlight = this.highlights.find((h) => {
           return h.key === key;
         });
-        const exists = highlight && highlight.value.some((v) => v === value[0]);
-        if (
-          key &&
-          value &&
-          Array.isArray(value) &&
-          value.length > 0 &&
-          !exists
-        ) {
+        if (key && value && Array.isArray(value) && value.length > 0) {
           highlight = highlight ?? {
             context: context,
             dataset: dataset,
             key: key,
             value: [],
           };
-          highlight.value.push(...value);
+          highlight.value = value;
           updateHighlight(this.$router, highlight, UPDATE_FOR_KEY);
         } else {
-          const idx = highlight.value.indexOf(value[0]);
-          highlight.value.splice(idx, 1);
-          if (!highlight.value.length) {
-            clearHighlight(this.$router, highlight.key);
-          } else {
-            updateHighlight(this.$router, highlight, UPDATE_FOR_KEY);
-          }
+          clearHighlight(this.$router, highlight.key);
         }
         appActions.logUserEvent(this.$store, {
           feature: Feature.CHANGE_HIGHLIGHT,
