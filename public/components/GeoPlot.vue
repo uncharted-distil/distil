@@ -143,6 +143,7 @@ import {
   Coordinate,
   updateVertexPrimitiveColor,
 } from "../util/rendering/coordinates";
+import { overlayRouteEntry } from "../util/routes";
 
 const SINGLE_FIELD = 1;
 const SPLIT_FIELD = 2;
@@ -249,6 +250,10 @@ export default Vue.extend({
       },
     },
     isExclude: { type: Boolean as () => boolean, default: false },
+    maxDataSize: {
+      type: Number as () => number,
+      default: Number.MAX_SAFE_INTEGER,
+    },
   },
 
   data() {
@@ -728,6 +733,10 @@ export default Vue.extend({
       color.b / maxVal,
     ]);
     this.fitBounds();
+    const entry = overlayRouteEntry(this.$route, {
+      dataSize: this.maxDataSize,
+    });
+    this.$router.push(entry).catch((err) => console.warn(err));
   },
   beforeDestroy() {
     this.map.remove(this.overlay);

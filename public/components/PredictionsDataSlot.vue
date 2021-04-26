@@ -286,6 +286,12 @@ export default Vue.extend({
       if (this.viewType === TIMESERIES_VIEW) return "ResultsTimeseriesView";
       return "";
     },
+    isGeoView(): boolean {
+      return this.viewType === GEO_VIEW;
+    },
+    dataSize(): number {
+      return routeGetters.getRouteDataSize(this.$store);
+    },
   },
 
   created() {
@@ -314,13 +320,19 @@ export default Vue.extend({
     },
     /* When the user request to fetch a different size of data. */
     onDataSizeSubmit(dataSize: number) {
-      const entry = overlayRouteEntry(this.$route, { dataSize });
-      this.$router.push(entry).catch((err) => console.warn(err));
+      if (this.dataSize !== dataSize) {
+        const entry = overlayRouteEntry(this.$route, { dataSize });
+        this.$router.push(entry).catch((err) => console.warn(err));
+      }
+    },
+  },
+  watch: {
+    dataSize() {
       predictionsActions.fetchPredictionTableData(this.$store, {
         dataset: this.dataset,
         highlights: this.highlights,
         produceRequestId: this.produceRequestId,
-        size: dataSize,
+        size: this.dataSize,
         isBaseline: false,
       });
     },
