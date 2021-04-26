@@ -429,12 +429,16 @@ export default Vue.extend({
       dataset: string
     ) {
       if (key && value) {
-        updateHighlight(this.$router, {
-          context: context,
-          dataset: dataset,
-          key: key,
-          value: value,
-        });
+        updateHighlight(
+          this.$router,
+          {
+            context: context,
+            dataset: dataset,
+            key: key,
+            value: value,
+          },
+          UPDATE_FOR_KEY
+        );
       } else {
         clearHighlight(this.$router, key);
       }
