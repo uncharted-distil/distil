@@ -164,10 +164,20 @@ func (s *Storage) IngestDataset(datasetSource metadata.DatasetSource, meta *mode
 }
 
 // DeleteDataset deletes a dataset from ES.
-func (s *Storage) DeleteDataset(dataset string) error {
-	_, err := s.client.Delete().Index(s.datasetIndex).Id(dataset).Refresh("true").Do(context.Background())
+func (s *Storage) DeleteDataset(dataset string, softDelete bool) error {
+	if !softDelete {
+		_, err := s.client.Delete().Index(s.datasetIndex).Id(dataset).Refresh("true").Do(context.Background())
+		return err
+	}
 
-	return err
+	// pull the dataset and update the deleted flag
+	ds, err := s.FetchDataset(dataset, true, true, true)
+	if err != nil {
+		return err
+	}
+	ds.Deleted = true
+
+	return s.UpdateDataset(ds)
 }
 
 func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, includeMeta bool, includeSystemData bool) ([]*api.Dataset, error) {

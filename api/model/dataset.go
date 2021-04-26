@@ -61,6 +61,7 @@ type Dataset struct {
 	Clone           bool                   `json:"clone"`
 	Immutable       bool                   `json:"immutable"`
 	ParentDataset   string                 `json:"parentDataset"`
+	Deleted         bool                   `json:"deleted"`
 }
 
 // JoinSuggestion specifies potential joins between datasets.

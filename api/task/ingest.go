@@ -647,7 +647,7 @@ func matchDataset(storage api.MetadataStorage, meta *model.Metadata) (string, er
 func deleteDataset(name string, pg *postgres.Database, meta api.MetadataStorage) error {
 	success := false
 	for i := 0; i < 10 && !success; i++ {
-		err := meta.DeleteDataset(name)
+		err := meta.DeleteDataset(name, false)
 		if err != nil {
 			log.Error(err)
 		} else {
