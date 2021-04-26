@@ -135,10 +135,10 @@ export default Vue.extend({
   },
   methods: {
     getConfidenceRank(item: TableRow, idx: number): number {
-      if (item[this.labelFeatureName] === LowShotLabels.positive) {
+      if (item[this.labelFeatureName].value === LowShotLabels.positive) {
         return 1.0;
       }
-      if (item[this.labelFeatureName] === LowShotLabels.negative) {
+      if (item[this.labelFeatureName].value === LowShotLabels.negative) {
         return 0;
       }
       // comes back order by confidence so the rank is already engrained in the array

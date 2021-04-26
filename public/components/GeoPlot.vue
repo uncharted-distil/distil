@@ -1359,7 +1359,7 @@ export default Vue.extend({
       this.renderer.refreshBuffers(); // rebuilds webgl buffers
       this.tileRenderer.draw();
       this.renderer.draw(); // draw the newly rebuilt buffers
-      if (this.boundsInitialized) {
+      if (!this.boundsInitialized) {
         this.fitBounds();
       }
       // don't show exit button
