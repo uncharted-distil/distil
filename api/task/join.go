@@ -196,7 +196,7 @@ func createFilteredData(csvFile string, variables []*model.Variable, lineCount i
 		for j := 0; j < len(row); j++ {
 			varType := variables[j].Type
 			typedRow[j] = &apiModel.FilteredDataValue{}
-			if model.IsNumerical(varType) {
+			if model.IsNumerical(varType) && row[j] != "" {
 				if model.IsFloatingPoint(varType) {
 					typedRow[j].Value, err = strconv.ParseFloat(row[j], 64)
 					if err != nil {
