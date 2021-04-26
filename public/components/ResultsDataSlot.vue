@@ -17,7 +17,7 @@
 
 <template>
   <div class="results-data-slot">
-    <p v-if="hasResults" class="results-data-slot-summary">
+    <p v-if="hasResults && !isGeoView" class="results-data-slot-summary">
       Displaying
       <data-size
         :current-size="numItems"
@@ -87,6 +87,7 @@ import { spinnerHTML } from "../util/spinner";
 import { getVariableSummariesByState, searchVariables } from "../util/data";
 import { isGeoLocatedType } from "../util/types";
 import { Filter, INCLUDE_FILTER } from "../util/filters";
+import { overlayRouteEntry } from "../util/routes";
 
 const GEO_VIEW = "geo";
 const GRAPH_VIEW = "graph";
@@ -287,6 +288,9 @@ export default Vue.extend({
         this.resultTrainingVarsSearch
       );
     },
+    dataSize(): number {
+      return routeGetters.getRouteDataSize(this.$store);
+    },
     trainingSummaries(): VariableSummary[] {
       const summaryDictionary = resultsGetters.getTrainingSummariesDictionary(
         this.$store
@@ -339,17 +343,9 @@ export default Vue.extend({
 
     /* When the user request to fetch a different size of data. */
     onDataSizeSubmit(dataSize: number) {
-      const args: any = {
-        dataset: this.dataset,
-        highlights: this.highlights,
-        size: dataSize,
-        solutionId: this.solutionId,
-      };
-
-      if (this.excluded) {
-        resultsActions.fetchExcludedResultTableData(this.$store, args);
-      } else {
-        resultsActions.fetchIncludedResultTableData(this.$store, args);
+      if (this.dataSize !== dataSize) {
+        const entry = overlayRouteEntry(this.$route, { dataSize: dataSize });
+        this.$router.push(entry).catch((err) => console.warn(err));
       }
     },
     async onTileClick(data: TileClickData) {
@@ -366,6 +362,21 @@ export default Vue.extend({
       };
       // fetch surrounding tiles
       await viewActions.updateResultAreaOfInterest(this.$store, filter);
+    },
+  },
+  watch: {
+    dataSize() {
+      const args: any = {
+        dataset: this.dataset,
+        highlights: this.highlights,
+        size: this.dataSize,
+        solutionId: this.solutionId,
+      };
+      if (this.excluded) {
+        resultsActions.fetchExcludedResultTableData(this.$store, args);
+      } else {
+        resultsActions.fetchIncludedResultTableData(this.$store, args);
+      }
     },
   },
 });

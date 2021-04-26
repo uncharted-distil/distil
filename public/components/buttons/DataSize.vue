@@ -61,7 +61,7 @@
 <script lang="ts">
 import Vue from "vue";
 import { BDropdown } from "bootstrap-vue";
-
+import { getters as routeGetters } from "../../store/route/module";
 /**
  * Button to change the size of a current data.
  * @param {Number} currentSize - the current number of data.
@@ -94,6 +94,9 @@ export default Vue.extend({
     isDisabled(): boolean {
       return this.isUpdating || this.dataSize === this.currentSize;
     },
+    routeDataSize(): number {
+      return routeGetters.getRouteDataSize(this.$store);
+    },
   },
 
   methods: {
@@ -111,6 +114,10 @@ export default Vue.extend({
       this.isUpdating = false;
       const dropdown = this.$refs.dropdown as typeof BDropdown;
       dropdown.hide();
+    },
+    routeDataSize() {
+      this.dataSize = this.routeDataSize;
+      this.onUpdate();
     },
   },
 });

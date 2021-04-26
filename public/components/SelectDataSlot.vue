@@ -49,7 +49,7 @@
     />
 
     <div class="table-title-container">
-      <p class="selection-data-slot-summary">
+      <p v-if="!isGeoView" class="selection-data-slot-summary">
         <data-size
           :current-size="numItems"
           :total="numRows"
@@ -337,7 +337,9 @@ export default Vue.extend({
     isMultiBandImage(): boolean {
       return routeGetters.isMultiBandImage(this.$store);
     },
-
+    isGeoView(): boolean {
+      return this.viewTypeModel === GEO_VIEW;
+    },
     /* Select which component to display the data. */
     viewComponent(): string {
       if (this.viewTypeModel === GEO_VIEW) return "SelectGeoPlot";
@@ -346,6 +348,9 @@ export default Vue.extend({
       if (this.viewTypeModel === TIMESERIES_VIEW) return "SelectTimeseriesView";
       // Default is TABLE_VIEW
       return "SelectDataTable";
+    },
+    dataSize(): number {
+      return routeGetters.getRouteDataSize(this.$store);
     },
   },
 
@@ -412,9 +417,10 @@ export default Vue.extend({
 
     /* When the user request to fetch a different size of data. */
     onDataSizeSubmit(dataSize: number) {
-      const entry = overlayRouteEntry(this.$route, { dataSize });
-      this.$router.push(entry).catch((err) => console.warn(err));
-      viewActions.updateSelectTrainingData(this.$store);
+      if (this.dataSize !== dataSize) {
+        const entry = overlayRouteEntry(this.$route, { dataSize });
+        this.$router.push(entry).catch((err) => console.warn(err));
+      }
     },
 
     resetHighlightsOrRow() {
@@ -429,6 +435,11 @@ export default Vue.extend({
       const lqfh = lexQueryToFiltersAndHighlight(lexQuery, this.dataset);
       deepUpdateFiltersInRoute(this.$router, lqfh.filters);
       updateHighlight(this.$router, lqfh.highlights, UPDATE_ALL);
+    },
+  },
+  watch: {
+    dataSize() {
+      viewActions.updateSelectTrainingData(this.$store);
     },
   },
 });
