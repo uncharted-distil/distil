@@ -856,7 +856,8 @@ export default Vue.extend({
       this.map.remove(this.overlay);
       this.createMapLayers(false);
       this.map.add(this.overlay);
-      this.updateMapState(); // trigger a tile render
+      this.tileRenderer.draw();
+      this.renderer.draw();
     },
     /**
      * toggle clustering
