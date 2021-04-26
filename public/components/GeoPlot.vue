@@ -727,17 +727,20 @@ export default Vue.extend({
       color.g / maxVal,
       color.b / maxVal,
     ]);
-    // Make the map container square to avoid webGl issue.
-    // https://github.com/uncharted-distil/distil/issues/2015
-    const container = this.$refs.geoPlotContainer as HTMLElement;
-    const width = container?.getBoundingClientRect().width ?? 500;
-    container.style.height = width + "px";
+    this.fitBounds();
   },
   beforeDestroy() {
     this.map.remove(this.overlay);
     this.map.remove(this.tileRenderer);
   },
   methods: {
+    fitBounds() {
+      const mapBounds = this.getBounds(
+        this.overlay.getQuad(this.clusterState.layerId())
+      );
+      this.map.fitToBounds(mapBounds);
+      this.boundsInitialized = true;
+    },
     baselineToggle() {
       this.isHidingBaseline = !this.isHidingBaseline;
       this.renderer.shouldDiscardFragment(this.isHidingBaseline);
@@ -1347,6 +1350,9 @@ export default Vue.extend({
       this.renderer.refreshBuffers(); // rebuilds webgl buffers
       this.tileRenderer.draw();
       this.renderer.draw(); // draw the newly rebuilt buffers
+      if (this.boundsInitialized) {
+        this.fitBounds();
+      }
       // don't show exit button
       this.showExit = false;
     },
