@@ -139,7 +139,7 @@ func convertResultToRanking(results *[][]string) error {
 
 // DeleteQueryCache deletes the query cache folder if it exists.
 func DeleteQueryCache(datasetID string) {
-	log.Infof("removing %s", datasetID)
+	log.Infof("removing %s from query cache", datasetID)
 	cachePath := getQueryCachePath(datasetID)
 	if err := os.RemoveAll(cachePath); err != nil {
 		log.Warnf("failed to remove query cache - %s", err)

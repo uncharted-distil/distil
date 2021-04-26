@@ -79,6 +79,7 @@ func (s *Storage) UpdateDataset(dataset *api.Dataset) error {
 		"clone":           dataset.Clone,
 		"immutable":       dataset.Immutable,
 		"parentDataset":   dataset.ParentDataset,
+		"deleted":         dataset.Deleted,
 	}
 
 	bytes, err := json.Marshal(source)
@@ -143,6 +144,7 @@ func (s *Storage) IngestDataset(datasetSource metadata.DatasetSource, meta *mode
 		"clone":            meta.Clone,
 		"immutable":        meta.Immutable,
 		"parentDataset":    "",
+		"deleted":          false,
 	}
 
 	bytes, err := json.Marshal(source)
@@ -193,6 +195,16 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 		if !ok {
 			id = hit.Id
 		}
+
+		// ignore deleted datasets
+		deleted, ok := json.Bool(src, "deleted")
+		if !ok {
+			deleted = false
+		}
+		if deleted {
+			continue
+		}
+
 		// extract the name
 		name, ok := json.String(src, "datasetName")
 		if !ok || name == "NULL" {
@@ -323,6 +335,7 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 			Immutable:       immutable,
 			Clone:           clone,
 			ParentDataset:   parentDataset,
+			Deleted:         deleted,
 		})
 	}
 	return datasets, nil
