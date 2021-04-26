@@ -45,7 +45,7 @@ import { getters as routeGetters } from "../store/route/module";
 import { getVariableSummariesByState, searchVariables } from "../util/data";
 import { isGeoLocatedType } from "../util/types";
 import { actions as viewActions } from "../store/view/module";
-import { INCLUDE_FILTER, Filter } from "../util/filters";
+import { INCLUDE_FILTER, Filter, EXCLUDE_FILTER } from "../util/filters";
 export default Vue.extend({
   name: "select-geo-plot",
 
@@ -124,7 +124,7 @@ export default Vue.extend({
         maxY: data.bounds[0][0],
         minX: data.bounds[0][1],
         minY: data.bounds[1][0],
-        mode: INCLUDE_FILTER,
+        mode: EXCLUDE_FILTER,
         type: data.type,
       };
       // fetch area of interests

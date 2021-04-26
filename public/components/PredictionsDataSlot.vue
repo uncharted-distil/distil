@@ -149,7 +149,9 @@ export default Vue.extend({
         1,
         this.trainingVariables.length,
         this.trainingVariables,
-        summaryDictionary
+        summaryDictionary,
+        true,
+        routeGetters.getRoutePredictionsDataset(this.$store)
       );
       return currentSummaries.filter((cs) => {
         return isGeoLocatedType(cs.varType);

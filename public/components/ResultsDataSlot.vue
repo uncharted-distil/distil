@@ -381,6 +381,8 @@ export default Vue.extend({
 .results-data-slot {
   display: flex;
   flex-direction: column;
+  max-height: 98%;
+  height: 98%;
 }
 
 .results-data-slot-container {

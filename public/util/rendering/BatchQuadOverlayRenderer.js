@@ -325,6 +325,7 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     this.fbo = null;
     this.depthBuffer = null;
     this.targetTexture = null;
+    this.fboDimensions = { width: 0, height: 0 };
     return this;
   }
   /**

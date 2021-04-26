@@ -652,6 +652,7 @@ export const actions = {
     // this is a hack to avoid adding an extra field just for the area of interest
     const clonedFilterParams = _.cloneDeep(filterParams);
     clonedFilterParams.filters.list.push(filter);
+    clonedFilterParams.filters.invert = true;
     const clonedExcludeFilter = _.cloneDeep(filter);
     // the exclude has to invert all the filters -- the route does a collective NOT() and
     // for areaOfInterest we need compounded ands so therefore we invert client side pass in
@@ -689,8 +690,8 @@ export const actions = {
       }), // include inner tiles
       datasetActions.fetchAreaOfInterestData(store, {
         dataset: dataset,
-        filterParams: baseline,
-        highlights: invertedHighlights,
+        filterParams: clonedFilterParams,
+        highlights: [],
         dataMode: dataMode,
         include: true,
         mutatorIsInclude: false,
@@ -698,7 +699,7 @@ export const actions = {
       }), // include outer tiles
       datasetActions.fetchAreaOfInterestData(store, {
         dataset: dataset,
-        filterParams: clonedFilterParamsExclude,
+        filterParams: clonedFilterParams,
         highlights: highlights,
         dataMode: dataMode,
         include: true,
@@ -707,7 +708,7 @@ export const actions = {
       }), // exclude inner tiles
       datasetActions.fetchAreaOfInterestData(store, {
         dataset: dataset,
-        filterParams: clonedFilterParamsExclude,
+        filterParams: baseline,
         highlights: invertedHighlights,
         dataMode: dataMode,
         include: true,
