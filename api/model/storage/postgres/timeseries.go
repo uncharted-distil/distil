@@ -597,7 +597,7 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 		Size:      filterParams.Size,
 		Variables: filterParams.Variables,
 		DataMode:  filterParams.DataMode,
-		Filters:   []*api.FilterSet{},
+		Filters:   []*model.FilterSet{},
 	}
 	joins := make([]*joinDefinition, 0)
 	wheres := []string{}

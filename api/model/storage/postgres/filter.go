@@ -299,7 +299,7 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, wheres []string, param
 	return wheres, params
 }
 
-func (s *Storage) buildSelectionFilter(dataset string, params []interface{}, alias string, filters []api.FilterObject) (string, []interface{}) {
+func (s *Storage) buildSelectionFilter(dataset string, params []interface{}, alias string, filters []model.FilterObject) (string, []interface{}) {
 	// filters acting on the same feature are OR
 	// Filters acting on different features are AND
 	var filtersByFeature []string
@@ -410,7 +410,7 @@ func (s *Storage) buildFilteredResultQueryField(variables []*model.Variable, tar
 	return strings.Join(distincts, ","), fields, nil
 }
 
-func (s *Storage) buildCorrectnessResultWhere(wheres []string, params []interface{}, storageName string, resultURI string, resultFilter api.FilterObject) ([]string, []interface{}, error) {
+func (s *Storage) buildCorrectnessResultWhere(wheres []string, params []interface{}, storageName string, resultURI string, resultFilter model.FilterObject) ([]string, []interface{}, error) {
 	// get the target variable name
 	storageNameResult := s.getResultTable(storageName)
 	targetName, err := s.getResultTargetName(storageNameResult, resultURI)
@@ -441,7 +441,7 @@ func (s *Storage) buildCorrectnessResultWhere(wheres []string, params []interfac
 	return append(wheres, fmt.Sprintf("(%s)", strings.Join(wheresFilter, " OR "))), params, nil
 }
 
-func (s *Storage) buildErrorResultWhere(wheres []string, params []interface{}, residualFilter api.FilterObject) ([]string, []interface{}, error) {
+func (s *Storage) buildErrorResultWhere(wheres []string, params []interface{}, residualFilter model.FilterObject) ([]string, []interface{}, error) {
 	// Add clauses to filter residuals to the existing where
 
 	// Error keys are a string of the form <solutionID>:error.  We need to pull the solution ID out so we can find the name of the target var.
@@ -479,7 +479,7 @@ func (s *Storage) buildErrorResultWhere(wheres []string, params []interface{}, r
 	return append(wheres, fmt.Sprintf("(%s)", strings.Join(wheresFilter, " OR "))), params, nil
 }
 
-func (s *Storage) buildConfidenceResultWhere(wheres []string, params []interface{}, confidenceFilter api.FilterObject, alias string) ([]string, []interface{}) {
+func (s *Storage) buildConfidenceResultWhere(wheres []string, params []interface{}, confidenceFilter model.FilterObject, alias string) ([]string, []interface{}) {
 	// Add a clause to filter confidence to the existing where
 	if alias != "" {
 		alias = alias + "."
@@ -495,7 +495,7 @@ func (s *Storage) buildConfidenceResultWhere(wheres []string, params []interface
 	// Append the clause
 	return append(wheres, fmt.Sprintf("(%s)", strings.Join(wheresFilter, " OR "))), params
 }
-func (s *Storage) buildRankResultWhere(wheres []string, params []interface{}, rankFilter api.FilterObject, alias string) ([]string, []interface{}) {
+func (s *Storage) buildRankResultWhere(wheres []string, params []interface{}, rankFilter model.FilterObject, alias string) ([]string, []interface{}) {
 	// Add a clause to filter confidence to the existing where
 	if alias != "" {
 		alias = alias + "."
@@ -511,11 +511,11 @@ func (s *Storage) buildRankResultWhere(wheres []string, params []interface{}, ra
 	// Append the clause
 	return append(wheres, fmt.Sprintf("(%s)", strings.Join(wheresFilter, " OR "))), params
 }
-func (s *Storage) buildPredictedResultWhere(dataset string, wheres []string, params []interface{}, alias string, resultURI string, resultFilter api.FilterObject) ([]string, []interface{}) {
+func (s *Storage) buildPredictedResultWhere(dataset string, wheres []string, params []interface{}, alias string, resultURI string, resultFilter model.FilterObject) ([]string, []interface{}) {
 	// handle the general category case
 	filterParams := &api.FilterParams{
-		Filters: []*api.FilterSet{{
-			FeatureFilters: []api.FilterObject{resultFilter},
+		Filters: []*model.FilterSet{{
+			FeatureFilters: []model.FilterObject{resultFilter},
 			Mode:           resultFilter.List[0].Mode,
 		}},
 	}
@@ -592,27 +592,27 @@ func combineClauses(mode string, clauses []string, operation string) string {
 }
 
 type filters struct {
-	genericFilters     []api.FilterObject
-	predictedFilters   []api.FilterObject
-	residualFilters    []api.FilterObject
-	correctnessFilters []api.FilterObject
-	confidenceFilters  []api.FilterObject
-	rankFilters        []api.FilterObject
+	genericFilters     []model.FilterObject
+	predictedFilters   []model.FilterObject
+	residualFilters    []model.FilterObject
+	correctnessFilters []model.FilterObject
+	confidenceFilters  []model.FilterObject
+	rankFilters        []model.FilterObject
 }
 
-func splitFilters(filterSet *api.FilterSet) (*filters, error) {
+func splitFilters(filterSet *model.FilterSet) (*filters, error) {
 	if filterSet == nil {
 		return &filters{}, nil
 	}
 
 	// split fitlers into inclusion and exclusion sets
 	output := &filters{
-		genericFilters:     []api.FilterObject{},
-		predictedFilters:   []api.FilterObject{},
-		residualFilters:    []api.FilterObject{},
-		correctnessFilters: []api.FilterObject{},
-		confidenceFilters:  []api.FilterObject{},
-		rankFilters:        []api.FilterObject{},
+		genericFilters:     []model.FilterObject{},
+		predictedFilters:   []model.FilterObject{},
+		residualFilters:    []model.FilterObject{},
+		correctnessFilters: []model.FilterObject{},
+		confidenceFilters:  []model.FilterObject{},
+		rankFilters:        []model.FilterObject{},
 	}
 
 	for _, featureFilters := range filterSet.FeatureFilters {
