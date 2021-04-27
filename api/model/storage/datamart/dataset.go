@@ -74,7 +74,7 @@ func (s *Storage) FetchDatasets(includeIndex bool, includeMeta bool, includeSyst
 }
 
 // DeleteDataset deletes a dataset from the datamart.
-func (s *Storage) DeleteDataset(dataset string) error {
+func (s *Storage) DeleteDataset(dataset string, softDelete bool) error {
 	return errors.Errorf("Not implemented")
 }
 

@@ -37,7 +37,7 @@
       <a class="nav-link"><b>Rows</b> {{ dataset.numRows }}</a>
       <a class="nav-link"><b>Size</b> {{ formatBytes(dataset.numBytes) }}</a>
       <b-button
-        v-if="!dataset.immutable && !isImportReady"
+        v-if="!isImportReady"
         variant="danger"
         data-toggle="tooltip"
         title="Delete dataset"

@@ -195,7 +195,7 @@ type MetadataStorage interface {
 	DeleteVariable(dataset string, varName string) error
 	AddGroupedVariable(dataset string, varName string, varDisplayName string, varType string, varRole string, grouping model.BaseGrouping) error
 	RemoveGroupedVariable(datasetName string, grouping model.BaseGrouping) error
-	DeleteDataset(dataset string) error
+	DeleteDataset(dataset string, softDelete bool) error
 	IngestDataset(datasetSource metadata.DatasetSource, meta *model.Metadata) error
 	UpdateDataset(dataset *Dataset) error
 

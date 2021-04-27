@@ -55,7 +55,7 @@ func (s *Storage) UpdateDataset(dataset *api.Dataset) error {
 }
 
 // DeleteDataset deletes a dataset from the file system.
-func (s *Storage) DeleteDataset(dataset string) error {
+func (s *Storage) DeleteDataset(dataset string, softDelete bool) error {
 	return errors.Errorf("Not implemented")
 }
 

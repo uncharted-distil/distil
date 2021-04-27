@@ -24,6 +24,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
+	log "github.com/unchartedsoftware/plog"
 	"goji.io/v3/pat"
 )
 
@@ -50,25 +51,16 @@ func DeletingDatasetHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataS
 			return
 		}
 		folder := env.ResolvePath(ds.Source, ds.Folder)
-		// verify dataset is a clone
+
+		// figure out if delete is soft
+		softDelete := false
 		if ds.Immutable {
-			handleError(w, errors.New("cannot delete Immutable dataset"))
-			return
+			log.Infof("doing a soft delete on dataset '%s'", ds.ID)
+			softDelete = true
 		}
-		// delete db tables
-		err = dataStorage.DeleteDataset(ds.StorageName)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
+
 		// delete meta
-		err = metaStorage.DeleteDataset(dataset)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-		// delete files
-		err = util.RemoveContents(folder, true)
+		err = metaStorage.DeleteDataset(dataset, softDelete)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -76,6 +68,21 @@ func DeletingDatasetHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataS
 
 		// delete the query cache associated wit this dataset if it exists
 		task.DeleteQueryCache(dataset)
+
+		if !softDelete {
+			// delete db tables
+			err = dataStorage.DeleteDataset(ds.StorageName)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			// delete files
+			err = util.RemoveContents(folder, true)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+		}
 
 		// send json
 		err = handleJSON(w, map[string]interface{}{"success": true})
