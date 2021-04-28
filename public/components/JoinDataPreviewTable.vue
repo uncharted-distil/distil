@@ -62,8 +62,8 @@
 <script lang="ts">
 import _ from "lodash";
 import Vue from "vue";
-import SparklinePreview from "./SparklinePreview";
-import ImagePreview from "./ImagePreview";
+import SparklinePreview from "./SparklinePreview.vue";
+import ImagePreview from "./ImagePreview.vue";
 import { Dictionary } from "../util/dict";
 import {
   TableColumn,

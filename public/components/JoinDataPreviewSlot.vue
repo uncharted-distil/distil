@@ -38,8 +38,8 @@
 import Vue from "vue";
 import { spinnerHTML } from "../util/spinner";
 import { Dictionary } from "../util/dict";
-import JoinDataPreviewTable from "./JoinDataPreviewTable";
-import FilterBadge from "./FilterBadge";
+import JoinDataPreviewTable from "./JoinDataPreviewTable.vue";
+import FilterBadge from "./FilterBadge.vue";
 import { TableRow, TableColumn } from "../store/dataset/index";
 
 export default Vue.extend({
