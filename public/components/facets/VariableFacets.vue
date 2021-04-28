@@ -99,7 +99,7 @@
               :ignore-highlights="ignoreHighlights"
               :instance-name="instanceName"
               :datasetName="datasetName"
-              @facet-click="onFacetClick"
+              @facet-click="onFacetCategoryClick"
             />
           </template>
           <template v-else-if="summary.varType === 'dateTime'">

@@ -121,10 +121,33 @@ func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorag
 
 			// build the data for batching
 			clusteredData := make(map[string]string)
+			// get all the unique pattern values
+			uniquePatterns := map[string]bool{}
 			for _, cluster := range clustered {
 				clusteredData[cluster.D3MIndex] = cluster.Label
+				uniquePatterns[cluster.Label] = true
 			}
-
+			// convert map keys to array
+			keys := make([]string, len(uniquePatterns))
+			idx := 0
+			for key := range uniquePatterns {
+				keys[idx] = key
+				idx++
+			}
+			// fetch the new cluster var
+			clusterVar, err := metaStorage.FetchVariable(dataset, clusterVarName)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			// set values
+			clusterVar.Values = keys
+			// update cluster variable
+			err = metaStorage.UpdateVariable(dataset, clusterVarName, clusterVar)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
 			// update the batches
 			err = dataStorage.UpdateVariableBatch(storageName, clusterVarName, clusteredData)
 			if err != nil {

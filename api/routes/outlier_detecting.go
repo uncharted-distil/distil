@@ -161,7 +161,20 @@ func OutlierResultsHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataSt
 				handleError(w, err)
 				return
 			}
-
+			// fetch the new outlier variable
+			outlierVar, err := metaStorage.FetchVariable(dataset, outlierVarName)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			// add the values to the new outlier variable
+			outlierVar.Values = []string{task.OutlierAnomaly, task.OutlierRegular}
+			// update outlier variable
+			err = metaStorage.UpdateVariable(dataset, outlierVarName, outlierVar)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
 			// add Variable to Database
 			err = dataStorage.AddVariable(dataset, storageName, outlierVarName, model.CategoricalType, "")
 			if err != nil {

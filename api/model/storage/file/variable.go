@@ -50,3 +50,8 @@ func (s *Storage) FetchVariablesDisplay(dataset string) ([]*model.Variable, erro
 func (s *Storage) FetchVariablesByName(dataset string, variables []string, includeIndex bool, includeMeta bool, includeSystemData bool) ([]*model.Variable, error) {
 	return nil, errors.Errorf("Not implemented")
 }
+
+// UpdateVariable updates the values of a variable
+func (s *Storage) UpdateVariable(dataset string, varName string, variableValue *model.Variable) error {
+	return nil
+}

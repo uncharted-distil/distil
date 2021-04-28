@@ -191,8 +191,8 @@ export function distilCategoryEntryBuilder(
   });
   const uniqueMetaCount = {} as Dictionary<boolean>;
   const uniqueSuggestion = categorySuggestions.filter((v) => {
-    if (!uniqueMetaCount[v.meta.count + v.meta.mode]) {
-      uniqueMetaCount[v.meta.count + v.meta.mode] = true;
+    if (!uniqueMetaCount[v.meta.count + v.meta.mode + v.meta.variable.key]) {
+      uniqueMetaCount[v.meta.count + v.meta.mode + v.meta.variable.key] = true;
       return true;
     }
     return false;
@@ -231,6 +231,7 @@ export function distilCategoryEntryBuilder(
           type: CATEGORICAL_TYPE,
           count: suggestion.meta.count,
           mode: suggestion.meta.mode,
+          key: suggestion.meta.variable.key,
         }),
       }).branch(branch)
     );
@@ -660,13 +661,14 @@ function variablesToLexSuggestions(
 ): ValueStateValue[] {
   if (!variables) return;
   return variables.reduce((a, v) => {
-    const name = v.variable.colName;
+    const name = v.variable.colDisplayName;
     const options = {
       type: colTypeToOptionType(v.variable.colType.toLowerCase()),
       variable: v.variable,
       name,
       count: v.count,
       mode: v.mode,
+      key: v.variable.key,
     };
     const config = {
       displayKey: v.variable.colDisplayName,

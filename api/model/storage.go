@@ -192,6 +192,7 @@ type MetadataStorage interface {
 	SetDataType(dataset string, varName string, varType string) error
 	SetExtrema(dataset string, varName string, extrema *Extrema) error
 	AddVariable(dataset string, varName string, varDisplayName string, varType string, varDistilRole string) error
+	UpdateVariable(dataset string, varName string, variableValue *model.Variable) error
 	DeleteVariable(dataset string, varName string) error
 	AddGroupedVariable(dataset string, varName string, varDisplayName string, varType string, varRole string, grouping model.BaseGrouping) error
 	RemoveGroupedVariable(datasetName string, grouping model.BaseGrouping) error
