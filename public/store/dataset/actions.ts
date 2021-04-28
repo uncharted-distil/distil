@@ -29,7 +29,7 @@ import {
   validateArgs,
 } from "../../util/data";
 import { Dictionary } from "../../util/dict";
-import { EXCLUDE_FILTER, FilterParams } from "../../util/filters";
+import { FilterParams } from "../../util/filters";
 import {
   addHighlightToFilterParams,
   cloneFilters,
@@ -607,6 +607,8 @@ export const actions = {
       description?: string;
       path: string;
       nosample?: boolean;
+      leftCols?: string[];
+      rightCols?: string[];
     }
   ): Promise<any> {
     if (!validateArgs(args, ["datasetID", "source"])) {
@@ -621,11 +623,15 @@ export const actions = {
         originalDataset: args.originalDataset,
         joinedDataset: args.joinedDataset,
         description: args.description,
+        leftCols: args.leftCols,
+        rightCols: args.rightCols,
       };
     } else if (args.originalDataset !== null) {
       postParams = {
         originalDataset: args.originalDataset,
         joinedDataset: args.joinedDataset,
+        leftCols: args.leftCols,
+        rightCols: args.rightCols,
       };
     }
     const response = await axios.post(
