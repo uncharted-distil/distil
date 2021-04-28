@@ -27,7 +27,7 @@ import {
   ValueState,
   ValueStateValue,
 } from "@uncharted.software/lex";
-import { Highlight, Variable } from "../store/dataset";
+import { Highlight, Variable, ClusteredGrouping } from "../store/dataset";
 import { Dictionary } from "./dict";
 import {
   BIVARIATE_FILTER,
@@ -110,7 +110,8 @@ export interface TemplateInfo {
 */
 export function variablesToLexLanguage(
   variables: VariableInfo[],
-  allVariables: Variable[]
+  allVariables: Variable[],
+  variableMap: Map<string, Variable>
 ): Lex {
   // remove timeseries
   const filteredVariables = variables.filter((v) => {
@@ -119,18 +120,17 @@ export function variablesToLexLanguage(
   const filteredAllVariables = allVariables.filter((v) => {
     return v.colType !== TIMESERIES_TYPE;
   });
-  const suggestions = variablesToLexSuggestions(filteredVariables);
+  const suggestions = variablesToLexSuggestions(filteredVariables, variableMap);
   // this generates the base templates used for the user typing into the lexbar
   const baseSuggestion = variablesToLexSuggestions(
     filteredAllVariables.map((v) => {
       return { variable: v, count: 1, mode: INCLUDE_FILTER };
-    })
+    }),
+    variableMap
   );
 
   const catVarLexSuggestions = perCategoricalVariableLexSuggestions(
-    filteredAllVariables.map((v) => {
-      return v;
-    })
+    allVariables
   );
   const allSuggestions = [...suggestions, ...baseSuggestion];
   return Lex.from("field", ValueState, {
@@ -199,7 +199,10 @@ export function distilCategoryEntryBuilder(
   });
   uniqueSuggestion.forEach((suggestion) => {
     const labelSuggestions =
-      catVarLexSuggestions[suggestion.meta.variable.key] ?? [];
+      catVarLexSuggestions[
+        suggestion.meta.variable?.grouping?.clusterCol ??
+          suggestion.meta.variable.key
+      ] ?? [];
     let branch = Lex.from("value_0", ValueState, {
       allowUnknown: false,
       icon: "",
@@ -482,13 +485,19 @@ export function variableAggregation(
   });
   return { activeVariables, highlightMap, filterMap };
 }
-export function filterParamsToLexQuery(templateInfo: TemplateInfo) {
+export function filterParamsToLexQuery(
+  templateInfo: TemplateInfo,
+  variableMap: Map<string, Variable>
+) {
   // remove highlight if variable does not exist
   const lexableElements = [
     ...templateInfo.highlightMap.values(),
     ...templateInfo.filterMap.values(),
   ];
-  const suggestions = variablesToLexSuggestions(templateInfo.activeVariables);
+  const suggestions = variablesToLexSuggestions(
+    templateInfo.activeVariables,
+    variableMap
+  );
   const lexQuery = filtersToValueState(lexableElements, suggestions);
   return lexQuery;
 }
@@ -657,13 +666,18 @@ function modeToColor(mode: string): string[] {
   queries as that reflects the current filter/highlight behavior.
 */
 function variablesToLexSuggestions(
-  variables: VariableInfo[]
+  variables: VariableInfo[],
+  variableMap: Map<string, Variable>
 ): ValueStateValue[] {
   if (!variables) return;
   return variables.reduce((a, v) => {
+    const grouping = v.variable.grouping as ClusteredGrouping;
+    const clusterVar = variableMap.get(grouping?.clusterCol);
     const name = v.variable.colDisplayName;
     const options = {
-      type: colTypeToOptionType(v.variable.colType.toLowerCase()),
+      type: colTypeToOptionType(
+        clusterVar?.colType?.toLowerCase() ?? v.variable?.colType?.toLowerCase()
+      ),
       variable: v.variable,
       name,
       count: v.count,

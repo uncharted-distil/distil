@@ -390,7 +390,7 @@ func (s *Storage) UpdateVariable(dataset string, varName string, variableValues 
 	// background context
 	ctx := context.Background()
 	// execute the ES query dont care about the res just care about errors
-	_, err := s.client.Update().Index("datasets").Id(datasetID).Script(script).Do(ctx)
+	_, err := s.client.Update().Index("datasets").Id(datasetID).Script(script).Refresh("true").Do(ctx)
 	if err != nil {
 		log.Error(err)
 	}

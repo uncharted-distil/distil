@@ -60,11 +60,19 @@ export default Vue.extend({
     language(): Lex {
       return variablesToLexLanguage(
         this.templateInfo.activeVariables,
-        this.variables
+        this.variables,
+        this.variableMap
       );
     },
     templateInfo(): TemplateInfo {
       return variableAggregation(this.filters, this.highlights, this.variables);
+    },
+    variableMap(): Map<string, Variable> {
+      return new Map(
+        this.variables.map((v) => {
+          return [v.key, v];
+        })
+      );
     },
   },
 
@@ -109,7 +117,10 @@ export default Vue.extend({
 
     setQuery(): void {
       if (!this.lex || !(this.filters || this.highlights)) return;
-      const lexQuery = filterParamsToLexQuery(this.templateInfo);
+      const lexQuery = filterParamsToLexQuery(
+        this.templateInfo,
+        this.variableMap
+      );
       this.lex.setQuery(lexQuery, false);
     },
   },
