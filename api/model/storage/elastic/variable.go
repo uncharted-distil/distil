@@ -17,6 +17,7 @@ package elastic
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
@@ -352,6 +353,48 @@ func (s *Storage) FetchVariableDisplay(dataset string, varName string) (*model.V
 	}
 
 	return variable, nil
+}
+
+func variableToEsSchema(variable *model.Variable) map[string]interface{} {
+	return map[string]interface{}{
+		model.VarNameField:             variable.HeaderName,
+		model.VarRoleField:             variable.Role,
+		model.VarSuggestedTypesField:   variable.SuggestedTypes,
+		model.VarImportanceField:       variable.Importance,
+		model.VarValuesField:           variable.Values,
+		model.VarGroupingField:         variable.Grouping,
+		model.VarOriginalTypeField:     variable.OriginalType,
+		model.VarDisplayVariableField:  variable.DisplayName,
+		model.VarImmutableField:        variable.Immutable,
+		model.VarDeleted:               variable.Deleted,
+		model.VarTypeField:             variable.Type,
+		model.VarDescriptionField:      variable.Description,
+		model.VarIndexField:            variable.Index,
+		model.VarSelectedRoleField:     variable.SelectedRole,
+		model.VarOriginalVariableField: variable.OriginalVariable,
+		model.VarDistilRole:            variable.DistilRole,
+		model.VarKeyField:              variable.Key,
+	}
+}
+
+// UpdateVariable updates variable data *note this updates the source be careful*
+func (s *Storage) UpdateVariable(dataset string, varName string, variableValues *model.Variable) error {
+	// get dataset id
+	datasetID := dataset
+	data := variableToEsSchema(variableValues)
+	// build script
+	script := elastic.
+		NewScript(fmt.Sprintf("for(def i=0; i < ctx._source.%[1]s.length;i++){if(ctx._source.%[1]s[i].%[2]s == params.varName){ctx._source.%[1]s[i]=params.varValues}}", model.Variables, model.VarNameField)).
+		Params(map[string]interface{}{"varName": varName, "varValues": data}).
+		Lang("painless")
+	// background context
+	ctx := context.Background()
+	// execute the ES query dont care about the res just care about errors
+	_, err := s.client.Update().Index("datasets").Id(datasetID).Script(script).Refresh("true").Do(ctx)
+	if err != nil {
+		log.Error(err)
+	}
+	return err
 }
 
 // FetchVariables returns all the variables for the provided index and dataset.

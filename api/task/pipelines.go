@@ -28,6 +28,8 @@ import (
 
 const (
 	denormFieldName = "filename"
+	OutlierAnomaly  = "anomaly"
+	OutlierRegular  = "regular"
 )
 
 var (
@@ -128,9 +130,9 @@ func createFriendlyLabel(label string) string {
 
 func createFriendlyOutlierLabel(label string) string {
 	if label == "-1" {
-		return "anomaly"
+		return OutlierAnomaly
 	}
-	return "regular"
+	return OutlierRegular
 }
 
 func getFieldIndex(header []string, fieldName string) int {
