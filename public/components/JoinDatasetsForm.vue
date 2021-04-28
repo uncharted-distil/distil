@@ -19,6 +19,7 @@
   <div class="create-solutions-form">
     <b-modal
       v-model="showJoinSuccess"
+      size="xlg"
       modal-class="join-preview-modal"
       cancel-disabled
       hide-header
@@ -294,7 +295,15 @@ export default Vue.extend({
   },
 });
 </script>
-
+<style>
+@media (min-width: 1200px) {
+  .modal-xlg.modal-dialog {
+    width: 90% !important;
+    max-width: 90% !important;
+    height: 70% !important;
+  }
+}
+</style>
 <style scoped>
 .join-button {
   margin: 0 8px;
