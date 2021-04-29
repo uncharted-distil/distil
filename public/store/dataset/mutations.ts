@@ -179,10 +179,10 @@ export const mutations = {
         );
       }
     } else {
-      const datasetVariable = state.variables.some((v) => {
+      const datasetExists = state.variables.some((v) => {
         return v.datasetName === args.dataset;
       });
-      if (datasetVariable) {
+      if (datasetExists) {
         const idx = state.variables.findIndex((v) => {
           return v.datasetName === args.dataset && v.colName === args.field;
         });
