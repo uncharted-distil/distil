@@ -67,6 +67,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 			ID:       datasetIDSource,
 			Type:     api.DatasetTypeModelling,
 		}
+		datasetDescription := ""
 		if (ingestParams.Source == metadata.Augmented || ingestParams.Source == metadata.Public) && provenance == "local" {
 			// parse POST params
 			params, err := getPostParameters(r)
@@ -90,7 +91,9 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 				missingParamErr(w, "path or joinedDataset")
 				return
 			}
-
+			if params["description"] != nil {
+				datasetDescription = params["description"].(string)
+			}
 			var originalDataset map[string]interface{}
 			var joinedDataset map[string]interface{}
 			if params["joinedDataset"] != nil {
@@ -193,12 +196,25 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 			ingestParams.Path = env.ResolvePath(ingestParams.Source, ingestParams.ID)
 		}
 		log.Infof("Importing dataset '%s' from '%s'", ingestParams.ID, ingestParams.Path)
-		_, err = meta.ImportDataset(ingestParams.ID, ingestParams.Path)
+		dsPath, err := meta.ImportDataset(ingestParams.ID, ingestParams.Path)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-
+		// update dataset description
+		if datasetDescription != "" {
+			ds, err := api.LoadDiskDatasetFromFolder(dsPath)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			ds.Dataset.Metadata.Description = datasetDescription
+			err = ds.SaveDataset()
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+		}
 		// ingest the imported dataset
 		ingestConfig := task.NewConfig(*config)
 
@@ -206,7 +222,6 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		if !isSampling {
 			ingestConfig.SampleRowLimit = math.MaxInt32 // Maximum int value.
 		}
-
 		log.Infof("Ingesting dataset '%s'", ingestParams.Path)
 		ingestResult, err := task.IngestDataset(ingestParams, ingestConfig, ingestSteps)
 		if err != nil {
@@ -221,7 +236,6 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 			handleError(w, err)
 			return
 		}
-
 		// marshal data and sent the response back
 		err = handleJSON(w, map[string]interface{}{
 			"dataset":  ingestResult.DatasetID,

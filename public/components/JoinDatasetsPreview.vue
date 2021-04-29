@@ -33,9 +33,9 @@
 
     <div class="row justify-content-center">
       <b-btn
+        v-b-modal.join-view-save
         class="mt-3 join-modal-button"
         variant="outline-success"
-        @click="commitJoin"
         :disabled="isPending"
       >
         <div class="row justify-content-center">
@@ -72,6 +72,7 @@
 import _ from "lodash";
 import Vue from "vue";
 import JoinDataPreviewSlot from "../components/JoinDataPreviewSlot.vue";
+import { SaveInfo } from "./SaveModal.vue";
 import { createRouteEntry } from "../util/routes";
 import { Dictionary } from "../util/dict";
 import { getters as routeGetters } from "../store/route/module";
@@ -81,14 +82,11 @@ import {
   TableColumn,
   TableRow,
 } from "../store/dataset/index";
-import {
-  getters as datasetGetters,
-  actions as datasetActions,
-} from "../store/dataset/module";
+import { actions as datasetActions } from "../store/dataset/module";
 import { getTableDataItems, getTableDataFields } from "../util/data";
 
 export default Vue.extend({
-  name: "join-datasets-preview",
+  name: "JoinDatasetsPreview",
 
   components: {
     JoinDataPreviewSlot,
@@ -157,22 +155,23 @@ export default Vue.extend({
   },
 
   methods: {
-    commitJoin() {
+    onSave(args: SaveInfo) {
       this.pending = true;
       const importDatasetArgs = {
-        datasetID: this.joinedDatasetID,
+        datasetID: args.name,
         terms: this.terms,
         source: "augmented",
         provenance: "local",
         originalDataset: this.datasetA,
         joinedDataset: this.datasetB,
         searchResultIndex: this.searchResultIndex,
+        description: args.description,
         path: this.path,
       };
       datasetActions
         .importDataset(this.$store, importDatasetArgs)
         .then(() => {
-          this.$emit("success", this.joinedDatasetID);
+          this.$emit("success", args.name);
           this.pending = false;
         })
         .catch(() => {

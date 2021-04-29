@@ -26,6 +26,7 @@
       hide-footer
     >
       <join-datasets-preview
+        ref="datasetPreview"
         :preview-table-data="previewTableData"
         :dataset-a="datasetA"
         :dataset-b="datasetB"
@@ -36,7 +37,7 @@
         @close="showJoinSuccess = !showJoinSuccess"
       />
     </b-modal>
-
+    <save-modal subject="Dataset" modalId="join-view-save" @save="onSave" />
     <error-modal
       :show="showJoinFailure"
       title="Join Failed"
@@ -102,6 +103,7 @@ import Vue from "vue";
 import JoinDatasetsPreview from "../components/JoinDatasetsPreview.vue";
 import ErrorModal from "../components/ErrorModal.vue";
 import Badge from "./Badge.vue";
+import SaveModal from "./SaveModal.vue";
 import { getters as routeGetters } from "../store/route/module";
 import { Dataset, TableColumn, TableRow } from "../store/dataset/index";
 import {
@@ -121,6 +123,7 @@ export default Vue.extend({
     JoinDatasetsPreview,
     ErrorModal,
     Badge,
+    SaveModal,
   },
 
   props: {
@@ -144,7 +147,6 @@ export default Vue.extend({
       datasetB: null,
     };
   },
-
   computed: {
     datasets(): Dataset[] {
       return datasetGetters.getDatasets(this.$store);
@@ -285,6 +287,12 @@ export default Vue.extend({
           this.joinedPath = "";
           console.warn(err);
         });
+    },
+    onSave(args) {
+      const datasetPreview = this.$refs.datasetPreview as InstanceType<
+        typeof JoinDatasetsPreview
+      >;
+      datasetPreview.onSave(args);
     },
     onJoinCommitSuccess(datasetID: string) {
       loadJoinedDataset(this.$router, datasetID, this.target);
