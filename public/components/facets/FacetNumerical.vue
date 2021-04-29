@@ -60,7 +60,7 @@
       />
     </div>
     <div v-else slot="footer" class="facet-footer-container">
-      No Data Avialable
+      No Data Available
     </div>
   </facet-bars>
 </template>

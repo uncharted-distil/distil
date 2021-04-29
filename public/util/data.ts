@@ -306,11 +306,8 @@ export async function fetchSummaryExemplars(
   const variables = datasetGetters.getVariables(store);
   const variable = variables.find((v) => v.key === variableName);
 
-  const baselineExemplars = summary.baseline.exemplars;
-  const filteredExemplars =
-    summary.filtered && summary.filtered.exemplars
-      ? summary.filtered.exemplars
-      : null;
+  const baselineExemplars = summary.baseline?.exemplars;
+  const filteredExemplars = summary.filtered?.exemplars;
   const exemplars = filteredExemplars ? filteredExemplars : baselineExemplars;
 
   if (exemplars) {
