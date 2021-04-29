@@ -604,6 +604,7 @@ export const actions = {
       terms: string;
       originalDataset: Dataset;
       joinedDataset: Dataset;
+      description?: string;
       path: string;
       nosample?: boolean;
     }
@@ -619,6 +620,7 @@ export const actions = {
         nosample: args.nosample,
         originalDataset: args.originalDataset,
         joinedDataset: args.joinedDataset,
+        description: args.description,
       };
     } else if (args.originalDataset !== null) {
       postParams = {

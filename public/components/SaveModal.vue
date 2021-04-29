@@ -19,9 +19,8 @@
   <div>
     <!-- Modal to save the model. -->
     <b-modal
-      id="save-model-modal"
-      title="Save Model"
-      no-stacking
+      :id="modalId"
+      :title="title"
       @ok="handleSaveOk"
       @cancel="resetModal"
       @close="resetModal"
@@ -29,9 +28,9 @@
       <!-- show form to save model if unsaved -->
       <form ref="saveModelForm" @submit.stop.prevent="saveModel">
         <b-form-group
-          label="Model Name"
+          :label="subjectNameLabel"
           label-for="model-name-input"
-          invalid-feedback="Model Name is Required"
+          :invalid-feedback="invalidFeedback"
           :state="saveNameState"
         >
           <b-form-input
@@ -42,7 +41,7 @@
           />
         </b-form-group>
         <b-form-group
-          label="Model Description"
+          :label="subjectDescriptionLabel"
           label-for="model-desc-input"
           :state="saveDescriptionState"
         >
@@ -62,8 +61,8 @@
       header-class="success-modal-header"
     >
       <p>
-        The model {{ saveName.toUpperCase() }} will now be available on the
-        start page for re-use. To use it now on new data, click
+        The {{ subject }} {{ saveName.toUpperCase() }} will now be available on
+        the start page for re-use. To use it now on new data, click
         <b>{{ actionName }}</b> or <b>Go Back to Start Page</b> to work on
         something else.
       </p>
@@ -80,19 +79,26 @@
 
 <script lang="ts">
 import Vue from "vue";
-import { actions as appActions } from "../store/app/module";
 import { SEARCH_ROUTE } from "../store/route";
 import { getters as routeGetters } from "../store/route/module";
 import { createRouteEntry } from "../util/routes";
-import { Feature, Activity, SubActivity } from "../util/userEvents";
 import router from "../router/router";
 
+export interface SaveInfo {
+  solutionId: string;
+  fittedSolution: string;
+  name: string;
+  description: string;
+}
+
 export default Vue.extend({
-  name: "SaveModel",
+  name: "SaveModal",
 
   props: {
     solutionId: { type: String as () => string, default: "" },
     fittedSolutionId: { type: String as () => string, default: "" },
+    subject: { type: String as () => string, default: "Model" },
+    modalId: { type: String as () => string, default: "save-model-modal" },
   },
 
   data() {
@@ -110,11 +116,25 @@ export default Vue.extend({
     },
 
     successTitle(): string {
-      return `<i class="fa fa-check-circle header-icon"/> Model ${this.saveName.toUpperCase()} was successfully saved`;
+      return `<i class="fa fa-check-circle header-icon"/> ${
+        this.subject
+      } ${this.saveName.toUpperCase()} was successfully saved`;
     },
 
     isTimeseries(): boolean {
       return routeGetters.isTimeseries(this.$store);
+    },
+    title(): string {
+      return `Save ${this.subject}`;
+    },
+    subjectDescriptionLabel(): string {
+      return `${this.subject} Description`;
+    },
+    subjectNameLabel(): string {
+      return `${this.subject} Name`;
+    },
+    invalidFeedback(): string {
+      return `${this.subject} Name is Required`;
     },
   },
 
@@ -173,29 +193,16 @@ export default Vue.extend({
       if (!this.validForm()) {
         return;
       }
-
-      appActions.logUserEvent(this.$store, {
-        feature: Feature.EXPORT_MODEL,
-        activity: Activity.MODEL_SELECTION,
-        subActivity: SubActivity.MODEL_SAVE,
-        details: {
-          solution: this.solutionId,
-          fittedSolution: this.fittedSolutionId,
-        },
-      });
-
-      try {
-        await appActions.saveModel(this.$store, {
-          fittedSolutionId: this.fittedSolutionId,
-          modelName: this.saveName,
-          modelDescription: this.saveDescription,
-        });
-      } catch (err) {
-        console.warn(err);
-      }
+      this.$emit("save", {
+        solutionId: this.solutionId,
+        fittedSolution: this.fittedSolutionId,
+        name: this.saveName,
+        description: this.saveDescription,
+      } as SaveInfo);
+    },
+    showSuccessModel() {
       this.$bvModal.show("save-success-modal");
     },
-
     // ensure required fields are filled out
     validForm() {
       const valid = this.saveName.length > 0;

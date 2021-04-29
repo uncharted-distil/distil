@@ -70,9 +70,10 @@
         </b-button>
       </template>
       <template v-else>
-        <save-model
+        <save-modal
           :solution-id="solutionId"
           :fitted-solution-id="fittedSolutionId"
+          @save="onModelSave"
         />
         <b-button
           variant="success"
@@ -92,7 +93,7 @@ import ResultFacets from "../components/ResultFacets.vue";
 import PredictionsDataUploader from "../components/PredictionsDataUploader.vue";
 import ForecastHorizon from "../components/ForecastHorizon.vue";
 import ErrorThresholdSlider from "../components/ErrorThresholdSlider.vue";
-import SaveModel from "../components/SaveModel.vue";
+import SaveModal, { SaveInfo } from "./SaveModal.vue";
 import ResultTargetVariable from "../components/ResultTargetVariable.vue";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
@@ -101,6 +102,8 @@ import { Variable, TaskTypes } from "../store/dataset/index";
 import Vue from "vue";
 import { Solution, SolutionStatus } from "../store/requests/index";
 import { isFittedSolutionIdSavedAsModel } from "../util/models";
+import { Feature, Activity, SubActivity } from "../util/userEvents";
+import { actions as appActions } from "../store/app/module";
 
 export default Vue.extend({
   name: "ResultSummaries",
@@ -111,7 +114,7 @@ export default Vue.extend({
     PredictionsDataUploader,
     ResultFacets,
     ResultTargetVariable,
-    SaveModel,
+    SaveModal,
   },
 
   data() {
@@ -209,6 +212,27 @@ export default Vue.extend({
 
   methods: {
     isFittedSolutionIdSavedAsModel,
+    async onSaveModel(args: SaveInfo) {
+      appActions.logUserEvent(this.$store, {
+        feature: Feature.EXPORT_MODEL,
+        activity: Activity.MODEL_SELECTION,
+        subActivity: SubActivity.MODEL_SAVE,
+        details: {
+          solution: args.solutionId,
+          fittedSolution: args.fittedSolution,
+        },
+      });
+
+      try {
+        await appActions.saveModel(this.$store, {
+          fittedSolutionId: this.fittedSolutionId,
+          modelName: args.name,
+          modelDescription: args.description,
+        });
+      } catch (err) {
+        console.warn(err);
+      }
+    },
   },
 });
 </script>
