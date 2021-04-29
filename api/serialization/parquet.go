@@ -211,7 +211,7 @@ func (d *Parquet) WriteData(uri string, data [][]string) error {
 		}
 		err = pw.Write(row)
 		if err != nil {
-			return errors.Wrap(err, "error writing data to parquet file")
+			return errors.Wrapf(err, "error writing row %d/%d to parquet file", i, len(data))
 		}
 	}
 	err = pw.WriteStop()
