@@ -149,10 +149,15 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 
 // SetGroups updates the dataset metadata (as stored) to capture group information.
 func SetGroups(datasetID string, rawGroupings []map[string]interface{}, data api.DataStorage, meta api.MetadataStorage, config *IngestTaskConfig) error {
-	multiBandImageGrouping := getMultiBandImageGrouping(rawGroupings)
-	if multiBandImageGrouping != nil {
+	// We currently only allow for one image to be present in a dataset.
+	multiBandImageGroupings := getMultiBandImageGrouping(rawGroupings)
+	numGroupings := len(multiBandImageGroupings)
+	if numGroupings >= 1 {
+		log.Warnf("found %d multiband image groupings - only first will be used", numGroupings)
+	}
+	if numGroupings > 0 {
 		rsg := &model.MultiBandImageGrouping{}
-		err := json.MapToStruct(rsg, multiBandImageGrouping)
+		err := json.MapToStruct(rsg, multiBandImageGroupings[0])
 		if err != nil {
 			return err
 		}
@@ -165,10 +170,10 @@ func SetGroups(datasetID string, rawGroupings []map[string]interface{}, data api
 		}
 	}
 
-	geoBoundsGrouping := getGeoBoundsGrouping(rawGroupings)
-	if geoBoundsGrouping != nil {
+	geoBoundsGroupings := getGeoBoundsGrouping(rawGroupings)
+	for _, rawGrouping := range geoBoundsGroupings {
 		grouping := &model.GeoBoundsGrouping{}
-		err := json.MapToStruct(grouping, geoBoundsGrouping)
+		err := json.MapToStruct(grouping, rawGrouping)
 		if err != nil {
 			return err
 		}
@@ -203,22 +208,24 @@ func SetGroups(datasetID string, rawGroupings []map[string]interface{}, data api
 	return nil
 }
 
-func getMultiBandImageGrouping(rawGroupings []map[string]interface{}) map[string]interface{} {
+func getMultiBandImageGrouping(rawGroupings []map[string]interface{}) []map[string]interface{} {
+	results := []map[string]interface{}{}
 	for _, rawGrouping := range rawGroupings {
 		if rawGrouping["type"] != nil && rawGrouping["type"].(string) == model.MultiBandImageType {
-			return rawGrouping
+			results = append(results, rawGrouping)
 		}
 	}
-	return nil
+	return results
 }
 
-func getGeoBoundsGrouping(rawGroupings []map[string]interface{}) map[string]interface{} {
+func getGeoBoundsGrouping(rawGroupings []map[string]interface{}) []map[string]interface{} {
+	results := []map[string]interface{}{}
 	for _, rawGrouping := range rawGroupings {
 		if rawGrouping["type"] != nil && rawGrouping["type"].(string) == model.GeoBoundsType {
-			return rawGrouping
+			results = append(results, rawGrouping)
 		}
 	}
-	return nil
+	return results
 }
 
 func canFeaturize(datasetID string, meta api.MetadataStorage) bool {
