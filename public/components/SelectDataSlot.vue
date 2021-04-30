@@ -45,6 +45,7 @@
       :variables="allVariables"
       :filters="routeFilters"
       :highlights="routeHighlight"
+      isSelectView
       @lex-query="updateFilterAndHighlightFromLexQuery"
     />
 
