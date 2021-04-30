@@ -18,14 +18,40 @@
 <template>
   <div class="search-bar-container">
     <header>Search</header>
-    <main ref="lexcontainer" class="lex-container" />
+    <b-tabs
+      v-if="isSelectView"
+      content-class="pr-0 pl-0 ml-15px"
+      nav-wrapper-class="pl-0"
+      pills
+      vertical
+      end
+    >
+      <b-tab
+        title="☀"
+        :active="isHighlightActive"
+        aria-h="Highlight"
+        @click="isHighlightActive = !isHighlightActive"
+        title-link-class="searchbar-nav btn-outline-secondary btn border-bottom-right-radius-0"
+      >
+        <main ref="lexcontainerHighlight" class="lex-container select" />
+      </b-tab>
+      <b-tab
+        title="≠"
+        :active="!isHighlightActive"
+        aria-label="Exclude"
+        title-link-class="searchbar-nav btn-outline-secondary btn border-top-right-radius-0"
+        @click="isHighlightActive = !isHighlightActive"
+      >
+        <main ref="lexcontainerExclude" class="lex-container select" />
+      </b-tab>
+    </b-tabs>
+    <main v-else ref="lexcontainer" class="lex-container" />
   </div>
 </template>
 
 <script lang="ts">
 import Vue from "vue";
 import _ from "lodash";
-import { h } from "preact";
 import { Lex } from "@uncharted.software/lex";
 import { Variable } from "../../store/dataset/index";
 import {
@@ -50,10 +76,12 @@ export default Vue.extend({
     highlights: { type: String, default: "" },
     filters: { type: String, default: "" },
     variables: { type: Array as () => Variable[], default: [] },
+    isSelectView: { type: Boolean as () => boolean, default: false },
   },
 
   data: () => ({
     lex: null,
+    isHighlightActive: true,
   }),
 
   computed: {
@@ -65,7 +93,7 @@ export default Vue.extend({
       );
     },
     templateInfo(): TemplateInfo {
-      return variableAggregation(this.filters, this.highlights, this.variables);
+      return variableAggregation(...this.variableInfo);
     },
     variableMap(): Map<string, Variable> {
       return new Map(
@@ -74,9 +102,26 @@ export default Vue.extend({
         })
       );
     },
+    lexContainerRef(): Vue | Element | Vue[] | Element[] {
+      return !this.isSelectView
+        ? this.$refs.lexcontainer
+        : this.isHighlightActive
+        ? this.$refs.lexcontainerHighlight
+        : this.$refs.lexcontainerExclude;
+    },
+    variableInfo(): [string, string, Variable[]] {
+      return !this.isSelectView
+        ? [this.filters, this.highlights, this.variables]
+        : this.isHighlightActive
+        ? [null, this.highlights, this.variables]
+        : [this.filters, null, this.variables];
+    },
   },
 
   watch: {
+    isHighlightActive() {
+      this.renderLex();
+    },
     filters(n, o) {
       if (n !== o) {
         this.setQuery();
@@ -111,7 +156,7 @@ export default Vue.extend({
       });
 
       // Render our search bar into our desired element
-      this.lex.render(this.$refs.lexcontainer);
+      this.lex.render(this.lexContainerRef);
       this.setQuery();
     },
 
@@ -134,6 +179,35 @@ header {
 </style>
 
 <style>
+.ml-15px {
+  margin-left: 15px;
+}
+.border-top-right-radius-0 {
+  border-top-right-radius: 0px !important;
+}
+.border-bottom-right-radius-0 {
+  border-bottom-right-radius: 0px !important;
+}
+.searchbar-nav {
+  height: 40px;
+  border-top-left-radius: 0% !important;
+  border-bottom-left-radius: 0% !important;
+  box-shadow: none !important;
+}
+.lex-container.select div.lex-box {
+  min-height: 80px;
+  overflow-y: hidden;
+  height: 80px;
+  background-color: var(--gray-300);
+}
+.lex-container.select div.lex-box:hover {
+  z-index: 1000;
+  top: 0%;
+  position: absolute !important;
+  display: block;
+  height: auto !important;
+  max-height: 40vh;
+}
 .lex-container div.lex-box button.btn {
   line-height: 1em !important;
   right: 0px;
