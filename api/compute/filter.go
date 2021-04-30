@@ -145,7 +145,7 @@ func getPreFiltering(ds *api.Dataset, filterParams *api.FilterParams) (*api.Filt
 
 	// filter if a clustering or outlier detection metadata feature exist
 	// remove pre filters from the rest of the filters since they should not be in the main pipeline
-	preFilters := api.NewFilterParamsFromRaw(nil)
+	preFilters := api.NewFilterParamsFromFilters(nil)
 	clone.Filters = []*model.FilterSet{}
 	for _, fs := range filterParams.Filters {
 		for _, ff := range fs.FeatureFilters {
