@@ -178,6 +178,18 @@ export const mutations = {
           args.variables[target].values
         );
       }
+    } else {
+      const datasetExists = state.variables.some((v) => {
+        return v.datasetName === args.dataset;
+      });
+      if (datasetExists) {
+        const idx = state.variables.findIndex((v) => {
+          return v.datasetName === args.dataset && v.colName === args.field;
+        });
+        if (idx > -1) {
+          Vue.set(state.variables[idx], "colType", args.type);
+        }
+      }
     }
 
     // update table data
