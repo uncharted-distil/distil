@@ -28,8 +28,11 @@ import (
 
 const (
 	denormFieldName = "filename"
-	OutlierAnomaly  = "anomaly"
-	OutlierRegular  = "regular"
+
+	// OutlierAnomaly is the category name used for anomalies discovered by outlier detection
+	OutlierAnomaly = "anomaly"
+	// OutlierRegular is the category name used for regular values as discovered by outlier detection
+	OutlierRegular = "regular"
 )
 
 var (
