@@ -139,36 +139,38 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, dataCtor api.DataStorag
 
 func getBandMapping(ds *api.Dataset, groupKeys []string, dataStorage api.DataStorage) (map[string]map[string]string, error) {
 	// build a filter to only include rows matching a group id
-	var groupingCol *model.Variable
-	var bandCol *model.Variable
-	var fileCol *model.Variable
+	var groupingCol string
+	var bandCol string
+	var fileCol string
+
+	// find the components of the multiband image
 	for _, v := range ds.Variables {
-		if v.DistilRole == model.VarDistilRoleGrouping && !v.IsGrouping() {
-			groupingCol = v
-		} else if v.Key == "band" {
-			bandCol = v
-		} else if !v.IsGrouping() && (model.IsMultiBandImage(v.Type) || v.Key == "image_file") {
-			fileCol = v
+		if v.IsGrouping() && model.IsMultiBandImage(v.Type) {
+			gcg := v.Grouping.(*model.MultiBandImageGrouping)
+			groupingCol = gcg.IDCol
+			fileCol = gcg.ImageCol
+			bandCol = gcg.BandCol
+			break
 		}
 	}
-	if groupingCol == nil {
+	if groupingCol == "" {
 		return nil, errors.Errorf("no grouping col found in dataset")
 	}
-	if fileCol == nil {
+	if fileCol == "" {
 		return nil, errors.Errorf("no file col found in dataset")
 	}
-	if bandCol == nil {
+	if bandCol == "" {
 		return nil, errors.Errorf("no band col found in dataset")
 	}
 
 	filter := &api.FilterParams{}
 	filter.AddFilter(&model.Filter{
-		Key:        groupingCol.Key,
+		Key:        groupingCol,
 		Type:       model.CategoricalFilter,
 		Categories: groupKeys,
 		Mode:       model.IncludeFilter,
 	})
-	filter.Variables = []string{fileCol.Key, bandCol.Key, groupingCol.Key}
+	filter.Variables = []string{fileCol, bandCol, groupingCol}
 
 	// pull back all rows for a group id
 	data, err := dataStorage.FetchData(ds.ID, ds.StorageName, filter, true, nil)
@@ -177,15 +179,15 @@ func getBandMapping(ds *api.Dataset, groupKeys []string, dataStorage api.DataSto
 	}
 
 	// cycle through results to build the band mapping
-	fileVariable, ok := data.Columns[fileCol.Key]
+	fileVariable, ok := data.Columns[fileCol]
 	if !ok {
 		return nil, errors.Errorf("no file column found in stored data")
 	}
-	bandVariable, ok := data.Columns[bandCol.Key]
+	bandVariable, ok := data.Columns[bandCol]
 	if !ok {
 		return nil, errors.Errorf("no band column found in stored data")
 	}
-	groupVariable, ok := data.Columns[groupingCol.Key]
+	groupVariable, ok := data.Columns[groupingCol]
 	if !ok {
 		return nil, errors.Errorf("no group column found in stored data")
 	}
