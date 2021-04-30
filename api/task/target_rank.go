@@ -27,8 +27,11 @@ import (
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/result"
 	"github.com/uncharted-distil/distil/api/env"
+	api "github.com/uncharted-distil/distil/api/model"
 	log "github.com/unchartedsoftware/plog"
 )
+
+const minFilteredFeatures = 2
 
 var excludedTypes = map[string]bool{
 	model.MultiBandImageType: true,
@@ -41,7 +44,7 @@ var excludedTypes = map[string]bool{
 
 // TargetRank will rank the dataset relative to a target variable using
 // a primitive.
-func TargetRank(dataset string, target string, features []*model.Variable, source metadata.DatasetSource) (map[string]float64, error) {
+func TargetRank(dataset *api.Dataset, target string, features []*model.Variable, source metadata.DatasetSource) (map[string]float64, error) {
 	// Some feature types cannot be / should not be ranked - we should skip ranking if there
 	// aren't at least 3 valid (target + 2 features)
 
@@ -54,9 +57,10 @@ func TargetRank(dataset string, target string, features []*model.Variable, sourc
 		}
 	}
 
-	// filter features by type / role and skip if we don't have at least 2 features that are valid
+	// filter features by type / role and skip if we don't have at least 2 features that are valid, or if this is a prefeaturized
+	// dataset (in which case the actual dataset processed is going to have large vectors hidden from the user)
 	filteredFeatures := filterFeatures(features, target)
-	if len(filteredFeatures) <= 2 || excludedTypes[targetFeature.Type] {
+	if len(filteredFeatures) <= minFilteredFeatures || excludedTypes[targetFeature.Type] || dataset.LearningDataset != "" {
 		return map[string]float64{}, nil
 	}
 	filteredFeatures[strings.ToLower(target)] = true
@@ -67,7 +71,7 @@ func TargetRank(dataset string, target string, features []*model.Variable, sourc
 		return nil, errors.Wrap(err, "unable to create ranking pipeline")
 	}
 
-	datasetInputDir := env.ResolvePath(source, dataset)
+	datasetInputDir := env.ResolvePath(source, dataset.ID)
 	datasetInputDir, err = filepath.Abs(datasetInputDir)
 	if err != nil {
 		return nil, errors.Errorf("path \"%s\" cannot be made absolute", datasetInputDir)

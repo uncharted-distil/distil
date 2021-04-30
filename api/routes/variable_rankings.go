@@ -56,7 +56,7 @@ func VariableRankingHandler(metaCtor api.MetadataStorageCtor) func(http.Response
 			handleError(w, errors.Wrap(err, "unable to expand grouped variables"))
 			return
 		}
-		rankings, err = targetRank(dataset, target, d.Folder, summaryVariables, d.Source)
+		rankings, err = targetRank(d, target, summaryVariables, d.Source)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable get variable ranking"))
 			return
@@ -81,9 +81,9 @@ func VariableRankingHandler(metaCtor api.MetadataStorageCtor) func(http.Response
 	}
 }
 
-func targetRank(dataset string, target string, folder string, variables []*model.Variable, source metadata.DatasetSource) (map[string]float64, error) {
+func targetRank(dataset *api.Dataset, target string, variables []*model.Variable, source metadata.DatasetSource) (map[string]float64, error) {
 	// compute rankings
-	rankings, err := task.TargetRank(folder, target, variables, source)
+	rankings, err := task.TargetRank(dataset, target, variables, source)
 	if err != nil {
 		return nil, err
 	}
