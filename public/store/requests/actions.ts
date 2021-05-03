@@ -19,7 +19,7 @@ import axios from "axios";
 import _ from "lodash";
 import { ActionContext } from "vuex";
 import { validateArgs } from "../../util/data";
-import { FilterParams } from "../../util/filters";
+import { FilterParams, FilterSetsParams } from "../../util/filters";
 import { getWebSocketConnection, Stream } from "../../util/ws";
 import { SummaryMode, TaskTypes } from "../dataset";
 import { actions as predictActions } from "../predictions/module";
@@ -40,7 +40,7 @@ import {
   SolutionRequestStatus,
   SolutionStatus,
 } from "./index";
-import { setInvert, cloneFilters } from "../../util/highlights";
+import { setInvert, cloneFilters, cloneFilterSet } from "../../util/highlights";
 import { mutations } from "./module";
 
 // Message definitions for the websocket.  These are only for communication with the
@@ -65,7 +65,7 @@ interface StatusMessage {
 // Search request message used in web socket context
 export interface SolutionRequestMsg {
   dataset: string;
-  filters: FilterParams;
+  filters: FilterSetsParams;
   metrics: string[];
   maxSolutions: number;
   maxTime: number;
@@ -530,7 +530,7 @@ export const actions = {
   createSolutionRequest(context: RequestContext, request: SolutionRequestMsg) {
     return new Promise((resolve, reject) => {
       const conn = getWebSocketConnection();
-      const filters = cloneFilters(request.filters);
+      const filters = cloneFilterSet(request.filters);
       request.filters = setInvert(filters, false);
       let receivedFirstSolution = false;
 

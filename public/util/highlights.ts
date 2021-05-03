@@ -25,6 +25,9 @@ import {
   VECTOR_FILTER,
   INCLUDE_FILTER,
   TEXT_FILTER,
+  FilterSetsParams,
+  FilterSet,
+  groupFiltersBySet,
 } from "../util/filters";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as datasetGetters } from "../store/dataset/module";
@@ -42,6 +45,7 @@ import {
 import _ from "lodash";
 import store from "../store/store";
 import VueRouter from "vue-router";
+import { v4 as uuidv4 } from "uuid";
 
 export const UPDATE_ALL = "updateAll";
 export const UPDATE_FOR_KEY = "updateForKey";
@@ -94,15 +98,15 @@ export function decodeHighlights(highlight: string): Highlight[] {
 }
 // applies the supplied invert if invert is not present on the filter or highlight object (returns clone)
 export function setInvert(
-  filterParams: FilterParams,
+  filterParams: FilterSetsParams,
   invert: boolean
-): FilterParams {
-  const fp = cloneFilters(filterParams);
+): FilterSetsParams {
+  const fp = cloneFilterSet(filterParams);
   if (!fp.highlights) {
-    fp.highlights = { list: [], invert } as FilterObject;
+    fp.highlights = { list: [] as Filter[], invert } as FilterObject;
   }
   if (!fp.filters) {
-    fp.filters = { list: [], invert } as FilterObject;
+    fp.filters = { list: [] as Filter[][], invert } as FilterSet;
   }
   fp.highlights.invert = fp.highlights.invert ?? invert;
   fp.filters.invert = fp.filters.invert ?? invert;
@@ -116,7 +120,7 @@ export function createFiltersFromHighlights(
   if (!highlights || highlights.length < 1) {
     return [];
   }
-
+  const setId = uuidv4();
   const filterHighlights = highlights.map((highlight) => {
     // inject metadata prefix for metadata vars
     const key = highlight.key;
@@ -143,6 +147,7 @@ export function createFiltersFromHighlights(
         mode: highlight.include ?? mode,
         categories: arrayCheck(highlight.value),
         displayName: displayName,
+        set: setId,
       };
     }
 
@@ -153,6 +158,7 @@ export function createFiltersFromHighlights(
         mode: highlight.include ?? mode,
         categories: arrayCheck(highlight.value),
         displayName: displayName,
+        set: setId,
       };
     }
 
@@ -163,6 +169,7 @@ export function createFiltersFromHighlights(
         mode: highlight.include ?? mode,
         categories: arrayCheck(highlight.value),
         displayName: displayName,
+        set: setId,
       };
     }
     if (Array.isArray(highlight.value)) {
@@ -172,6 +179,7 @@ export function createFiltersFromHighlights(
         mode: highlight.include ?? mode,
         categories: highlight.value,
         displayName: displayName,
+        set: setId,
       };
     }
     if (
@@ -193,6 +201,7 @@ export function createFiltersFromHighlights(
           min: highlight.value.from,
           max: highlight.value.to,
           displayName: displayName,
+          set: setId,
         };
       }
 
@@ -203,6 +212,7 @@ export function createFiltersFromHighlights(
         min: highlight.value.from,
         max: highlight.value.to,
         displayName: displayName,
+        set: setId,
       };
     }
     if (
@@ -220,6 +230,7 @@ export function createFiltersFromHighlights(
         minY: highlight.value.minY,
         maxY: highlight.value.maxY,
         displayName: displayName,
+        set: setId,
       };
     }
   });
@@ -282,6 +293,9 @@ export function resultSummaryHighlight(highlight: Highlight) {
 export function cloneFilters(filterParams: FilterParams): FilterParams {
   return _.cloneDeep(filterParams);
 }
+export function cloneFilterSet(filterSet: FilterSetsParams): FilterSetsParams {
+  return _.cloneDeep(filterSet);
+}
 export function setHighlightModes(
   filterParams: FilterParams,
   mode: string
@@ -304,13 +318,20 @@ export function addHighlightToFilterParams(
   filterParams: FilterParams,
   highlights: Highlight[],
   mode: string = INCLUDE_FILTER
-): FilterParams {
+): FilterSetsParams {
   const params = _.cloneDeep(filterParams);
   const highlightFilters = createFiltersFromHighlights(highlights, mode);
   if (highlightFilters.length > 0) {
     params.highlights.list = highlightFilters;
   }
-  return params;
+
+  return {
+    ...params,
+    filters: {
+      list: groupFiltersBySet(params.filters.list),
+      invert: params.filters.invert,
+    },
+  };
 }
 
 export function updateHighlight(

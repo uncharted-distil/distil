@@ -89,7 +89,7 @@ import {
   TIMESERIES_TYPE,
 } from "../util/types";
 import { Dictionary } from "./dict";
-import { FilterParams } from "./filters";
+import { FilterParams, FilterSetsParams } from "./filters";
 import { overlayRouteEntry } from "./routes";
 
 // Postfixes for special variable names
@@ -628,7 +628,7 @@ export async function fetchSolutionResultSummary(
   resultProperty: string,
   resultSummaries: VariableSummary[],
   updateFunction: (arg: ResultsContext, summary: VariableSummary) => void,
-  filterParams: FilterParams,
+  filterParams: FilterParams | FilterSetsParams,
   varMode: SummaryMode
 ): Promise<any> {
   const dataset = solution.dataset;
@@ -692,7 +692,7 @@ export async function fetchPredictionResultSummary(
   label: string,
   resultSummaries: VariableSummary[],
   updateFunction: (arg: PredictionContext, summary: VariableSummary) => void,
-  filterParams: FilterParams,
+  filterParams: FilterParams | FilterSetsParams,
   varMode: SummaryMode
 ): Promise<any> {
   const dataset = predictions.dataset;
