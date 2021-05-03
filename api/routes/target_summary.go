@@ -109,7 +109,7 @@ func TargetSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.Sol
 		if hasBand && isGeobounds {
 			boundsFilter := model.NewCategoricalFilter("band", model.IncludeFilter, []string{"01"})
 			boundsFilter.IsBaselineFilter = true
-			filterParams.Filters.List = append(filterParams.Filters.List, boundsFilter)
+			filterParams.AddFilter(boundsFilter)
 		}
 		// extract extrema for solution
 		extrema, err := fetchSolutionPredictedExtrema(meta, data, solution, dataset, storageName, target, "")
@@ -119,7 +119,7 @@ func TargetSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.Sol
 		}
 
 		// fetch summary histogram
-		summary, err := data.FetchSummaryByResult(dataset, storageName, target, result.ResultURI, api.NewFilterParamsFromRaw(filterParams), extrema, api.SummaryMode(mode))
+		summary, err := data.FetchSummaryByResult(dataset, storageName, target, result.ResultURI, filterParams, extrema, api.SummaryMode(mode))
 		if err != nil {
 			handleError(w, err)
 			return

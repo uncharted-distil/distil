@@ -58,7 +58,7 @@ func ExtractHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCt
 			return
 		}
 		// replace any grouped variables in filter params with the group's
-		expandedFilterParams, err := api.ExpandFilterParams(dataset, api.NewFilterParamsFromRaw(filterParams), false, metaStorage)
+		expandedFilterParams, err := api.ExpandFilterParams(dataset, filterParams, false, metaStorage)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to expand filter params"))
 			return

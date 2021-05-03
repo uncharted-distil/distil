@@ -48,7 +48,7 @@ func TimeseriesHandler(metaCtor api.MetadataStorageCtor, ctorStorage api.DataSto
 		}
 
 		// get variable names and ranges out of the params
-		var filterParams *model.FilterParamsRaw
+		var filterParams *model.FilterParams
 		if params.FilterParams != nil {
 			filterParams, err = api.ParseFilterParamsFromJSONRaw(params.FilterParams)
 			if err != nil {
@@ -89,7 +89,7 @@ func TimeseriesHandler(metaCtor api.MetadataStorageCtor, ctorStorage api.DataSto
 
 			// fetch timeseries
 			timeseriesData, err := storage.FetchTimeseries(dataset, storageName, t.VarKey, variable.Grouping.GetIDCol(),
-				xColName, yColName, []string{t.SeriesID}, operation, api.NewFilterParamsFromRaw(filterParams))
+				xColName, yColName, []string{t.SeriesID}, operation, filterParams)
 			if err != nil {
 				handleError(w, err)
 				return

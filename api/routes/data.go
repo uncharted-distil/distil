@@ -54,7 +54,7 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 			return
 		}
 		var data *api.FilteredData
-		if !(len(filterParams.Filters.List) < 1 && filterParams.Filters.Invert) {
+		if !(len(filterParams.Filters) < 1 && filterParams.Invert) {
 			dataset := pat.Param(r, "dataset")
 			includeGroupingCol := pat.Param(r, "include-grouping-col")
 			includeGroupingColBool := parseBoolParam(includeGroupingCol)
@@ -92,7 +92,7 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 			storageName := ds.StorageName
 
 			// replace any grouped variables in filter params with the group's
-			expandedFilterParams, err := api.ExpandFilterParams(dataset, api.NewFilterParamsFromRaw(filterParams), false, metaStore)
+			expandedFilterParams, err := api.ExpandFilterParams(dataset, filterParams, false, metaStore)
 			if err != nil {
 				handleError(w, errors.Wrap(err, "unable to expand filter params"))
 				return
