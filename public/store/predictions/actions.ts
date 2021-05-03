@@ -153,6 +153,7 @@ export const actions = {
     }
   ) {
     const filterParamsBlank = emptyFilterParamsObject();
+    filterParamsBlank.filters.list.push(args.filter);
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
       args.highlights
@@ -161,7 +162,6 @@ export const actions = {
     if (_.isInteger(args.size)) {
       filterParams.size = args.size;
     }
-    filterParams.filters.list.push(args.filter);
     try {
       const response = await axios.post(
         `/distil/prediction-results/${encodeURIComponent(
@@ -189,6 +189,7 @@ export const actions = {
     }
   ) {
     const filterParamsBlank = emptyFilterParamsObject();
+    filterParamsBlank.filters.list.push(args.filter);
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
       args.highlights,
@@ -198,7 +199,6 @@ export const actions = {
     if (_.isInteger(args.size)) {
       filterParams.size = args.size;
     }
-    filterParams.filters.list.push(args.filter);
     // if highlight is null there is nothing to invert so return null
     if (
       filterParams.highlights === null &&
@@ -249,16 +249,12 @@ export const actions = {
       return null;
     }
 
-    let filterParams = {
-      highlights: { list: [], invert: false },
-      variables: [],
-      filters: { list: [], invert: false },
-    } as FilterParams;
-    filterParams = addHighlightToFilterParams(filterParams, args.highlights);
+    const filterParams = emptyFilterParamsObject();
+    const filterSet = addHighlightToFilterParams(filterParams, args.highlights);
     try {
       const response = await axios.post(
         `/distil/training-summary/${args.dataset}/${args.variable.key}/${args.resultID}/${args.varMode}`,
-        filterParams
+        filterSet
       );
       const summary = response.data.summary;
       await fetchSummaryExemplars(args.dataset, args.variable.key, summary);
@@ -289,13 +285,13 @@ export const actions = {
     }
   ) {
     let filterParams = emptyFilterParamsObject();
-    filterParams = addHighlightToFilterParams(filterParams, args.highlights);
+    const filterSet = addHighlightToFilterParams(filterParams, args.highlights);
     const mutator = args.isBaseline
       ? mutations.setBaselinePredictionTableData
       : mutations.setIncludedPredictionTableData;
     // Add the size limit to results if provided.
     if (_.isInteger(args.size)) {
-      filterParams.size = args.size;
+      filterSet.size = args.size;
     }
 
     try {
@@ -303,7 +299,7 @@ export const actions = {
         `distil/prediction-results/${encodeURIComponent(
           args.produceRequestId
         )}`,
-        filterParams
+        filterSet
       );
       mutator(context, response.data);
     } catch (error) {
@@ -351,7 +347,7 @@ export const actions = {
     }
 
     let filterParams = emptyFilterParamsObject();
-    filterParams = addHighlightToFilterParams(filterParams, args.highlights);
+    const filterSet = addHighlightToFilterParams(filterParams, args.highlights);
 
     const endpoint = `/distil/prediction-result-summary`;
     const key = predictions.predictedKey;
@@ -364,7 +360,7 @@ export const actions = {
       label,
       predictionGetters.getPredictionSummaries(context),
       mutations.updatePredictedSummary,
-      filterParams,
+      filterSet,
       args.varMode
     );
   },

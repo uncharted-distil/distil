@@ -567,6 +567,7 @@ export function lexQueryToFiltersAndHighlight(
           displayName: displayKey,
           type,
           key,
+          set: "",
         };
 
         if (type === GEOBOUNDS_FILTER || type === GEOCOORDINATE_FILTER) {

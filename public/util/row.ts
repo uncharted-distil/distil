@@ -60,6 +60,7 @@ export function createFilterFromRowSelection(
     type: ROW_FILTER,
     mode: mode,
     d3mIndices: selection.d3mIndices.map((num) => _.toString(num)),
+    set: "",
   };
 }
 
