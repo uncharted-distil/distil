@@ -32,7 +32,7 @@ import (
 	"github.com/uncharted-distil/distil/api/util"
 )
 
-func filterData(client *compute.Client, ds *api.Dataset, filterParams *api.FilterParamsRaw, dataStorage api.DataStorage) (string, *api.FilterParamsRaw, error) {
+func filterData(client *compute.Client, ds *api.Dataset, filterParams *api.FilterParams, dataStorage api.DataStorage) (string, *api.FilterParams, error) {
 	inputPath := ds.GetLearningFolder()
 
 	log.Infof("checking if solution search for dataset %s found in '%s' needs prefiltering", ds.ID, inputPath)
@@ -65,7 +65,7 @@ func filterData(client *compute.Client, ds *api.Dataset, filterParams *api.Filte
 	}
 
 	// run the filtering pipeline
-	pipeline, err := description.CreateDataFilterPipeline("Pre Filtering", "pre filter a dataset that has metadata features", resultingVariables, preFilters.Filters.List)
+	pipeline, err := description.CreateDataFilterPipeline("Pre Filtering", "pre filter a dataset that has metadata features", resultingVariables, preFilters.Filters)
 	if err != nil {
 		return "", nil, err
 	}
@@ -99,16 +99,20 @@ func filterData(client *compute.Client, ds *api.Dataset, filterParams *api.Filte
 	return outputFolder, updatedParams, nil
 }
 
-func mapFilterKeys(dataset string, filters *api.FilterParamsRaw, variables []*model.Variable) *api.FilterParamsRaw {
+func mapFilterKeys(dataset string, filters *api.FilterParams, variables []*model.Variable) *api.FilterParams {
 	filtersUpdated := filters.Clone()
 
 	varsMapped := api.MapVariables(variables, func(variable *model.Variable) string { return variable.Key })
-	for _, f := range filtersUpdated.Filters.List {
-		variable := varsMapped[f.Key]
-		if variable.Key == f.Key && variable.IsGrouping() {
-			if _, ok := variable.Grouping.(*model.GeoBoundsGrouping); ok {
-				grouping := variable.Grouping.(*model.GeoBoundsGrouping)
-				f.Key = grouping.CoordinatesCol
+	for _, fs := range filtersUpdated.Filters {
+		for _, ff := range fs.FeatureFilters {
+			for _, f := range ff.List {
+				variable := varsMapped[f.Key]
+				if variable.Key == f.Key && variable.IsGrouping() {
+					if _, ok := variable.Grouping.(*model.GeoBoundsGrouping); ok {
+						grouping := variable.Grouping.(*model.GeoBoundsGrouping)
+						f.Key = grouping.CoordinatesCol
+					}
+				}
 			}
 		}
 	}
@@ -116,11 +120,11 @@ func mapFilterKeys(dataset string, filters *api.FilterParamsRaw, variables []*mo
 	return filtersUpdated
 }
 
-func hashFilter(schemaFile string, filterParams *api.FilterParamsRaw) (uint64, error) {
+func hashFilter(schemaFile string, filterParams *api.FilterParams) (uint64, error) {
 	// generate the hash from the params
 	hashStruct := struct {
 		Schema       string
-		FilterParams *api.FilterParamsRaw
+		FilterParams *api.FilterParams
 	}{
 		Schema:       schemaFile,
 		FilterParams: filterParams,
@@ -132,37 +136,38 @@ func hashFilter(schemaFile string, filterParams *api.FilterParamsRaw) (uint64, e
 	return hash, nil
 }
 
-func getPreFiltering(ds *api.Dataset, filterParams *api.FilterParamsRaw) (*api.FilterParamsRaw, *api.FilterParamsRaw) {
+func getPreFiltering(ds *api.Dataset, filterParams *api.FilterParams) (*api.FilterParams, *api.FilterParams) {
 	vars := map[string]*model.Variable{}
 	for _, v := range ds.Variables {
 		vars[v.Key] = v
 	}
 	clone := filterParams.Clone()
+
 	// filter if a clustering or outlier detection metadata feature exist
 	// remove pre filters from the rest of the filters since they should not be in the main pipeline
-	// TODO: NEED TO HANDLE OUTLIER FILTERS!
-	preFilters := &api.FilterParamsRaw{
-		Filters: api.FilterObject{List: []*model.Filter{}, Invert: false},
-	}
-	filters := clone.Filters
-	clone.Filters = api.FilterObject{List: []*model.Filter{}, Invert: false}
-	for _, f := range filters.List {
-		variable := vars[f.Key]
-		params := clone
-		if variable.IsGrouping() {
-			cg, ok := variable.Grouping.(model.ClusteredGrouping)
-			if ok {
-				f.Key = cg.GetClusterCol()
-				params = preFilters
+	preFilters := api.NewFilterParamsFromFilters(nil)
+	clone.Filters = []*model.FilterSet{}
+	for _, fs := range filterParams.Filters {
+		for _, ff := range fs.FeatureFilters {
+			for _, f := range ff.List {
+				variable := vars[f.Key]
+				params := clone
+				if variable.IsGrouping() {
+					cg, ok := variable.Grouping.(model.ClusteredGrouping)
+					if ok {
+						f.Key = cg.GetClusterCol()
+						params = preFilters
+					}
+				}
+
+				// Pre-filters rows select by D3MIndex (i.e. row selection.)
+				if variable.Key == model.D3MIndexFieldName {
+					params = preFilters
+				}
+
+				params.AddFilter(f)
 			}
 		}
-
-		// Pre-filters rows select by D3MIndex (i.e. row selection.)
-		if variable.Key == model.D3MIndexFieldName {
-			params = preFilters
-		}
-
-		params.Filters.List = append(params.Filters.List, f)
 	}
 
 	return clone, preFilters

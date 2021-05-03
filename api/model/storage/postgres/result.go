@@ -528,7 +528,7 @@ func isCorrectnessCategory(categoryName string) bool {
 	return strings.EqualFold(CorrectCategory, categoryName) || strings.EqualFold(categoryName, IncorrectCategory)
 }
 
-func addCorrectnessFilterToWhere(wheres []string, params []interface{}, correctnessFilters api.FilterObject, target *model.Variable) ([]string, []interface{}, error) {
+func addCorrectnessFilterToWhere(wheres []string, params []interface{}, correctnessFilters model.FilterObject, target *model.Variable) ([]string, []interface{}, error) {
 	wheresFilter := []string{}
 	for _, correctnessFilter := range correctnessFilters.List {
 		if len(correctnessFilter.Categories[0]) == 0 {
@@ -555,7 +555,7 @@ func getFullName(alias string, column string) string {
 	return fullName
 }
 
-func addPredictedFilterToWhere(wheres []string, params []interface{}, predictedFilters api.FilterObject, target *model.Variable) ([]string, []interface{}, error) {
+func addPredictedFilterToWhere(wheres []string, params []interface{}, predictedFilters model.FilterObject, target *model.Variable) ([]string, []interface{}, error) {
 	// Handle the predicted column, which is accessed as `value` in the result query
 	wheresFilter := []string{}
 	for _, predictedFilter := range predictedFilters.List {
@@ -616,7 +616,7 @@ func addPredictedFilterToWhere(wheres []string, params []interface{}, predictedF
 	return append(wheres, fmt.Sprintf("(%s)", strings.Join(wheresFilter, " OR "))), params, nil
 }
 
-func addErrorFilterToWhere(wheres []string, params []interface{}, alias string, targetName string, residualFilters api.FilterObject) ([]string, []interface{}, error) {
+func addErrorFilterToWhere(wheres []string, params []interface{}, alias string, targetName string, residualFilters model.FilterObject) ([]string, []interface{}, error) {
 	wheresFilter := []string{}
 	for _, residualFilter := range residualFilters.List {
 		// Add a clause to filter residuals to the existing where

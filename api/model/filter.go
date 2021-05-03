@@ -53,40 +53,28 @@ func DataModeFromString(s string) (DataMode, error) {
 // by the server only, and not the client. Filters are gathered by mode (include/exclude),
 // with each mode being a list of features that are used as filters.
 type FilterParams struct {
-	Size      int          `json:"size"`
-	Filters   []*FilterSet `json:"filters"`
-	Variables []string     `json:"variables"`
-	DataMode  DataMode     `json:"dataMode"`
-	Invert    bool         `json:"invert"`
+	Size      int                `json:"size"`
+	Filters   []*model.FilterSet `json:"filters"`
+	Variables []string           `json:"variables"`
+	DataMode  DataMode           `json:"dataMode"`
+	Invert    bool               `json:"invert"`
 }
 
 // FilterParamsRaw defines the set of numeric range and categorical filters. Variables
 // with no range or category filters are also allowed.
 type FilterParamsRaw struct {
-	Size       int          `json:"size"`
-	Highlights FilterObject `json:"highlights"`
-	Filters    FilterObject `json:"filters"`
-	Variables  []string     `json:"variables"`
-	DataMode   DataMode     `json:"dataMode"`
-}
-
-// FilterObject captures a collection of invertable filters.
-type FilterObject struct {
-	List   []*model.Filter `json:"list"`
-	Invert bool            `json:"invert"`
-}
-
-// FilterSet captures a set of filters representing one subset of data.
-type FilterSet struct {
-	FeatureFilters []FilterObject `json:"featureFilters"`
-	Mode           string         `json:"mode"`
+	Size       int                `json:"size"`
+	Highlights model.FilterObject `json:"highlights"`
+	Filters    model.FilterObject `json:"filters"`
+	Variables  []string           `json:"variables"`
+	DataMode   DataMode           `json:"dataMode"`
 }
 
 // NewFilterParamsFromFilters creates a wrapping container for all filters.
 func NewFilterParamsFromFilters(filters []*model.Filter) *FilterParams {
 	// group filters by feature and mode
 	params := &FilterParams{
-		Filters: []*FilterSet{},
+		Filters: []*model.FilterSet{},
 	}
 
 	// add filters to the params
@@ -105,7 +93,7 @@ func NewFilterParamsFromRaw(raw *FilterParamsRaw) *FilterParams {
 		Size:      rawClone.Size,
 		Variables: rawClone.Variables,
 		DataMode:  rawClone.DataMode,
-		Filters:   []*FilterSet{},
+		Filters:   []*model.FilterSet{},
 	}
 
 	// add filters and highlights to the params
@@ -146,21 +134,21 @@ func GetBaselineFilter(filterParam *FilterParams) *FilterParams {
 
 	// highlights should not be applied to the baseline
 	clone := &FilterParams{
-		Filters: []*FilterSet{},
+		Filters: []*model.FilterSet{},
 	}
 	for _, filters := range filterParam.Filters {
-		baselineFilters := []FilterObject{}
+		baselineFilters := []model.FilterObject{}
 		for _, f := range filters.FeatureFilters {
-			baseline := f.getBaselineFilter()
+			baseline := f.GetBaselineFilter()
 			if len(baseline) > 0 {
-				baselineFilters = append(baselineFilters, FilterObject{
+				baselineFilters = append(baselineFilters, model.FilterObject{
 					Invert: f.Invert,
-					List:   f.getBaselineFilter(),
+					List:   f.GetBaselineFilter(),
 				})
 			}
 		}
 		if len(baselineFilters) > 0 {
-			clone.Filters = append(clone.Filters, &FilterSet{
+			clone.Filters = append(clone.Filters, &model.FilterSet{
 				FeatureFilters: baselineFilters,
 				Mode:           filters.Mode,
 			})
@@ -172,29 +160,18 @@ func GetBaselineFilter(filterParam *FilterParams) *FilterParams {
 	return clone
 }
 
-func (f FilterObject) getBaselineFilter() []*model.Filter {
-	baseline := []*model.Filter{}
-	for _, filter := range f.List {
-		if filter.IsBaselineFilter {
-			baseline = append(baseline, filter)
-		}
-	}
-
-	return baseline
-}
-
 // Clone returns a deep copy of the filter params.
 func (f *FilterParams) Clone() *FilterParams {
 	clone := &FilterParams{
-		Filters: []*FilterSet{},
+		Filters: []*model.FilterSet{},
 	}
 	for _, filters := range f.Filters {
-		featureSet := &FilterSet{
+		featureSet := &model.FilterSet{
 			Mode:           filters.Mode,
-			FeatureFilters: []FilterObject{},
+			FeatureFilters: []model.FilterObject{},
 		}
 		for _, fo := range filters.FeatureFilters {
-			cloneFilterObject := FilterObject{
+			cloneFilterObject := model.FilterObject{
 				Invert: fo.Invert,
 				List:   []*model.Filter{},
 			}
@@ -228,7 +205,7 @@ func (f *FilterParams) AddFilter(filter *model.Filter) {
 			}
 
 			// feature not filtered yet
-			set.FeatureFilters = append(set.FeatureFilters, FilterObject{
+			set.FeatureFilters = append(set.FeatureFilters, model.FilterObject{
 				Invert: false,
 				List:   []*model.Filter{filter},
 			})
@@ -236,9 +213,9 @@ func (f *FilterParams) AddFilter(filter *model.Filter) {
 		}
 	}
 	// no filter for that mode exists yet
-	f.Filters = append(f.Filters, &FilterSet{
+	f.Filters = append(f.Filters, &model.FilterSet{
 		Mode: filter.Mode,
-		FeatureFilters: []FilterObject{{
+		FeatureFilters: []model.FilterObject{{
 			Invert: false,
 			List:   []*model.Filter{filter},
 		}},
@@ -439,7 +416,7 @@ func (f *FilterParams) MergeParams(other *FilterParams) {
 }
 
 // MergeFilterObjects merges a slice of filter objects with the existing filter params.
-func (f *FilterParams) MergeFilterObjects(filters []FilterObject) {
+func (f *FilterParams) MergeFilterObjects(filters []model.FilterObject) {
 	for _, features := range filters {
 		for _, filter := range features.List {
 			found := false

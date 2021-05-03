@@ -81,7 +81,7 @@ type SolutionRequest struct {
 	Quality              string
 	ProblemType          string
 	Metrics              []string
-	Filters              *api.FilterParamsRaw
+	Filters              *api.FilterParams
 	DatasetAugmentations []*model.DatasetOrigin
 	TrainTestSplit       float64
 	CancelFuncs          map[string]context.CancelFunc
@@ -140,10 +140,11 @@ func NewSolutionRequest(variables []*model.Variable, data []byte) (*SolutionRequ
 	}
 	filters, ok := json.Get(j, "filters")
 	if ok {
-		req.Filters, err = api.ParseFilterParamsFromJSON(filters)
+		rawFilters, err := api.ParseFilterParamsFromJSON(filters)
 		if err != nil {
 			return nil, err
 		}
+		req.Filters = api.NewFilterParamsFromRaw(rawFilters)
 	}
 
 	req.CancelFuncs = map[string]context.CancelFunc{}
@@ -302,7 +303,7 @@ func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.
 	}
 
 	// replace any grouped variables in filter params with the group's
-	expandedFilters, err := api.ExpandFilterParams(s.Dataset, api.NewFilterParamsFromRaw(s.Filters), true, metaStorage)
+	expandedFilters, err := api.ExpandFilterParams(s.Dataset, s.Filters, true, metaStorage)
 	if err != nil {
 		return nil, err
 	}
@@ -312,7 +313,7 @@ func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.
 			AllFeatures:      featureVariables,
 			TargetFeature:    s.TargetFeature,
 			SelectedFeatures: expandedFilters.Variables,
-			Filters:          s.Filters.Filters.List,
+			Filters:          s.Filters.Filters,
 		}, augments)
 	if err != nil {
 		return nil, err
@@ -828,7 +829,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// store request filters
-	err = solutionStorage.PersistRequestFilters(requestID, api.NewFilterParamsFromRaw(s.Filters))
+	err = solutionStorage.PersistRequestFilters(requestID, s.Filters)
 	if err != nil {
 		return err
 	}

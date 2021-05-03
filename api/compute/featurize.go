@@ -52,7 +52,7 @@ func (s *SolutionRequest) createPreFeaturizedPipeline(learningDataset string,
 	name := fmt.Sprintf("prefeaturized-%s-%s-%s", s.Dataset, learningDataset, uuid.String())
 	desc := fmt.Sprintf("Prefeaturized pipeline capturing user feature selection and type information. Dataset: `%s` ID: `%s`", s.Dataset, uuid.String())
 
-	expandedFilters, err := api.ExpandFilterParams(s.Dataset, api.NewFilterParamsFromRaw(s.Filters), true, metaStorage)
+	expandedFilters, err := api.ExpandFilterParams(s.Dataset, s.Filters, true, metaStorage)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func (s *SolutionRequest) createPreFeaturizedPipeline(learningDataset string,
 			AllFeatures:      featurizedVariables,
 			TargetFeature:    featurizedVariables[targetIndex],
 			SelectedFeatures: expandedFilters.Variables,
-			Filters:          s.Filters.Filters.List,
+			Filters:          s.Filters.Filters,
 		}, nil)
 	if err != nil {
 		return nil, err
