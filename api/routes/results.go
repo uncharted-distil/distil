@@ -93,10 +93,9 @@ func ResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.DataStora
 		}
 
 		// merge provided filterParams with those of the request
-		// req.Filters.Merge(filterParams)
-
+		req.Filters.MergeParams(filterParams)
 		// Expand any grouped variables defined in filters into their subcomponents
-		updatedFilterParams, err := api.ExpandFilterParams(dataset, filterParams, false, meta)
+		updatedFilterParams, err := api.ExpandFilterParams(dataset, req.Filters, false, meta)
 		if err != nil {
 			handleError(w, err)
 			return

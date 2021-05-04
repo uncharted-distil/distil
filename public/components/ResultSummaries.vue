@@ -73,7 +73,7 @@
         <save-modal
           :solution-id="solutionId"
           :fitted-solution-id="fittedSolutionId"
-          @save="onModelSave"
+          @save="onSaveModel"
         />
         <b-button
           variant="success"

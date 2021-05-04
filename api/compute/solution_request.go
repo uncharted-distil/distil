@@ -144,7 +144,7 @@ func NewSolutionRequest(variables []*model.Variable, data []byte) (*SolutionRequ
 		if err != nil {
 			return nil, err
 		}
-		req.Filters = api.NewFilterParamsFromRaw(rawFilters)
+		req.Filters = rawFilters
 	}
 
 	req.CancelFuncs = map[string]context.CancelFunc{}
