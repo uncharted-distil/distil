@@ -69,7 +69,11 @@ import { Solution } from "../store/requests/index";
 import { SolutionRequestMsg } from "../store/requests/actions";
 import { Variable, DataMode } from "../store/dataset/index";
 import { DATE_TIME_TYPE } from "../util/types";
-import { FilterParams } from "../util/filters";
+import {
+  FilterParams,
+  FilterSetsParams,
+  groupFiltersBySet,
+} from "../util/filters";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import Vue from "vue";
 
@@ -160,10 +164,16 @@ export default Vue.extend({
       const routeSplit = routeGetters.getRouteTrainTestSplit(this.$store);
       const defaultSplit = appGetters.getTrainTestSplit(this.$store);
       const timestampSplit = routeGetters.getRouteTimestampSplit(this.$store);
-
+      const filterSet = {
+        ...this.filterParams,
+        filters: {
+          list: groupFiltersBySet(this.filterParams.filters.list),
+          invert: this.filterParams.filters.invert,
+        },
+      } as FilterSetsParams;
       const solutionRequestMsg = {
         dataset: this.dataset,
-        filters: this.filterParams,
+        filters: filterSet,
         target: routeGetters.getRouteTargetVariable(this.$store),
         metrics: this.metrics,
         maxSolutions: routeGetters.getModelLimit(this.$store),

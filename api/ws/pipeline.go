@@ -294,7 +294,7 @@ func handleQuery(conn *Connection, client *compute.Client, metadataCtor apiModel
 		MetaStorage: metaStorage,
 		Dataset:     req.DatasetID,
 		TargetName:  req.Target,
-		Filters:     apiModel.NewFilterParamsFromRaw(req.Filters),
+		Filters:     req.Filters,
 	}
 	_, err = task.Query(params)
 	if err != nil {

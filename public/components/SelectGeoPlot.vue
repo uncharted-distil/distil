@@ -126,6 +126,7 @@ export default Vue.extend({
         minY: data.bounds[1][0],
         mode: EXCLUDE_FILTER,
         type: data.type,
+        set: "",
       };
       // fetch area of interests
       await viewActions.updateAreaOfInterest(this.$store, filter);

@@ -95,7 +95,7 @@ func PredictionResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api
 		}
 
 		// merge provided filterParams with those of the request
-		req.Filters.Merge(filterParams)
+		req.Filters.MergeParams(filterParams)
 
 		// Expand any grouped variables defined in filters into their subcomponents
 		dataset := predictResult.Dataset

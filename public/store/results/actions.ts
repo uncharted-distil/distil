@@ -393,6 +393,7 @@ export const actions = {
     }
 
     const filterParamsBlank = emptyFilterParamsObject();
+    filterParamsBlank.filters.list.push(args.filter);
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
       args.highlights
@@ -403,7 +404,7 @@ export const actions = {
     if (_.isInteger(args.size)) {
       filterParams.size = args.size;
     }
-    filterParams.filters.list.push(args.filter);
+
     try {
       const response = await axios.post(
         `/distil/results/${args.dataset}/${encodeURIComponent(
@@ -441,6 +442,7 @@ export const actions = {
     }
 
     const filterParamsBlank = emptyFilterParamsObject();
+    filterParamsBlank.filters.list.push(args.filter);
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
       args.highlights,
@@ -453,7 +455,6 @@ export const actions = {
     if (_.isInteger(args.size)) {
       filterParams.size = args.size;
     }
-    filterParams.filters.list.push(args.filter);
     // if highlight is null there is nothing to invert so return null
     if (
       filterParams.highlights === null &&

@@ -359,6 +359,7 @@ export default Vue.extend({
         minY: data.bounds[1][0],
         mode: INCLUDE_FILTER,
         type: data.type,
+        set: "",
       };
       // fetch surrounding tiles
       await viewActions.updateResultAreaOfInterest(this.$store, filter);

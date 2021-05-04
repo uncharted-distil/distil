@@ -119,10 +119,10 @@ func CorrectnessSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor ap
 		if hasBand && isGeobounds {
 			boundsFilter := model.NewCategoricalFilter("band", model.IncludeFilter, []string{"01"})
 			boundsFilter.IsBaselineFilter = true
-			filterParams.Filters.List = append(filterParams.Filters.List, boundsFilter)
+			filterParams.AddFilter(boundsFilter)
 		}
 		// fetch summary histogram
-		summary, err := data.FetchCorrectnessSummary(dataset, storageName, res.ResultURI, api.NewFilterParamsFromRaw(filterParams), api.SummaryMode(mode))
+		summary, err := data.FetchCorrectnessSummary(dataset, storageName, res.ResultURI, filterParams, api.SummaryMode(mode))
 		if err != nil {
 			handleError(w, err)
 			return

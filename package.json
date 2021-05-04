@@ -43,6 +43,7 @@
     "store": "^2.0.12",
     "string-similarity": "^4.0.4",
     "ts-enum-util": "^4.0.1",
+    "uuid": "^8.3.2",
     "vue": "^2.6.6",
     "vue-observe-visibility": "^0.4.4",
     "vue-router": "^3.0.6",

@@ -20,7 +20,8 @@ import { getters as routeGetters } from "../store/route/module";
 import { overlayRouteEntry } from "./routes";
 import store from "../store/store";
 import VueRouter from "vue-router";
-
+import { Dictionary } from "./dict";
+import { v4 as uuidv4 } from "uuid";
 /**
  * Categorical filter, omitting documents that do not contain the provided
  * categories in the variable.
@@ -112,6 +113,7 @@ export function invertFilter(filter: string): string {
 export interface Filter {
   type: string;
   mode: string;
+  set: string;
   displayName?: string;
   key?: string;
   min?: number;
@@ -124,9 +126,22 @@ export interface Filter {
   categories?: string[];
   d3mIndices?: string[];
 }
+export interface FilterSetsParams {
+  highlights: FilterObject;
+  filters: FilterSet;
+  variables: string[];
+  size?: number;
+  dataMode?: string;
+  isHighlight?: boolean;
+}
 
 export interface FilterObject {
   list: Filter[];
+  invert?: boolean;
+}
+
+export interface FilterSet {
+  list: Filter[][];
   invert?: boolean;
 }
 
@@ -174,7 +189,26 @@ export function encodeFilters(filters: Filter[]): string {
   }
   return btoa(JSON.stringify(filters));
 }
-
+/**
+ * Groups filters by the set property
+ * @param filters
+ *
+ */
+export function groupFiltersBySet(filters: Filter[]): Array<Filter[]> {
+  const setMap = {} as Dictionary<Filter[]>;
+  filters.forEach((f) => {
+    if (!setMap[f.set]) {
+      setMap[f.set] = [] as Filter[];
+    }
+    setMap[f.set].push(f);
+  });
+  const keys = Object.keys(setMap);
+  return [
+    ...keys.map((key) => {
+      return setMap[key];
+    }),
+  ];
+}
 /**
  * Resolves any redundant row include / excludes such that there are only a
  * maximum of two row filters, one for includes, one for excludes.
@@ -204,11 +238,13 @@ function dedupeRowFilters(filters: FilterObject): Filter[] {
     type: ROW_FILTER,
     mode: INCLUDE_FILTER,
     d3mIndices: [],
+    set: uuidv4(),
   };
   const excludes = {
     type: ROW_FILTER,
     mode: EXCLUDE_FILTER,
     d3mIndices: [],
+    set: uuidv4(),
   };
 
   _.keys(d3mIndices).forEach((d3mIndex) => {

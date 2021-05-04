@@ -93,16 +93,16 @@ func VariableSummaryHandler(metaCtor api.MetadataStorageCtor, ctorStorage api.Da
 		if hasBand && isGeobounds {
 			// if inverting the filter, then invert the mode
 			mode := model.IncludeFilter
-			if filterParams.Filters.Invert {
+			if filterParams.Invert {
 				mode = model.ExcludeFilter
 			}
 			boundsFilter := model.NewCategoricalFilter("band", mode, []string{"01"})
 			boundsFilter.IsBaselineFilter = true
-			filterParams.Filters.List = append(filterParams.Filters.List, boundsFilter)
+			filterParams.AddFilter(boundsFilter)
 		}
 
 		// fetch summary histogram
-		summary, err := storage.FetchSummary(dataset, storageName, variable, api.NewFilterParamsFromRaw(filterParams), mode)
+		summary, err := storage.FetchSummary(dataset, storageName, variable, filterParams, mode)
 		if err != nil {
 			handleError(w, err)
 			return
