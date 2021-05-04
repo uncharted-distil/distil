@@ -53,7 +53,7 @@ func SaveFittedSolution(fittedSolutionID string, modelName string, modelDescript
 	// ignore errors in this part because they are secondary to saving the model
 	if len(ranks) == 0 {
 		summaryVariables, _ := api.FetchSummaryVariables(dataset.ID, metadataStorage)
-		ranks, _ = TargetRank(dataset.Folder, request.TargetFeature(), summaryVariables, dataset.Source)
+		ranks, _ = TargetRank(dataset, request.TargetFeature(), summaryVariables, dataset.Source)
 	}
 
 	varMap := make(map[string]*model.Variable)

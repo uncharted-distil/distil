@@ -26,10 +26,10 @@
     <join-data-preview-slot
       :items="joinDataPreviewItems"
       :fields="emphasizedFields"
-      :numRows="joinDataPreviewNumRows"
-      :hasData="joinDataPreviewHasData"
+      :num-rows="joinDataPreviewNumRows"
+      :has-data="joinDataPreviewHasData"
       instance-name="join-dataset-bottom"
-    ></join-data-preview-slot>
+    />
 
     <div class="row justify-content-center">
       <b-btn
@@ -39,18 +39,18 @@
         :disabled="isPending"
       >
         <div class="row justify-content-center">
-          <i class="fa fa-check-circle fa-2x mr-2"></i>
+          <i class="fa fa-check-circle fa-2x mr-2" />
           <b>Commit join</b>
         </div>
       </b-btn>
       <b-btn
         class="mt-3 join-modal-button"
         variant="outline-danger"
-        @click="onClose"
         :disabled="isPending"
+        @click="onClose"
       >
         <div class="row justify-content-center">
-          <i class="fa fa-times-circle fa-2x mr-2"></i>
+          <i class="fa fa-times-circle fa-2x mr-2" />
           <b>Cancel</b>
         </div>
       </b-btn>
@@ -63,7 +63,7 @@
         variant="outline-secondary"
         striped
         :animated="true"
-      ></b-progress>
+      />
     </div>
   </div>
 </template>
@@ -84,6 +84,7 @@ import {
 } from "../store/dataset/index";
 import { actions as datasetActions } from "../store/dataset/module";
 import { getTableDataItems, getTableDataFields } from "../util/data";
+import { pairs } from "d3-array";
 
 export default Vue.extend({
   name: "JoinDatasetsPreview",
@@ -157,6 +158,15 @@ export default Vue.extend({
   methods: {
     onSave(args: SaveInfo) {
       this.pending = true;
+
+      const leftCols = routeGetters
+        .getJoinPairs(this.$store)
+        .map((p) => p.first);
+
+      const rightCols = routeGetters
+        .getJoinPairs(this.$store)
+        .map((p) => p.second);
+
       const importDatasetArgs = {
         datasetID: args.name,
         terms: this.terms,
@@ -164,6 +174,8 @@ export default Vue.extend({
         provenance: "local",
         originalDataset: this.datasetA,
         joinedDataset: this.datasetB,
+        leftCols: leftCols,
+        rightCols: rightCols,
         searchResultIndex: this.searchResultIndex,
         description: args.description,
         path: this.path,

@@ -96,6 +96,8 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 			}
 			var originalDataset map[string]interface{}
 			var joinedDataset map[string]interface{}
+			leftCols := []string{}
+			rightCols := []string{}
 			if params["joinedDataset"] != nil {
 				if params["originalDataset"] == nil {
 					missingParamErr(w, "originalDataset")
@@ -107,6 +109,22 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 				originalDataset, okOriginal = params["originalDataset"].(map[string]interface{})
 				joinedDataset, okJoined = params["joinedDataset"].(map[string]interface{})
 				if okOriginal && okJoined {
+					var leftOk bool
+					var rightOk bool
+
+					// Parse out the left and right join column lists.  This is necessary because we need patch up
+					// the group references if one of them was a right join column (which gets removed)
+					leftCols, leftOk = json.StringArray(params, "leftCols")
+					if !leftOk {
+						missingParamErr(w, "leftCols")
+						return
+					}
+					rightCols, rightOk = json.StringArray(params, "rightCols")
+					if !rightOk {
+						missingParamErr(w, "rightCols")
+						return
+					}
+
 					// make sure only one of the datasets has a prefeaturized version
 					originalLearningDataset := originalDataset["learningDataset"].(string)
 					joinedLearningDataset := joinedDataset["learningDataset"].(string)
@@ -162,6 +180,14 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 							return
 						}
 						ingestParams.RawGroupings = append(groups, groupsJoin...)
+
+						// final step - on join we drop the right column, which may be referred to by a group
+						// we replace any refs to the right col with a ref to the left col
+						nameUpdates := make([]nameUpdate, len(rightCols))
+						for rightIdx, rightVar := range rightCols {
+							nameUpdates[rightIdx] = nameUpdate{old: rightVar, new: leftCols[rightIdx]}
+						}
+						ingestParams.RawGroupings = remapDatasetGroups(nameUpdates, ingestParams.RawGroupings)
 					}
 
 					// set the definitive types based on the currently stored metadata
@@ -429,6 +455,32 @@ func getDatasetGroups(dsRaw map[string]interface{}) ([]map[string]interface{}, e
 	}
 
 	return groups, nil
+}
+
+type nameUpdate struct {
+	old string
+	new string
+}
+
+// Given a raw JSON group definition, find any references to the "old" variable in the update list,
+// and replace it with the "new" value.  This is mainly needed for joins, where the right hand join columns
+// get removed, but may part of a group in the joined data.
+func remapDatasetGroups(updates []nameUpdate, groups []map[string]interface{}) []map[string]interface{} {
+	remappedGroups := []map[string]interface{}{}
+	for _, g := range groups {
+		rg := map[string]interface{}{}
+		for groupField, value := range g {
+			for _, update := range updates {
+				if value == update.old {
+					rg[groupField] = update.new
+				} else {
+					rg[groupField] = value
+				}
+			}
+		}
+		remappedGroups = append(remappedGroups, rg)
+	}
+	return remappedGroups
 }
 
 func getVariablesDefault(datasetID string, metaStorage api.MetadataStorage) []*model.Variable {
