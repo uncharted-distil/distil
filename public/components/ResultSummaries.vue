@@ -71,6 +71,7 @@
       </template>
       <template v-else>
         <save-modal
+          ref="saveModel"
           :solution-id="solutionId"
           :fitted-solution-id="fittedSolutionId"
           @save="onSaveModel"
@@ -229,6 +230,8 @@ export default Vue.extend({
           modelName: args.name,
           modelDescription: args.description,
         });
+        const modal = this.$refs.saveModel as InstanceType<typeof SaveModal>;
+        modal.showSuccessModel();
       } catch (err) {
         console.warn(err);
       }
