@@ -127,11 +127,9 @@ func (defaultSubmitter) submit(datasetURIs []string, pipelineDesc *description.F
 }
 
 func createDatasetFromCSV(config *env.Config, csvFile string, datasetName string, storageName string, joinLeft *JoinSpec, joinRight *JoinSpec) ([]*model.Variable, error) {
-
-	datasetStorage := serialization.GetStorage(csvFile)
-	inputData, err := datasetStorage.ReadData(csvFile)
+	inputData, err := serialization.ResultToInputCSV(csvFile)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to read data")
+		return nil, err
 	}
 
 	metadata := model.NewMetadata(datasetName, datasetName, datasetName, storageName)

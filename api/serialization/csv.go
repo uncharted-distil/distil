@@ -29,6 +29,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
+	"github.com/uncharted-distil/distil-compute/primitive/compute/result"
 	"github.com/uncharted-distil/distil/api/util"
 	log "github.com/unchartedsoftware/plog"
 )
@@ -228,4 +229,40 @@ func (d *CSV) writeVariable(variable *model.Variable, extended bool) interface{}
 	}
 
 	return output
+}
+
+// ResultToInputCSV takes a result produced by a TA2 pipeline run ensures that it is in a format
+// suitable for storage as a D3M dataset.
+func ResultToInputCSV(resultURI string) ([][]string, error) {
+	// Parse the result CSV
+	result, err := result.ParseResultCSV(resultURI)
+	if err != nil {
+		return nil, err
+	}
+
+	transformedInput := make([][]string, len(result))
+
+	// Loop over the result structure and save each field out
+	for rowIdx, row := range result {
+		record := make([]string, len(row))
+		for colIdx, v := range row {
+			if v != nil {
+				if arr, ok := v.([]interface{}); ok {
+					// If this field was parsed as an array, we will override its string conversion
+					// to ensure that we write out in D3M format, which is a quoted comma separated
+					// list.  If the array is nested, the nested data will be blindly converted
+					// to a string.
+					strArr := make([]string, len(arr))
+					for i, s := range arr {
+						strArr[i] = fmt.Sprintf("%v", s)
+					}
+					record[colIdx] = strings.Join(strArr, ",")
+				} else {
+					record[colIdx] = fmt.Sprintf("%v", v)
+				}
+			}
+		}
+		transformedInput[rowIdx] = record
+	}
+	return transformedInput, nil
 }
