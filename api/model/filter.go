@@ -74,7 +74,6 @@ func NewFilterParamsFromFilters(filters []*model.Filter) *FilterParams {
 	return params
 }
 
-
 // GetBaselineFilter returns a filter params that only has the baseline filters.
 func GetBaselineFilter(filterParam *FilterParams) *FilterParams {
 	if filterParam == nil {
@@ -558,10 +557,10 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 	} else {
 		return nil, errors.New("Missing required param highlights.Invert")
 	}
-	if highlightFilterSet.List != nil{
-	highlightSet := model.FilterSet{}
-	highlightSet.FeatureFilters = append(highlightSet.FeatureFilters, highlightFilterSet)
-	filterParams.Filters = append(filterParams.Filters, &highlightSet)
+	if highlightFilterSet.List != nil {
+		highlightSet := model.FilterSet{}
+		highlightSet.FeatureFilters = append(highlightSet.FeatureFilters, highlightFilterSet)
+		filterParams.Filters = append(filterParams.Filters, &highlightSet)
 	}
 	// this invert will apply to all filterObjects
 	invertFilters, ok := json.Bool(params, "filters", "invert")
@@ -575,22 +574,22 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 		for _, set := range filterSets {
 			// pull the set out
 			filterSet := model.FilterSet{}
-				// put the set in a filter object
-				filterObject := model.FilterObject{}
-				setMode := ""
-				for _, filter := range set {
-					f, err := parseFilter(filter)
-					if err != nil {
-						return nil, err
-					}
-					filterObject.List = append(filterObject.List, f)
-					filterObject.Invert = invertFilters
-					setMode = f.Mode
+			// put the set in a filter object
+			filterObject := model.FilterObject{}
+			setMode := ""
+			for _, filter := range set {
+				f, err := parseFilter(filter)
+				if err != nil {
+					return nil, err
 				}
-				// put filterObject in a filterSet then append to filterParams
-				filterSet.FeatureFilters = append(filterSet.FeatureFilters, filterObject)
-				filterSet.Mode = setMode
-				filterParams.Filters = append(filterParams.Filters, &filterSet)
+				filterObject.List = append(filterObject.List, f)
+				filterObject.Invert = invertFilters
+				setMode = f.Mode
+			}
+			// put filterObject in a filterSet then append to filterParams
+			filterSet.FeatureFilters = append(filterSet.FeatureFilters, filterObject)
+			filterSet.Mode = setMode
+			filterParams.Filters = append(filterParams.Filters, &filterSet)
 		}
 	}
 	// We might need to throw an error if no variables are passed?

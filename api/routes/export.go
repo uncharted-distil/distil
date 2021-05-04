@@ -140,8 +140,8 @@ func ExportResultHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.Data
 			handleError(w, err)
 			return
 		}
-		if rowCount >=0 {
-		req.Filters.Size = rowCount
+		if rowCount >= 0 {
+			req.Filters.Size = rowCount
 		}
 		filterParams, err := api.ExpandFilterParams(dataset, req.Filters, false, meta)
 		if err != nil {

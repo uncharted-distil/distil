@@ -195,14 +195,15 @@ func Array(json map[string]interface{}, path ...string) ([]map[string]interface{
 	}
 	return vals, true
 }
+
 // DoubleArray returns an [][]map[string]interface{} property under the given key.
-func DoubleArray(json map[string]interface{}, path ...string)([][]map[string]interface{}, bool){
+func DoubleArray(json map[string]interface{}, path ...string) ([][]map[string]interface{}, bool) {
 	vs, ok := array(json, path...)
 	if !ok {
 		return nil, false
 	}
 	result := make([][]map[string]interface{}, len(vs))
-	for j, v := range vs{
+	for j, v := range vs {
 		val, ok := v.([]interface{})
 		if !ok {
 			return nil, false
@@ -219,6 +220,7 @@ func DoubleArray(json map[string]interface{}, path ...string)([][]map[string]int
 	}
 	return result, true
 }
+
 // InterfaceArray returns a []interface{} under the given path.
 func InterfaceArray(json map[string]interface{}, path ...string) ([]interface{}, bool) {
 	return array(json, path...)
