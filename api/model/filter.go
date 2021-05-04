@@ -139,11 +139,6 @@ func (f *FilterParams) Clone() *FilterParams {
 	return clone
 }
 
-// AddSet adds a set to the filter params
-func (f *FilterParams) AddSet(filter *model.Filter) {
-
-}
-
 // AddFilter adds a filter to the filter params, inserting it in the proper collection.
 func (f *FilterParams) AddFilter(filter *model.Filter) {
 	// currently assume all include filters are one filter set, and exclude another
