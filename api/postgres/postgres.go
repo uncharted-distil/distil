@@ -376,10 +376,14 @@ func insertFromSourceGeometry(d *Database, tableName string, ds *Dataset) error 
 	fields := []string{}
 	for _, v := range ds.Variables {
 		typ := dataTypeText
-		if v.Key == model.D3MIndexFieldName || v.Type == model.GeoBoundsType {
-			typ = MapD3MTypeToPostgresType(v.Type)
+		fieldValue := fmt.Sprintf("\"%s\"::%s", v.Key, typ)
+		if v.Key == model.D3MIndexFieldName {
+			fieldValue = fmt.Sprintf("\"%s\"::%s", v.Key, MapD3MTypeToPostgresType(v.Type))
+		} else if v.Type == model.GeoBoundsType {
+			// reduce the polygon to a centroid
+			fieldValue = fmt.Sprintf("ST_CENTROID(\"%s\"::%s)", v.Key, MapD3MTypeToPostgresType(v.Type))
 		}
-		fields = append(fields, fmt.Sprintf("\"%s\"::%s", v.Key, typ))
+		fields = append(fields, fieldValue)
 	}
 	fieldSQL := strings.Join(fields, ",")
 	updateSQL := fmt.Sprintf("INSERT INTO \"%s_base\" SELECT %s FROM \"%s\";", tableName, fieldSQL, tmpTableName)
@@ -507,8 +511,6 @@ func (d *Database) IngestRow(tableName string, data []string) error {
 		var val interface{}
 		if d.isNullVariable(variables[i].Type, data[i]) {
 			val = nil
-		} else if variables[i].Type == model.GeoBoundsType+"s" {
-			val = fmt.Sprintf("%s:geometry", data[i])
 		} else {
 			val = data[i]
 		}

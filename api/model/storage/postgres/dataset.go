@@ -713,17 +713,6 @@ func (s *Storage) SetVariableValue(storageName string, varName string, value str
 	return nil
 }
 
-// UpdateVariable updates the value of a variable stored in the database.
-func (s *Storage) UpdateVariable(storageName string, varName string, d3mIndex string, value string) error {
-	sql := fmt.Sprintf("UPDATE %s_base SET \"%s\" = $1 WHERE \"%s\" = $2", storageName, varName, model.D3MIndexFieldName)
-	_, err := s.client.Exec(sql, value, d3mIndex)
-	if err != nil {
-		return errors.Wrap(err, "Unable to update value stored in the database")
-	}
-
-	return nil
-}
-
 // UpdateVariableBatch batches updates for a variable to increase performance.
 func (s *Storage) UpdateVariableBatch(storageName string, varName string, updates map[string]string) error {
 	// A couple of approaches are possible:
@@ -813,9 +802,22 @@ func (s *Storage) UpdateData(dataset string, storageName string, varName string,
 	paramsFilter := make([]interface{}, 0)
 	wheres, paramsFilter = s.buildFilteredQueryWhere(dataset, wheres, paramsFilter, "b", filterParams)
 
+	// geometries should be updated slightly differently
+	// they should be reduced to their centroid
+	varMeta, err := s.metadata.FetchVariable(dataset, varName)
+	if err != nil {
+		_ = tx.Rollback(context.Background())
+		return err
+	}
+
+	updateValue := fmt.Sprintf("\"%s\" = t.\"%s\"", varName, varName)
+	if model.IsGeoBounds(varMeta.Type) {
+		updateValue = fmt.Sprintf("\"%s\" = ST_CENTROID(t.\"%s\"::geometry)", varName, varName)
+	}
+
 	// run the update
-	updateSQL := fmt.Sprintf("UPDATE %s.%s.\"%s\" AS b SET \"%s\" = t.\"%s\" FROM \"%s\" AS t WHERE %s",
-		"distil", "public", storageName, varName, varName, tableNameTmp, strings.Join(wheres, " AND "))
+	updateSQL := fmt.Sprintf("UPDATE %s.%s.\"%s\" AS b SET %s FROM \"%s\" AS t WHERE %s",
+		"distil", "public", storageName, updateValue, tableNameTmp, strings.Join(wheres, " AND "))
 	_, err = tx.Exec(context.Background(), updateSQL, paramsFilter...)
 	if err != nil {
 		if rbErr := tx.Rollback(context.Background()); rbErr != nil {
@@ -853,6 +855,7 @@ func (s *Storage) createGeometryField(dataset string, storageName string, varNam
 		}
 
 		// create index on the field
+		// less efficient than doing it after ingest, but a bit cleaner codewise
 		err = s.createIndex(baseTable, postgisFieldName, model.GeoBoundsType)
 		if err != nil {
 			return err
