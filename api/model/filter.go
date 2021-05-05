@@ -538,28 +538,34 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 	if params == nil {
 		return filterParams, nil
 	}
-
+	// highlight invert
+	invertHighlights, ok := json.Bool(params, "highlights", "invert")
+	if !ok {
+		return nil, errors.New("Missing required param highlights.Invert")
+	}
 	highlights, ok := json.Array(params, "highlights", "list")
-	highlightFilterSet := model.FilterObject{}
+	// use map to collect like filters by key
+	highlightMap := map[string]*model.FilterObject{}
 	if ok {
 		for _, highlight := range highlights {
 			h, err := parseFilter(highlight)
 			if err != nil {
 				return nil, err
 			}
-			highlightFilterSet.List = append(highlightFilterSet.List, h)
+			if _, ok := highlightMap[h.Key]; !ok {
+				highlightMap[h.Key] = &model.FilterObject{}
+				highlightMap[h.Key].Invert = invertHighlights
+			}
+			highlightMap[h.Key].List = append((highlightMap[h.Key]).List, h)
 		}
 	}
-	// highlight invert
-	invertHighlights, ok := json.Bool(params, "highlights", "invert")
-	if ok {
-		highlightFilterSet.Invert = invertHighlights
-	} else {
-		return nil, errors.New("Missing required param highlights.Invert")
-	}
-	if highlightFilterSet.List != nil {
+	// if we have filters create and append the set
+	if len(highlightMap) > 0 {
 		highlightSet := model.FilterSet{}
-		highlightSet.FeatureFilters = append(highlightSet.FeatureFilters, highlightFilterSet)
+		for _, val := range highlightMap {
+			highlightSet.FeatureFilters = append(highlightSet.FeatureFilters, *val)
+		}
+		highlightSet.Mode = model.IncludeFilter
 		filterParams.Filters = append(filterParams.Filters, &highlightSet)
 	}
 	// this invert will apply to all filterObjects
