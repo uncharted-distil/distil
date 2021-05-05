@@ -771,6 +771,9 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 	datasetPathTest = fmt.Sprintf("file://%s", datasetPathTest)
 
+	// keep original filters to store them to the database
+	originalFilters := s.Filters
+
 	// get filters that map filters on groupings to the underlying field
 	s.Filters = mapFilterKeys(s.Dataset, s.Filters, dataset.Variables)
 
@@ -828,8 +831,8 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		}
 	}
 
-	// store request filters
-	err = solutionStorage.PersistRequestFilters(requestID, s.Filters)
+	// store the original request filters
+	err = solutionStorage.PersistRequestFilters(requestID, originalFilters)
 	if err != nil {
 		return err
 	}
