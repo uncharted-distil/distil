@@ -71,7 +71,7 @@ func TargetRank(dataset *api.Dataset, target string, features []*model.Variable,
 		return nil, errors.Wrap(err, "unable to create ranking pipeline")
 	}
 
-	datasetInputDir := env.ResolvePath(source, dataset.ID)
+	datasetInputDir := env.ResolvePath(source, dataset.Folder)
 	datasetInputDir, err = filepath.Abs(datasetInputDir)
 	if err != nil {
 		return nil, errors.Errorf("path \"%s\" cannot be made absolute", datasetInputDir)
