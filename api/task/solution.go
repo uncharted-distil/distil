@@ -62,7 +62,7 @@ func SaveFittedSolution(fittedSolutionID string, modelName string, modelDescript
 	}
 	// parse the supplied variables to ensure they're correct
 	numOfCorrectVars := 0
-	for _, v := range request.Features { 
+	for _, v := range request.Features {
 		if varMap[v.FeatureName] != nil {
 			numOfCorrectVars++
 		}
@@ -75,7 +75,7 @@ func SaveFittedSolution(fittedSolutionID string, modelName string, modelDescript
 		// we can assume that the feature target is in the varMap
 		if v.FeatureType == model.FeatureTypeTarget {
 			target = api.SolutionVariableFromModelVariable(varMap[v.FeatureName], float64(-1))
-		} else if varMap[v.FeatureName] != nil{
+		} else if varMap[v.FeatureName] != nil {
 			vars[c] = v.FeatureName
 			variable := varMap[v.FeatureName]
 			varDetails[c] = api.SolutionVariableFromModelVariable(variable, ranks[v.FeatureName])
