@@ -775,10 +775,6 @@ export function totalAreaCoverage(
   if (!coordinates || coordinates.some((x) => x === undefined)) {
     return 0;
   }
-  const c = [
-    [coordinates[1], coordinates[0]], // Corner A as [Lat, Lng]
-    [coordinates[5], coordinates[4]], // Corner C as [Lat, Lng]
-  ];
   const quad = polygon([
     [
       [coordinates[7], coordinates[6]],
@@ -788,8 +784,8 @@ export function totalAreaCoverage(
       [coordinates[7], coordinates[6]],
     ],
   ]);
-  // meters to km
-  return Math.round((area(quad) * data.length) / 1000);
+  // meters to km *limits to 2 decimal place*
+  return Math.round(area(quad) * data.length * 0.0001 + Number.EPSILON) / 100;
 }
 export function topVariablesNames(variables: Variable[], max = 5): string[] {
   return sortVariablesByPCARanking(filterVariablesByFeature(variables))
