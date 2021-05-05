@@ -225,13 +225,17 @@ export default Vue.extend({
       });
 
       try {
-        await appActions.saveModel(this.$store, {
+        const err = await appActions.saveModel(this.$store, {
           fittedSolutionId: this.fittedSolutionId,
           modelName: args.name,
           modelDescription: args.description,
         });
-        const modal = this.$refs.saveModel as InstanceType<typeof SaveModal>;
-        modal.showSuccessModel();
+        // should probably change UI based on error
+        if (!err) {
+          const modal = this.$refs.saveModel as InstanceType<typeof SaveModal>;
+
+          modal.showSuccessModel();
+        }
       } catch (err) {
         console.warn(err);
       }

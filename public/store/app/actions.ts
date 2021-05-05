@@ -33,13 +33,14 @@ export const actions = {
       modelName: string;
       modelDescription: string;
     }
-  ) {
+  ): Promise<Error> {
     try {
       await axios.post(`/distil/save/${args.fittedSolutionId}/true`, {
         modelName: args.modelName,
         modelDescription: args.modelDescription,
       });
       console.warn(`User saved model for ${args.fittedSolutionId}`);
+      return null;
     } catch (error) {
       // If there's a proxy involved (NGINX) we will end up getting a 502 on a successful export because
       // the server exits.  We need to explicitly check for the condition here so that we don't interpret
