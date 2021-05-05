@@ -30,6 +30,10 @@
         <strong class="erroneous-color">erroneous</strong> predictions
       </template>
     </p>
+    <p v-else-if="isGeoView" class="selection-data-slot-summary">
+      Selected Area Coverage:
+      <strong class="matching-color">{{ areaCoverage }}km<sup>2</sup></strong>
+    </p>
 
     <div class="results-data-slot-container" :class="{ pending: !hasData }">
       <div v-if="isPending || hasNoResults" class="results-data-no-results">
@@ -84,7 +88,11 @@ import { getters as requestsGetters } from "../store/requests/module";
 import { Dictionary } from "../util/dict";
 import { updateTableRowSelection } from "../util/row";
 import { spinnerHTML } from "../util/spinner";
-import { getVariableSummariesByState, searchVariables } from "../util/data";
+import {
+  getVariableSummariesByState,
+  searchVariables,
+  totalAreaCoverage,
+} from "../util/data";
 import { isGeoLocatedType } from "../util/types";
 import { Filter, INCLUDE_FILTER } from "../util/filters";
 import { overlayRouteEntry } from "../util/routes";
@@ -146,7 +154,9 @@ export default Vue.extend({
     solutionId(): string {
       return this.solution?.solutionId;
     },
-
+    areaCoverage(): number {
+      return totalAreaCoverage(this.items, this.variables);
+    },
     confidenceSummaries(): VariableSummary {
       return resultsGetters.getConfidenceSummaries(this.$store).filter((cf) => {
         return cf.solutionId === this.solutionId;

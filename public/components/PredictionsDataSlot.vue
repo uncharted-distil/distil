@@ -32,7 +32,7 @@
       :highlights="routeHighlight"
       @lex-query="updateFilterAndHighlightFromLexQuery"
     />
-    <p v-if="hasResults" class="predictions-data-slot-summary">
+    <p v-if="hasResults && !isGeoView" class="predictions-data-slot-summary">
       <data-size
         :current-size="numItems"
         :total="numRows"
@@ -45,7 +45,10 @@
         <strong class="selected-color">selected</strong>
       </template>
     </p>
-
+    <p v-else-if="isGeoView" class="selection-data-slot-summary">
+      Selected Area Coverage:
+      <strong class="matching-color">{{ areaCoverage }}km<sup>2</sup></strong>
+    </p>
     <div class="predictions-data-slot-container" :class="{ pending: !hasData }">
       <div v-if="isPending || hasNoResults" class="predictions-data-no-results">
         <div v-if="isPending" v-html="spinnerHTML" />
@@ -102,7 +105,7 @@ import LayerSelection from "./LayerSelection.vue";
 import { Filter, INCLUDE_FILTER } from "../util/filters";
 import { actions as viewActions } from "../store/view/module";
 import { isGeoLocatedType } from "../util/types";
-import { getVariableSummariesByState } from "../util/data";
+import { getVariableSummariesByState, totalAreaCoverage } from "../util/data";
 import { updateHighlight, UPDATE_ALL } from "../util/highlights";
 import { lexQueryToFiltersAndHighlight } from "../util/lex";
 import { resultSummariesToVariables } from "../util/summaries";
@@ -291,6 +294,9 @@ export default Vue.extend({
     },
     dataSize(): number {
       return routeGetters.getRouteDataSize(this.$store);
+    },
+    areaCoverage(): number {
+      return totalAreaCoverage(this.items, this.variables);
     },
   },
 

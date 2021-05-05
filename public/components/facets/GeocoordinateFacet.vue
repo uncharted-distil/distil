@@ -22,9 +22,6 @@
         {{ headerLabel }}
       </span>
       <i class="fa fa-globe"></i>
-      <span v-if="highlights.length" class="area"
-        >{{ totalArea }}km<sup>2</sup></span
-      >
       <type-change-menu
         :geocoordinate="true"
         :dataset="dataset"
@@ -110,21 +107,17 @@ import TypeChangeMenu from "../TypeChangeMenu.vue";
 import FacetNumerical from "./FacetNumerical.vue";
 import { updateHighlight, clearHighlight } from "../../util/highlights";
 import {
-  GEOCOORDINATE_TYPE,
   LATITUDE_TYPE,
   LONGITUDE_TYPE,
   REAL_VECTOR_TYPE,
   EXPAND_ACTION_TYPE,
   COLLAPSE_ACTION_TYPE,
-  GEOBOUNDS_TYPE,
 } from "../../util/types";
-import { GeoBoundsGrouping } from "../../store/dataset/index";
 import { overlayRouteEntry, varModesToString } from "../../util/routes";
 import { removeFiltersByName } from "../../util/filters";
 import { Feature, Activity, SubActivity } from "../../util/userEvents";
 
 import "leaflet/dist/leaflet.css";
-import area from "@turf/area";
 import helpers, { polygon, featureCollection, point } from "@turf/helpers";
 import bbox from "@turf/bbox";
 import booleanContains from "@turf/boolean-contains";
@@ -258,17 +251,6 @@ export default Vue.extend({
       } else {
         return null;
       }
-    },
-    coordinateColumn(): string {
-      const coordinateColumns = datasetGetters
-        .getVariables(this.$store)
-        .filter((v) => v.colType === GEOBOUNDS_TYPE)
-        .map((v) => (v.grouping as GeoBoundsGrouping).coordinatesCol);
-      if (coordinateColumns.length > 1 || !coordinateColumns.length) {
-        console.error("only 1 coordinate column is supported");
-        return null;
-      }
-      return coordinateColumns[0];
     },
     target(): string {
       return this.summary.key;
@@ -434,30 +416,6 @@ export default Vue.extend({
       return this.includedActive
         ? datasetGetters.getIncludedTableDataItems(this.$store)
         : datasetGetters.getExcludedTableDataItems(this.$store);
-    },
-    totalArea(): number {
-      if (this.coordinateColumn === null || !this.data.length) {
-        return 0;
-      }
-      const coordinates = this.data[0][this.coordinateColumn].value;
-      if (!coordinates || coordinates.some((x) => x === undefined)) {
-        return 0;
-      }
-      const c = [
-        [coordinates[1], coordinates[0]], // Corner A as [Lat, Lng]
-        [coordinates[5], coordinates[4]], // Corner C as [Lat, Lng]
-      ];
-      const quad = polygon([
-        [
-          [coordinates[7], coordinates[6]],
-          [coordinates[1], coordinates[0]],
-          [coordinates[3], coordinates[2]],
-          [coordinates[5], coordinates[4]],
-          [coordinates[7], coordinates[6]],
-        ],
-      ]);
-      // meters to km
-      return Math.round((area(quad) * this.data.length) / 1000);
     },
     selectedPoints(): helpers.Point[] {
       if (this.selectedRows) {
@@ -1223,8 +1181,5 @@ export default Vue.extend({
 
 .latlon .facets-root.highlighting-enabled {
   padding-left: 0px;
-}
-.area {
-  color: var(--blue);
 }
 </style>

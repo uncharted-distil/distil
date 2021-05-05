@@ -30,9 +30,17 @@
       />
     </div>
     <div class="d-flex justify-content-between m-1">
-      <p class="selection-data-slot-summary">
+      <p v-if="!isGeoView" class="selection-data-slot-summary">
         <strong class="matching-color">matching</strong> samples of
         {{ numRows }} to model<template v-if="selectionNumRows > 0">
+          , {{ selectionNumRows }}
+          <strong class="selected-color">selected</strong>
+        </template>
+      </p>
+      <p v-else class="selection-data-slot-summary">
+        Selected Area Coverage:
+        <strong class="matching-color">{{ areaCoverage }}km<sup>2</sup></strong>
+        <template v-if="selectionNumRows > 0">
           , {{ selectionNumRows }}
           <strong class="selected-color">selected</strong>
         </template>
@@ -84,7 +92,7 @@ import {
 } from "../../store/dataset/index";
 import { getters as datasetGetters } from "../../store/dataset/module";
 import { getters as routeGetters } from "../../store/route/module";
-import { LowShotLabels } from "../../util/data";
+import { LowShotLabels, totalAreaCoverage } from "../../util/data";
 import { createFiltersFromHighlights } from "../../util/highlights";
 import { Filter, INCLUDE_FILTER } from "../../util/filters";
 import LabelHeaderButtons from "./LabelHeaderButtons.vue";
@@ -152,6 +160,9 @@ export default Vue.extend({
     selectionNumRows(): number {
       return getNumIncludedRows(this.rowSelection);
     },
+    isGeoView(): boolean {
+      return this.viewTypeModel === GEO_VIEW;
+    },
     viewComponent(): string {
       if (this.viewTypeModel === GEO_VIEW) return "LabelGeoPlot";
       if (this.viewTypeModel === IMAGE_VIEW) return "ImageMosaic";
@@ -186,6 +197,9 @@ export default Vue.extend({
     },
     unlabeled(): string {
       return LowShotLabels.unlabeled;
+    },
+    areaCoverage(): number {
+      return totalAreaCoverage(this.dataItems, this.variables);
     },
   },
   methods: {
