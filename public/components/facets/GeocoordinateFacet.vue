@@ -22,6 +22,9 @@
         {{ headerLabel }}
       </span>
       <i class="fa fa-globe"></i>
+      <span v-if="highlights.length" class="area"
+        >{{ totalArea }}km<sup>2</sup></span
+      >
       <type-change-menu
         :geocoordinate="true"
         :dataset="dataset"
@@ -113,19 +116,20 @@ import {
   REAL_VECTOR_TYPE,
   EXPAND_ACTION_TYPE,
   COLLAPSE_ACTION_TYPE,
+  GEOBOUNDS_TYPE,
 } from "../../util/types";
+import { GeoBoundsGrouping } from "../../store/dataset/index";
 import { overlayRouteEntry, varModesToString } from "../../util/routes";
-import { Filter, removeFiltersByName } from "../../util/filters";
+import { removeFiltersByName } from "../../util/filters";
 import { Feature, Activity, SubActivity } from "../../util/userEvents";
 
 import "leaflet/dist/leaflet.css";
-
+import area from "@turf/area";
 import helpers, { polygon, featureCollection, point } from "@turf/helpers";
 import bbox from "@turf/bbox";
 import booleanContains from "@turf/boolean-contains";
 import { BLUE_PALETTE, BLACK_PALETTE } from "../../util/color";
-const SINGLE_FIELD = 1;
-const SPLIT_FIELD = 2;
+
 const CLOSE_BUTTON_CLASS = "geo-close-button";
 const CLOSE_ICON_CLASS = "fa-times";
 
@@ -255,7 +259,17 @@ export default Vue.extend({
         return null;
       }
     },
-
+    coordinateColumn(): string {
+      const coordinateColumns = datasetGetters
+        .getVariables(this.$store)
+        .filter((v) => v.colType === GEOBOUNDS_TYPE)
+        .map((v) => (v.grouping as GeoBoundsGrouping).coordinatesCol);
+      if (coordinateColumns.length > 1 || !coordinateColumns.length) {
+        console.error("only 1 coordinate column is supported");
+        return null;
+      }
+      return coordinateColumns[0];
+    },
     target(): string {
       return this.summary.key;
     },
@@ -305,10 +319,10 @@ export default Vue.extend({
               { selected: false, count: latBucket.count }
             );
             features.push(feature);
+            features.push(feature);
           }
         });
       });
-
       return featureCollection(features);
     },
 
@@ -348,7 +362,6 @@ export default Vue.extend({
             }
           });
         });
-
         return featureCollection(features);
       } else {
         const features: helpers.Feature[] = [];
@@ -417,12 +430,38 @@ export default Vue.extend({
     selectedRows(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
     },
-
+    data(): TableRow[] {
+      return this.includedActive
+        ? datasetGetters.getIncludedTableDataItems(this.$store)
+        : datasetGetters.getExcludedTableDataItems(this.$store);
+    },
+    totalArea(): number {
+      if (this.coordinateColumn === null || !this.data.length) {
+        return 0;
+      }
+      const coordinates = this.data[0][this.coordinateColumn].value;
+      if (!coordinates || coordinates.some((x) => x === undefined)) {
+        return 0;
+      }
+      const c = [
+        [coordinates[1], coordinates[0]], // Corner A as [Lat, Lng]
+        [coordinates[5], coordinates[4]], // Corner C as [Lat, Lng]
+      ];
+      const quad = polygon([
+        [
+          [coordinates[7], coordinates[6]],
+          [coordinates[1], coordinates[0]],
+          [coordinates[3], coordinates[2]],
+          [coordinates[5], coordinates[4]],
+          [coordinates[7], coordinates[6]],
+        ],
+      ]);
+      // meters to km
+      return Math.round((area(quad) * this.data.length) / 1000);
+    },
     selectedPoints(): helpers.Point[] {
       if (this.selectedRows) {
-        const tableItems = this.includedActive
-          ? datasetGetters.getIncludedTableDataItems(this.$store)
-          : datasetGetters.getExcludedTableDataItems(this.$store);
+        const tableItems = this.data;
         if (this.isGeoTableRows(tableItems)) {
           const selectedItems = this.selectedRows.d3mIndices.flatMap(
             (index) => {
@@ -1184,5 +1223,8 @@ export default Vue.extend({
 
 .latlon .facets-root.highlighting-enabled {
   padding-left: 0px;
+}
+.area {
+  color: var(--blue);
 }
 </style>

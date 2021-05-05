@@ -714,7 +714,7 @@ export const actions = {
         include: true,
         mutatorIsInclude: false,
         isExclude: true,
-      }), // include outer tiles
+      }), // exclude outer tiles
     ]);
   },
   clearHighlight(context: ViewContext) {
