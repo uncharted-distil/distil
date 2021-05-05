@@ -107,7 +107,6 @@ import TypeChangeMenu from "../TypeChangeMenu.vue";
 import FacetNumerical from "./FacetNumerical.vue";
 import { updateHighlight, clearHighlight } from "../../util/highlights";
 import {
-  GEOCOORDINATE_TYPE,
   LATITUDE_TYPE,
   LONGITUDE_TYPE,
   REAL_VECTOR_TYPE,
@@ -115,17 +114,15 @@ import {
   COLLAPSE_ACTION_TYPE,
 } from "../../util/types";
 import { overlayRouteEntry, varModesToString } from "../../util/routes";
-import { Filter, removeFiltersByName } from "../../util/filters";
+import { removeFiltersByName } from "../../util/filters";
 import { Feature, Activity, SubActivity } from "../../util/userEvents";
 
 import "leaflet/dist/leaflet.css";
-
 import helpers, { polygon, featureCollection, point } from "@turf/helpers";
 import bbox from "@turf/bbox";
 import booleanContains from "@turf/boolean-contains";
 import { BLUE_PALETTE, BLACK_PALETTE } from "../../util/color";
-const SINGLE_FIELD = 1;
-const SPLIT_FIELD = 2;
+
 const CLOSE_BUTTON_CLASS = "geo-close-button";
 const CLOSE_ICON_CLASS = "fa-times";
 
@@ -255,7 +252,6 @@ export default Vue.extend({
         return null;
       }
     },
-
     target(): string {
       return this.summary.key;
     },
@@ -308,7 +304,6 @@ export default Vue.extend({
           }
         });
       });
-
       return featureCollection(features);
     },
 
@@ -348,7 +343,6 @@ export default Vue.extend({
             }
           });
         });
-
         return featureCollection(features);
       } else {
         const features: helpers.Feature[] = [];
@@ -417,12 +411,14 @@ export default Vue.extend({
     selectedRows(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
     },
-
+    data(): TableRow[] {
+      return this.includedActive
+        ? datasetGetters.getIncludedTableDataItems(this.$store)
+        : datasetGetters.getExcludedTableDataItems(this.$store);
+    },
     selectedPoints(): helpers.Point[] {
       if (this.selectedRows) {
-        const tableItems = this.includedActive
-          ? datasetGetters.getIncludedTableDataItems(this.$store)
-          : datasetGetters.getExcludedTableDataItems(this.$store);
+        const tableItems = this.data;
         if (this.isGeoTableRows(tableItems)) {
           const selectedItems = this.selectedRows.d3mIndices.flatMap(
             (index) => {

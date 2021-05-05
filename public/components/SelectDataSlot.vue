@@ -63,6 +63,10 @@
           <strong class="selected-color">selected</strong>
         </template>
       </p>
+      <p v-else class="selection-data-slot-summary">
+        Selected Area Coverage:
+        <strong class="matching-color">{{ areaCoverage }}km<sup>2</sup></strong>
+      </p>
 
       <layer-selection v-if="isMultiBandImage" class="layer-select-dropdown" />
       <b-button
@@ -160,6 +164,7 @@ import { actions as appActions } from "../store/app/module";
 import { actions as viewActions } from "../store/view/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { Dictionary } from "lodash";
+import { totalAreaCoverage } from "../util/data";
 
 const GEO_VIEW = "geo";
 const GRAPH_VIEW = "graph";
@@ -352,6 +357,9 @@ export default Vue.extend({
     },
     dataSize(): number {
       return routeGetters.getRouteDataSize(this.$store);
+    },
+    areaCoverage(): number {
+      return totalAreaCoverage(this.items, this.variables);
     },
   },
 

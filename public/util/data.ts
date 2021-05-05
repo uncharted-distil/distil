@@ -41,6 +41,7 @@ import {
   Variable,
   VariableSummary,
   VariableSummaryKey,
+  GeoBoundsGrouping,
 } from "../store/dataset/index";
 import {
   actions as datasetActions,
@@ -87,10 +88,13 @@ import {
   LONGITUDE_TYPE,
   MULTIBAND_IMAGE_TYPE,
   TIMESERIES_TYPE,
+  GEOBOUNDS_TYPE,
 } from "../util/types";
 import { Dictionary } from "./dict";
 import { FilterParams, FilterSetsParams } from "./filters";
 import { overlayRouteEntry } from "./routes";
+import area from "@turf/area";
+import helpers, { polygon, featureCollection, point } from "@turf/helpers";
 
 // Postfixes for special variable names
 export const PREDICTED_SUFFIX = "_predicted";
@@ -753,7 +757,36 @@ export function searchVariables(
     );
   });
 }
-
+export function totalAreaCoverage(
+  data: TableRow[],
+  variables: Variable[]
+): number {
+  if (!data || !data.length || !variables || !variables.length) {
+    return 0;
+  }
+  const coordinateColumns = variables
+    .filter((v) => v.colType === GEOBOUNDS_TYPE)
+    .map((v) => (v.grouping as GeoBoundsGrouping).coordinatesCol);
+  if (!coordinateColumns.length) {
+    return 0;
+  }
+  const coordinateColumn = coordinateColumns[0];
+  const coordinates = data[0][coordinateColumn].value;
+  if (!coordinates || coordinates.some((x) => x === undefined)) {
+    return 0;
+  }
+  const quad = polygon([
+    [
+      [coordinates[7], coordinates[6]],
+      [coordinates[1], coordinates[0]],
+      [coordinates[3], coordinates[2]],
+      [coordinates[5], coordinates[4]],
+      [coordinates[7], coordinates[6]],
+    ],
+  ]);
+  // meters to km *limits to 2 decimal place*
+  return Math.round(area(quad) * data.length * 0.0001 + Number.EPSILON) / 100;
+}
 export function topVariablesNames(variables: Variable[], max = 5): string[] {
   return sortVariablesByPCARanking(filterVariablesByFeature(variables))
     .slice(0, max)
