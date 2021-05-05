@@ -71,6 +71,7 @@
       </template>
       <template v-else>
         <save-modal
+          ref="saveModel"
           :solution-id="solutionId"
           :fitted-solution-id="fittedSolutionId"
           @save="onSaveModel"
@@ -224,11 +225,17 @@ export default Vue.extend({
       });
 
       try {
-        await appActions.saveModel(this.$store, {
+        const err = await appActions.saveModel(this.$store, {
           fittedSolutionId: this.fittedSolutionId,
           modelName: args.name,
           modelDescription: args.description,
         });
+        // should probably change UI based on error
+        if (!err) {
+          const modal = this.$refs.saveModel as InstanceType<typeof SaveModal>;
+
+          modal.showSuccessModel();
+        }
       } catch (err) {
         console.warn(err);
       }

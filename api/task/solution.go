@@ -60,15 +60,22 @@ func SaveFittedSolution(fittedSolutionID string, modelName string, modelDescript
 	for _, vt := range dataset.Variables {
 		varMap[vt.Key] = vt
 	}
-
-	vars := make([]string, len(request.Features)-1)
-	varDetails := make([]*api.SolutionVariable, len(request.Features)-1)
+	// parse the supplied variables to ensure they're correct
+	numOfCorrectVars := 0
+	for _, v := range request.Features { 
+		if varMap[v.FeatureName] != nil {
+			numOfCorrectVars++
+		}
+	}
+	vars := make([]string, numOfCorrectVars-1)
+	varDetails := make([]*api.SolutionVariable, numOfCorrectVars-1)
 	target := &api.SolutionVariable{}
 	c := 0
 	for _, v := range request.Features {
+		// we can assume that the feature target is in the varMap
 		if v.FeatureType == model.FeatureTypeTarget {
 			target = api.SolutionVariableFromModelVariable(varMap[v.FeatureName], float64(-1))
-		} else {
+		} else if varMap[v.FeatureName] != nil{
 			vars[c] = v.FeatureName
 			variable := varMap[v.FeatureName]
 			varDetails[c] = api.SolutionVariableFromModelVariable(variable, ranks[v.FeatureName])
