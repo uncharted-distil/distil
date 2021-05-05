@@ -301,7 +301,6 @@ export default Vue.extend({
               { selected: false, count: latBucket.count }
             );
             features.push(feature);
-            features.push(feature);
           }
         });
       });
