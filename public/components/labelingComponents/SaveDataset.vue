@@ -42,6 +42,9 @@
             :value="datasetName"
             required
           />
+          <b-form-checkbox v-model="retainUnlabeled" class="pt-2">
+            Retain unlabeled rows
+          </b-form-checkbox>
         </b-form-group>
       </form>
     </b-modal>
@@ -87,6 +90,7 @@ export default Vue.extend({
     return {
       saveName: "",
       saveNameState: null,
+      retainUnlabeled: false,
     };
   },
 
@@ -144,7 +148,7 @@ export default Vue.extend({
 
     // save model
     async saveDataset() {
-      this.$emit("save", this.saveName);
+      this.$emit("save", this.saveName, this.retainUnlabeled);
     },
 
     // ensure required fields are filled out

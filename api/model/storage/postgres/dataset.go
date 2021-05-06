@@ -50,12 +50,8 @@ func getVariableTableName(storageName string) string {
 
 // SaveDataset is used for dropping the unused values based on filter param. (Only used in save_dataset route)
 func (s *Storage) SaveDataset(dataset string, storageName string, filterParams *api.FilterParams) error {
-	err := s.deleteRows(dataset, getBaseTableName(storageName), filterParams)
-	if err != nil {
-		return err
-	}
 	// due to values being dropped from base table result table is invalid
-	err = s.deleteRows(dataset, s.getResultTable(storageName), nil)
+	err := s.deleteRows(dataset, s.getResultTable(storageName), nil)
 	if err != nil {
 		return err
 	}
@@ -63,6 +59,13 @@ func (s *Storage) SaveDataset(dataset string, storageName string, filterParams *
 	err = s.deleteRows(dataset, s.getSolutionFeatureWeightTable(storageName), nil)
 	if err != nil {
 		return err
+	}
+
+	if !filterParams.IsEmpty(false) {
+		err = s.deleteRows(dataset, getBaseTableName(storageName), filterParams)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

@@ -110,7 +110,7 @@ func createJoinStatements(joins []*joinDefinition) string {
 // cluster column ID to ensure that it is used in downstream queries.  This is necessary when dealing with the timerseries
 // compound facet, which will display cluster info when available.
 func updateClusterFilters(metadataStorage api.MetadataStorage, dataset string, filterParams *api.FilterParams, mode api.SummaryMode) error {
-	if filterParams != nil && !filterParams.Empty(false) {
+	if filterParams != nil && !filterParams.IsEmpty(false) {
 		for _, s := range filterParams.Filters {
 			for _, f := range s.FeatureFilters {
 				for _, h := range f.List {

@@ -38,7 +38,7 @@ func filterData(client *compute.Client, ds *api.Dataset, filterParams *api.Filte
 	log.Infof("checking if solution search for dataset %s found in '%s' needs prefiltering", ds.ID, inputPath)
 	// determine if filtering is needed
 	updatedParams, preFilters := getPreFiltering(ds, filterParams)
-	if preFilters.Empty(false) {
+	if preFilters.IsEmpty(false) {
 		log.Infof("solution request for dataset %s does not need prefiltering", ds.ID)
 		return inputPath, updatedParams, nil
 	}

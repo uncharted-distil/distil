@@ -71,7 +71,7 @@ func (f *CoordinateField) FetchSummaryData(resultURI string, filterParams *api.F
 		if err != nil {
 			return nil, err
 		}
-		if !filterParams.Empty(true) {
+		if !filterParams.IsEmpty(true) {
 			filtered, err = f.fetchHistogram(filterParams, coordinateBuckets)
 			if err != nil {
 				return nil, err
@@ -82,7 +82,7 @@ func (f *CoordinateField) FetchSummaryData(resultURI string, filterParams *api.F
 		if err != nil {
 			return nil, err
 		}
-		if !filterParams.Empty(true) {
+		if !filterParams.IsEmpty(true) {
 			filtered, err = f.fetchHistogramByResult(resultURI, filterParams, coordinateBuckets)
 			if err != nil {
 				return nil, err

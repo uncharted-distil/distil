@@ -433,15 +433,17 @@ export default Vue.extend({
     onSaveClick() {
       this.$bvModal.show("save-model-modal");
     },
-    async onSaveValid(saveName: string) {
-      const highlights = [
-        {
-          context: this.instance,
-          dataset: this.dataset,
-          key: this.labelName,
-          value: LowShotLabels.unlabeled,
-        },
-      ]; // exclude unlabeled from data export
+    async onSaveValid(saveName: string, retainUnlabeled: boolean) {
+      const highlights = retainUnlabeled
+        ? null
+        : [
+            {
+              context: this.instance,
+              dataset: this.dataset,
+              key: this.labelName,
+              value: LowShotLabels.unlabeled,
+            },
+          ]; // exclude unlabeled from data export
       let filterParams = routeGetters.getDecodedSolutionRequestFilterParams(
         this.$store
       );
