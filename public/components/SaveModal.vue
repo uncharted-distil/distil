@@ -18,13 +18,7 @@
 <template>
   <div>
     <!-- Modal to save the model. -->
-    <b-modal
-      :id="modalId"
-      :title="title"
-      @ok="handleSaveOk"
-      @cancel="resetModal"
-      @close="resetModal"
-    >
+    <b-modal :id="modalId" :title="title" @close="resetModal">
       <!-- show form to save model if unsaved -->
       <form ref="saveModelForm" @submit.stop.prevent="saveModel">
         <b-form-group
@@ -52,6 +46,13 @@
           />
         </b-form-group>
       </form>
+      <template v-slot:modal-footer>
+        <b-button variant="secondary" @click="resetModal"> cancel </b-button>
+        <b-button variant="primary" @click="handleSaveOk" :disabled="isSaving">
+          <b-spinner v-if="isSaving" small />
+          <span v-else>ok</span>
+        </b-button>
+      </template>
     </b-modal>
 
     <!-- Modal to offer to apply the model once saved. -->
@@ -107,6 +108,7 @@ export default Vue.extend({
       saveNameState: null,
       saveDescription: "",
       saveDescriptionState: null,
+      isSaving: false,
     };
   },
 
@@ -159,6 +161,7 @@ export default Vue.extend({
 
       // Trigger submit handler
       this.saveModel();
+      this.isSaving = true;
     },
 
     // CDB: Currently will open up the file upload dialog. Should transition to the
@@ -201,6 +204,7 @@ export default Vue.extend({
       } as SaveInfo);
     },
     showSuccessModel() {
+      this.isSaving = false;
       this.$bvModal.show("save-success-modal");
     },
     // ensure required fields are filled out
