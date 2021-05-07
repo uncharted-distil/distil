@@ -28,13 +28,20 @@
       <i :class="getGroupIcon(summary) + ' facet-header-icon'" />
       <span>{{ summary.label.toUpperCase() }}</span>
       <importance-bars :importance="importance" />
-      <type-change-menu
-        v-if="facetEnableTypeChanges"
-        class="facet-header-dropdown"
-        :dataset="summary.dataset"
-        :field="summary.key"
-        :expand-collapse="expandCollapse"
-      />
+      <div class="facet-header-dropdown d-flex align-items-center">
+        <color-scale-drop-down
+          v-if="geoEnabled"
+          :variableSummary="summary"
+          isFacetScale
+          class="mr-1"
+        />
+        <type-change-menu
+          v-if="facetEnableTypeChanges"
+          :dataset="summary.dataset"
+          :field="summary.key"
+          :expand-collapse="expandCollapse"
+        />
+      </div>
     </div>
 
     <div slot="footer" class="facet-footer-container">
@@ -67,6 +74,7 @@ import { FacetTermsData } from "@uncharted.software/facets-core/dist/types/facet
 
 import TypeChangeMenu from "../TypeChangeMenu.vue";
 import ImportanceBars from "../ImportanceBars.vue";
+import ColorScaleDropDown from "../ColorScaleDropDown.vue";
 import { Highlight, RowSelection, VariableSummary } from "../../store/dataset";
 import {
   getCategoricalChunkSize,
@@ -85,6 +93,7 @@ export default Vue.extend({
   components: {
     TypeChangeMenu,
     ImportanceBars,
+    ColorScaleDropDown,
   },
 
   directives: {
@@ -110,6 +119,7 @@ export default Vue.extend({
     instanceName: String as () => string,
     rowSelection: Object as () => RowSelection,
     importance: Number as () => number,
+    geoEnabled: { type: Boolean as () => boolean, default: false },
   },
 
   data() {

@@ -93,7 +93,6 @@ import {
   searchVariables,
   totalAreaCoverage,
 } from "../util/data";
-import { isGeoLocatedType } from "../util/types";
 import { Filter, INCLUDE_FILTER } from "../util/filters";
 import { overlayRouteEntry } from "../util/routes";
 
@@ -314,9 +313,13 @@ export default Vue.extend({
         this.trainingVariables,
         summaryDictionary
       );
-      return currentSummaries.filter((cs) => {
-        return isGeoLocatedType(cs.varType);
-      });
+      if (this.confidenceSummaries) {
+        currentSummaries.push(this.confidenceSummaries);
+      }
+      if (this.rankSummary) {
+        currentSummaries.push(this.rankSummary);
+      }
+      return currentSummaries;
     },
   },
 

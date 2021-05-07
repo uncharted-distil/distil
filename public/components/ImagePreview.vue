@@ -82,7 +82,7 @@ import {
 import { isRowSelected } from "../util/row";
 import { Dictionary } from "../util/dict";
 import { MULTIBAND_IMAGE_TYPE, IMAGE_TYPE } from "../util/types";
-import { ColorScaleNames, COLOR_SCALES } from "../util/data";
+import { ColorScaleNames, COLOR_SCALES } from "../util/color";
 
 export default Vue.extend({
   name: "ImagePreview",

@@ -92,7 +92,6 @@ import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as requestGetters } from "../store/requests/module";
 import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
-import { COLOR_SCALES } from "../util/data";
 import lumo from "lumo";
 import BatchQuadOverlay from "../util/rendering/BatchQuadOverlay";
 import {
@@ -133,6 +132,8 @@ import {
   BLACK,
   RESULT_RED,
   RESULT_GREEN,
+  colorByFacet,
+  COLOR_SCALES,
 } from "../util/color";
 import DrillDown from "./DrillDown.vue";
 import {
@@ -143,6 +144,7 @@ import {
   Coordinate,
   updateVertexPrimitiveColor,
 } from "../util/rendering/coordinates";
+import { isGeoLocatedType } from "../util/types";
 import { overlayRouteEntry } from "../util/routes";
 
 const SINGLE_FIELD = 1;
@@ -311,7 +313,23 @@ export default Vue.extend({
     imageType(): string {
       return MULTIBAND_IMAGE_TYPE;
     },
-
+    colorScaleByVar(): string {
+      return routeGetters.getColorScaleVariable(this.$store);
+    },
+    coloringByVariable(): boolean {
+      return this.colorScaleByVar.length > 0;
+    },
+    colorByVariable(): (item: TableRow, idx: number) => number {
+      const findKey = (v) => {
+        return v.key === this.colorScaleByVar;
+      };
+      if (!this.summaries.some(findKey)) {
+        return (item: TableRow, idx: number) => {
+          return 0;
+        };
+      }
+      return colorByFacet(this.summaries.find(findKey));
+    },
     target(): string {
       return routeGetters.getRouteTargetVariable(this.$store);
     },
@@ -438,11 +456,11 @@ export default Vue.extend({
       return fields;
     },
     bucketFeatures(): Bucket[] {
-      if (!this.summaries.length) {
+      if (!this.geoSummary.length) {
         return [];
       }
       const features = [];
-      this.summaries.forEach((summary) => {
+      this.geoSummary.forEach((summary) => {
         // compute the bucket size in degrees
         const buckets =
           summary.filtered && highlightsExist()
@@ -516,7 +534,11 @@ export default Vue.extend({
         })
       );
     },
-
+    geoSummary(): VariableSummary[] {
+      return this.summaries.filter((cs) => {
+        return isGeoLocatedType(cs.varType);
+      });
+    },
     isMultiBandImage(): boolean {
       const variables = datasetGetters.getVariables(this.$store);
       return variables.some((v) => {
@@ -691,6 +713,9 @@ export default Vue.extend({
       }
     },
     colorScale() {
+      this.onNewData();
+    },
+    colorScaleByVar() {
       this.onNewData();
     },
     areaOfInterestItems() {
@@ -1011,9 +1036,9 @@ export default Vue.extend({
       this.drillDownState.bounds = this.getInterestBounds(this.areas[id]);
       this.$emit("tileClicked", {
         bounds: this.drillDownState.bounds,
-        key: this.summaries[0].key,
-        displayName: this.summaries[0].label,
-        type: this.summaries[0].type,
+        key: this.geoSummary[0].key,
+        displayName: this.geoSummary[0].label,
+        type: this.geoSummary[0].type,
       });
     },
     // assumes x and y are normalized points this function is for the selection tool
@@ -1135,7 +1160,7 @@ export default Vue.extend({
       }
       const areas = tableData.map((item, i) => {
         const imageUrl = this.isMultiBandImage
-          ? item[this.multibandImageGroupColumn].value
+          ? item[this.multibandImageGroupColumn]?.value
           : null;
         const fullCoordinates = item[this.coordinateColumn].value;
         if (!fullCoordinates) {
@@ -1254,8 +1279,8 @@ export default Vue.extend({
           fieldSpec.type === SINGLE_FIELD
             ? fieldSpec.field
             : this.fieldHash(fieldSpec);
-      } else if (!!this.summaries[0].key) {
-        key = this.summaries[0].key;
+      } else if (!!this.geoSummary[0].key) {
+        key = this.geoSummary[0].key;
       } else {
         console.error("Error createHighlight no available key");
         return;
@@ -1310,6 +1335,9 @@ export default Vue.extend({
 
     tileColor(item: any, idx: number) {
       let color = this.isExclude ? BLACK : BLUE; // Default
+      if (this.coloringByVariable) {
+        return this.colorScale(this.colorByVariable(item, idx));
+      }
       if (this.rowSelectionMap.has(item.d3mIndex)) {
         return SELECTION_RED;
       }

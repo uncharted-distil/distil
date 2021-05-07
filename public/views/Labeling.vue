@@ -25,6 +25,7 @@
       <variable-facets
         enable-highlighting
         enable-type-filtering
+        enable-color-scales
         :summaries="[labelSummary]"
         :instance-name="instance"
         class="h-18"
@@ -33,6 +34,7 @@
       <variable-facets
         enable-highlighting
         enable-type-filtering
+        enable-color-scales
         :summaries="featureSummaries"
         :pagination="
           featureSummaries && searchedActiveVariables.length > numRowsPerPage
@@ -68,6 +70,7 @@
       <variable-facets
         enable-highlighting
         enable-type-filtering
+        enable-color-scales
         :summaries="scoreSummary"
         :instance-name="instance"
         class="h-18"

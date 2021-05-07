@@ -31,7 +31,7 @@ import NavBar from "./components/NavBar.vue";
 import store from "./store/store";
 import { actions as appActions } from "./store/app/module";
 import router from "./router/router";
-
+import "@fortawesome/fontawesome-free/css/all.min.css";
 import "font-awesome/css/font-awesome.css";
 import "bootstrap-vue/dist/bootstrap-vue.css";
 import "./styles/uncharted-bootstrap-v4.5-custom.css";

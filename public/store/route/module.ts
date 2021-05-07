@@ -132,6 +132,7 @@ export const getters = {
   getGroupingType: read(moduleGetters.getGroupingType),
   getRouteTask: read(moduleGetters.getRouteTask),
   getColorScale: read(moduleGetters.getColorScale),
+  getColorScaleVariable: read(moduleGetters.getColorScaleVariable),
   getRouteFittedSolutionId: read(moduleGetters.getRouteFittedSolutionId),
   getRoutePredictionsDataset: read(moduleGetters.getRoutePredictionsDataset),
   isSingleSolution: read(moduleGetters.isSingleSolution),

@@ -33,6 +33,7 @@
             class="h-100"
             enable-search
             enable-highlighting
+            enable-color-scales
             :facetCount="trainingVariables.length"
             instance-name="resultTrainingVars"
             is-result-features
@@ -75,8 +76,10 @@ import {
   getVariableSummariesByState,
   searchVariables,
   filterArrayByPage,
+  getAllVariablesSummaries,
 } from "../util/data";
 import { Activity } from "../util/userEvents";
+import { isGeoLocatedType } from "../util/types";
 
 export default Vue.extend({
   name: "predictions-view",
@@ -107,6 +110,15 @@ export default Vue.extend({
         requestGetters.getActivePredictionTrainingVariables(this.$store),
         this.resultTrainingVarsSearch
       );
+    },
+    geoVarExists(): boolean {
+      const varSums = getAllVariablesSummaries(
+        requestGetters.getActivePredictionTrainingVariables(this.$store),
+        predictionGetters.getTrainingSummariesDictionary(this.$store)
+      );
+      return varSums.some((v) => {
+        return isGeoLocatedType(v.type);
+      });
     },
     trainingSummaries(): VariableSummary[] {
       const summaryDictionary = predictionGetters.getTrainingSummariesDictionary(

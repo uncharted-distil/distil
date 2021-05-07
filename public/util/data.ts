@@ -17,13 +17,6 @@
 
 import axios from "axios";
 import sha1 from "crypto-js/sha1";
-import {
-  interpolateInferno,
-  interpolateMagma,
-  interpolatePlasma,
-  interpolateTurbo,
-  interpolateViridis,
-} from "d3-scale-chromatic";
 import _ from "lodash";
 import localStorage from "store";
 import Vue from "vue";
@@ -94,7 +87,7 @@ import { Dictionary } from "./dict";
 import { FilterParams, FilterSetsParams } from "./filters";
 import { overlayRouteEntry } from "./routes";
 import area from "@turf/area";
-import helpers, { polygon, featureCollection, point } from "@turf/helpers";
+import { polygon } from "@turf/helpers";
 
 // Postfixes for special variable names
 export const PREDICTED_SUFFIX = "_predicted";
@@ -138,26 +131,6 @@ export interface TimeIntervals {
   value: number;
   text: string;
 }
-
-// ColorScaleNames is an enum that contains all the supported color scale names. Can be used to access COLOR_SCALES functions
-export enum ColorScaleNames {
-  viridis = "viridis",
-  magma = "magma",
-  inferno = "inferno",
-  plasma = "plasma",
-  turbo = "turbo",
-}
-// COLOR_SCALES contains the color scalefunctions that are js. This is for wrapping it in typescript.
-export const COLOR_SCALES: Map<
-  ColorScaleNames,
-  (t: number) => string
-> = new Map([
-  [ColorScaleNames.viridis, interpolateViridis],
-  [ColorScaleNames.magma, interpolateMagma],
-  [ColorScaleNames.inferno, interpolateInferno],
-  [ColorScaleNames.plasma, interpolatePlasma],
-  [ColorScaleNames.turbo, interpolateTurbo],
-]);
 
 // update datasets in local storage
 export function addRecentDataset(dataset: string) {
@@ -822,7 +795,17 @@ export function sortVariablesByImportance(variables: Variable[]): Variable[] {
   });
   return variables;
 }
-
+export function getAllVariablesSummaries(
+  variables: Variable[],
+  summaryDictionary: Dictionary<Dictionary<VariableSummary>>
+): VariableSummary[] {
+  return getVariableSummariesByState(
+    0,
+    variables.length,
+    variables,
+    summaryDictionary
+  );
+}
 export function getVariableSummariesByState(
   pageIndex: number,
   pageSize: number,

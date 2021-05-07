@@ -10,6 +10,7 @@
     "prettier-fix": "prettier --write public/**/**{vue,ts}"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^5.15.3",
     "@turf/area": "^6.3.0",
     "@turf/bbox": "^6.0.1",
     "@turf/boolean-contains": "^6.0.1",

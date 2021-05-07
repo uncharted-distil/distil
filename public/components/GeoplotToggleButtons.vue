@@ -29,22 +29,6 @@
           <i class="fa fa-object-group fa-lg icon" aria-hidden="true" />
         </div>
       </li>
-      <li v-if="dataHasConfidence" class="pt-1">
-        <div
-          class="toggle confidence-toggle"
-          :class="{ active: isColoringByConfidence }"
-          @click="confidenceColoringToggle"
-        >
-          <a
-            :class="confidenceClass"
-            title="confidence"
-            aria-label="Color by Confidence"
-            :style="colorGradient"
-          >
-            C
-          </a>
-        </div>
-      </li>
       <li class="pt-1">
         <div
           class="toggle"
@@ -97,9 +81,6 @@ export default Vue.extend({
     mapToggle() {
       this.$emit("map-toggle");
     },
-    confidenceColoringToggle() {
-      this.$emit("confidence-toggle");
-    },
     clusteringToggle() {
       this.$emit("clustering-toggle");
     },
@@ -137,49 +118,5 @@ export default Vue.extend({
 }
 .toggle.active {
   color: #26b8d1;
-}
-.confidence-toggle.active:hover::after {
-  content: "----Less Confidence";
-  position: absolute;
-  white-space: nowrap;
-  left: 30px;
-  top: 15px; /*works out to 4 pixels from bottom (this is based off the font size)*/
-  display: inline;
-  position: absolute;
-}
-.confidence-toggle.active:hover::before {
-  content: "----More Confidence";
-  white-space: nowrap;
-  left: 30px;
-  top: -7px; /*works out to 4 pixels from top (this is based off the font size)*/
-  display: inline;
-  position: absolute;
-}
-.confidence-icon {
-  width: 30px;
-  height: 30px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  font-weight: bolder;
-  font-size: xx-large;
-}
-.toggled-confidence-icon {
-  width: 30px;
-  height: 30px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  font-weight: bolder;
-  font-size: xx-large;
-  background-size: 100%;
-  background-clip: text;
-  -webkit-background-clip: text;
-  -moz-background-clip: text;
-  background-image: linear-gradient(0deg, #f3ec78, #af4261);
-  -webkit-text-fill-color: transparent;
-  -moz-text-fill-color: transparent;
 }
 </style>

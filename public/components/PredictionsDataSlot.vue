@@ -23,7 +23,6 @@
       :variables="variables"
     >
       <p class="font-weight-bold mr-auto">Samples Predicted</p>
-      <color-scale-drop-down v-if="isMultiBandImage" />
       <layer-selection v-if="isMultiBandImage" class="layer-button" />
     </view-type-toggle>
     <search-bar
@@ -95,16 +94,19 @@ import {
 } from "../store/predictions/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
-import { PredictStatus } from "../store/requests/index";
+import { PredictStatus, Predictions } from "../store/requests/index";
 import { Dictionary } from "../util/dict";
 import { updateTableRowSelection, getNumIncludedRows } from "../util/row";
 import ViewTypeToggle from "../components/ViewTypeToggle.vue";
 import { MULTIBAND_IMAGE_TYPE } from "../util/types";
-import ColorScaleDropDown from "./ColorScaleDropDown.vue";
 import LayerSelection from "./LayerSelection.vue";
 import { Filter, INCLUDE_FILTER } from "../util/filters";
 import { actions as viewActions } from "../store/view/module";
-import { isGeoLocatedType } from "../util/types";
+import {
+  getPredictionResultSummary,
+  getPredictionConfidenceSummary,
+  getPredictionRankSummary,
+} from "../util/summaries";
 import { getVariableSummariesByState, totalAreaCoverage } from "../util/data";
 import { updateHighlight, UPDATE_ALL } from "../util/highlights";
 import { lexQueryToFiltersAndHighlight } from "../util/lex";
@@ -126,7 +128,6 @@ export default Vue.extend({
     PredictionsDataTable,
     ResultsTimeseriesView,
     ViewTypeToggle,
-    ColorScaleDropDown,
     LayerSelection,
     SearchBar,
   },
@@ -156,9 +157,21 @@ export default Vue.extend({
         true,
         routeGetters.getRoutePredictionsDataset(this.$store)
       );
-      return currentSummaries.filter((cs) => {
-        return isGeoLocatedType(cs.varType);
-      });
+      const rank = getPredictionRankSummary(this.prediction.resultId);
+      const confidence = getPredictionConfidenceSummary(
+        this.prediction.resultId
+      );
+      const summary = getPredictionResultSummary(this.produceRequestId);
+      if (rank) {
+        currentSummaries.push(rank);
+      }
+      if (confidence) {
+        currentSummaries.push(confidence);
+      }
+      if (summary) {
+        currentSummaries.push(summary);
+      }
+      return currentSummaries;
     },
     trainingVariables(): Variable[] {
       return requestGetters.getActivePredictionTrainingVariables(this.$store);
@@ -186,7 +199,9 @@ export default Vue.extend({
     highlights(): Highlight[] {
       return routeGetters.getDecodedHighlights(this.$store);
     },
-
+    prediction(): Predictions {
+      return requestGetters.getActivePredictions(this.$store);
+    },
     produceRequestId(): string {
       return routeGetters.getRouteProduceRequestId(this.$store);
     },

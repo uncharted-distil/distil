@@ -19,6 +19,7 @@
   <div>
     <variable-facets
       class="target-summary"
+      :enable-color-scales="geoVarExists"
       enable-highlighting
       enable-type-change
       :summaries="targetSummaries"
@@ -36,9 +37,12 @@ import Vue from "vue";
 import PositiveLabel from "./buttons/PositiveLabel.vue";
 import VariableFacets from "./facets/VariableFacets.vue";
 import { getters as routeGetters } from "../store/route/module";
+import { getters as datasetGetters } from "../store/dataset/module";
 import { TARGET_VAR_INSTANCE } from "../store/route/index";
-import { VariableSummary } from "../store/dataset/index";
+import { getAllVariablesSummaries } from "../util/data";
+import { VariableSummary, Variable } from "../store/dataset/index";
 import { Activity } from "../util/userEvents";
+import { isGeoLocatedType } from "../util/types";
 
 export default Vue.extend({
   name: "TargetVariable",
@@ -59,7 +63,18 @@ export default Vue.extend({
     targetSummaries(): VariableSummary[] {
       return routeGetters.getTargetVariableSummaries(this.$store);
     },
-
+    variables(): Variable[] {
+      return routeGetters.getTrainingVariables(this.$store);
+    },
+    geoVarExists(): boolean {
+      const varSumsDict = datasetGetters.getIncludedVariableSummariesDictionary(
+        this.$store
+      );
+      const varSums = getAllVariablesSummaries(this.variables, varSumsDict);
+      return varSums.some((v) => {
+        return isGeoLocatedType(v.type);
+      });
+    },
     labels(): string[] {
       // make sure we are only on a binary classification task
       if (!routeGetters.isBinaryClassification(this.$store)) return;

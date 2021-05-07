@@ -18,7 +18,8 @@
 import _ from "lodash";
 import { $enum } from "ts-enum-util";
 import { Route } from "vue-router";
-import { ColorScaleNames, JoinPair, minimumRouteKey } from "../../util/data";
+import { JoinPair, minimumRouteKey } from "../../util/data";
+import { ColorScaleNames } from "../../util/color";
 import { Dictionary } from "../../util/dict";
 import { decodeFilters, Filter, FilterParams } from "../../util/filters";
 import { decodeHighlights } from "../../util/highlights";
@@ -536,6 +537,10 @@ export const getters = {
   getColorScale(state: Route, getters: any): ColorScaleNames {
     const colorScale = state.query.colorScale as ColorScaleNames;
     return colorScale ?? ColorScaleNames.viridis; // default to viridis
+  },
+  getColorScaleVariable(state: Route, getters: any): string {
+    const colorScaleVar = state.query.colorScaleVariable as string;
+    return colorScaleVar ?? "";
   },
   getGeoCenter(state: Route, getters: any): number[] {
     const geo = state.query.geo as string;
