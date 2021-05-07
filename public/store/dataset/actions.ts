@@ -684,10 +684,58 @@ export const actions = {
     }
   },
 
+  async clearVariable(
+    context: DatasetContext,
+    args: {
+      dataset: string;
+      key: string;
+      highlights: Highlight[];
+      filterParams: FilterParams;
+    }
+  ): Promise<[void, void]> {
+    if (!validateArgs(args, ["dataset", "key"])) {
+      return null;
+    }
+    let filterParams = addHighlightToFilterParams(
+      args.filterParams,
+      args.highlights
+    );
+    filterParams = setInvert(filterParams, false);
+
+    try {
+      await axios.post(
+        `/distil/clear/${args.dataset}/${args.key}`,
+        filterParams
+      );
+      return Promise.all([
+        actions.fetchVariableSummary(context, {
+          dataset: args.dataset,
+          variable: args.key,
+          filterParams: args.filterParams,
+          highlights: args.highlights,
+          include: true,
+          dataMode: DataMode.Default,
+          mode: SummaryMode.Default,
+        }),
+        actions.fetchVariableSummary(context, {
+          dataset: args.dataset,
+          variable: args.key,
+          filterParams: args.filterParams,
+          highlights: args.highlights,
+          include: false,
+          dataMode: DataMode.Default,
+          mode: SummaryMode.Default,
+        }),
+      ]);
+    } catch (error) {
+      console.error(error);
+    }
+  },
+
   async deleteVariable(
     context: DatasetContext,
     args: { dataset: string; key: string }
-  ): Promise<any> {
+  ): Promise<[void[], void[]]> {
     if (!validateArgs(args, ["dataset", "key"])) {
       return null;
     }

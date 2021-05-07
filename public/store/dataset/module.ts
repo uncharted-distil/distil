@@ -123,6 +123,7 @@ export const actions = {
   importDataset: dispatch(moduleActions.importDataset),
   importFullDataset: dispatch(moduleActions.importFullDataset),
   importAvailableDataset: dispatch(moduleActions.importAvailableDataset),
+  clearVariable: dispatch(moduleActions.clearVariable),
   deleteVariable: dispatch(moduleActions.deleteVariable),
   setGrouping: dispatch(moduleActions.setGrouping),
   removeGrouping: dispatch(moduleActions.removeGrouping),

@@ -283,6 +283,7 @@ func main() {
 	registerRoutePost(mux, "/distil/prediction-result-summary/:results-uuid/:mode", routes.PredictionResultSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/solution-result-summary/:results-uuid/:mode", routes.SolutionResultSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/geocode/:dataset/:variable", routes.GeocodingHandler(esMetadataStorageCtor, pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/clear/:dataset/:variable", routes.ClearHandler(esMetadataStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/cluster/:dataset/:variable", routes.ClusteringHandler(esMetadataStorageCtor, pgDataStorageCtor, config))
 	registerRoutePost(mux, "/distil/cluster/:result-id", routes.ClusteringExplainHandler(pgSolutionStorageCtor, esMetadataStorageCtor, pgDataStorageCtor, config))
 	registerRoutePost(mux, "/distil/upload/:dataset", routes.UploadHandler(&config))

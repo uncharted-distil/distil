@@ -170,8 +170,8 @@ func (f *FilterParams) AddFilter(filter *model.Filter) {
 	})
 }
 
-// Empty returns if the filter set is empty.
-func (f *FilterParams) Empty(ignoreBaselineFilters bool) bool {
+// IsEmpty returns true if the filter set is empty.
+func (f *FilterParams) IsEmpty(ignoreBaselineFilters bool) bool {
 	for _, set := range f.Filters {
 		for _, filters := range set.FeatureFilters {
 			for _, filter := range filters.List {
