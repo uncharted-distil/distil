@@ -64,6 +64,10 @@ func ClearHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCtor
 			handleError(w, err)
 			return
 		}
+		if ds.Immutable {
+			handleError(w, errors.New("can not mutate an immutable dataset"))
+			return
+		}
 
 		// replace any grouped variables in filter params with the group's
 		expandedFilterParams, err := api.ExpandFilterParams(dataset, filterParams, false, metaStorage)

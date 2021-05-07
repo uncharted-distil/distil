@@ -686,22 +686,33 @@ export const actions = {
 
   async clearVariable(
     context: DatasetContext,
-    args: { dataset: string; key: string; highlights: Highlight[] }
+    args: {
+      dataset: string;
+      key: string;
+      highlights: Highlight[];
+      filterParams: FilterParams;
+    }
   ): Promise<any> {
     if (!validateArgs(args, ["dataset", "key"])) {
       return null;
     }
+    let filterParams = addHighlightToFilterParams(
+      args.filterParams,
+      args.highlights
+    );
+    filterParams = setInvert(filterParams, false);
+
     try {
       await axios.post(
         `/distil/clear/${args.dataset}/${args.key}`,
-        args.highlights
+        filterParams
       );
       return Promise.all([
         actions.fetchVariableSummary(context, {
           dataset: args.dataset,
           variable: args.key,
-          filterParams: null,
-          highlights: null,
+          filterParams: args.filterParams,
+          highlights: args.highlights,
           include: true,
           dataMode: DataMode.Default,
           mode: SummaryMode.Default,
@@ -709,8 +720,8 @@ export const actions = {
         actions.fetchVariableSummary(context, {
           dataset: args.dataset,
           variable: args.key,
-          filterParams: null,
-          highlights: null,
+          filterParams: args.filterParams,
+          highlights: args.highlights,
           include: false,
           dataMode: DataMode.Default,
           mode: SummaryMode.Default,

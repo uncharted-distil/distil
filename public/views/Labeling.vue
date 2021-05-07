@@ -434,16 +434,15 @@ export default Vue.extend({
       this.$bvModal.show("save-model-modal");
     },
     async onSaveValid(saveName: string, retainUnlabeled: boolean) {
-      const highlights = retainUnlabeled
-        ? null
-        : [
-            {
-              context: this.instance,
-              dataset: this.dataset,
-              key: this.labelName,
-              value: LowShotLabels.unlabeled,
-            },
-          ]; // exclude unlabeled from data export
+      const highlightsClear = [
+        {
+          context: this.instance,
+          dataset: this.dataset,
+          key: this.labelName,
+          value: LowShotLabels.unlabeled,
+        },
+      ]; // exclude unlabeled from data export
+      const highlights = retainUnlabeled ? null : highlightsClear;
       let filterParams = routeGetters.getDecodedSolutionRequestFilterParams(
         this.$store
       );
@@ -463,7 +462,8 @@ export default Vue.extend({
       await datasetActions.clearVariable(this.$store, {
         dataset: this.dataset,
         key: this.labelName,
-        highlights: null,
+        highlights: highlightsClear,
+        filterParams: filterParams,
       });
       const dataMode = routeGetters.getDataMode(this.$store);
       await datasetActions.saveDataset(this.$store, {
