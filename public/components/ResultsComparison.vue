@@ -31,7 +31,6 @@
     >
       <p class="font-weight-bold" :class="{ 'mr-auto': !hasWeight }">Samples</p>
       <legend-weight v-if="hasWeight" class="ml-5 mr-auto" />
-      <color-scale-drop-down v-if="isMultiBandImage" />
       <layer-selection
         :hasImageAttention="true"
         v-if="isMultiBandImage"
@@ -76,7 +75,6 @@ import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as resultsGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
 import { Variable } from "../store/dataset/index";
-import ColorScaleDropDown from "./ColorScaleDropDown.vue";
 import { updateHighlight, UPDATE_ALL } from "../util/highlights";
 import { lexQueryToFiltersAndHighlight } from "../util/lex";
 
@@ -91,7 +89,6 @@ export default Vue.extend({
     LegendWeight,
     ResultsDataSlot,
     ViewTypeToggle,
-    ColorScaleDropDown,
     SearchBar,
   },
 

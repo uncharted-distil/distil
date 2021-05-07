@@ -19,6 +19,7 @@
   <div>
     <variable-facets
       class="target-summary"
+      enable-color-scales
       enable-highlighting
       enable-type-change
       :summaries="targetSummaries"
@@ -59,7 +60,6 @@ export default Vue.extend({
     targetSummaries(): VariableSummary[] {
       return routeGetters.getTargetVariableSummaries(this.$store);
     },
-
     labels(): string[] {
       // make sure we are only on a binary classification task
       if (!routeGetters.isBinaryClassification(this.$store)) return;

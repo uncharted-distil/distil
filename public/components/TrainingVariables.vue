@@ -29,6 +29,7 @@
       enable-highlighting
       enable-search
       enable-type-change
+      :enable-color-scales="geoVarExists"
       :facetCount="trainingVariables.length"
       :html="html"
       :isAvailableFeatures="false"
@@ -74,11 +75,13 @@ import {
   NUM_PER_PAGE,
   getVariableSummariesByState,
   searchVariables,
+  getAllVariablesSummaries,
 } from "../util/data";
 import { overlayRouteEntry } from "../util/routes";
 import { removeFiltersByName } from "../util/filters";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
+import { isGeoLocatedType } from "../util/types";
 
 export default Vue.extend({
   name: "training-variables",
@@ -114,6 +117,16 @@ export default Vue.extend({
         routeGetters.getTrainingVariables(this.$store),
         this.trainingVarsSearch
       );
+    },
+    geoVarExists(): boolean {
+      const dict = datasetGetters.getVariableSummariesDictionary(this.$store);
+      const varSums = getAllVariablesSummaries(
+        routeGetters.getTrainingVariables(this.$store),
+        dict
+      );
+      return varSums.some((v) => {
+        return isGeoLocatedType(v.type);
+      });
     },
     trainingVariableSummaries(): VariableSummary[] {
       const pageIndex = routeGetters.getRouteTrainingVarsPage(this.$store);
@@ -264,7 +277,13 @@ export default Vue.extend({
       };
     },
   },
-
+  watch: {
+    geoVarExists() {
+      const route = routeGetters.getRoute(this.$store);
+      const entry = overlayRouteEntry(route, { hasGeoData: this.geoVarExists });
+      this.$router.push(entry).catch((err) => console.warn(err));
+    },
+  },
   methods: {
     removeAll() {
       appActions.logUserEvent(this.$store, {

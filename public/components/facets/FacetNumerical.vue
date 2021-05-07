@@ -23,16 +23,23 @@
     :disabled.prop="!enableHighlighting"
     @facet-element-updated="updateSelection"
   >
-    <div slot="header-label" :class="headerClass">
+    <div slot="header-label" :class="headerClass" class="d-flex">
       <span>{{ summary.label.toUpperCase() }}</span>
       <importance-bars :importance="importance" />
-      <type-change-menu
-        v-if="facetEnableTypeChanges"
-        class="facet-header-dropdown"
-        :dataset="summary.dataset"
-        :field="summary.key"
-        :expand-collapse="expandCollapse"
-      />
+      <div class="facet-header-dropdown d-flex align-items-center">
+        <color-scale-drop-down
+          v-if="geoEnabled"
+          :variableSummary="summary"
+          isFacetScale
+          class="mr-1"
+        />
+        <type-change-menu
+          v-if="facetEnableTypeChanges"
+          :dataset="summary.dataset"
+          :field="summary.key"
+          :expand-collapse="expandCollapse"
+        />
+      </div>
     </div>
 
     <facet-template
@@ -55,8 +62,8 @@
       />
       <div
         v-if="displayFooter"
+        class="facet-footer-custom-html d-flex justify-content-between"
         v-child="computeCustomHTML()"
-        class="facet-footer-custom-html"
       />
     </div>
     <div v-else slot="footer" class="facet-footer-container">
@@ -71,7 +78,7 @@ import Vue from "vue";
 import "@uncharted.software/facets-core";
 import "@uncharted.software/facets-plugins";
 import { FacetBarsData } from "@uncharted.software/facets-core/dist/types/facet-bars/FacetBars";
-
+import ColorScaleDropDown from "../ColorScaleDropDown.vue";
 import TypeChangeMenu from "../TypeChangeMenu.vue";
 import ImportanceBars from "../ImportanceBars.vue";
 import { Highlight, RowSelection, VariableSummary } from "../../store/dataset";
@@ -89,6 +96,7 @@ export default Vue.extend({
   components: {
     TypeChangeMenu,
     ImportanceBars,
+    ColorScaleDropDown,
   },
 
   directives: {
@@ -117,6 +125,7 @@ export default Vue.extend({
     instanceName: String as () => string,
     rowSelection: Object as () => RowSelection,
     importance: Number as () => number,
+    geoEnabled: { type: Boolean as () => boolean, default: false },
   },
 
   computed: {

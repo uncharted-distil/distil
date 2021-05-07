@@ -117,7 +117,6 @@ import {
 } from "../util/summaries";
 import { getPredictionsById } from "../util/predictions";
 import { updateHighlight, clearHighlight } from "../util/highlights";
-import { Dictionary } from "vue-router/types/router";
 
 export default Vue.extend({
   name: "prediction-summaries",

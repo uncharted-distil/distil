@@ -48,7 +48,6 @@ import {
   getAllDataItems,
   LowShotLabels,
 } from "../../util/data";
-import { isGeoLocatedType } from "../../util/types";
 import { actions as viewActions } from "../../store/view/module";
 import { INCLUDE_FILTER, Filter } from "../../util/filters";
 import { actions as datasetActions } from "../../store/dataset/module";
@@ -113,9 +112,7 @@ export default Vue.extend({
         summaryDictionary
       ) as VariableSummary[];
 
-      return currentSummaries.filter((cs) => {
-        return isGeoLocatedType(cs.varType);
-      });
+      return currentSummaries;
     },
     baselineItems(): TableRow[] {
       const bItems =

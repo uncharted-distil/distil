@@ -20,6 +20,7 @@
     <variable-facets
       class="result-target-summary"
       enable-highlighting
+      enable-color-scales
       :summaries="summaries"
       :instance-name="instanceName"
       :log-activity="logActivity"

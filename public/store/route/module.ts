@@ -61,6 +61,7 @@ export const getters = {
     moduleGetters.getDecodedTrainingVariableNames
   ),
   getRouteLabel: read(moduleGetters.getRouteLabel),
+  hasGeoData: read(moduleGetters.hasGeoData),
   getRouteJoinDatasetsVarsPage: read(
     moduleGetters.getRouteJoinDatasetsVarsPage
   ),
@@ -132,6 +133,7 @@ export const getters = {
   getGroupingType: read(moduleGetters.getGroupingType),
   getRouteTask: read(moduleGetters.getRouteTask),
   getColorScale: read(moduleGetters.getColorScale),
+  getColorScaleVariable: read(moduleGetters.getColorScaleVariable),
   getRouteFittedSolutionId: read(moduleGetters.getRouteFittedSolutionId),
   getRoutePredictionsDataset: read(moduleGetters.getRoutePredictionsDataset),
   isSingleSolution: read(moduleGetters.isSingleSolution),

@@ -33,6 +33,7 @@
           class="h-100"
           enable-search
           enable-highlighting
+          enable-color-scales
           :facetCount="trainingVariables.length"
           instance-name="resultTrainingVars"
           is-result-features
@@ -76,8 +77,11 @@ import {
   searchVariables,
   filterArrayByPage,
   shouldRunMi,
+  getAllVariablesSummaries,
 } from "../util/data";
 import { Activity } from "../util/userEvents";
+import { isGeoLocatedType } from "../util/types";
+import { overlayRouteEntry } from "../util/routes";
 
 export default Vue.extend({
   name: "results-view",
@@ -117,6 +121,15 @@ export default Vue.extend({
         return variables[this.target].colType;
       }
       return "";
+    },
+    geoVarExists(): boolean {
+      const varSums = getAllVariablesSummaries(
+        requestGetters.getActiveSolutionTrainingVariables(this.$store),
+        resultGetters.getTrainingSummariesDictionary(this.$store)
+      );
+      return varSums.some((v) => {
+        return isGeoLocatedType(v.type);
+      });
     },
     resultTrainingVarsSearch(): string {
       return routeGetters.getRouteResultTrainingVarsSearch(this.$store);
@@ -193,6 +206,11 @@ export default Vue.extend({
     },
   },
   watch: {
+    geoVarExists() {
+      const route = routeGetters.getRoute(this.$store);
+      const entry = overlayRouteEntry(route, { hasGeoData: this.geoVarExists });
+      this.$router.push(entry).catch((err) => console.warn(err));
+    },
     highlightString() {
       viewActions.updateResultsSolution(this.$store);
     },

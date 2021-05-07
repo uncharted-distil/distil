@@ -23,16 +23,24 @@
     :disabled.prop="!enableHighlighting"
     @facet-element-updated="updateSelection"
   >
-    <div slot="header-label" :class="headerClass">
+    <div slot="header-label" :class="headerClass" class="d-flex">
       <span>{{ summary.label.toUpperCase() }}</span>
       <importance-bars :importance="importance" />
-      <type-change-menu
-        v-if="facetEnableTypeChanges"
-        class="facet-header-dropdown"
-        :dataset="summary.dataset"
-        :field="summary.key"
-        :expand-collapse="expandCollapse"
-      />
+      <div></div>
+      <div class="facet-header-dropdown d-flex align-items-center">
+        <color-scale-drop-down
+          v-if="geoEnabled"
+          :variableSummary="summary"
+          isFacetScale
+          class="mr-1"
+        />
+        <type-change-menu
+          v-if="facetEnableTypeChanges"
+          :dataset="summary.dataset"
+          :field="summary.key"
+          :expand-collapse="expandCollapse"
+        />
+      </div>
     </div>
 
     <facet-template target="facet-bars-value" title="${tooltip}" />
@@ -60,6 +68,7 @@ import "@uncharted.software/facets-plugins";
 
 import TypeChangeMenu from "../TypeChangeMenu.vue";
 import ImportanceBars from "../ImportanceBars.vue";
+import ColorScaleDropDown from "../ColorScaleDropDown.vue";
 import { Highlight, RowSelection, VariableSummary } from "../../store/dataset";
 import {
   getSubSelectionValues,
@@ -76,6 +85,7 @@ export default Vue.extend({
   components: {
     TypeChangeMenu,
     ImportanceBars,
+    ColorScaleDropDown,
   },
 
   directives: {
@@ -101,6 +111,7 @@ export default Vue.extend({
     instanceName: String as () => string,
     rowSelection: Object as () => RowSelection,
     importance: Number as () => number,
+    geoEnabled: { type: Boolean as () => boolean, default: false },
   },
 
   computed: {
@@ -279,7 +290,6 @@ export default Vue.extend({
   position: absolute;
   right: 12px;
 }
-
 .facet-footer-container {
   min-height: 12px;
   padding: 6px 12px 5px;

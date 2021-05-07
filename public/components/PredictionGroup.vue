@@ -4,6 +4,7 @@
       enable-highlighting
       :summary="predictedSummary"
       :key="predictedSummary.key"
+      :geo-enabled="hasGeoData"
       :is="getFacetByType(predictedSummary.type)"
       :highlights="highlights"
       :enabled-type-changes="[]"
@@ -17,6 +18,7 @@
       v-if="!!confidenceSummary"
       enable-highlighting
       :summary="confidenceSummary"
+      :geo-enabled="hasGeoData"
       :key="confidenceSummary.key"
       :is="getFacetByType(confidenceSummary.type)"
       :highlights="highlights"
@@ -30,6 +32,7 @@
     <component
       v-if="!!rankingSummary"
       enable-highlighting
+      :geo-enabled="hasGeoData"
       :summary="rankingSummary"
       :key="rankingSummary.key"
       :is="getFacetByType(rankingSummary.type)"
@@ -69,6 +72,9 @@ export default Vue.extend({
     highlights: Array as () => Highlight[],
   },
   computed: {
+    hasGeoData(): boolean {
+      return routeGetters.hasGeoData(this.$store);
+    },
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
     },

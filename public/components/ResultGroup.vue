@@ -91,6 +91,7 @@
           <component
             :is="getFacetByType(summary.type)"
             enable-highlighting
+            :geo-enabled="hasGeoData"
             :summary="summary"
             :highlights="highlights"
             :enabled-type-changes="[]"
@@ -129,6 +130,7 @@
           v-for="summary in correctnessSummaries"
           :key="summary.key"
           enable-highlighting
+          :geo-enabled="hasGeoData"
           :summary="summary"
           :highlights="highlights"
           :enabled-type-changes="[]"
@@ -143,6 +145,7 @@
           v-for="summary in confidenceSummaries"
           :key="summary.key"
           enable-highlighting
+          :geo-enabled="hasGeoData"
           :summary="summary"
           :highlights="highlights"
           :enabled-type-changes="[]"
@@ -157,6 +160,7 @@
           v-for="summary in rankingSummaries"
           :key="summary.key"
           enable-highlighting
+          :geo-enabled="hasGeoData"
           :summary="summary"
           :highlight="highlights"
           :enabled-type-changes="[]"
@@ -252,6 +256,9 @@ export default Vue.extend({
         null,
         FACET_COLOR_FILTERED,
       ]);
+    },
+    hasGeoData(): boolean {
+      return routeGetters.hasGeoData(this.$store);
     },
     target(): string {
       return routeGetters.getRouteTargetVariable(this.$store);

@@ -18,7 +18,7 @@
 import _ from "lodash";
 import { Location, Route } from "vue-router";
 import { SummaryMode } from "../store/dataset";
-import { ColorScaleNames } from "./data";
+import { ColorScaleNames } from "./color";
 import { Dictionary } from "./dict";
 // TODO: should really have a separate definition for each route
 export interface RouteArgs {
@@ -32,6 +32,7 @@ export interface RouteArgs {
   include?: string;
   solutionId?: string;
   highlights?: string;
+  hasGeoData?: boolean;
   row?: string;
   residualThresholdMin?: string;
   residualThresholdMax?: string;
@@ -64,6 +65,7 @@ export interface RouteArgs {
   previousTarget?: string;
   singleSolution?: string;
   colorScale?: ColorScaleNames;
+  colorScaleVariable?: string;
   predictionsDataset?: string;
   bandCombinationId?: string;
   imageAttention?: boolean;

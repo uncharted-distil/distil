@@ -101,7 +101,7 @@ export default Vue.extend({
       const summaryDictionary = include
         ? datasetGetters.getIncludedVariableSummariesDictionary(this.$store)
         : datasetGetters.getExcludedVariableSummariesDictionary(this.$store);
-
+      const targets = routeGetters.getTargetVariableSummaries(this.$store);
       const currentSummaries = getVariableSummariesByState(
         pageIndex,
         this.trainingVariables.length,
@@ -109,9 +109,7 @@ export default Vue.extend({
         summaryDictionary
       ) as VariableSummary[];
 
-      return currentSummaries.filter((cs) => {
-        return isGeoLocatedType(cs.varType);
-      });
+      return currentSummaries.concat(targets);
     },
   },
   methods: {
