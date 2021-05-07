@@ -23,7 +23,7 @@ import (
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
-// DeleteHandler inserts a new field based on existing fields.
+// DeleteHandler deletes a field from the data storage and the metadata storage.
 func DeleteHandler(dataCtor api.DataStorageCtor, esMetaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")

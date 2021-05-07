@@ -706,9 +706,16 @@ func (s *Storage) insertBatchData(storageName string, varNames []string, inserts
 }
 
 // SetVariableValue updates an entire column to specified value
-func (s *Storage) SetVariableValue(storageName string, varName string, value string) error {
-	sql := fmt.Sprintf("UPDATE %s_base SET \"%s\" = $1", storageName, varName)
-	_, err := s.client.Exec(sql, value)
+func (s *Storage) SetVariableValue(dataset string, storageName string, varName string, value string, filterParams *api.FilterParams) error {
+	wheres := []string{}
+	params := []interface{}{value}
+	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, "", filterParams)
+	whereClause := ""
+	if len(wheres) > 0 {
+		whereClause = fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
+	}
+	sql := fmt.Sprintf("UPDATE %s_base SET \"%s\" = $1 %s;", storageName, varName, whereClause)
+	_, err := s.client.Exec(sql, params...)
 	if err != nil {
 		return errors.Wrap(err, "Unable to update value stored in the database")
 	}

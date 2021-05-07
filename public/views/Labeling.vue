@@ -459,6 +459,12 @@ export default Vue.extend({
           key: this.labelScoreName,
         });
       }
+      // clear the unlabeled values when saving
+      await datasetActions.clearVariable(this.$store, {
+        dataset: this.dataset,
+        key: this.labelName,
+        highlights: null,
+      });
       const dataMode = routeGetters.getDataMode(this.$store);
       await datasetActions.saveDataset(this.$store, {
         dataset: this.dataset,

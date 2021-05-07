@@ -236,7 +236,7 @@ func persistQueryResults(params QueryParams, storageName string, resultData [][]
 		}
 
 	} else {
-		err = params.DataStorage.SetVariableValue(storageName, targetScore, "0.0")
+		err = params.DataStorage.SetVariableValue(params.Dataset, storageName, targetScore, "0.0", nil)
 		if err != nil {
 			return err
 		}
