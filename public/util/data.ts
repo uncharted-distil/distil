@@ -797,13 +797,16 @@ export function sortVariablesByImportance(variables: Variable[]): Variable[] {
 }
 export function getAllVariablesSummaries(
   variables: Variable[],
-  summaryDictionary: Dictionary<Dictionary<VariableSummary>>
+  summaryDictionary: Dictionary<Dictionary<VariableSummary>>,
+  dataset?: string
 ): VariableSummary[] {
   return getVariableSummariesByState(
     0,
     variables.length,
     variables,
-    summaryDictionary
+    summaryDictionary,
+    false,
+    dataset
   );
 }
 export function getVariableSummariesByState(

@@ -85,7 +85,7 @@ export function colorByFacet(
       })
     );
     return (item: TableRow, idx: number) => {
-      return keyMap.get(item[key].value);
+      return keyMap.get(item[key]?.value ?? item[variable.key]?.value);
     };
   } else if (variable.varType === DATE_TIME_TYPE) {
     const diff = variable.baseline.extrema.max - variable.baseline.extrema.min;

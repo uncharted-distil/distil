@@ -33,7 +33,7 @@
           class="h-100"
           enable-search
           enable-highlighting
-          :enable-color-scales="geoVarExists"
+          enable-color-scales
           :facetCount="trainingVariables.length"
           instance-name="resultTrainingVars"
           is-result-features
@@ -81,6 +81,7 @@ import {
 } from "../util/data";
 import { Activity } from "../util/userEvents";
 import { isGeoLocatedType } from "../util/types";
+import { overlayRouteEntry } from "../util/routes";
 
 export default Vue.extend({
   name: "results-view",
@@ -205,6 +206,11 @@ export default Vue.extend({
     },
   },
   watch: {
+    geoVarExists() {
+      const route = routeGetters.getRoute(this.$store);
+      const entry = overlayRouteEntry(route, { hasGeoData: this.geoVarExists });
+      this.$router.push(entry).catch((err) => console.warn(err));
+    },
     highlightString() {
       viewActions.updateResultsSolution(this.$store);
     },

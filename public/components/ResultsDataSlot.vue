@@ -50,7 +50,6 @@
         :instance-name="instanceName"
         :summaries="trainingSummaries"
         :area-of-interest-items="{ inner: inner, outer: outer }"
-        :confidence-access-func="colorTile"
         :is-result="true"
         :dataset="dataset"
         @tileClicked="onTileClick"
@@ -93,6 +92,13 @@ import {
   searchVariables,
   totalAreaCoverage,
 } from "../util/data";
+import {
+  getSolutionResultSummary,
+  getResidualSummary,
+  getCorrectnessSummary,
+  getConfidenceSummary,
+  getRankingSummary,
+} from "../util/summaries";
 import { Filter, INCLUDE_FILTER } from "../util/filters";
 import { overlayRouteEntry } from "../util/routes";
 
@@ -155,16 +161,6 @@ export default Vue.extend({
     },
     areaCoverage(): number {
       return totalAreaCoverage(this.items, this.variables);
-    },
-    confidenceSummaries(): VariableSummary {
-      return resultsGetters.getConfidenceSummaries(this.$store).filter((cf) => {
-        return cf.solutionId === this.solutionId;
-      })[0];
-    },
-    rankSummary(): VariableSummary {
-      return resultsGetters.getRankingSummaries(this.$store).filter((rank) => {
-        return rank.solutionId === this.solutionId;
-      })[0];
     },
     solutionHasErrored(): boolean {
       return this.solution
@@ -313,26 +309,33 @@ export default Vue.extend({
         this.trainingVariables,
         summaryDictionary
       );
-      if (this.confidenceSummaries) {
-        currentSummaries.push(this.confidenceSummaries);
+      const predictedSummary = getSolutionResultSummary(this.solutionId);
+      if (predictedSummary) {
+        currentSummaries.push(predictedSummary);
       }
-      if (this.rankSummary) {
-        currentSummaries.push(this.rankSummary);
+      const residualSummary = getResidualSummary(this.solutionId);
+      if (residualSummary) {
+        currentSummaries.push(residualSummary);
       }
+      const correctnessSummary = getCorrectnessSummary(this.solutionId);
+      if (correctnessSummary) {
+        currentSummaries.push(correctnessSummary);
+      }
+      const confidenceSummary = getConfidenceSummary(this.solutionId);
+      if (confidenceSummary) {
+        currentSummaries.push(confidenceSummary);
+      }
+      const rankingSummary = getRankingSummary(this.solutionId);
+      if (rankingSummary) {
+        currentSummaries.push(rankingSummary);
+      }
+      // target summary
+      currentSummaries.push(resultsGetters.getTargetSummary(this.$store));
       return currentSummaries;
     },
   },
 
   methods: {
-    colorTile(d) {
-      if (d.rank !== undefined) {
-        return d.rank.value / this.rankSummary.baseline.extrema.max;
-      }
-      if (d.confidence !== undefined) {
-        return d.confidence.value;
-      }
-      return undefined;
-    },
     errorCount(dataColumn: TableRow[]): number {
       return dataColumn.filter((item) => {
         if (this.regressionEnabled) {

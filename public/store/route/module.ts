@@ -61,6 +61,7 @@ export const getters = {
     moduleGetters.getDecodedTrainingVariableNames
   ),
   getRouteLabel: read(moduleGetters.getRouteLabel),
+  hasGeoData: read(moduleGetters.hasGeoData),
   getRouteJoinDatasetsVarsPage: read(
     moduleGetters.getRouteJoinDatasetsVarsPage
   ),

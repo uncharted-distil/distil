@@ -32,6 +32,7 @@ export interface RouteArgs {
   include?: string;
   solutionId?: string;
   highlights?: string;
+  hasGeoData?: boolean;
   row?: string;
   residualThresholdMin?: string;
   residualThresholdMax?: string;

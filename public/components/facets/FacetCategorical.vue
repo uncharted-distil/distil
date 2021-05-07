@@ -24,7 +24,7 @@
     :disabled.prop="!enableHighlighting"
     @facet-element-updated="updateSelection"
   >
-    <div slot="header-label" :class="headerClass">
+    <div slot="header-label" :class="headerClass" class="d-flex">
       <i :class="getGroupIcon(summary) + ' facet-header-icon'" />
       <span>{{ summary.label.toUpperCase() }}</span>
       <importance-bars :importance="importance" />

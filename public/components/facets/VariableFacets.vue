@@ -115,7 +115,7 @@
               :enable-highlighting="enableHighlighting"
               :ignore-highlights="ignoreHighlights"
               :instance-name="instanceName"
-              :geoEnabled="enableColorScales"
+              :geoEnabled="enableColorScales && geoVariableExists"
               @facet-click="onFacetClick"
               @range-change="onRangeChange"
             />
@@ -132,7 +132,7 @@
               :enable-highlighting="enableHighlighting"
               :ignore-highlights="ignoreHighlights"
               :instance-name="instanceName"
-              :geoEnabled="enableColorScales"
+              :geoEnabled="enableColorScales && geoVariableExists"
               @facet-click="onFacetCategoryClick"
             />
           </template>
@@ -148,7 +148,7 @@
               :enable-highlighting="enableHighlighting"
               :ignore-highlights="ignoreHighlights"
               :instance-name="instanceName"
-              :geoEnabled="enableColorScales"
+              :geoEnabled="enableColorScales && geoVariableExists"
               @numerical-click="onNumericalClick"
               @range-change="onRangeChange"
               @facet-click="onFacetClick"
@@ -286,9 +286,7 @@ export default Vue.extend({
       },
     },
     geoVariableExists(): boolean {
-      return this.summaries.some((cs) => {
-        return isGeoLocatedType(cs.varType);
-      });
+      return routeGetters.hasGeoData(this.$store);
     },
     dataset(): string {
       return this.datasetName ?? routeGetters.getRouteDataset(this.$store);

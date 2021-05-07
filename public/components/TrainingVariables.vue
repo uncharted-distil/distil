@@ -277,7 +277,13 @@ export default Vue.extend({
       };
     },
   },
-
+  watch: {
+    geoVarExists() {
+      const route = routeGetters.getRoute(this.$store);
+      const entry = overlayRouteEntry(route, { hasGeoData: this.geoVarExists });
+      this.$router.push(entry).catch((err) => console.warn(err));
+    },
+  },
   methods: {
     removeAll() {
       appActions.logUserEvent(this.$store, {

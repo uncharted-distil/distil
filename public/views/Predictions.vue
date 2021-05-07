@@ -80,6 +80,7 @@ import {
 } from "../util/data";
 import { Activity } from "../util/userEvents";
 import { isGeoLocatedType } from "../util/types";
+import { overlayRouteEntry } from "../util/routes";
 
 export default Vue.extend({
   name: "predictions-view",
@@ -114,7 +115,8 @@ export default Vue.extend({
     geoVarExists(): boolean {
       const varSums = getAllVariablesSummaries(
         requestGetters.getActivePredictionTrainingVariables(this.$store),
-        predictionGetters.getTrainingSummariesDictionary(this.$store)
+        predictionGetters.getTrainingSummariesDictionary(this.$store),
+        routeGetters.getRoutePredictionsDataset(this.$store)
       );
       return varSums.some((v) => {
         return isGeoLocatedType(v.type);
@@ -179,6 +181,11 @@ export default Vue.extend({
   },
 
   watch: {
+    geoVarExists() {
+      const route = routeGetters.getRoute(this.$store);
+      const entry = overlayRouteEntry(route, { hasGeoData: this.geoVarExists });
+      this.$router.push(entry).catch((err) => console.warn(err));
+    },
     produceRequestId() {
       viewActions.updatePrediction(this.$store);
       viewActions.updateBaselinePredictions(this.$store);

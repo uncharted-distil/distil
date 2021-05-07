@@ -119,7 +119,11 @@ import {
 } from "../store/dataset/module";
 import { LABEL_FEATURE_INSTANCE } from "../store/route/index";
 import { actions as viewActions } from "../store/view/module";
-import { CATEGORICAL_TYPE, DISTIL_ROLES } from "../util/types";
+import {
+  CATEGORICAL_TYPE,
+  DISTIL_ROLES,
+  isGeoLocatedType,
+} from "../util/types";
 import {
   getVariableSummariesByState,
   searchVariables,
@@ -130,6 +134,7 @@ import {
   minimumRouteKey,
   addOrderBy,
   downloadFile,
+  getAllVariablesSummaries,
 } from "../util/data";
 import {
   Variable,
@@ -301,6 +306,18 @@ export default Vue.extend({
 
       return currentSummaries;
     },
+    geoVarExists(): boolean {
+      const summaryDictionary = datasetGetters.getVariableSummariesDictionary(
+        this.$store
+      );
+      const varSums = getAllVariablesSummaries(
+        this.variables,
+        summaryDictionary
+      );
+      return varSums.some((v) => {
+        return isGeoLocatedType(v.type);
+      });
+    },
     highlight(): string {
       return routeGetters.getRouteHighlight(this.$store);
     },
@@ -323,6 +340,11 @@ export default Vue.extend({
     },
   },
   watch: {
+    geoVarExists() {
+      const route = routeGetters.getRoute(this.$store);
+      const entry = overlayRouteEntry(route, { hasGeoData: this.geoVarExists });
+      this.$router.push(entry).catch((err) => console.warn(err));
+    },
     highlight() {
       this.onDataChanged();
     },
@@ -338,6 +360,9 @@ export default Vue.extend({
     await this.fetchData();
     this.loadingState = "Checking Clone";
     this.checkClone();
+    const route = routeGetters.getRoute(this.$store);
+    const entry = overlayRouteEntry(route, { hasGeoData: this.geoVarExists });
+    this.$router.push(entry).catch((err) => console.warn(err));
   },
   methods: {
     async checkClone() {

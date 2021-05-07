@@ -447,7 +447,9 @@ export const getters = {
 
     return filterParams;
   },
-
+  hasGeoData(state: Route): boolean {
+    return state.query.hasGeoData === "true";
+  },
   getDecodedHighlights(state: Route): Highlight[] {
     return decodeHighlights(state.query.highlights as string);
   },
