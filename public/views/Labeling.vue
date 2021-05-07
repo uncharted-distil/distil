@@ -459,12 +459,14 @@ export default Vue.extend({
         });
       }
       // clear the unlabeled values when saving
-      await datasetActions.clearVariable(this.$store, {
-        dataset: this.dataset,
-        key: this.labelName,
-        highlights: highlightsClear,
-        filterParams: filterParams,
-      });
+      if (retainUnlabeled) {
+        await datasetActions.clearVariable(this.$store, {
+          dataset: this.dataset,
+          key: this.labelName,
+          highlights: highlightsClear,
+          filterParams: filterParams,
+        });
+      }
       const dataMode = routeGetters.getDataMode(this.$store);
       await datasetActions.saveDataset(this.$store, {
         dataset: this.dataset,
