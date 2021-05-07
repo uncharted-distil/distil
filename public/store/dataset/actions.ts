@@ -692,7 +692,7 @@ export const actions = {
       highlights: Highlight[];
       filterParams: FilterParams;
     }
-  ): Promise<any> {
+  ): Promise<[void[], void[]]> {
     if (!validateArgs(args, ["dataset", "key"])) {
       return null;
     }
@@ -735,7 +735,7 @@ export const actions = {
   async deleteVariable(
     context: DatasetContext,
     args: { dataset: string; key: string }
-  ): Promise<any> {
+  ): Promise<[void[], void[]]> {
     if (!validateArgs(args, ["dataset", "key"])) {
       return null;
     }
