@@ -317,12 +317,14 @@ export function setFilterModes(
 export function addHighlightToFilterParams(
   filterParams: FilterParams,
   highlights: Highlight[],
-  mode: string = INCLUDE_FILTER
+  mode: string = INCLUDE_FILTER,
+  highlightMode: string = INCLUDE_FILTER
 ): FilterSetsParams {
   const params = _.cloneDeep(filterParams);
   const highlightFilters = createFiltersFromHighlights(highlights, mode);
   if (highlightFilters.length > 0) {
     params.highlights.list = highlightFilters;
+    params.highlights.mode = highlightMode;
   }
 
   return {

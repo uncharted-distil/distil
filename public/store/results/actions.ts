@@ -345,6 +345,7 @@ export const actions = {
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
       args.highlights,
+      EXCLUDE_FILTER,
       EXCLUDE_FILTER
     );
 
