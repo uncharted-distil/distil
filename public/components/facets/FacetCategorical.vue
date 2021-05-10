@@ -31,6 +31,7 @@
       <div class="facet-header-dropdown d-flex align-items-center">
         <color-scale-drop-down
           v-if="geoEnabled"
+          :is-toggle="colorScaleToggle"
           :variableSummary="summary"
           isFacetScale
           class="mr-1"
@@ -120,6 +121,7 @@ export default Vue.extend({
     rowSelection: Object as () => RowSelection,
     importance: Number as () => number,
     geoEnabled: { type: Boolean as () => boolean, default: false },
+    colorScaleToggle: { type: Boolean as () => boolean, default: false },
   },
 
   data() {

@@ -91,7 +91,7 @@
           <component
             :is="getFacetByType(summary.type)"
             enable-highlighting
-            :geo-enabled="hasGeoData"
+            :geo-enabled="hasGeoData && isActiveSolution"
             :summary="summary"
             :highlights="highlights"
             :enabled-type-changes="[]"
@@ -130,7 +130,8 @@
           v-for="summary in correctnessSummaries"
           :key="summary.key"
           enable-highlighting
-          :geo-enabled="hasGeoData"
+          colorScaleToggle
+          :geo-enabled="hasGeoData && isActiveSolution"
           :summary="summary"
           :highlights="highlights"
           :enabled-type-changes="[]"
@@ -145,7 +146,7 @@
           v-for="summary in confidenceSummaries"
           :key="summary.key"
           enable-highlighting
-          :geo-enabled="hasGeoData"
+          :geo-enabled="hasGeoData && isActiveSolution"
           :summary="summary"
           :highlights="highlights"
           :enabled-type-changes="[]"
@@ -160,7 +161,7 @@
           v-for="summary in rankingSummaries"
           :key="summary.key"
           enable-highlighting
-          :geo-enabled="hasGeoData"
+          :geo-enabled="hasGeoData && isActiveSolution"
           :summary="summary"
           :highlight="highlights"
           :enabled-type-changes="[]"
@@ -190,6 +191,7 @@ import {
 } from "../store/dataset/index";
 import { SolutionStatus } from "../store/requests/index";
 import { getters as routeGetters } from "../store/route/module";
+import { getters as requestGetters } from "../store/requests/module";
 import {
   getFacetByType,
   applyColor,
@@ -245,6 +247,12 @@ export default Vue.extend({
   computed: {
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
+    },
+    isActiveSolution(): boolean {
+      return (
+        requestGetters.getActiveSolution(this.$store).solutionId ===
+        this.solutionId
+      );
     },
     errorColor(): string {
       return applyColor([FACET_COLOR_ERROR]);
