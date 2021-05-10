@@ -4,7 +4,7 @@
       enable-highlighting
       :summary="predictedSummary"
       :key="predictedSummary.key"
-      :geo-enabled="hasGeoData"
+      :geo-enabled="hasGeoData && isActivePrediction"
       :is="getFacetByType(predictedSummary.type)"
       :highlights="highlights"
       :enabled-type-changes="[]"
@@ -18,7 +18,7 @@
       v-if="!!confidenceSummary"
       enable-highlighting
       :summary="confidenceSummary"
-      :geo-enabled="hasGeoData"
+      :geo-enabled="hasGeoData && isActivePrediction"
       :key="confidenceSummary.key"
       :is="getFacetByType(confidenceSummary.type)"
       :highlights="highlights"
@@ -32,7 +32,7 @@
     <component
       v-if="!!rankingSummary"
       enable-highlighting
-      :geo-enabled="hasGeoData"
+      :geo-enabled="hasGeoData && isActivePrediction"
       :summary="rankingSummary"
       :key="rankingSummary.key"
       :is="getFacetByType(rankingSummary.type)"
@@ -51,6 +51,7 @@
 import Vue from "vue";
 import FacetNumerical from "../components/facets/FacetNumerical.vue";
 import FacetCategorical from "../components/facets/FacetCategorical.vue";
+import { getIDFromKey } from "../util/summaries";
 import {
   VariableSummary,
   RowSelection,
@@ -89,6 +90,12 @@ export default Vue.extend({
     },
     rankingInstanceName(): string {
       return `ranking-prediction-facet-${this.predictionDataset}`;
+    },
+    isActivePrediction(): boolean {
+      return (
+        routeGetters.getRouteProduceRequestId(this.$store) ===
+        getIDFromKey(this.predictedSummary.key)
+      );
     },
   },
   methods: {

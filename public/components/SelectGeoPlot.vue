@@ -42,8 +42,7 @@ import {
   VariableSummary,
 } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
-import { getVariableSummariesByState, searchVariables } from "../util/data";
-import { isGeoLocatedType } from "../util/types";
+import { searchVariables } from "../util/data";
 import { actions as viewActions } from "../store/view/module";
 import { INCLUDE_FILTER, Filter, EXCLUDE_FILTER } from "../util/filters";
 export default Vue.extend({
@@ -56,6 +55,10 @@ export default Vue.extend({
   props: {
     instanceName: String as () => string,
     includedActive: Boolean as () => boolean,
+    summaries: {
+      type: Array as () => VariableSummary[],
+      default: Array as () => VariableSummary[],
+    },
   },
 
   computed: {
@@ -94,22 +97,6 @@ export default Vue.extend({
         routeGetters.getTrainingVariables(this.$store),
         this.trainingVarsSearch
       );
-    },
-    summaries(): VariableSummary[] {
-      const pageIndex = routeGetters.getRouteTrainingVarsPage(this.$store);
-      const include = routeGetters.getRouteInclude(this.$store);
-      const summaryDictionary = include
-        ? datasetGetters.getIncludedVariableSummariesDictionary(this.$store)
-        : datasetGetters.getExcludedVariableSummariesDictionary(this.$store);
-      const targets = routeGetters.getTargetVariableSummaries(this.$store);
-      const currentSummaries = getVariableSummariesByState(
-        pageIndex,
-        this.trainingVariables.length,
-        this.trainingVariables,
-        summaryDictionary
-      ) as VariableSummary[];
-
-      return currentSummaries.concat(targets);
     },
   },
   methods: {

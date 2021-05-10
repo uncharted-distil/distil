@@ -74,6 +74,7 @@ import {
 } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import { circleSpinnerHTML as spinnerHTML } from "../util/spinner";
+import { VariableSummary } from "../store/dataset/index";
 import {
   D3M_INDEX_FIELD,
   TableRow,
@@ -82,7 +83,7 @@ import {
 import { isRowSelected } from "../util/row";
 import { Dictionary } from "../util/dict";
 import { MULTIBAND_IMAGE_TYPE, IMAGE_TYPE } from "../util/types";
-import { ColorScaleNames, COLOR_SCALES } from "../util/color";
+import { COLOR_SCALES, colorByFacet } from "../util/color";
 
 export default Vue.extend({
   name: "ImagePreview",
@@ -107,6 +108,7 @@ export default Vue.extend({
     shouldCleanUp: { type: Boolean as () => boolean, default: true },
     shouldFetchImage: { type: Boolean as () => boolean, default: true },
     datasetName: { type: String as () => string, default: null },
+    summaries: { type: Array as () => VariableSummary[], default: () => [] },
   },
 
   data() {
@@ -124,16 +126,30 @@ export default Vue.extend({
 
   computed: {
     confidenceColor(): string {
-      if (!this.isLoaded) return;
-      const confidenceScale = this.row?.confidenceScale;
-      if (!confidenceScale) return;
-      return COLOR_SCALES.get(this.colorScale)(confidenceScale);
+      if (!this.summaries.length || this.colorScaleByVar === "") {
+        return;
+      }
+      // index is not needed
+      return this.colorScale(this.colorByVariable(this.row, 0));
     },
-
-    colorScale(): ColorScaleNames {
-      return routeGetters.getColorScale(this.$store);
+    colorScaleByVar(): string {
+      return routeGetters.getColorScaleVariable(this.$store);
     },
-
+    colorByVariable(): (item: TableRow, idx: number) => number {
+      const findKey = (v) => {
+        return v.key === this.colorScaleByVar;
+      };
+      if (!this.summaries.some(findKey)) {
+        return (item: TableRow, idx: number) => {
+          return 0;
+        };
+      }
+      return colorByFacet(this.summaries.find(findKey));
+    },
+    colorScale(): (t: number) => string {
+      const colorScale = routeGetters.getColorScale(this.$store);
+      return COLOR_SCALES.get(colorScale);
+    },
     imageId(): string {
       return this.imageUrl?.split(/_B[0-9][0-9a-zA-Z][.]/)[0];
     },

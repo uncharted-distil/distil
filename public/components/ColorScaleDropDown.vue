@@ -16,7 +16,20 @@
 -->
 
 <template>
-  <b-dropdown variant="outline-secondary p-0 pl-1 pr-1" size="dropdown">
+  <b-button
+    v-if="isToggle"
+    @click="onToggleClick"
+    variant="outline-secondary"
+    :class="toggleStyle"
+  >
+    <i class="fas fa-palette fa-sm"></i>
+  </b-button>
+  <b-dropdown
+    v-else
+    variant="outline-secondary p-0 pl-1 pr-1 shadow-none"
+    size="dropdown"
+    class="shadow-none"
+  >
     <template v-slot:button-content>
       <div class="d-inline-flex align-items-center justify-content-center">
         <i class="fas fa-palette fa-sm"></i>
@@ -61,6 +74,7 @@ export default Vue.extend({
   props: {
     isFacetScale: { type: Boolean as () => boolean, default: false },
     variableSummary: Object as () => VariableSummary,
+    isToggle: { type: Boolean as () => boolean, default: false },
   },
   computed: {
     isCategorical(): boolean {
@@ -111,8 +125,18 @@ export default Vue.extend({
     max(): number {
       return this.variableSummary?.baseline.extrema.max ?? 0;
     },
+    toggleStyle(): string {
+      return this.selectedFacet === ""
+        ? "selected-toggle d-flex align-items-center shadow-none"
+        : "toggle d-flex align-items-center shadow-none";
+    },
   },
   methods: {
+    onToggleClick() {
+      const route = routeGetters.getRoute(this.$store);
+      const entry = overlayRouteEntry(route, { colorScaleVariable: "" });
+      this.$router.push(entry).catch((err) => console.warn(err));
+    },
     getDiscrete(colorScaleName: ColorScaleNames): string {
       const colors = DISCRETE_COLOR_MAPS.get(colorScaleName);
       const stepLength = 100 / colors.length;
@@ -159,8 +183,14 @@ export default Vue.extend({
 .bar {
   height: 30px;
 }
-.dropdown {
+.dropdown,
+.toggle {
   height: 22px;
+}
+.selected-toggle {
+  height: 22px;
+  color: #424242;
+  background-color: #9e9e9e;
 }
 .selected-bar {
   width: 100px;

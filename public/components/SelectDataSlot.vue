@@ -110,6 +110,7 @@
         :dataset="dataset"
         :data-items="items"
         :data-fields="fields"
+        :summaries="summaries"
       />
     </div>
   </div>
@@ -138,6 +139,7 @@ import {
   Highlight,
   RowSelection,
   TableColumn,
+  VariableSummary,
 } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
 import {
@@ -164,7 +166,7 @@ import { actions as appActions } from "../store/app/module";
 import { actions as viewActions } from "../store/view/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { Dictionary } from "lodash";
-import { totalAreaCoverage } from "../util/data";
+import { getAllVariablesSummaries, totalAreaCoverage } from "../util/data";
 
 const GEO_VIEW = "geo";
 const GRAPH_VIEW = "graph";
@@ -360,6 +362,19 @@ export default Vue.extend({
     },
     areaCoverage(): number {
       return totalAreaCoverage(this.items, this.variables);
+    },
+    summaries(): VariableSummary[] {
+      const include = routeGetters.getRouteInclude(this.$store);
+      const summaryDictionary = include
+        ? datasetGetters.getIncludedVariableSummariesDictionary(this.$store)
+        : datasetGetters.getExcludedVariableSummariesDictionary(this.$store);
+      const targets = routeGetters.getTargetVariableSummaries(this.$store);
+      const currentSummaries = getAllVariablesSummaries(
+        this.trainingVariables,
+        summaryDictionary
+      ) as VariableSummary[];
+
+      return currentSummaries.concat(targets);
     },
   },
 

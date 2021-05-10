@@ -203,6 +203,7 @@ export default Vue.extend({
           produceRequestId: requestId,
           highlights: null,
           predictionsDataset: dataset,
+          colorScaleVariable: "",
         });
         this.$router.push(entry).catch((err) => console.warn(err));
       }
