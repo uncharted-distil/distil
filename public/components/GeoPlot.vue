@@ -239,18 +239,6 @@ export default Vue.extend({
       type: Boolean as () => boolean,
       default: false,
     },
-    confidenceAccessFunc: {
-      type: Function,
-      default: (d, i, length) => {
-        if (d.rank !== undefined) {
-          return d.rank.value / length;
-        }
-        if (d.confidence !== undefined) {
-          return d.confidence.value;
-        }
-        return undefined;
-      },
-    },
     isExclude: { type: Boolean as () => boolean, default: false },
     maxDataSize: {
       type: Number as () => number,
@@ -295,8 +283,6 @@ export default Vue.extend({
       showExit: false,
       pointSize: 0.025,
       isClustering: false,
-      isColoringByConfidence: false,
-      confidenceIconClass: "confidence-icon",
       isSatelliteView: false,
       tileAreaThreshold: 170, // area in pixels
       boundsInitialized: false,
@@ -333,18 +319,6 @@ export default Vue.extend({
     target(): string {
       return routeGetters.getRouteTargetVariable(this.$store);
     },
-    dataHasConfidence(): boolean {
-      if (!this.dataItems?.length) {
-        return false;
-      }
-      return (
-        this.confidenceAccessFunc(
-          this.dataItems[0],
-          0,
-          this.dataItems.length
-        ) !== undefined
-      );
-    },
     getTopVariables(): string[] {
       const variables = datasetGetters
         .getVariables(this.$store)
@@ -380,29 +354,6 @@ export default Vue.extend({
         return CoordinateType.PointBased;
       }
       return -1;
-    },
-    colorGradient(): string {
-      return this.isColoringByConfidence
-        ? `background-image:linear-gradient(${[
-            0.0, // padding
-            0.0, // padding
-            1.0,
-            0.9,
-            0.8,
-            0.7,
-            0.6,
-            0.5,
-            0.4,
-            0.3,
-            0.2,
-            0.1,
-            0.0,
-            0.0, // padding
-            0.0, // padding
-          ]
-            .map(this.colorScale)
-            .join(",")})`
-        : "";
     },
     fieldSpecs(): GeoField[] {
       const variables = datasetGetters.getVariables(this.$store);
@@ -691,10 +642,6 @@ export default Vue.extend({
         },
       };
     },
-
-    confidenceClass(): string {
-      return this.confidenceIconClass;
-    },
   },
 
   watch: {
@@ -914,17 +861,6 @@ export default Vue.extend({
         this.tileRenderer.draw();
         this.renderer.draw();
       }
-    },
-    /**
-     * toggles coloring tiles by confidence (only available in result screen)
-     */
-    toggleConfidenceColoring() {
-      this.isColoringByConfidence = !this.isColoringByConfidence;
-      this.confidenceIconClass = this.isColoringByConfidence
-        ? "toggled-confidence-icon"
-        : "confidence-icon";
-      this.updateMapState();
-      this.onNewData();
     },
     /**
      * on selection tool toggle disable or enable the quad interactions such as click or hover
@@ -1343,17 +1279,6 @@ export default Vue.extend({
       }
       if (item.isExcluded) {
         return GRAY;
-      }
-      if (this.isColoringByConfidence) {
-        if (
-          this.confidenceAccessFunc(item, idx, this.dataItems.length) ===
-          undefined
-        ) {
-          return undefined;
-        }
-        return this.colorScale(
-          this.confidenceAccessFunc(item, idx, this.dataItems.length)
-        );
       }
       if (item[this.targetField] && item[this.predictedField]) {
         color =

@@ -34,6 +34,7 @@
                 :unique-trail="uniqueTrail"
                 :should-clean-up="false"
                 :should-fetch-image="false"
+                :summaries="summaries"
                 @click="onImageClick"
                 @shift-click="onImageShiftClick"
               />
@@ -72,11 +73,8 @@ import {
   TableColumn,
   TableRow,
   D3M_INDEX_FIELD,
+  VariableSummary,
 } from "../store/dataset/index";
-import {
-  actions as datasetActions,
-  mutations as datasetMutations,
-} from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
 import {
@@ -117,6 +115,10 @@ export default Vue.extend({
     },
     labelFeatureName: { type: String as () => string, default: "" },
     dataset: { type: String as () => string, default: "" },
+    summaries: {
+      type: Array as () => VariableSummary[],
+      default: Array as () => VariableSummary[],
+    },
   },
 
   data() {

@@ -986,21 +986,8 @@ export function fetchLowShotScores() {
   });
 }
 
-/** Create the method to get the scale [0, 1] of a TableValue 
-    to visually display its ranking or confidence. */
-function getConfidenceScale(dataLength: number): Function {
-  // Create the scale that uses ranking before confidence.
-  return function (value: TableValue): number {
-    if (value.rank !== undefined) return value.rank / dataLength;
-    if (value.confidence !== undefined) return value.confidence;
-    return;
-  };
-}
-
 export function getTableDataItems(data: TableData): TableRow[] {
   if (validateData(data)) {
-    const confidenceScale = getConfidenceScale(data.numRows);
-
     // convert fetched result data rows into table data rows
     const formattedTable = data.values.map((resultRow, rowIndex) => {
       const row = {} as TableRow;
@@ -1022,12 +1009,6 @@ export function getTableDataItems(data: TableData): TableRow[] {
             const conKey = "rank";
             row[conKey] = {};
             row[conKey].value = colValue.rank;
-          }
-          if (
-            colValue.rank !== undefined ||
-            colValue.confidence !== undefined
-          ) {
-            row.confidenceScale = confidenceScale(colValue);
           }
         } else {
           row[key] = formatValue(colValue.value, colType);

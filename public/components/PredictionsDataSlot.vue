@@ -157,9 +157,10 @@ export default Vue.extend({
         true,
         routeGetters.getRoutePredictionsDataset(this.$store)
       );
-      const rank = getPredictionRankSummary(this.prediction.resultId);
+
+      const rank = getPredictionRankSummary(this.prediction?.resultId);
       const confidence = getPredictionConfidenceSummary(
-        this.prediction.resultId
+        this.prediction?.resultId
       );
       const summary = getPredictionResultSummary(this.produceRequestId);
       if (rank) {
