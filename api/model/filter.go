@@ -219,53 +219,6 @@ func filtersEqual(first *model.Filter, second *model.Filter) bool {
 	return baseEquals && boundsEquals && model.StringSliceEqual(first.Categories, second.Categories)
 }
 
-// MergeParams merges another set of filter params into this set, expanding all
-// properties.
-func (f *FilterParams) MergeParams(other *FilterParams) {
-
-	// If the filters has a nil or negative value, we use the value use by default on distil-model
-	// https://github.com/uncharted-distil/distil/blob/master/api/model/storage/postgres/request.go#L239
-	if other.Size >= 0 {
-		f.Size = other.Size
-	}
-
-	for _, set := range other.Filters {
-		for _, features := range set.FeatureFilters {
-			for _, filter := range features.List {
-				found := false
-				for _, setOther := range f.Filters {
-					if setOther.Mode == set.Mode {
-						for _, filters := range setOther.FeatureFilters {
-							for _, currentFilter := range filters.List {
-								if filtersEqual(filter, currentFilter) {
-									found = true
-									break
-								}
-							}
-						}
-					}
-				}
-				if !found {
-					f.AddFilter(filter)
-				}
-			}
-		}
-	}
-
-	for _, variable := range other.Variables {
-		found := false
-		for _, currentVariable := range f.Variables {
-			if variable == currentVariable {
-				found = true
-				break
-			}
-		}
-		if !found {
-			f.Variables = append(f.Variables, variable)
-		}
-	}
-}
-
 // MergeFilterObjects merges a slice of filter objects with the existing filter params.
 func (f *FilterParams) MergeFilterObjects(filters []model.FilterObject) {
 	for _, features := range filters {
@@ -543,6 +496,12 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 	if !ok {
 		return nil, errors.New("Missing required param highlights.Invert")
 	}
+
+	modeHighlights, ok := json.String(params, "highlights", "mode")
+	if !ok {
+		modeHighlights = model.IncludeFilter
+	}
+
 	highlights, ok := json.Array(params, "highlights", "list")
 	// use map to collect like filters by key
 	highlightMap := map[string]*model.FilterObject{}
@@ -565,7 +524,7 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 		for _, val := range highlightMap {
 			highlightSet.FeatureFilters = append(highlightSet.FeatureFilters, *val)
 		}
-		highlightSet.Mode = model.IncludeFilter
+		highlightSet.Mode = modeHighlights
 		filterParams.Filters = append(filterParams.Filters, &highlightSet)
 	}
 	// this invert will apply to all filterObjects

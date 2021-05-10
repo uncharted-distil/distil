@@ -138,6 +138,7 @@ export interface FilterSetsParams {
 export interface FilterObject {
   list: Filter[];
   invert?: boolean;
+  mode?: string;
 }
 
 export interface FilterSet {
