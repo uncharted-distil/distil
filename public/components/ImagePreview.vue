@@ -108,7 +108,7 @@ export default Vue.extend({
     shouldCleanUp: { type: Boolean as () => boolean, default: true },
     shouldFetchImage: { type: Boolean as () => boolean, default: true },
     datasetName: { type: String as () => string, default: null },
-    summaries: { type: Array as () => VariableSummary[], default: [] },
+    summaries: { type: Array as () => VariableSummary[], default: () => [] },
   },
 
   data() {
