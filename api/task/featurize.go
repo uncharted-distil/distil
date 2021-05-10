@@ -168,6 +168,17 @@ func SetGroups(datasetID string, rawGroupings []map[string]interface{}, data api
 		if err != nil {
 			return err
 		}
+
+		// Make sure we set the role of the multiband image's ID column to grouping as filters need this to run DISTINCT ON
+		idColVariable, err := meta.FetchVariable(datasetID, rsg.GetIDCol())
+		if err != nil {
+			return err
+		}
+		idColVariable.DistilRole = model.VarDistilRoleGrouping
+		err = meta.UpdateVariable(datasetID, rsg.GetIDCol(), idColVariable)
+		if err != nil {
+			return err
+		}
 	}
 
 	geoBoundsGroupings := getGeoBoundsGrouping(rawGroupings)
