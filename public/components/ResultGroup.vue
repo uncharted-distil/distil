@@ -641,6 +641,7 @@ export default Vue.extend({
         const entry = overlayRouteEntry(this.$route, {
           solutionId: this.solutionId,
           highlights: null,
+          colorScaleVariable: "",
         });
         this.$router.push(entry).catch((err) => console.warn(err));
       }

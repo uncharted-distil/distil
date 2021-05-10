@@ -24,7 +24,12 @@
   >
     <i class="fas fa-palette fa-sm"></i>
   </b-button>
-  <b-dropdown v-else variant="outline-secondary p-0 pl-1 pr-1" size="dropdown">
+  <b-dropdown
+    v-else
+    variant="outline-secondary p-0 pl-1 pr-1 shadow-none"
+    size="dropdown"
+    class="shadow-none"
+  >
     <template v-slot:button-content>
       <div class="d-inline-flex align-items-center justify-content-center">
         <i class="fas fa-palette fa-sm"></i>
@@ -122,8 +127,8 @@ export default Vue.extend({
     },
     toggleStyle(): string {
       return this.selectedFacet === ""
-        ? "selected-toggle d-flex align-items-center"
-        : "toggle d-flex align-items-center";
+        ? "selected-toggle d-flex align-items-center shadow-none"
+        : "toggle d-flex align-items-center shadow-none";
     },
   },
   methods: {
