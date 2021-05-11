@@ -116,7 +116,11 @@ import {
   getPredictionRankSummary,
 } from "../util/summaries";
 import { getPredictionsById } from "../util/predictions";
-import { updateHighlight, clearHighlight } from "../util/highlights";
+import {
+  updateHighlight,
+  clearHighlight,
+  UPDATE_FOR_KEY,
+} from "../util/highlights";
 
 export default Vue.extend({
   name: "prediction-summaries",
@@ -215,26 +219,31 @@ export default Vue.extend({
       value: string;
       dataset: string;
     }) {
-      if (args.key && args.value) {
-        // If this isn't the currently selected prediction set, first update it.
-        // Note that the key is of the form <requestId>:predicted and so needs to be
-        // parsed.
+      let highlight = this.highlights.find((h) => {
+        return h.key === args.key;
+      });
+      if (
+        args.key &&
+        args.value &&
+        Array.isArray(args.value) &&
+        args.value.length > 0
+      ) {
         if (
           this.summaries &&
           this.produceRequestId !== getIDFromKey(args.key)
         ) {
           this.onClick(args.key);
         }
-
-        // extract the var name from the key
-        updateHighlight(this.$router, {
+        highlight = highlight ?? {
           context: args.context,
           dataset: args.dataset,
           key: args.key,
-          value: args.value,
-        });
+          value: [],
+        };
+        highlight.value = args.value;
+        updateHighlight(this.$router, highlight, UPDATE_FOR_KEY);
       } else {
-        clearHighlight(this.$router, args.key);
+        clearHighlight(this.$router, highlight.key);
       }
       appActions.logUserEvent(this.$store, {
         feature: Feature.CHANGE_HIGHLIGHT,
@@ -290,12 +299,16 @@ export default Vue.extend({
       dataset: string;
     }) {
       if (args.key && args.value) {
-        updateHighlight(this.$router, {
-          context: args.context,
-          dataset: args.dataset,
-          key: args.key,
-          value: args.value,
-        });
+        updateHighlight(
+          this.$router,
+          {
+            context: args.context,
+            dataset: args.dataset,
+            key: args.key,
+            value: args.value,
+          },
+          UPDATE_FOR_KEY
+        );
       } else {
         clearHighlight(this.$router, args.key);
       }

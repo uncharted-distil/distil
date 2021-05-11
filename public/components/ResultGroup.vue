@@ -208,7 +208,11 @@ import {
 } from "../util/solutions";
 import { getModelNameByFittedSolutionId } from "../util/models";
 import { overlayRouteEntry } from "../util/routes";
-import { updateHighlight, clearHighlight } from "../util/highlights";
+import {
+  updateHighlight,
+  clearHighlight,
+  UPDATE_FOR_KEY,
+} from "../util/highlights";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import _ from "lodash";
@@ -443,16 +447,20 @@ export default Vue.extend({
       value: string,
       dataset: string
     ) {
-      if (key && value) {
-        // extract the var name from the key
-        updateHighlight(this.$router, {
+      let highlight = this.highlights.find((h) => {
+        return h.key === key;
+      });
+      if (key && value && Array.isArray(value) && value.length > 0) {
+        highlight = highlight ?? {
           context: context,
           dataset: dataset,
           key: key,
-          value: value,
-        });
+          value: [],
+        };
+        highlight.value = value;
+        updateHighlight(this.$router, highlight, UPDATE_FOR_KEY);
       } else {
-        clearHighlight(this.$router, key);
+        clearHighlight(this.$router, highlight.key);
       }
       appActions.logUserEvent(this.$store, {
         feature: Feature.CHANGE_HIGHLIGHT,
@@ -461,23 +469,26 @@ export default Vue.extend({
         details: { key: key, value: value },
       });
     },
-
     onCorrectnessCategoricalClick(
       context: string,
       key: string,
       value: string,
       dataset: string
     ) {
-      if (key && value) {
-        // extract the var name from the key
-        updateHighlight(this.$router, {
+      let highlight = this.highlights.find((h) => {
+        return h.key === key;
+      });
+      if (key && value && Array.isArray(value) && value.length > 0) {
+        highlight = highlight ?? {
           context: context,
           dataset: dataset,
           key: key,
-          value: value,
-        });
+          value: [],
+        };
+        highlight.value = value;
+        updateHighlight(this.$router, highlight, UPDATE_FOR_KEY);
       } else {
-        clearHighlight(this.$router, key);
+        clearHighlight(this.$router, highlight.key);
       }
       appActions.logUserEvent(this.$store, {
         feature: Feature.CHANGE_HIGHLIGHT,
@@ -518,12 +529,16 @@ export default Vue.extend({
       dataset: string
     ) {
       if (key && value) {
-        updateHighlight(this.$router, {
-          context: context,
-          dataset: dataset,
-          key: key,
-          value: value,
-        });
+        updateHighlight(
+          this.$router,
+          {
+            context: context,
+            dataset: dataset,
+            key: key,
+            value: value,
+          },
+          UPDATE_FOR_KEY
+        );
       } else {
         clearHighlight(this.$router, key);
       }
@@ -567,12 +582,16 @@ export default Vue.extend({
       dataset: string
     ) {
       if (key && value) {
-        updateHighlight(this.$router, {
-          context: context,
-          dataset: dataset,
-          key: key,
-          value: value,
-        });
+        updateHighlight(
+          this.$router,
+          {
+            context: context,
+            dataset: dataset,
+            key: key,
+            value: value,
+          },
+          UPDATE_FOR_KEY
+        );
       } else {
         clearHighlight(this.$router, key);
       }
@@ -612,12 +631,16 @@ export default Vue.extend({
       dataset: string
     ) {
       if (key && value) {
-        updateHighlight(this.$router, {
-          context: context,
-          dataset: dataset,
-          key: key,
-          value: value,
-        });
+        updateHighlight(
+          this.$router,
+          {
+            context: context,
+            dataset: dataset,
+            key: key,
+            value: value,
+          },
+          UPDATE_FOR_KEY
+        );
       } else {
         clearHighlight(this.$router, key);
       }
