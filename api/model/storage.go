@@ -198,6 +198,7 @@ type MetadataStorage interface {
 	DeleteDataset(dataset string, softDelete bool) error
 	IngestDataset(datasetSource metadata.DatasetSource, meta *model.Metadata) error
 	UpdateDataset(dataset *Dataset) error
+	DatasetExists(dataset string) (bool, error)
 
 	// CloneDataset creates a copy of an existing dataset
 	CloneDataset(dataset string, datasetNew string, storageNameNew string, folderNew string) error
