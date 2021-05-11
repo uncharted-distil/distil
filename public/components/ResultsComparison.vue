@@ -47,11 +47,13 @@
       <results-data-slot
         instance-name="results-slot-top"
         :view-type="viewType"
+        class="h-50"
       />
       <results-data-slot
         excluded
         instance-name="results-slot-bottom"
         :view-type="viewType"
+        class="h-50"
       />
     </div>
     <results-data-slot
@@ -149,7 +151,7 @@ export default Vue.extend({
 }
 .two-slots {
   padding-top: 10px;
-  height: 50%;
+  height: 100%;
 }
 .one-slot {
   height: 100%;
