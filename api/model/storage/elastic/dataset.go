@@ -570,11 +570,8 @@ func (s *Storage) DatasetExists(dataset string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if len(datasets) < 1 {
-		return false, nil
-	}
 
-	return true, nil
+	return len(datasets) > 0, nil
 }
 
 // AddGroupedVariable adds a grouping to the metadata.
