@@ -82,28 +82,6 @@
             @col-clicked="onBottomColumnClicked"
           />
         </div>
-        <div class="row pb-5">
-          <div class="col-12 d-flex flex-column align-items-center">
-            <b-button variant="primary" @click="swapDatasets">
-              Swap Datasets
-            </b-button>
-          </div>
-          <div
-            class="join-accuracy-slider col-12 d-flex flex-column align-items-center"
-          >
-            <div class="join-accuracy-label">Join Accuracy</div>
-            <vue-slider
-              :min="0"
-              :max="1"
-              :interval="0.01"
-              :value="joinAccuracy"
-              :lazy="true"
-              width="100px"
-              tooltip-dir="bottom"
-              @callback="onJoinAccuracyChanged"
-            />
-          </div>
-        </div>
         <div class="row">
           <div class="col-12">
             <join-datasets-form
@@ -113,6 +91,8 @@
               :dataset-a-column="topColumn"
               :dataset-b-column="bottomColumn"
               :join-accuracy="joinAccuracy"
+              @join-accuracy="onJoinAccuracyChanged"
+              @swap-datasets="swapDatasets"
             />
           </div>
         </div>
@@ -123,7 +103,6 @@
 
 <script lang="ts">
 import Vue from "vue";
-import vueSlider from "vue-slider-component";
 import JoinDatasetsForm from "../components/JoinDatasetsForm.vue";
 import JoinDataSlot from "../components/JoinDataSlot.vue";
 import VariableFacets from "../components/facets/VariableFacets.vue";
@@ -156,7 +135,6 @@ export default Vue.extend({
     JoinDatasetsForm,
     JoinDataSlot,
     VariableFacets,
-    vueSlider,
   },
 
   computed: {

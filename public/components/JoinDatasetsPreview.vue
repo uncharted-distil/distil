@@ -201,7 +201,6 @@ export default Vue.extend({
 <style>
 .join-button {
   margin: 0 8px;
-  width: 35%;
   line-height: 32px !important;
 }
 

@@ -63,35 +63,57 @@
         />
       </main>
     </div>
-    <div class="row justify-content-center">
-      <b-button
-        variant="primary"
-        :disabled="disableAdd"
-        @click="addJoinRelation"
-      >
-        Add Join Relationship
-      </b-button>
-      <b-button
-        class="join-button"
-        :disabled="disableJoin"
-        :variant="joinVariant"
-        @click="previewJoin"
-      >
-        <div class="row justify-content-center">
-          <i class="fa fa-check-circle fa-2x mr-2" />
-          <b>Join Datasets</b>
+    <div class="d-flex justify-content-between bottom-margin">
+      <div class="d-flex">
+        <b-button variant="primary" @click="swapDatasets" class="join-button">
+          Swap Datasets
+        </b-button>
+        <div
+          class="join-accuracy-label d-flex justify-content-center flex-column ml-1"
+        >
+          Join Accuracy
+          <vue-slider
+            :min="0"
+            :max="1"
+            :interval="0.01"
+            :value="joinAccuracy"
+            :lazy="true"
+            width="100px"
+            tooltip-dir="bottom"
+            @callback="onJoinAccuracyChanged"
+          />
         </div>
-      </b-button>
-    </div>
-
-    <div class="join-progress">
-      <b-progress
-        v-if="isPending"
-        :value="percentComplete"
-        variant="outline-secondary"
-        striped
-        :animated="true"
-      />
+      </div>
+      <div class="join-progress">
+        <b-progress
+          v-if="isPending"
+          :value="percentComplete"
+          variant="outline-secondary"
+          striped
+          :animated="true"
+        />
+      </div>
+      <div>
+        <b-button
+          variant="primary"
+          class="h-100"
+          :disabled="disableAdd"
+          @click="addJoinRelation"
+        >
+          Add Join Relationship
+        </b-button>
+        <b-button
+          class="join-button"
+          :disabled="disableJoin"
+          :variant="joinVariant"
+          @click="previewJoin"
+        >
+          <div class="d-flex justify-content-center align-items-center">
+            <i class="fa fa-check-circle mr-2" />
+            <b>Join Datasets</b>
+          </div>
+        </b-button>
+      </div>
     </div>
   </div>
 </template>
@@ -100,6 +122,7 @@
 import _ from "lodash";
 import Vue from "vue";
 // components
+import vueSlider from "vue-slider-component";
 import JoinDatasetsPreview from "../components/JoinDatasetsPreview.vue";
 import ErrorModal from "../components/ErrorModal.vue";
 import Badge from "./Badge.vue";
@@ -124,6 +147,7 @@ export default Vue.extend({
     ErrorModal,
     Badge,
     SaveModal,
+    vueSlider,
   },
 
   props: {
@@ -213,6 +237,12 @@ export default Vue.extend({
   },
 
   methods: {
+    onJoinAccuracyChanged(value: number) {
+      this.$emit("join-accuracy", value);
+    },
+    swapDatasets() {
+      this.$emit("swap-datasets");
+    },
     badgeRemoved(joinPair: JoinPair) {
       const pairs = this.joinPairs.filter((jp) => {
         return jp.first !== joinPair.first || jp.second !== joinPair.second;
@@ -313,9 +343,11 @@ export default Vue.extend({
 }
 </style>
 <style scoped>
+.bottom-margin {
+  margin-bottom: 30px;
+}
 .join-button {
   margin: 0 8px;
-  width: 35%;
   line-height: 32px !important;
 }
 
@@ -326,9 +358,11 @@ export default Vue.extend({
 }
 
 .join-progress {
-  margin: 6px 10%;
+  width: 40%;
 }
-
+.join-accuracy-label {
+  text-align: center;
+}
 .check-message-container {
   display: flex;
   justify-content: flex-start;
