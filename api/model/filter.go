@@ -425,6 +425,9 @@ func parseFilter(filter map[string]interface{}) (*model.Filter, error) {
 		if !ok {
 			return nil, errors.Errorf("no `categories` provided for filter")
 		}
+		if len(categories) == 0 {
+			return nil, errors.Errorf("empty set of categories provided for filter")
+		}
 		return model.NewCategoricalFilter(key, mode, categories), nil
 	}
 

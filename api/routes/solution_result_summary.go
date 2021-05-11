@@ -129,6 +129,10 @@ func SolutionResultSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor
 			handleError(w, err)
 			return
 		}
+		if res == nil {
+			handleError(w, errors.Errorf("unrecognized result uuid supplied"))
+			return
+		}
 
 		// Fetch the request so we have access to the original parameters.
 		request, err := solution.FetchRequestBySolutionID(res.SolutionID)
