@@ -194,10 +194,20 @@ func SetGroups(datasetID string, rawGroupings []map[string]interface{}, data api
 			return err
 		}
 
+		// confirm that the coordinates col data does exist - it could be that it was removed during the join
+		// process
+		exists, err := data.DoesVariableExist(datasetID, ds.StorageName, grouping.CoordinatesCol)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			continue
+		}
+
 		// confirm the existence of the underlying polygon field, creating it if necessary
 		// (less than ideal because it hides a pretty big side effect)
 		// (other option would be to error here and let calling code worry about it)
-		exists, err := data.DoesVariableExist(datasetID, ds.StorageName, grouping.PolygonCol)
+		exists, err = data.DoesVariableExist(datasetID, ds.StorageName, grouping.PolygonCol)
 		if err != nil {
 			return err
 		}
