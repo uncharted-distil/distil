@@ -78,6 +78,11 @@ func (s *Storage) DeleteDataset(dataset string, softDelete bool) error {
 	return errors.Errorf("Not implemented")
 }
 
+// DatasetExists returns true if a dataset exists.
+func (s *Storage) DatasetExists(dataset string) (bool, error) {
+	return false, errors.Errorf("Not implemented")
+}
+
 // FetchDataset returns a dataset in the provided index.
 func (s *Storage) FetchDataset(datasetName string, includeIndex bool, includeMeta bool, includeSystemData bool) (*api.Dataset, error) {
 	return nil, errors.Errorf("Not implemented")

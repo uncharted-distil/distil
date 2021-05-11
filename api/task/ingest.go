@@ -311,16 +311,15 @@ func Ingest(originalSchemaFile string, schemaFile string, data api.DataStorage,
 	meta.Immutable = true
 	if !config.IngestOverwrite {
 		// get the unique name, and if it is different then write out the updated metadata
-		uniqueName, err := getUniqueDatasetName(meta, storage)
+		uniqueID, err := getUniqueDatasetID(meta, storage)
 		if err != nil {
 			return "", err
 		}
 
-		if uniqueName != meta.Name {
+		if uniqueID != meta.ID {
 			extendedOutput := params.Source == metadata.Augmented
-			log.Infof("storing (extended: %v) metadata with new name to %s (new: '%s', old: '%s')", extendedOutput, originalSchemaFile, uniqueName, meta.Name)
-			meta.Name = uniqueName
-			meta.ID = model.NormalizeDatasetID(uniqueName)
+			log.Infof("storing (extended: %v) metadata with new id to %s (new: '%s', old: '%s')", extendedOutput, originalSchemaFile, uniqueID, meta.ID)
+			meta.ID = uniqueID
 			datasetStorage := serialization.GetStorage(originalSchemaFile)
 			err = datasetStorage.WriteMetadata(originalSchemaFile, meta, extendedOutput, false)
 			if err != nil {
@@ -662,19 +661,36 @@ func deleteDataset(name string, pg *postgres.Database, meta api.MetadataStorage)
 	return nil
 }
 
-func getUniqueDatasetName(meta *model.Metadata, storage api.MetadataStorage) (string, error) {
+func getUniqueDatasetID(meta *model.Metadata, storage api.MetadataStorage) (string, error) {
 	// create a unique name if the current name is already in use
 	datasets, err := storage.FetchDatasets(false, false, false)
 	if err != nil {
 		return "", err
 	}
 
-	datasetNames := make([]string, 0)
+	datasetIDs := make([]string, 0)
 	for _, ds := range datasets {
-		datasetNames = append(datasetNames, ds.Name)
+		datasetIDs = append(datasetIDs, ds.ID)
 	}
 
-	return getUniqueString(meta.Name, datasetNames), nil
+	// get a unique id based on the existence of the file on disk
+	// this approach will result in the concatenation of "_1" until a unique dataset is found
+	datasetExists := true
+	uniqueDatasetID := meta.ID
+	for datasetExists {
+		uniqueDatasetID = getUniqueString(uniqueDatasetID, datasetIDs)
+
+		// make sure the dataset doesnt exist
+		datasetExists, err = storage.DatasetExists(uniqueDatasetID)
+		if err != nil {
+			return "", err
+		}
+
+		// set the existing datasets to the unique id since that will be the base
+		datasetIDs = []string{uniqueDatasetID}
+	}
+
+	return uniqueDatasetID, nil
 }
 
 func createIndices(pg *postgres.Database, datasetID string, fields []string, meta *model.Metadata, config *IngestTaskConfig) error {

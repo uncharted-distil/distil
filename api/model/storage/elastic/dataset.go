@@ -182,7 +182,7 @@ func (s *Storage) DeleteDataset(dataset string, softDelete bool) error {
 	return s.UpdateDataset(ds)
 }
 
-func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, includeMeta bool, includeSystemData bool) ([]*api.Dataset, error) {
+func (s *Storage) parseDatasets(res *elastic.SearchResult, includeDeleted bool, includeIndex bool, includeMeta bool, includeSystemData bool) ([]*api.Dataset, error) {
 	var datasets []*api.Dataset
 	for _, hit := range res.Hits.Hits {
 		// parse hit into JSON
@@ -201,7 +201,7 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 		if !ok {
 			deleted = false
 		}
-		if deleted {
+		if deleted && !includeDeleted {
 			continue
 		}
 
@@ -354,7 +354,7 @@ func (s *Storage) FetchDatasets(includeIndex bool, includeMeta bool, includeSyst
 	if err != nil {
 		return nil, errors.Wrap(err, "elasticsearch dataset fetch query failed")
 	}
-	return s.parseDatasets(res, includeIndex, includeMeta, includeSystemData)
+	return s.parseDatasets(res, false, includeIndex, includeMeta, includeSystemData)
 }
 
 // FetchDataset returns a dataset in the provided index.
@@ -370,7 +370,7 @@ func (s *Storage) FetchDataset(datasetName string, includeIndex bool, includeMet
 	if err != nil {
 		return nil, errors.Wrap(err, "elasticsearch dataset fetch query failed")
 	}
-	datasets, err := s.parseDatasets(res, includeIndex, includeMeta, includeSystemData)
+	datasets, err := s.parseDatasets(res, false, includeIndex, includeMeta, includeSystemData)
 	if err != nil {
 		return nil, err
 	}
@@ -396,7 +396,7 @@ func (s *Storage) SearchDatasets(terms string, baseDataset *api.Dataset, include
 	if err != nil {
 		return nil, errors.Wrap(err, "elasticsearch dataset search query failed")
 	}
-	return s.parseDatasets(res, includeIndex, includeMeta, includeSystemData)
+	return s.parseDatasets(res, false, includeIndex, includeMeta, includeSystemData)
 }
 
 func (s *Storage) updateVariables(dataset string, variables []*model.Variable) error {
@@ -551,6 +551,30 @@ func (s *Storage) DeleteVariable(dataset string, key string) error {
 	}
 
 	return s.updateVariables(dataset, vars)
+}
+
+// DatasetExists returns true if a dataset exists in ES.
+func (s *Storage) DatasetExists(dataset string) (bool, error) {
+	query := elastic.NewMatchQuery("_id", dataset)
+	// execute the ES query
+	res, err := s.client.Search().
+		Query(query).
+		Index(s.datasetIndex).
+		FetchSource(true).
+		Size(datasetsListSize).
+		Do(context.Background())
+	if err != nil {
+		return false, errors.Wrap(err, "elasticsearch dataset fetch query failed")
+	}
+	datasets, err := s.parseDatasets(res, true, false, false, false)
+	if err != nil {
+		return false, err
+	}
+	if len(datasets) < 1 {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 // AddGroupedVariable adds a grouping to the metadata.
