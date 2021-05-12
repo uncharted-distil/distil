@@ -65,7 +65,7 @@ func JoinDatamart(joinLeft *JoinSpec, joinRight *JoinSpec, rightOrigin *model.Da
 }
 
 // JoinDistil will bring misery.
-func JoinDistil(joinLeft *JoinSpec, joinRight *JoinSpec, leftCols []string, rightCols []string, accuracy float32) (string, *apiModel.FilteredData, error) {
+func JoinDistil(joinLeft *JoinSpec, joinRight *JoinSpec, leftCols []string, rightCols []string, accuracies []float64) (string, *apiModel.FilteredData, error) {
 	cfg, err := env.LoadConfig()
 	if err != nil {
 		return "", nil, err
@@ -73,18 +73,17 @@ func JoinDistil(joinLeft *JoinSpec, joinRight *JoinSpec, leftCols []string, righ
 
 	varsLeftMapUpdated := apiModel.MapVariables(joinLeft.UpdatedVariables, func(variable *model.Variable) string { return variable.Key })
 	varsRightMapUpdated := apiModel.MapVariables(joinRight.UpdatedVariables, func(variable *model.Variable) string { return variable.Key })
-	leftVars := make([]*model.Variable, len(leftCols))
-	rightVars := make([]*model.Variable, len(rightCols))
-	for i, v := range leftCols {
-		leftVars[i] = varsLeftMapUpdated[v]
-	}
-	for i, v := range rightCols {
-		rightVars[i] = varsRightMapUpdated[v]
+	joins := make([]*description.Join, len(leftCols))
+	for i := range leftCols {
+		joins[i] = &description.Join{
+			Left:     varsLeftMapUpdated[leftCols[i]],
+			Right:    varsRightMapUpdated[rightCols[i]],
+			Accuracy: accuracies[i],
+		}
 	}
 
 	rightExcludes := generateRightExcludes(joinLeft.UpdatedVariables, joinRight.UpdatedVariables)
-	pipelineDesc, err := description.CreateJoinPipeline("Joiner", "Join existing data", leftVars, rightVars,
-		[]*model.Variable{}, rightExcludes, accuracy)
+	pipelineDesc, err := description.CreateJoinPipeline("Joiner", "Join existing data", joins, []*model.Variable{}, rightExcludes, description.JoinTypeLeft)
 	if err != nil {
 		return "", nil, err
 	}
