@@ -5,9 +5,9 @@
         <div
           class="toggle"
           :class="{ active: isSelectionMode }"
-          @click="selectionToolToggle"
           title="Select area"
           aria-label="Select area"
+          @click="selectionToolToggle"
         >
           <icon-base
             width="100%"
@@ -47,7 +47,7 @@
           :class="{ active: isHidingBaseline }"
           @click="baselineToggle"
         >
-          <i class="fa fa-eye-slash icon" aria-hidden="true"></i>
+          <i class="fa fa-eye-slash icon" aria-hidden="true" />
         </div>
       </li>
     </ul>
@@ -71,8 +71,8 @@ export default Vue.extend({
     isSelectionMode: { type: Boolean as () => boolean, default: false },
     isHidingBaseline: { type: Boolean as () => boolean, default: false },
     dataHasConfidence: { type: Boolean as () => boolean, default: false },
-    colorGradient: { type: String as () => string },
-    confidenceClass: { type: String as () => string },
+    colorGradient: { type: String as () => string, default: "" },
+    confidenceClass: { type: String as () => string, default: "" },
   },
   methods: {
     baselineToggle() {
