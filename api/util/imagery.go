@@ -512,6 +512,10 @@ func SplitMultiBandImage(dataset gdal.Dataset, outputFolder string, bandMapping 
 // CreatePolygonFromCoordinates creates a string that captures the polygon defined
 // by the coordinates.
 func CreatePolygonFromCoordinates(coordinates []float64) string {
+	if len(coordinates) == 0 {
+		return "POLYGON EMPTY"
+	}
+
 	// polygon must be closed, so if it isnt, then add the first point at the end to close it
 	if coordinates[0] != coordinates[len(coordinates)-2] || coordinates[1] != coordinates[len(coordinates)-1] {
 		coordinates = append(coordinates, coordinates[0], coordinates[1])

@@ -168,6 +168,17 @@ func SetGroups(datasetID string, rawGroupings []map[string]interface{}, data api
 		if err != nil {
 			return err
 		}
+
+		// Make sure we set the role of the multiband image's ID column to grouping as filters need this to run DISTINCT ON
+		idColVariable, err := meta.FetchVariable(datasetID, rsg.GetIDCol())
+		if err != nil {
+			return err
+		}
+		idColVariable.DistilRole = model.VarDistilRoleGrouping
+		err = meta.UpdateVariable(datasetID, rsg.GetIDCol(), idColVariable)
+		if err != nil {
+			return err
+		}
 	}
 
 	geoBoundsGroupings := getGeoBoundsGrouping(rawGroupings)
@@ -183,10 +194,20 @@ func SetGroups(datasetID string, rawGroupings []map[string]interface{}, data api
 			return err
 		}
 
+		// confirm that the coordinates col data does exist - it could be that it was removed during the join
+		// process
+		exists, err := data.DoesVariableExist(datasetID, ds.StorageName, grouping.CoordinatesCol)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			continue
+		}
+
 		// confirm the existence of the underlying polygon field, creating it if necessary
 		// (less than ideal because it hides a pretty big side effect)
 		// (other option would be to error here and let calling code worry about it)
-		exists, err := data.DoesVariableExist(datasetID, ds.StorageName, grouping.PolygonCol)
+		exists, err = data.DoesVariableExist(datasetID, ds.StorageName, grouping.PolygonCol)
 		if err != nil {
 			return err
 		}

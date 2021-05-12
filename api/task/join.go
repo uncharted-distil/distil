@@ -82,7 +82,9 @@ func JoinDistil(joinLeft *JoinSpec, joinRight *JoinSpec, leftCols []string, righ
 		rightVars[i] = varsRightMapUpdated[v]
 	}
 
-	pipelineDesc, err := description.CreateJoinPipeline("Joiner", "Join existing data", leftVars, rightVars, accuracy)
+	rightExcludes := generateRightExcludes(joinLeft.UpdatedVariables, joinRight.UpdatedVariables)
+	pipelineDesc, err := description.CreateJoinPipeline("Joiner", "Join existing data", leftVars, rightVars,
+		[]*model.Variable{}, rightExcludes, accuracy)
 	if err != nil {
 		return "", nil, err
 	}
@@ -279,4 +281,31 @@ func joinMetadataVariables(headerNames []string, leftMetadata *model.Metadata, r
 	}
 
 	return mergedVariables, mergedResources
+}
+
+func generateRightExcludes(leftVariables []*model.Variable, rightVariables []*model.Variable) []*model.Variable {
+	// There is only allowed to be one set of geo coords after a join.  This is a constraint
+	// driven by the UI, as having multiple bounds columns isn't properly handled by our
+	// mapping approach.
+	toRemove := map[string]bool{}
+	for _, v := range leftVariables {
+		if v.IsGrouping() && model.IsGeoBounds(v.Type) {
+			for _, v := range rightVariables {
+				if v.IsGrouping() && model.IsGeoBounds(v.Type) {
+					gb := v.Grouping.(*model.GeoBoundsGrouping)
+					toRemove[gb.PolygonCol] = true
+					toRemove[gb.CoordinatesCol] = true
+					break
+				}
+			}
+			break
+		}
+	}
+	rightExcludes := []*model.Variable{}
+	for _, v := range rightVariables {
+		if toRemove[v.Key] {
+			rightExcludes = append(rightExcludes, v)
+		}
+	}
+	return rightExcludes
 }
