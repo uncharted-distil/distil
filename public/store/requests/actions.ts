@@ -166,6 +166,7 @@ async function updateCurrentSolutionResults(
     varMode: varModes.has(req.target)
       ? varModes.get(req.target)
       : SummaryMode.Default,
+    handleMutation: true,
   });
   resultsActions.fetchTrainingSummaries(store, {
     dataset: req.dataset,
@@ -201,6 +202,7 @@ async function updateCurrentSolutionResults(
       varMode: varModes.has(req.target)
         ? varModes.get(req.target)
         : SummaryMode.Default,
+      handleMutation: true,
     });
   } else if (isClassification) {
     resultsActions.fetchCorrectnessSummary(store, {
@@ -211,6 +213,7 @@ async function updateCurrentSolutionResults(
       varMode: varModes.has(req.target)
         ? varModes.get(req.target)
         : SummaryMode.Default,
+      handleMutation: true,
     });
     resultsActions.fetchConfidenceSummary(store, {
       dataset: req.dataset,
@@ -220,6 +223,7 @@ async function updateCurrentSolutionResults(
       varMode: varModes.has(req.target)
         ? varModes.get(req.target)
         : SummaryMode.Default,
+      handleMutation: true,
     });
     resultsActions.fetchRankingSummary(store, {
       dataset: req.dataset,
@@ -229,6 +233,7 @@ async function updateCurrentSolutionResults(
       varMode: varModes.has(req.target)
         ? varModes.get(req.target)
         : SummaryMode.Default,
+      handleMutation: true,
     });
   }
 }
@@ -289,6 +294,7 @@ function updateSolutionResults(
     varMode: varModes.has(req.target)
       ? varModes.get(req.target)
       : SummaryMode.Default,
+    handleMutation: true,
   });
 
   if (isRegression || isForecasting) {
@@ -306,6 +312,7 @@ function updateSolutionResults(
       varMode: varModes.has(req.target)
         ? varModes.get(req.target)
         : SummaryMode.Default,
+      handleMutation: true,
     });
   } else if (isClassification) {
     resultsActions.fetchCorrectnessSummary(store, {
@@ -316,6 +323,7 @@ function updateSolutionResults(
       varMode: varModes.has(req.target)
         ? varModes.get(req.target)
         : SummaryMode.Default,
+      handleMutation: true,
     });
     resultsActions.fetchConfidenceSummary(store, {
       dataset: req.dataset,
@@ -325,6 +333,7 @@ function updateSolutionResults(
       varMode: varModes.has(req.target)
         ? varModes.get(req.target)
         : SummaryMode.Default,
+      handleMutation: true,
     });
   }
 }

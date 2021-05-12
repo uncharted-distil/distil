@@ -344,6 +344,7 @@ export default Vue.extend({
           include: true,
           dataMode: DataMode.Cluster,
           mode: $enum(SummaryMode).asValueOrDefault(v, SummaryMode.Default),
+          handleMutation: true,
         });
       }
 
