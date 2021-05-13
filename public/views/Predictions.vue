@@ -171,6 +171,9 @@ export default Vue.extend({
     rowsPerPage(): number {
       return NUM_PER_PAGE;
     },
+    openPredictions(): string[] {
+      return routeGetters.getRouteOpenSolutions(this.$store);
+    },
   },
 
   async beforeMount() {
@@ -185,6 +188,9 @@ export default Vue.extend({
       const route = routeGetters.getRoute(this.$store);
       const entry = overlayRouteEntry(route, { hasGeoData: this.geoVarExists });
       this.$router.push(entry).catch((err) => console.warn(err));
+    },
+    openPredictions() {
+      viewActions.updatePrediction(this.$store);
     },
     produceRequestId() {
       viewActions.updatePrediction(this.$store);

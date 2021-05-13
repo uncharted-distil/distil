@@ -958,10 +958,6 @@ export const actions = {
   },
 
   async fetchPredictionsData(context: ViewContext) {
-    // clear previous state
-    predictionMutations.clearTrainingSummaries(store);
-    predictionMutations.setIncludedPredictionTableData(store, null);
-
     const produceRequestId = context.getters.getRouteProduceRequestId as string;
     const fittedSolutionId = context.getters.getRouteFittedSolutionId;
     // fetch the predictions
@@ -979,7 +975,7 @@ export const actions = {
     await fetchVariables(context, {
       dataset: inferenceDataset,
     });
-    return actions.updatePredictions(context);
+    return actions.updatePredictions(context, { isInit: true });
   },
 
   updatePredictionTrainingSummaries(context: ViewContext) {
@@ -1031,10 +1027,7 @@ export const actions = {
       isBaseline: true,
     });
   },
-  updatePredictions(context: ViewContext) {
-    // clear previous state
-    predictionMutations.setIncludedPredictionTableData(store, null);
-
+  updatePredictions(context: ViewContext, args?: { isInit: boolean }) {
     // fetch new state
     const produceRequestId = context.getters.getRouteProduceRequestId as string;
     const fittedSolutionId = context.getters.getRouteFittedSolutionId as string;
@@ -1047,6 +1040,16 @@ export const actions = {
     const size = routeGetters.getRouteDataSize(store);
     const dataMode = context.getters.getDataMode;
     const varMode = SummaryMode.Default;
+    const openPredictions = new Map(
+      routeGetters.getRouteOpenSolutions(store).map((s) => {
+        return [s, true];
+      })
+    );
+    const relPreds = requestGetters
+      .getRelevantPredictions(store)
+      .filter((p) => {
+        return openPredictions.has(p.requestId) || (args?.isInit ?? false);
+      });
     // table data
     predictionActions.fetchPredictionTableData(store, {
       dataset: inferenceDataset,
@@ -1061,8 +1064,10 @@ export const actions = {
     predictionActions.fetchPredictedSummaries(store, {
       highlights: highlights,
       fittedSolutionId: fittedSolutionId,
+      predictions: relPreds,
     });
-    requestGetters.getRelevantPredictions(store).forEach((p) => {
+
+    relPreds.forEach((p) => {
       predictionActions.fetchConfidenceSummary(store, {
         dataset: inferenceDataset,
         highlights: highlights,

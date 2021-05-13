@@ -113,7 +113,6 @@ export function getSolutionById(
 
 export function isTopSolutionByTime(
   solutions: Solution[],
-  requestId: string,
   solutionId: string,
   n: number
 ): boolean {
