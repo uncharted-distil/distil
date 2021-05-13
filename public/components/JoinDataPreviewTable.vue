@@ -68,18 +68,10 @@ import { Dictionary } from "../util/dict";
 import {
   TableColumn,
   TableRow,
-  D3M_INDEX_FIELD,
-  Grouping,
   Variable,
   TimeseriesGrouping,
 } from "../store/dataset/index";
 import { getters as datasetGetters } from "../store/dataset/module";
-import { getters as routeGetters } from "../store/route/module";
-import {
-  IMAGE_TYPE,
-  TIMESERIES_TYPE,
-  MULTIBAND_IMAGE_TYPE,
-} from "../util/types";
 import { getTimeseriesGroupingsFromFields, getImageFields } from "../util/data";
 
 export default Vue.extend({

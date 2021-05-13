@@ -379,9 +379,6 @@ export const actions = {
     });
   },
   updateJoinDatasetsData(context: ViewContext) {
-    // clear any previous state
-    datasetMutations.clearJoinDatasetsTableData(store);
-
     const datasetIDs = context.getters.getRouteJoinDatasets;
     const highlights = context.getters.getDecodedJoinDatasetsHighlight;
     const filterParams = context.getters.getDecodedJoinDatasetsFilterParams;
@@ -504,10 +501,6 @@ export const actions = {
   },
 
   async fetchSelectTrainingData(context: ViewContext, clearSummaries: boolean) {
-    // clear any previous state
-    datasetMutations.setIncludedTableData(store, null);
-    datasetMutations.setExcludedTableData(store, null);
-
     if (clearSummaries) {
       clearVariableSummaries(context);
     }
@@ -570,7 +563,6 @@ export const actions = {
   },
 
   updateLabelData(context: ViewContext) {
-    // clear any previous state
     const dataset = context.getters.getRouteDataset;
     const highlights = context.getters.getDecodedHighlights as Highlight[];
     const filterParams = context.getters
@@ -842,10 +834,6 @@ export const actions = {
     });
   },
   async updateResultBaseline(context: ViewContext) {
-    resultMutations.setFullIncludedResultTableData(
-      store,
-      createEmptyTableData()
-    );
     // fetch new state
     const dataset = routeGetters.getRouteDataset(store);
     const solutionId = routeGetters.getRouteSolutionId(store);
@@ -862,14 +850,19 @@ export const actions = {
     });
   },
   async updateResultsSolution(context: ViewContext) {
-    // clear previous state
-    resultMutations.clearResidualsExtrema(store);
-    resultMutations.setIncludedResultTableData(store, createEmptyTableData());
-    resultMutations.setExcludedResultTableData(store, createEmptyTableData());
     // fetch new state
     const dataset = routeGetters.getRouteDataset(store);
     const target = routeGetters.getRouteTargetVariable(store);
-    const requestIds = requestGetters.getRelevantSolutionRequestIds(store);
+    const openSolutions = new Map(
+      routeGetters.getRouteOpenSolutions(store).map((s) => {
+        return [s, true];
+      })
+    );
+    const requestIds = requestGetters
+      .getRelevantSolutionRequestIds(store)
+      .filter((r) => {
+        return openSolutions.has(r);
+      });
     const solutionId = routeGetters.getRouteSolutionId(store);
     const highlights = routeGetters.getDecodedHighlights(store);
     const dataMode = context.getters.getDataMode;

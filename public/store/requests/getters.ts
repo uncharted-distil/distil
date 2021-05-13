@@ -26,7 +26,6 @@ import {
   Predictions,
   PredictStatus,
 } from "./index";
-import { getVarType } from "../../util/types";
 
 export function sortRequestsByTimestamp(
   a: SolutionRequest,
