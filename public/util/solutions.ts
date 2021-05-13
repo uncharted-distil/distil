@@ -18,18 +18,18 @@
 import _, { Dictionary } from "lodash";
 import moment from "moment";
 
-import { sortSolutionsByScore } from "../store/requests/getters";
+import { sortRequestsByTimestamp } from "../store/requests/getters";
 import {
   getters as requestGetters,
   actions as requestActions,
 } from "../store/requests/module";
 import { getters as routeGetters } from "../store/route/module";
 import { actions as dataActions } from "../store/dataset/module";
-import { createRouteEntry } from "../util/routes";
+import { createRouteEntry, overlayRouteEntry } from "../util/routes";
 import { Solution, SolutionStatus } from "../store/requests/index";
 import { APPLY_MODEL_ROUTE } from "../store/route/index";
 import store from "../store/store";
-import VueRouter from "vue-router";
+import VueRouter, { Route } from "vue-router";
 
 export const SOLUTION_LABELS: Dictionary<string> = {
   [SolutionStatus.SOLUTION_PENDING]: "PENDING",
@@ -111,7 +111,7 @@ export function getSolutionById(
   return solutions.find((result) => result.solutionId === solutionId);
 }
 
-export function isTopSolutionByScore(
+export function isTopSolutionByTime(
   solutions: Solution[],
   requestId: string,
   solutionId: string,
@@ -120,14 +120,28 @@ export function isTopSolutionByScore(
   if (!solutionId) {
     return null;
   }
-  const topN = solutions
-    .filter((req) => req.requestId === requestId)
-    .slice()
-    .sort(sortSolutionsByScore)
-    .slice(0, n);
+  const topN = [...solutions].sort(sortRequestsByTimestamp).slice(0, n);
   return !!topN.find((result) => result.solutionId === solutionId);
 }
-
+export function reviseOpenSolutions(
+  requestId: string,
+  route: Route,
+  router: VueRouter
+) {
+  const openSolutions = routeGetters.getRouteOpenSolutions(store);
+  const idx = openSolutions.findIndex((s) => {
+    return s === requestId;
+  });
+  if (idx != -1) {
+    openSolutions.splice(idx, 1);
+  } else {
+    openSolutions.push(requestId);
+  }
+  const entry = overlayRouteEntry(route, {
+    openSolutions: JSON.stringify(openSolutions),
+  });
+  router.push(entry).catch((err) => console.warn(err));
+}
 export async function openModelSolution(
   router: VueRouter,
   args: {

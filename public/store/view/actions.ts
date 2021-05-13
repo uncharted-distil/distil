@@ -850,14 +850,20 @@ export const actions = {
     });
   },
   async updateResultsSolution(context: ViewContext) {
-    // clear previous state
     // fetch new state
     const dataset = routeGetters.getRouteDataset(store);
     const target = routeGetters.getRouteTargetVariable(store);
+    const openSolutions = new Map(
+      routeGetters.getRouteOpenSolutions(store).map((s) => {
+        return [s, true];
+      })
+    );
     // filters requests out that errored
     const requestIds = filterBadRequests(
       requestGetters.getSolutions(store),
-      requestGetters.getRelevantSolutionRequestIds(store)
+      requestGetters.getRelevantSolutionRequestIds(store).filter((r) => {
+        return openSolutions.has(r);
+      })
     );
     const solutionId = routeGetters.getRouteSolutionId(store);
     const highlights = routeGetters.getDecodedHighlights(store);

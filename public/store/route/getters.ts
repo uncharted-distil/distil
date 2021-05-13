@@ -365,6 +365,12 @@ export const getters = {
     return state.query.solutionId ? (state.query.solutionId as string) : null;
   },
 
+  getRouteOpenSolutions(state: Route): string[] {
+    return state.query.openSolutions
+      ? (JSON.parse(state.query.openSolutions as string) as string[])
+      : [];
+  },
+
   getRouteResultId(state: Route): string {
     return state.query.resultId ? (state.query.resultId as string) : null;
   },

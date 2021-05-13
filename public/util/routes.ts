@@ -62,6 +62,7 @@ export interface RouteArgs {
   varRanked?: string;
   produceRequestId?: string;
   fittedSolutionId?: string;
+  openSolutions?: string;
   previousTarget?: string;
   singleSolution?: string;
   colorScale?: ColorScaleNames;
