@@ -28,7 +28,21 @@ export function getPredictionsById(
   const id = predictionsId || "";
   return predictions.find((r) => r.requestId === id);
 }
-
+export function isTopPredictionByTime(
+  solutions: Predictions[],
+  requestId: string,
+  n: number
+): boolean {
+  if (!requestId) {
+    return null;
+  }
+  const topN = [...solutions]
+    .sort((a, b) => {
+      return moment(b.timestamp).unix() - moment(a.timestamp).unix();
+    })
+    .slice(0, n);
+  return !!topN.find((result) => result.requestId === requestId);
+}
 // Finds the index to assign to a given prediction, based on timestamps of prediction execution.
 export function getPredictionsIndex(predictionId: string): number {
   // Get the solutions sorted by score.

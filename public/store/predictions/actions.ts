@@ -50,8 +50,8 @@ import {
   getters as predictionGetters,
   mutations as predictionMutations,
 } from "../predictions/module";
+import { Predictions } from "../requests/index";
 import { getPredictionsById } from "../../util/predictions";
-import { filter } from "vue/types/umd";
 
 export type PredictionContext = ActionContext<PredictionState, DistilState>;
 
@@ -371,13 +371,11 @@ export const actions = {
     args: {
       highlights: Highlight[];
       fittedSolutionId: string;
+      predictions: Predictions[];
     }
   ) {
-    const predictions = context.rootState.requestsModule.predictions.filter(
-      (p) => p.fittedSolutionId === args.fittedSolutionId
-    );
     return Promise.all(
-      predictions.map((p) =>
+      args.predictions.map((p) =>
         actions.fetchPredictionSummary(context, {
           highlights: args.highlights,
           varMode: SummaryMode.Default,

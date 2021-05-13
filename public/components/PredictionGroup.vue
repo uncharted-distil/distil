@@ -1,5 +1,5 @@
 <template>
-  <div class="prediction-group">
+  <div v-if="openSolution.has(prediction.requestId)" class="prediction-group">
     <component
       enable-highlighting
       :summary="predictedSummary"
@@ -51,14 +51,18 @@
 import Vue from "vue";
 import FacetNumerical from "../components/facets/FacetNumerical.vue";
 import FacetCategorical from "../components/facets/FacetCategorical.vue";
-import { getIDFromKey } from "../util/summaries";
 import {
   VariableSummary,
   RowSelection,
   Highlight,
 } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
+import { getters as requestGetters } from "../store/requests/module";
 import { getFacetByType } from "../util/facets";
+
+import { Predictions } from "../store/requests";
+import { isTopPredictionByTime } from "../util/predictions";
+import { reviseOpenSolutions } from "../util/solutions";
 
 export default Vue.extend({
   name: "PredictionGroup",
@@ -71,6 +75,7 @@ export default Vue.extend({
     predictedSummary: Object as () => VariableSummary,
     rankingSummary: Object as () => VariableSummary,
     highlights: Array as () => Highlight[],
+    prediction: Object as () => Predictions,
   },
   computed: {
     hasGeoData(): boolean {
@@ -94,9 +99,39 @@ export default Vue.extend({
     isActivePrediction(): boolean {
       return (
         routeGetters.getRouteProduceRequestId(this.$store) ===
-        getIDFromKey(this.predictedSummary.key)
+        this.prediction.requestId
       );
     },
+    openSolution(): Map<string, boolean> {
+      return new Map(
+        routeGetters.getRouteOpenSolutions(this.$store).map((s) => {
+          return [s, true];
+        })
+      );
+    },
+    isTopN(): boolean {
+      return isTopPredictionByTime(
+        requestGetters.getRelevantPredictions(this.$store),
+        this.prediction.requestId,
+        3
+      );
+    },
+    isOpenInRoute(): boolean {
+      return this.openPredictions.some((s) => {
+        s === this.prediction.requestId;
+      });
+    },
+    openPredictions(): string[] {
+      return routeGetters.getRouteOpenSolutions(this.$store);
+    },
+  },
+  mounted() {
+    if (
+      (this.isActivePrediction && !this.isOpenInRoute) ||
+      (this.isTopN && !this.isOpenInRoute && this.openPredictions.length < 3)
+    ) {
+      reviseOpenSolutions(this.prediction.requestId, this.$route, this.$router);
+    }
   },
   methods: {
     getFacetByType(type: string) {

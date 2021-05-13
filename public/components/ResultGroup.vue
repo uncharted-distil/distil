@@ -427,7 +427,6 @@ export default Vue.extend({
     isTopN(): boolean {
       return isTopSolutionByTime(
         store.state.requestsModule.solutions,
-        this.requestId,
         this.solutionId,
         3
       );

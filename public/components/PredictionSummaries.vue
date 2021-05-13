@@ -26,6 +26,18 @@
         >
           <header class="prediction-group-title" :title="meta.summary.dataset">
             {{ meta.summary.dataset }}
+            <div
+              class="pull-right pl-2 solution-button"
+              @click.stop="onCollapseClick(meta.prediction.requestId)"
+            >
+              <i
+                class="fa"
+                :class="{
+                  'fa-angle-down': !openSolution.has(meta.prediction.requestId),
+                  'fa-angle-up': openSolution.has(meta.prediction.requestId),
+                }"
+              />
+            </div>
           </header>
           <div class="prediction-group-body">
             <!-- we need the new facets in here-->
@@ -34,6 +46,7 @@
               :predictedSummary="meta.summary"
               :rankingSummary="meta.rank"
               :highlights="highlights"
+              :prediction="meta.prediction"
               @categorical-click="onCategoricalClick"
               @numerical-click="onNumericalClick"
               @range-change="onRangeChange"
@@ -121,6 +134,7 @@ import {
   clearHighlight,
   UPDATE_FOR_KEY,
 } from "../util/highlights";
+import { reviseOpenSolutions } from "../util/solutions";
 
 export default Vue.extend({
   name: "prediction-summaries",
@@ -161,6 +175,8 @@ export default Vue.extend({
           rank: getPredictionRankSummary(p.resultId),
           confidence: getPredictionConfidenceSummary(p.resultId),
           summary: getPredictionResultSummary(p.requestId),
+          requestId: p.requestId,
+          prediction: p,
         };
         if (!meta.rank && !meta.confidence && !meta.summary) {
           return;
@@ -184,11 +200,20 @@ export default Vue.extend({
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
     },
+    openSolution(): Map<string, boolean> {
+      return new Map(
+        routeGetters.getRouteOpenSolutions(this.$store).map((s) => {
+          return [s, true];
+        })
+      );
+    },
   },
 
   methods: {
     getFacetByType: getFacetByType,
-
+    onCollapseClick(requestId: string) {
+      reviseOpenSolutions(requestId, this.$route, this.$router);
+    },
     onClick(key: string) {
       // Note that the key is of the form <requestId>:predicted and so needs to be parsed.
       const requestId = getIDFromKey(key);
