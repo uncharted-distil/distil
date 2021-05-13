@@ -178,12 +178,16 @@ func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec,
 	if params["joinPairs"] == nil {
 		return "", nil, errors.Errorf("missing parameter 'joinPairs'")
 	}
+
+	accuracy := params["accuracy"].(float64)
+
 	joinPairs, ok := json.Array(params, "joinPairs")
 	if !ok {
 		return "", nil, errors.Errorf("joinPairs not a list of join pairs")
 	}
 	leftCols := make([]string, len(joinPairs))
 	rightCols := make([]string, len(joinPairs))
+	accuracies := make([]float64, len(joinPairs))
 	for i, p := range joinPairs {
 		colName, ok := p["first"].(string)
 		if !ok {
@@ -196,10 +200,10 @@ func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec,
 			return "", nil, errors.Errorf("join pair 'second' value is not a string")
 		}
 		rightCols[i] = colName
+
+		accuracies[i] = accuracy
 	}
 
-	tmp := params["accuracy"].(float64)
-	accuracy := float32(tmp)
 	// need to read variables from disk for the variable list
 	metaLeft, err := getDiskMetadata(joinLeft.DatasetID, metaStorage)
 	if err != nil {
@@ -224,7 +228,7 @@ func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec,
 	joinLeft.ExistingMetadata = metaLeft
 	joinRight.ExistingMetadata = metaRight
 
-	path, data, err := task.JoinDistil(joinLeft, joinRight, leftCols, rightCols, accuracy)
+	path, data, err := task.JoinDistil(joinLeft, joinRight, leftCols, rightCols, accuracies)
 	if err != nil {
 		return "", nil, err
 	}
