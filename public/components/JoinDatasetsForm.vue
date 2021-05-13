@@ -63,7 +63,7 @@
         />
       </main>
     </div>
-    <div class="d-flex justify-content-between bottom-margin">
+    <div class="d-flex justify-content-between bottom-margin form-height">
       <div class="d-flex">
         <b-button variant="primary" @click="swapDatasets" class="join-button">
           Swap Datasets
@@ -93,7 +93,7 @@
           :animated="true"
         />
       </div>
-      <div>
+      <div class="d-flex">
         <b-button
           variant="primary"
           class="h-100"
@@ -356,9 +356,12 @@ export default Vue.extend({
   max-width: 80% !important;
   max-height: 90%;
 }
-
+.form-height {
+  max-height: 40px;
+}
 .join-progress {
   width: 40%;
+  margin: 6px 10px;
 }
 .join-accuracy-label {
   text-align: center;

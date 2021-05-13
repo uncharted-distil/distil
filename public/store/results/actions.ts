@@ -26,6 +26,7 @@ import {
   fetchSolutionResultSummary,
   fetchSummaryExemplars,
   minimumRouteKey,
+  updateSummaries,
   validateArgs,
   VARIABLE_SUMMARY_BASE,
   VARIABLE_SUMMARY_CONFIDENCE,
@@ -41,7 +42,14 @@ import {
   getSolutionById,
   getSolutionsBySolutionRequestIds,
 } from "../../util/solutions";
-import { DataMode, Highlight, SummaryMode, Variable } from "../dataset/index";
+import {
+  DataMode,
+  Highlight,
+  SummaryMode,
+  Variable,
+  VariableSummary,
+  VariableSummaryResp,
+} from "../dataset/index";
 import { getters as dataGetters } from "../dataset/module";
 import { TimeSeriesForecastUpdate } from "../dataset/mutations";
 import { getters as resultGetters } from "../results/module";
@@ -53,7 +61,7 @@ export type ResultsContext = ActionContext<ResultsState, DistilState>;
 
 export const actions = {
   // fetches variable summary data for the given dataset and variables
-  fetchTrainingSummaries(
+  async fetchTrainingSummaries(
     context: ResultsContext,
     args: {
       dataset: string;
@@ -101,19 +109,8 @@ export const actions = {
       const existingVariableSummary =
         summariesByVariable?.[variable.key]?.[routeKey];
 
-      if (existingVariableSummary) {
-        promises.push(existingVariableSummary);
-      } else {
-        if (summariesByVariable[variable.key]) {
-          // if we have any saved state for that variable
-          // use that as placeholder due to vue lifecycle
-          const tempVariableSummaryKey = Object.keys(
-            summariesByVariable[variable.key]
-          )[0];
-          promises.push(
-            summariesByVariable[variable.key][tempVariableSummaryKey]
-          );
-        } else {
+      if (!existingVariableSummary) {
+        if (!summariesByVariable[variable.key]) {
           // add a loading placeholder if nothing exists for that variable
           createPendingSummary(
             variable.key,
@@ -134,11 +131,16 @@ export const actions = {
             varMode: args.varModes.has(variable.key)
               ? args.varModes.get(variable.key)
               : SummaryMode.Default,
+            handleMutation: false,
           })
         );
       }
     });
-    return Promise.all(promises);
+    const values = await Promise.all(promises);
+    values.map((v) => {
+      if (!v) return;
+      mutations.updateTrainingSummary(context, v.summary);
+    });
   },
 
   async fetchTrainingSummary(
@@ -150,8 +152,9 @@ export const actions = {
       highlights: Highlight[];
       dataMode: DataMode;
       varMode: SummaryMode;
+      handleMutation: boolean;
     }
-  ): Promise<void> {
+  ): Promise<void | VariableSummaryResp<ResultsContext>> {
     if (!args.dataset) {
       console.warn("`dataset` argument is missing");
       return null;
@@ -179,20 +182,35 @@ export const actions = {
         `/distil/training-summary/${args.dataset}/${args.variable.key}/${args.resultID}/${args.varMode}`,
         filterParams
       );
-      const summary = response.data.summary;
+      const summary = response.data.summary as VariableSummary;
       await fetchSummaryExemplars(args.dataset, args.variable.key, summary);
-      mutations.updateTrainingSummary(context, summary);
+      if (args.handleMutation) {
+        mutations.updateTrainingSummary(context, summary);
+        return;
+      }
+      return { context, summary };
     } catch (error) {
       console.error(error);
-      mutations.updateTrainingSummary(
+      if (args.handleMutation) {
+        mutations.updateTrainingSummary(
+          context,
+          createErrorSummary(
+            args.variable.key,
+            args.variable.colDisplayName,
+            args.dataset,
+            error
+          )
+        );
+      }
+      return {
         context,
-        createErrorSummary(
+        summary: createErrorSummary(
           args.variable.key,
           args.variable.colDisplayName,
           args.dataset,
           error
-        )
-      );
+        ),
+      };
     }
   },
 
@@ -538,8 +556,9 @@ export const actions = {
       highlights: Highlight[];
       dataMode: DataMode;
       varMode: SummaryMode;
+      handleMutation: boolean;
     }
-  ) {
+  ): Promise<void | VariableSummaryResp<ResultsContext>> {
     if (!args.dataset) {
       console.warn("`dataset` argument is missing");
       return null;
@@ -578,7 +597,7 @@ export const actions = {
     const endpoint = `/distil/solution-result-summary`;
     const key = solution.predictedKey;
     const label = "Predicted";
-    return fetchSolutionResultSummary(
+    const resp = fetchSolutionResultSummary(
       context,
       endpoint,
       solution,
@@ -588,12 +607,16 @@ export const actions = {
       resultGetters.getPredictedSummaries(context),
       mutations.updatePredictedSummaries,
       filterParams,
-      args.varMode
+      args.varMode,
+      args.handleMutation
     );
+    if (!args.handleMutation) {
+      return resp;
+    }
   },
 
   // fetches result summaries for a given solution create request
-  fetchPredictedSummaries(
+  async fetchPredictedSummaries(
     context: ResultsContext,
     args: {
       dataset: string;
@@ -612,7 +635,7 @@ export const actions = {
       context.rootState.requestsModule.solutions,
       args.requestIds
     );
-    return Promise.all(
+    const values = await Promise.all(
       solutions.map((solution) => {
         return actions.fetchPredictedSummary(context, {
           dataset: args.dataset,
@@ -623,9 +646,15 @@ export const actions = {
           varMode: args.varModes.has(args.target)
             ? args.varModes.get(args.target)
             : SummaryMode.Default,
+          handleMutation: false,
         });
       })
     );
+    values.map((v) => {
+      if (!v) return;
+      const val = v as VariableSummaryResp<ResultsContext>;
+      mutations.updatePredictedSummaries(val.context, val.summary);
+    });
   },
 
   // fetches result summary for a given solution id.
@@ -638,6 +667,7 @@ export const actions = {
       highlights: Highlight[];
       dataMode: DataMode;
       varMode: SummaryMode;
+      handleMutation: boolean;
     }
   ) {
     if (!args.dataset) {
@@ -688,12 +718,13 @@ export const actions = {
       resultGetters.getResidualsSummaries(context),
       mutations.updateResidualsSummaries,
       filterParams,
-      args.varMode
+      args.varMode,
+      args.handleMutation
     );
   },
 
   // fetches result summaries for a given solution create request
-  fetchResidualsSummaries(
+  async fetchResidualsSummaries(
     context: ResultsContext,
     args: {
       dataset: string;
@@ -712,7 +743,7 @@ export const actions = {
       context.rootState.requestsModule.solutions,
       args.requestIds
     );
-    return Promise.all(
+    const values = await Promise.all(
       solutions.map((solution) => {
         return actions.fetchResidualsSummary(context, {
           dataset: args.dataset,
@@ -723,9 +754,15 @@ export const actions = {
           varMode: args.varModes.has(args.target)
             ? args.varModes.get(args.target)
             : SummaryMode.Default,
+          handleMutation: false,
         });
       })
     );
+    values.map((v) => {
+      if (!v) return;
+      const val = v as VariableSummaryResp<ResultsContext>;
+      mutations.updateResidualsSummaries(val.context, val.summary);
+    });
   },
 
   // fetches result summary for a given pipeline id.
@@ -737,6 +774,7 @@ export const actions = {
       highlights: Highlight[];
       dataMode: DataMode;
       varMode: SummaryMode;
+      handleMutation: boolean;
     }
   ) {
     if (!validateArgs(args, ["dataset", "solutionId", "varMode"])) {
@@ -764,7 +802,7 @@ export const actions = {
     const endPoint = `/distil/correctness-summary/${args.dataset}`;
     const key = solution.errorKey;
     const label = "Error";
-    return fetchSolutionResultSummary(
+    const resp = fetchSolutionResultSummary(
       context,
       endPoint,
       solution,
@@ -774,12 +812,16 @@ export const actions = {
       resultGetters.getCorrectnessSummaries(context),
       mutations.updateCorrectnessSummaries,
       filterParams,
-      args.varMode
+      args.varMode,
+      args.handleMutation
     );
+    if (!args.handleMutation) {
+      return resp;
+    }
   },
 
   // fetches result summaries for a given pipeline create request
-  fetchCorrectnessSummaries(
+  async fetchCorrectnessSummaries(
     context: ResultsContext,
     args: {
       dataset: string;
@@ -798,7 +840,7 @@ export const actions = {
       context.rootState.requestsModule.solutions,
       args.requestIds
     );
-    return Promise.all(
+    const values = await Promise.all(
       solutions.map((solution) => {
         return actions.fetchCorrectnessSummary(context, {
           dataset: args.dataset,
@@ -808,9 +850,14 @@ export const actions = {
           varMode: args.varModes.has(args.target)
             ? args.varModes.get(args.target)
             : SummaryMode.Default,
+          handleMutation: false,
         });
       })
     );
+    values.map((v) => {
+      const val = v as VariableSummaryResp<ResultsContext>;
+      mutations.updateCorrectnessSummaries(val.context, val.summary);
+    });
   },
   // fetches result summary for a given solution id.
   fetchRankingSummary(
@@ -821,6 +868,7 @@ export const actions = {
       highlights: Highlight[];
       dataMode: DataMode;
       varMode: SummaryMode;
+      handleMutation: boolean;
     }
   ) {
     if (!args.dataset) {
@@ -857,7 +905,7 @@ export const actions = {
     const endpoint = `/distil/confidence-summary/${args.dataset}`;
     const key = `${solution.solutionId}:rank`;
     const label = "Ranking";
-    return fetchSolutionResultSummary(
+    const resp = fetchSolutionResultSummary(
       context,
       endpoint,
       solution,
@@ -867,11 +915,15 @@ export const actions = {
       resultGetters.getRankingSummaries(context),
       mutations.updateRankingSummaries,
       filterParams,
-      args.varMode
+      args.varMode,
+      args.handleMutation
     );
+    if (!args.handleMutation) {
+      return resp;
+    }
   },
   // fetches result summaries for a given solution create request
-  fetchRankingSummaries(
+  async fetchRankingSummaries(
     context: ResultsContext,
     args: {
       dataset: string;
@@ -890,7 +942,7 @@ export const actions = {
       context.rootState.requestsModule.solutions,
       args.requestIds
     );
-    return Promise.all(
+    const values = await Promise.all(
       solutions.map((solution) => {
         return actions.fetchRankingSummary(context, {
           dataset: args.dataset,
@@ -900,12 +952,18 @@ export const actions = {
           varMode: args.varModes.has(args.target)
             ? args.varModes.get(args.target)
             : SummaryMode.Default,
+          handleMutation: false,
         });
       })
     );
+    values.map((v) => {
+      if (!v) return;
+      const val = v as VariableSummaryResp<ResultsContext>;
+      mutations.updateRankingSummaries(val.context, val.summary);
+    });
   },
   // fetches result summary for a given solution id.
-  fetchConfidenceSummary(
+  async fetchConfidenceSummary(
     context: ResultsContext,
     args: {
       dataset: string;
@@ -913,6 +971,7 @@ export const actions = {
       highlights: Highlight[];
       dataMode: DataMode;
       varMode: SummaryMode;
+      handleMutation: boolean;
     }
   ) {
     if (!args.dataset) {
@@ -949,7 +1008,7 @@ export const actions = {
     const endpoint = `/distil/confidence-summary/${args.dataset}`;
     const key = solution.confidenceKey;
     const label = "Confidence";
-    return fetchSolutionResultSummary(
+    const resp = await fetchSolutionResultSummary(
       context,
       endpoint,
       solution,
@@ -959,12 +1018,16 @@ export const actions = {
       resultGetters.getConfidenceSummaries(context),
       mutations.updateConfidenceSummaries,
       filterParams,
-      args.varMode
+      args.varMode,
+      args.handleMutation
     );
+    if (!args.handleMutation) {
+      return resp;
+    }
   },
 
   // fetches result summaries for a given solution create request
-  fetchConfidenceSummaries(
+  async fetchConfidenceSummaries(
     context: ResultsContext,
     args: {
       dataset: string;
@@ -983,7 +1046,7 @@ export const actions = {
       context.rootState.requestsModule.solutions,
       args.requestIds
     );
-    return Promise.all(
+    const values = await Promise.all(
       solutions.map((solution) => {
         return actions.fetchConfidenceSummary(context, {
           dataset: args.dataset,
@@ -993,9 +1056,15 @@ export const actions = {
           varMode: args.varModes.has(args.target)
             ? args.varModes.get(args.target)
             : SummaryMode.Default,
+          handleMutation: false,
         });
       })
     );
+    values.map((v) => {
+      if (!v) return;
+      const val = v as VariableSummaryResp<ResultsContext>;
+      mutations.updateConfidenceSummaries(val.context, val.summary);
+    });
   },
 
   async fetchForecastedTimeseries(

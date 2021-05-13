@@ -16,6 +16,7 @@
  */
 
 import axios, { AxiosResponse } from "axios";
+import { BIconLayoutThreeColumns } from "bootstrap-vue";
 import _ from "lodash";
 import { ActionContext } from "vuex";
 import {
@@ -74,7 +75,9 @@ import {
   Task,
   Variable,
   VariableRankingPendingRequest,
+  VariableSummary,
   VariableSummaryKey,
+  VariableSummaryResp,
 } from "./index";
 import { getters, mutations } from "./module";
 import { TimeSeriesUpdate } from "./mutations";
@@ -273,6 +276,7 @@ export const actions = {
         include: true,
         dataMode: DataMode.Default,
         mode: SummaryMode.Default,
+        handleMutation: true,
       }),
       actions.fetchVariableSummary(context, {
         dataset: args.dataset,
@@ -282,6 +286,7 @@ export const actions = {
         include: false,
         dataMode: DataMode.Default,
         mode: SummaryMode.Default,
+        handleMutation: true,
       }),
       actions.fetchVariableSummary(context, {
         dataset: args.dataset,
@@ -291,6 +296,7 @@ export const actions = {
         include: true,
         dataMode: DataMode.Default,
         mode: SummaryMode.Default,
+        handleMutation: true,
       }),
       actions.fetchVariableSummary(context, {
         dataset: args.dataset,
@@ -300,6 +306,7 @@ export const actions = {
         include: false,
         dataMode: DataMode.Default,
         mode: SummaryMode.Default,
+        handleMutation: true,
       }),
     ]);
   },
@@ -692,7 +699,12 @@ export const actions = {
       highlights: Highlight[];
       filterParams: FilterParams;
     }
-  ): Promise<[void, void]> {
+  ): Promise<
+    [
+      void | VariableSummaryResp<DatasetContext>,
+      void | VariableSummaryResp<DatasetContext>
+    ]
+  > {
     if (!validateArgs(args, ["dataset", "key"])) {
       return null;
     }
@@ -716,6 +728,7 @@ export const actions = {
           include: true,
           dataMode: DataMode.Default,
           mode: SummaryMode.Default,
+          handleMutation: true,
         }),
         actions.fetchVariableSummary(context, {
           dataset: args.dataset,
@@ -725,6 +738,7 @@ export const actions = {
           include: false,
           dataMode: DataMode.Default,
           mode: SummaryMode.Default,
+          handleMutation: true,
         }),
       ]);
     } catch (error) {
@@ -945,7 +959,7 @@ export const actions = {
   async setVariableType(
     context: DatasetContext,
     args: { dataset: string; field: string; type: string }
-  ): Promise<any> {
+  ): Promise<[void | {}, void | {}]> {
     if (!validateArgs(args, ["dataset", "field", "type"])) {
       return null;
     }
@@ -973,6 +987,7 @@ export const actions = {
           include: true,
           dataMode: DataMode.Default,
           mode: SummaryMode.Default,
+          handleMutation: true,
         }),
         actions.fetchVariableSummary(context, {
           dataset: args.dataset,
@@ -982,6 +997,7 @@ export const actions = {
           include: false,
           dataMode: DataMode.Default,
           mode: SummaryMode.Default,
+          handleMutation: true,
         }),
       ]);
     } catch (error) {
@@ -1044,7 +1060,7 @@ export const actions = {
     });
   },
 
-  fetchVariableSummaries(
+  async fetchVariableSummaries(
     context: DatasetContext,
     args: {
       dataset: string;
@@ -1077,19 +1093,8 @@ export const actions = {
       const existingVariableSummary =
         summariesByVariable?.[compositeKey]?.[routeKey];
 
-      if (existingVariableSummary) {
-        promises.push(existingVariableSummary);
-      } else {
-        if (summariesByVariable[compositeKey]) {
-          // if we have any saved state for that variable
-          // use that as placeholder due to vue lifecycle
-          const tempVariableSummaryKey = Object.keys(
-            summariesByVariable[compositeKey]
-          )[0];
-          promises.push(
-            summariesByVariable[compositeKey][tempVariableSummaryKey]
-          );
-        } else {
+      if (!existingVariableSummary) {
+        if (!summariesByVariable[compositeKey]) {
           // add a loading placeholder if nothing exists for that variable
           mutator(
             context,
@@ -1117,12 +1122,15 @@ export const actions = {
             include: args.include,
             dataMode: args.dataMode,
             mode: mode,
+            handleMutation: false,
           })
         );
       }
     });
-    // fill them in asynchronously
-    return Promise.all(promises);
+    const values = await Promise.all(promises);
+    values.map((v) => {
+      if (v.context) mutator(v.context, v.summary);
+    });
   },
 
   async fetchVariableSummary(
@@ -1135,8 +1143,9 @@ export const actions = {
       include: boolean;
       dataMode: DataMode;
       mode: SummaryMode;
+      handleMutation: boolean;
     }
-  ): Promise<void> {
+  ): Promise<VariableSummaryResp<DatasetContext> | void> {
     if (!validateArgs(args, ["dataset", "variable"])) {
       return null;
     }
@@ -1162,7 +1171,11 @@ export const actions = {
       );
       const summary = response.data.summary;
       await fetchSummaryExemplars(args.dataset, args.variable, summary);
-      mutator(context, summary);
+      if (args.handleMutation) {
+        mutator(context, summary);
+        return;
+      }
+      return { context, summary };
     } catch (error) {
       console.error(error);
       const key = args.variable;

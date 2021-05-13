@@ -49,6 +49,20 @@ export const SOLUTION_PROGRESS: Dictionary<number> = {
   [SolutionStatus.SOLUTION_COMPLETED]: 100,
 };
 
+export function filterBadRequests(
+  solutions: Solution[],
+  requestIds: string[]
+): string[] {
+  const solutionMap = new Map(
+    solutions.map((s) => {
+      return [s.requestId, s.progress !== SolutionStatus.SOLUTION_ERRORED];
+    })
+  );
+  return requestIds.filter((r) => {
+    return solutionMap.get(r);
+  });
+}
+
 export function getSolutionIndex(solutionId: string) {
   // Get the solutions sorted by score.
   const solutions = [...requestGetters.getRelevantSolutions(store)];

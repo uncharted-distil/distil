@@ -35,6 +35,7 @@ import {
   VariableSummary,
   VariableSummaryKey,
   GeoBoundsGrouping,
+  VariableSummaryResp,
 } from "../store/dataset/index";
 import {
   actions as datasetActions,
@@ -606,8 +607,9 @@ export async function fetchSolutionResultSummary(
   resultSummaries: VariableSummary[],
   updateFunction: (arg: ResultsContext, summary: VariableSummary) => void,
   filterParams: FilterParams | FilterSetsParams,
-  varMode: SummaryMode
-): Promise<any> {
+  varMode: SummaryMode,
+  handleMutations: boolean
+): Promise<void | VariableSummaryResp<ResultsContext>> {
   const dataset = solution.dataset;
   const solutionId = solution.solutionId;
   const target = solution.feature;
@@ -641,7 +643,7 @@ export async function fetchSolutionResultSummary(
         : { highlights: { invert: false }, filters: { invert: false } }
     );
     // save the histogram data if this is summary data
-    const summary = response.data[resultProperty];
+    const summary = response.data[resultProperty] as VariableSummary;
     if (!summary) {
       return;
     }
@@ -654,10 +656,18 @@ export async function fetchSolutionResultSummary(
     );
     summary.solutionId = solutionId;
     summary.dataset = dataset;
-    updateFunction(context, summary);
+    if (handleMutations) {
+      updateFunction(context, summary);
+      return;
+    }
+    return { context, summary };
   } catch (error) {
     console.error(error);
-    updateFunction(context, createErrorSummary(key, label, dataset, error));
+    if (handleMutations) {
+      updateFunction(context, createErrorSummary(key, label, dataset, error));
+      return;
+    }
+    return { context, summary: createErrorSummary(key, label, dataset, error) };
   }
 }
 

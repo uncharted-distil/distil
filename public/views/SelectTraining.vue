@@ -159,7 +159,6 @@ export default Vue.extend({
       viewActions.updateSelectTrainingData(this.$store);
     },
     filters() {
-      viewActions.clearDatasetTableData(this.$store);
       viewActions.updateSelectTrainingData(this.$store);
     },
     availableTrainingVarsPage() {
