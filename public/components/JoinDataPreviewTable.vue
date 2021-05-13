@@ -21,7 +21,7 @@
     hover
     small
     :items="items"
-    :fields="fields"
+    :fields="tableFields"
     sticky-header="100%"
     class="distil-table"
   >
@@ -80,7 +80,11 @@ import {
   TIMESERIES_TYPE,
   MULTIBAND_IMAGE_TYPE,
 } from "../util/types";
-import { getTimeseriesGroupingsFromFields, getImageFields } from "../util/data";
+import {
+  getTimeseriesGroupingsFromFields,
+  formatFieldsAsArray,
+  getImageFields,
+} from "../util/data";
 
 export default Vue.extend({
   name: "join-data-preview-table",
@@ -102,6 +106,10 @@ export default Vue.extend({
     },
     imageFields(): { key: string; type: string }[] {
       return getImageFields(this.fields);
+    },
+
+    tableFields(): TableColumn[] {
+      return formatFieldsAsArray(this.fields);
     },
 
     timeseriesGroupings(): TimeseriesGrouping[] {
