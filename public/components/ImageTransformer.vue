@@ -56,13 +56,12 @@ export default Vue.extend({
   props: {
     width: { type: Number as () => number, default: 300 },
     height: { type: Number as () => number, default: 300 },
-    imgSrcs: { type: Array as () => string[], default: [] },
+    imgSrcs: { type: Array as () => HTMLImageElement[], default: [] },
   },
   data() {
     return {
       mouseDown: false,
       start: { x: 0, y: 0 },
-      imgs: [],
       isMouseOnCanvas: false,
     };
   },
@@ -109,21 +108,15 @@ export default Vue.extend({
       if (!this.imgSrcs.length) {
         return;
       }
-      this.imgs = [];
-      this.imgSrcs.forEach((src) => {
-        const image = new Image(this.width, this.height);
-        image.src = src;
-        this.imgs.push(image);
-      });
       const promises = [];
-      this.imgs.forEach((img, i) => {
+      this.imgSrcs.forEach((img, i) => {
         if (!img.complete) {
           promises.push(
             new Promise((res, rej) => {
-              this.imgs[i].onload = () => {
+              this.imgSrcs[i].onload = () => {
                 res(true);
               };
-              this.imgs[i].onerror = () => {
+              this.imgSrcs[i].onerror = () => {
                 rej();
               };
             })
@@ -146,7 +139,7 @@ export default Vue.extend({
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.ctx.restore();
       // draws any images
-      this.imgs.forEach((img) => {
+      this.imgSrcs.forEach((img) => {
         this.ctx.drawImage(img, 0, 0, this.width, this.height);
       });
     },
