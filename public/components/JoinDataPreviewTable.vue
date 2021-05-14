@@ -68,8 +68,6 @@ import { Dictionary } from "../util/dict";
 import {
   TableColumn,
   TableRow,
-  D3M_INDEX_FIELD,
-  Grouping,
   Variable,
   TimeseriesGrouping,
 } from "../store/dataset/index";

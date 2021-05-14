@@ -32,7 +32,7 @@
       <template v-if="!isErrored && !isSelected">
         <div
           class="pull-right pl-2 solution-button"
-          @click.stop="minimized = !minimized"
+          @click.stop="onCollapseClick"
         >
           <i
             class="fa"
@@ -202,9 +202,10 @@ import {
 import {
   getSolutionIndex,
   getSolutionById,
-  isTopSolutionByScore,
+  isTopSolutionByTime,
   SOLUTION_PROGRESS,
   SOLUTION_LABELS,
+  reviseOpenSolutions,
 } from "../util/solutions";
 import { getModelNameByFittedSolutionId } from "../util/models";
 import { overlayRouteEntry } from "../util/routes";
@@ -243,7 +244,6 @@ export default Vue.extend({
 
   data() {
     return {
-      minimized: null,
       openDeleteModal: false,
     };
   },
@@ -404,15 +404,15 @@ export default Vue.extend({
       }
       return false;
     },
-
-    isMinimized(): boolean {
-      return this.minimized !== null ? this.minimized : !this.isTopN;
+    isOpenInRoute(): boolean {
+      return this.openSolutions.some((s) => {
+        return s === this.requestId;
+      });
     },
-
     isMaximized(): boolean {
       return (
-        this.routeSolutionId === this.solutionId ||
-        (!this.isMinimized && !this.isErrored)
+        (this.routeSolutionId === this.solutionId || !this.isErrored) &&
+        this.isOpenInRoute
       );
     },
 
@@ -425,9 +425,8 @@ export default Vue.extend({
     },
 
     isTopN(): boolean {
-      return isTopSolutionByScore(
+      return isTopSolutionByTime(
         store.state.requestsModule.solutions,
-        this.requestId,
         this.solutionId,
         3
       );
@@ -437,9 +436,34 @@ export default Vue.extend({
       // waiting for explanation enum to be added to results summaries
       return !!this.predictedSummary?.weighted;
     },
+    openSolutions(): string[] {
+      return routeGetters.getRouteOpenSolutions(this.$store);
+    },
   },
-
+  mounted() {
+    if (
+      (this.routeSolutionId === this.solutionId &&
+        !this.isErrored &&
+        !this.isOpenInRoute) ||
+      (this.isTopN &&
+        this.openSolutions.length < 3 &&
+        !this.isErrored &&
+        !this.isOpenInRoute)
+    ) {
+      reviseOpenSolutions(this.requestId, this.$route, this.$router);
+    }
+  },
+  watch: {
+    isActiveSolution() {
+      if (!this.isOpenInRoute) {
+        reviseOpenSolutions(this.requestId, this.$route, this.$router);
+      }
+    },
+  },
   methods: {
+    onCollapseClick() {
+      reviseOpenSolutions(this.requestId, this.$route, this.$router);
+    },
     getFacetByType: getFacetByType,
     onResultCategoricalClick(
       context: string,

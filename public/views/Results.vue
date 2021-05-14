@@ -182,6 +182,9 @@ export default Vue.extend({
     rowsPerPage(): number {
       return NUM_PER_PAGE;
     },
+    openSolutions(): string[] {
+      return routeGetters.getRouteOpenSolutions(this.$store);
+    },
   },
 
   async beforeMount() {
@@ -206,6 +209,9 @@ export default Vue.extend({
     },
   },
   watch: {
+    openSolutions(requestIds: string[]) {
+      viewActions.updateResultSummaries(this.$store, { requestIds });
+    },
     geoVarExists() {
       const route = routeGetters.getRoute(this.$store);
       const entry = overlayRouteEntry(route, { hasGeoData: this.geoVarExists });

@@ -61,6 +61,7 @@ export const actions = {
   fetchResultsData: dispatch(moduleActions.fetchResultsData),
   updateResultsSummaries: dispatch(moduleActions.updateResultsSummaries),
   updateResultsSolution: dispatch(moduleActions.updateResultsSolution),
+  updateResultSummaries: dispatch(moduleActions.updateResultSummaries),
   updateResultBaseline: dispatch(moduleActions.updateResultBaseline),
   fetchPredictionsData: dispatch(moduleActions.fetchPredictionsData),
   updateResultAreaOfInterest: dispatch(
@@ -74,6 +75,7 @@ export const actions = {
   ),
   updateBaselinePredictions: dispatch(moduleActions.updateBaselinePredictions),
   updatePrediction: dispatch(moduleActions.updatePredictions),
+  updatePredictionSummaries: dispatch(moduleActions.updatePredictionSummaries),
   updateAreaOfInterest: dispatch(moduleActions.updateAreaOfInterest),
   updateVariableSummaries: dispatch(moduleActions.updateVariableSummaries),
 };

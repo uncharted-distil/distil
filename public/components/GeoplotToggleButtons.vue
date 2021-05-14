@@ -70,9 +70,6 @@ export default Vue.extend({
     isClustering: { type: Boolean as () => boolean, default: false },
     isSelectionMode: { type: Boolean as () => boolean, default: false },
     isHidingBaseline: { type: Boolean as () => boolean, default: false },
-    dataHasConfidence: { type: Boolean as () => boolean, default: false },
-    colorGradient: { type: String as () => string, default: "" },
-    confidenceClass: { type: String as () => string, default: "" },
   },
   methods: {
     baselineToggle() {

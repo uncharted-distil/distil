@@ -101,6 +101,7 @@ export const getters = {
   getRouteTargetVariable: read(moduleGetters.getRouteTargetVariable),
   getRoutePreviousTarget: read(moduleGetters.getRoutePreviousTarget),
   getRouteSolutionId: read(moduleGetters.getRouteSolutionId),
+  getRouteOpenSolutions: read(moduleGetters.getRouteOpenSolutions),
   getRouteFilters: read(moduleGetters.getRouteFilters),
   getRouteHighlight: read(moduleGetters.getRouteHighlight),
   getRouteRowSelection: read(moduleGetters.getRouteRowSelection),

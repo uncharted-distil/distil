@@ -54,6 +54,7 @@ import {
   actions as predictionActions,
   mutations as predictionMutations,
 } from "../predictions/module";
+import { Predictions } from "../requests";
 import {
   actions as requestActions,
   getters as requestGetters,
@@ -849,15 +850,93 @@ export const actions = {
       size: allData,
     });
   },
-  async updateResultsSolution(context: ViewContext) {
-    // clear previous state
+  updateResultSummaries(context: ViewContext, args: { requestIds: string[] }) {
     // fetch new state
     const dataset = routeGetters.getRouteDataset(store);
     const target = routeGetters.getRouteTargetVariable(store);
+    const requestIds = args.requestIds;
+    const solutionId = routeGetters.getRouteSolutionId(store);
+    const highlights = routeGetters.getDecodedHighlights(store);
+    const dataMode = context.getters.getDataMode;
+    const varModes: Map<string, SummaryMode> = routeGetters.getDecodedVarModes(
+      store
+    );
+
+    resultActions.fetchPredictedSummaries(store, {
+      dataset: dataset,
+      target: target,
+      requestIds: requestIds,
+      highlights: highlights,
+      dataMode: dataMode,
+      varModes: varModes,
+    });
+
+    const task = routeGetters.getRouteTask(store);
+
+    if (!task) {
+      console.error(`task is ${task}`);
+    } else if (
+      task.includes(TaskTypes.REGRESSION) ||
+      task.includes(TaskTypes.FORECASTING)
+    ) {
+      resultActions.fetchResidualsExtrema(store, {
+        dataset: dataset,
+        target: target,
+        solutionId: solutionId,
+      });
+      resultActions.fetchResidualsSummaries(store, {
+        dataset: dataset,
+        target: target,
+        requestIds: requestIds,
+        highlights: highlights,
+        dataMode: dataMode,
+        varModes: varModes,
+      });
+    } else if (task.includes(TaskTypes.CLASSIFICATION)) {
+      resultActions.fetchCorrectnessSummaries(store, {
+        dataset: dataset,
+        target: target,
+        requestIds: requestIds,
+        highlights: highlights,
+        dataMode: dataMode,
+        varModes: varModes,
+      });
+
+      resultActions.fetchConfidenceSummaries(store, {
+        dataset: dataset,
+        target: target,
+        requestIds: requestIds,
+        highlights: highlights,
+        dataMode: dataMode,
+        varModes: varModes,
+      });
+      resultActions.fetchRankingSummaries(store, {
+        dataset: dataset,
+        target: target,
+        requestIds: requestIds,
+        highlights: highlights,
+        dataMode: dataMode,
+        varModes: varModes,
+      });
+    } else {
+      console.error(`unhandled task type ${task}`);
+    }
+  },
+  async updateResultsSolution(context: ViewContext) {
+    // fetch new state
+    const dataset = routeGetters.getRouteDataset(store);
+    const target = routeGetters.getRouteTargetVariable(store);
+    const openSolutions = new Map(
+      routeGetters.getRouteOpenSolutions(store).map((s) => {
+        return [s, true];
+      })
+    );
     // filters requests out that errored
     const requestIds = filterBadRequests(
       requestGetters.getSolutions(store),
-      requestGetters.getRelevantSolutionRequestIds(store)
+      requestGetters.getRelevantSolutionRequestIds(store).filter((r) => {
+        return openSolutions.has(r);
+      })
     );
     const solutionId = routeGetters.getRouteSolutionId(store);
     const highlights = routeGetters.getDecodedHighlights(store);
@@ -952,10 +1031,6 @@ export const actions = {
   },
 
   async fetchPredictionsData(context: ViewContext) {
-    // clear previous state
-    predictionMutations.clearTrainingSummaries(store);
-    predictionMutations.setIncludedPredictionTableData(store, null);
-
     const produceRequestId = context.getters.getRouteProduceRequestId as string;
     const fittedSolutionId = context.getters.getRouteFittedSolutionId;
     // fetch the predictions
@@ -973,7 +1048,7 @@ export const actions = {
     await fetchVariables(context, {
       dataset: inferenceDataset,
     });
-    return actions.updatePredictions(context);
+    return actions.updatePredictions(context, { isInit: true });
   },
 
   updatePredictionTrainingSummaries(context: ViewContext) {
@@ -1025,10 +1100,47 @@ export const actions = {
       isBaseline: true,
     });
   },
-  updatePredictions(context: ViewContext) {
-    // clear previous state
-    predictionMutations.setIncludedPredictionTableData(store, null);
+  updatePredictionSummaries(
+    context: ViewContext,
+    args: { predictions: Predictions[] }
+  ) {
+    const produceRequestId = context.getters.getRouteProduceRequestId as string;
+    const fittedSolutionId = context.getters.getRouteFittedSolutionId as string;
+    const pred = getPredictionsById(
+      context.getters.getPredictions,
+      produceRequestId
+    );
+    const inferenceDataset = pred.dataset;
+    const highlights = context.getters.getDecodedHighlights as Highlight[];
+    const dataMode = context.getters.getDataMode;
+    const varMode = SummaryMode.Default;
+    // this is where rank and confidence should get updated
+    predictionActions.fetchPredictedSummaries(store, {
+      highlights: highlights,
+      fittedSolutionId: fittedSolutionId,
+      predictions: args.predictions,
+    });
 
+    args.predictions.forEach((p) => {
+      predictionActions.fetchConfidenceSummary(store, {
+        dataset: inferenceDataset,
+        highlights: highlights,
+        solutionId: p.resultId,
+        dataMode,
+        varMode,
+        target: p.feature,
+      });
+      predictionActions.fetchRankSummary(store, {
+        dataset: inferenceDataset,
+        highlights: highlights,
+        solutionId: p.resultId,
+        dataMode,
+        varMode,
+        target: p.feature,
+      });
+    });
+  },
+  updatePredictions(context: ViewContext, args?: { isInit: boolean }) {
     // fetch new state
     const produceRequestId = context.getters.getRouteProduceRequestId as string;
     const fittedSolutionId = context.getters.getRouteFittedSolutionId as string;
@@ -1041,6 +1153,16 @@ export const actions = {
     const size = routeGetters.getRouteDataSize(store);
     const dataMode = context.getters.getDataMode;
     const varMode = SummaryMode.Default;
+    const openPredictions = new Map(
+      routeGetters.getRouteOpenSolutions(store).map((s) => {
+        return [s, true];
+      })
+    );
+    const relPreds = requestGetters
+      .getRelevantPredictions(store)
+      .filter((p) => {
+        return openPredictions.has(p.requestId) || (args?.isInit ?? false);
+      });
     // table data
     predictionActions.fetchPredictionTableData(store, {
       dataset: inferenceDataset,
@@ -1055,8 +1177,10 @@ export const actions = {
     predictionActions.fetchPredictedSummaries(store, {
       highlights: highlights,
       fittedSolutionId: fittedSolutionId,
+      predictions: relPreds,
     });
-    requestGetters.getRelevantPredictions(store).forEach((p) => {
+
+    relPreds.forEach((p) => {
       predictionActions.fetchConfidenceSummary(store, {
         dataset: inferenceDataset,
         highlights: highlights,
