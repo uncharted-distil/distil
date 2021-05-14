@@ -224,13 +224,13 @@ export default Vue.extend({
         null
       );
     },
-    imageSources(): string[] {
+    imageSources(): HTMLImageElement[] {
       const sources = [];
       if (!!this.image) {
-        sources.push(this.image.src);
+        sources.push(this.image);
       }
       if (!!this.imageAttention && this.isFilteredToggled) {
-        sources.push(this.imageAttention.src);
+        sources.push(this.imageAttention);
       }
       return sources;
     },
