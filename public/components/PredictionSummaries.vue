@@ -135,7 +135,7 @@ import {
   UPDATE_FOR_KEY,
 } from "../util/highlights";
 import { reviseOpenSolutions } from "../util/solutions";
-
+import moment from "moment";
 export default Vue.extend({
   name: "prediction-summaries",
 
@@ -175,15 +175,24 @@ export default Vue.extend({
           rank: getPredictionRankSummary(p.resultId),
           confidence: getPredictionConfidenceSummary(p.resultId),
           summary: getPredictionResultSummary(p.requestId),
-          requestId: p.requestId,
           prediction: p,
         };
-        if (!meta.rank && !meta.confidence && !meta.summary) {
+        if (
+          !meta.rank &&
+          !meta.confidence &&
+          !meta.summary &&
+          !meta.prediction
+        ) {
           return;
         }
         result.push(meta);
       });
-      return result;
+      return result.sort((a, b) => {
+        return (
+          moment(b.prediction.timestamp).unix() -
+          moment(a.prediction.timestamp).unix()
+        );
+      });
     },
     summaries(): VariableSummary[] {
       // get the list of variable summaries, sorting by timestamp
