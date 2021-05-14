@@ -36,7 +36,7 @@ func missingParamErr(w http.ResponseWriter, paramName string) {
 
 // JoinHandler generates a route handler that joins two datasets using caller supplied
 // columns.  The joined data is returned to the caller, but is NOT added to storage.
-func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func JoinHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// parse JSON from post
 		params, err := getPostParameters(r)
@@ -87,6 +87,12 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 			return
 		}
 
+		dataStorage, err := dataCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
 		// add d3m variables to left variables
 		meta, err := metaCtor()
 		if err != nil {
@@ -101,7 +107,7 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 		leftVariables = append(leftVariables, d3mIndexVar)
 
 		// run joining pipeline
-		path, data, err := join(leftJoin, rightJoin, leftVariables, rightVariables, datasetRight, params, meta)
+		path, data, err := join(leftJoin, rightJoin, leftVariables, rightVariables, datasetRight, params, dataStorage, meta)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -152,11 +158,12 @@ func parseVariables(variablesRaw []interface{}) ([]*model.Variable, error) {
 	return variables, nil
 }
 
-func join(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, varsLeft []*model.Variable, varsRight []*model.Variable,
-	datasetRight map[string]interface{}, params map[string]interface{}, metaStorage api.MetadataStorage) (string, *api.FilteredData, error) {
+func join(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, varsLeft []*model.Variable,
+	varsRight []*model.Variable, datasetRight map[string]interface{}, params map[string]interface{},
+	dataStorage api.DataStorage, metaStorage api.MetadataStorage) (string, *api.FilteredData, error) {
 	// determine if distil or datamart
 	if params["searchResultIndex"] == nil {
-		return joinDistil(joinLeft, joinRight, params, metaStorage)
+		return joinDistil(joinLeft, joinRight, params, dataStorage, metaStorage)
 	}
 
 	joinLeft.ExistingMetadata = &model.Metadata{
@@ -173,8 +180,8 @@ func join(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, varsLeft []*model.V
 	return joinDatamart(joinLeft, joinRight, varsLeft, varsRight, datasetRight, params)
 }
 
-func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec,
-	params map[string]interface{}, metaStorage api.MetadataStorage) (string, *api.FilteredData, error) {
+func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, params map[string]interface{},
+	dataStorage api.DataStorage, metaStorage api.MetadataStorage) (string, *api.FilteredData, error) {
 	if params["joinPairs"] == nil {
 		return "", nil, errors.Errorf("missing parameter 'joinPairs'")
 	}
@@ -228,7 +235,7 @@ func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec,
 	joinLeft.ExistingMetadata = metaLeft
 	joinRight.ExistingMetadata = metaRight
 
-	path, data, err := task.JoinDistil(joinLeft, joinRight, leftCols, rightCols, accuracies)
+	path, data, err := task.JoinDistil(dataStorage, joinLeft, joinRight, leftCols, rightCols, accuracies)
 	if err != nil {
 		return "", nil, err
 	}

@@ -57,6 +57,35 @@ func (s *Storage) parseExtrema(row pgx.Rows, variable *model.Variable) (*api.Ext
 	}, nil
 }
 
+// IsKey verifies if a given set of variables is unique across the dataset.
+func (s *Storage) IsKey(dataset string, storageName string, variables []*model.Variable) (bool, error) {
+	// use a group by on the variables and retain only rows with more than a single result
+	columnNames := []string{}
+	for _, v := range variables {
+		columnNames = append(columnNames, fmt.Sprintf("\"%s\"", v.Key))
+	}
+	grouping := strings.Join(columnNames, ",")
+
+	sql := fmt.Sprintf("select count(*) from (select %s, count(*) from %s group by %s having count(*) > 1) as d;",
+		grouping, storageName, grouping)
+	rows, err := s.client.Query(sql)
+	if err != nil {
+		return false, errors.Wrapf(err, "unable execute query to verify key validity")
+	}
+	defer rows.Close()
+
+	// the column combination is not a key if there are any rows in the result rows
+	badKeyCount := 0
+	if rows.Next() {
+		err = rows.Scan(&badKeyCount)
+		if err != nil {
+			return false, errors.Wrap(err, "unable to read bad key count")
+		}
+	}
+
+	return badKeyCount == 0, nil
+}
+
 // FetchExtrema return extrema of a variable in a result set.
 func (s *Storage) FetchExtrema(dataset string, storageName string, variable *model.Variable) (*api.Extrema, error) {
 	field, err := s.createField(dataset, storageName, variable, api.DefaultMode)
