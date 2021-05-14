@@ -126,6 +126,8 @@ type DataStorage interface {
 	// DeleteDataset drops all tables associated to storageName
 	DeleteDataset(storageName string) error
 	CreateIndices(dataset string, indexFields []string) error
+	// IsKey verifies the unique property of the listed variables
+	IsKey(dataset string, storageName string, variables []*model.Variable) (bool, error)
 }
 
 // SolutionStorageCtor represents a client constructor to instantiate a

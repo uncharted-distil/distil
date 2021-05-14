@@ -65,7 +65,7 @@ func JoinDatamart(joinLeft *JoinSpec, joinRight *JoinSpec, rightOrigin *model.Da
 }
 
 // JoinDistil will bring misery.
-func JoinDistil(joinLeft *JoinSpec, joinRight *JoinSpec, leftCols []string, rightCols []string, accuracies []float64) (string, *apiModel.FilteredData, error) {
+func JoinDistil(dataStorage apiModel.DataStorage, joinLeft *JoinSpec, joinRight *JoinSpec, leftCols []string, rightCols []string, accuracies []float64) (string, *apiModel.FilteredData, error) {
 	cfg, err := env.LoadConfig()
 	if err != nil {
 		return "", nil, err
@@ -74,12 +74,21 @@ func JoinDistil(joinLeft *JoinSpec, joinRight *JoinSpec, leftCols []string, righ
 	varsLeftMapUpdated := apiModel.MapVariables(joinLeft.UpdatedVariables, func(variable *model.Variable) string { return variable.Key })
 	varsRightMapUpdated := apiModel.MapVariables(joinRight.UpdatedVariables, func(variable *model.Variable) string { return variable.Key })
 	joins := make([]*description.Join, len(leftCols))
+	rightVars := make([]*model.Variable, len(rightCols))
 	for i := range leftCols {
 		joins[i] = &description.Join{
 			Left:     varsLeftMapUpdated[leftCols[i]],
 			Right:    varsRightMapUpdated[rightCols[i]],
 			Accuracy: accuracies[i],
 		}
+		rightVars[i] = varsRightMapUpdated[rightCols[i]]
+	}
+	isKey, err := dataStorage.IsKey(joinRight.DatasetID, joinRight.ExistingMetadata.StorageName, rightVars)
+	if err != nil {
+		return "", nil, err
+	}
+	if !isKey {
+		return "", nil, errors.Errorf("specified right join columns do not specify a unique key")
 	}
 
 	rightExcludes := generateRightExcludes(joinLeft.UpdatedVariables, joinRight.UpdatedVariables)
