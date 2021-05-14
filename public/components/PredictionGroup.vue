@@ -1,5 +1,5 @@
 <template>
-  <div v-if="openSolution.has(prediction.requestId)" class="prediction-group">
+  <div v-if="isOpen" class="prediction-group">
     <component
       enable-highlighting
       :summary="predictedSummary"
@@ -78,6 +78,9 @@ export default Vue.extend({
     prediction: Object as () => Predictions,
   },
   computed: {
+    isOpen(): boolean {
+      return this.openSolution.has(this.prediction?.requestId);
+    },
     hasGeoData(): boolean {
       return routeGetters.hasGeoData(this.$store);
     },
@@ -99,7 +102,7 @@ export default Vue.extend({
     isActivePrediction(): boolean {
       return (
         routeGetters.getRouteProduceRequestId(this.$store) ===
-        this.prediction.requestId
+        this.prediction?.requestId
       );
     },
     openSolution(): Map<string, boolean> {
@@ -112,13 +115,13 @@ export default Vue.extend({
     isTopN(): boolean {
       return isTopPredictionByTime(
         requestGetters.getRelevantPredictions(this.$store),
-        this.prediction.requestId,
+        this.prediction?.requestId,
         3
       );
     },
     isOpenInRoute(): boolean {
       return this.openPredictions.some((s) => {
-        s === this.prediction.requestId;
+        s === this.prediction?.requestId;
       });
     },
     openPredictions(): string[] {
@@ -130,7 +133,11 @@ export default Vue.extend({
       (this.isActivePrediction && !this.isOpenInRoute) ||
       (this.isTopN && !this.isOpenInRoute && this.openPredictions.length < 3)
     ) {
-      reviseOpenSolutions(this.prediction.requestId, this.$route, this.$router);
+      reviseOpenSolutions(
+        this.prediction?.requestId,
+        this.$route,
+        this.$router
+      );
     }
   },
   methods: {

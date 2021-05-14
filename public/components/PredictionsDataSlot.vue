@@ -106,11 +106,11 @@ import {
   getPredictionResultSummary,
   getPredictionConfidenceSummary,
   getPredictionRankSummary,
+  summaryToVariable,
 } from "../util/summaries";
 import { getVariableSummariesByState, totalAreaCoverage } from "../util/data";
 import { updateHighlight, UPDATE_ALL } from "../util/highlights";
 import { lexQueryToFiltersAndHighlight } from "../util/lex";
-import { resultSummariesToVariables } from "../util/summaries";
 import { overlayRouteEntry } from "../util/routes";
 const TABLE_VIEW = "table";
 const IMAGE_VIEW = "image";
@@ -162,7 +162,7 @@ export default Vue.extend({
       const confidence = getPredictionConfidenceSummary(
         this.prediction?.resultId
       );
-      const summary = getPredictionResultSummary(this.produceRequestId);
+      const summary = getPredictionResultSummary(this.prediction?.requestId);
       if (rank) {
         currentSummaries.push(rank);
       }
@@ -181,15 +181,22 @@ export default Vue.extend({
       return routeGetters.getRoutePredictionsDataset(this.$store);
     },
     allVariables(): Variable[] {
-      let predictionVariables = [];
-      const requestIds = requestGetters
-        .getRelevantPredictions(this.$store)
-        .map((p) => p.requestId);
-      requestIds.forEach((id) => {
-        predictionVariables = predictionVariables.concat(
-          resultSummariesToVariables(id)
-        );
-      });
+      let predictionVariables = [] as Variable[];
+      const activePred = this.prediction;
+      const rankSum = getPredictionRankSummary(activePred?.resultId);
+      const confidenceSum = getPredictionConfidenceSummary(
+        activePred?.resultId
+      );
+      const predSum = getPredictionResultSummary(activePred?.requestId);
+      if (rankSum) {
+        predictionVariables.push(summaryToVariable(rankSum));
+      }
+      if (confidenceSum) {
+        predictionVariables.push(summaryToVariable(confidenceSum));
+      }
+      if (predSum) {
+        predictionVariables.push(summaryToVariable(predSum));
+      }
       return datasetGetters
         .getAllVariables(this.$store)
         .concat(predictionVariables);
