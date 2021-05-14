@@ -189,8 +189,20 @@ export default Vue.extend({
       const entry = overlayRouteEntry(route, { hasGeoData: this.geoVarExists });
       this.$router.push(entry).catch((err) => console.warn(err));
     },
-    openPredictions() {
-      viewActions.updatePrediction(this.$store);
+    openPredictions(curr: string[]) {
+      const requestIdMap = new Map(
+        curr.map((p) => {
+          return [p, true];
+        })
+      );
+      const predictions = requestGetters
+        .getRelevantPredictions(this.$store)
+        .filter((p) => {
+          return requestIdMap.has(p.requestId);
+        });
+      viewActions.updatePredictionSummaries(this.$store, {
+        predictions: predictions,
+      });
     },
     produceRequestId() {
       viewActions.updatePrediction(this.$store);
