@@ -54,6 +54,7 @@ import {
   actions as predictionActions,
   mutations as predictionMutations,
 } from "../predictions/module";
+import { Predictions } from "../requests";
 import {
   actions as requestActions,
   getters as requestGetters,
@@ -849,6 +850,78 @@ export const actions = {
       size: allData,
     });
   },
+  updateResultSummaries(context: ViewContext, args: { requestIds: string[] }) {
+    // fetch new state
+    const dataset = routeGetters.getRouteDataset(store);
+    const target = routeGetters.getRouteTargetVariable(store);
+    const requestIds = args.requestIds;
+    const solutionId = routeGetters.getRouteSolutionId(store);
+    const highlights = routeGetters.getDecodedHighlights(store);
+    const dataMode = context.getters.getDataMode;
+    const varModes: Map<string, SummaryMode> = routeGetters.getDecodedVarModes(
+      store
+    );
+
+    resultActions.fetchPredictedSummaries(store, {
+      dataset: dataset,
+      target: target,
+      requestIds: requestIds,
+      highlights: highlights,
+      dataMode: dataMode,
+      varModes: varModes,
+    });
+
+    const task = routeGetters.getRouteTask(store);
+
+    if (!task) {
+      console.error(`task is ${task}`);
+    } else if (
+      task.includes(TaskTypes.REGRESSION) ||
+      task.includes(TaskTypes.FORECASTING)
+    ) {
+      resultActions.fetchResidualsExtrema(store, {
+        dataset: dataset,
+        target: target,
+        solutionId: solutionId,
+      });
+      resultActions.fetchResidualsSummaries(store, {
+        dataset: dataset,
+        target: target,
+        requestIds: requestIds,
+        highlights: highlights,
+        dataMode: dataMode,
+        varModes: varModes,
+      });
+    } else if (task.includes(TaskTypes.CLASSIFICATION)) {
+      resultActions.fetchCorrectnessSummaries(store, {
+        dataset: dataset,
+        target: target,
+        requestIds: requestIds,
+        highlights: highlights,
+        dataMode: dataMode,
+        varModes: varModes,
+      });
+
+      resultActions.fetchConfidenceSummaries(store, {
+        dataset: dataset,
+        target: target,
+        requestIds: requestIds,
+        highlights: highlights,
+        dataMode: dataMode,
+        varModes: varModes,
+      });
+      resultActions.fetchRankingSummaries(store, {
+        dataset: dataset,
+        target: target,
+        requestIds: requestIds,
+        highlights: highlights,
+        dataMode: dataMode,
+        varModes: varModes,
+      });
+    } else {
+      console.error(`unhandled task type ${task}`);
+    }
+  },
   async updateResultsSolution(context: ViewContext) {
     // fetch new state
     const dataset = routeGetters.getRouteDataset(store);
@@ -1025,6 +1098,46 @@ export const actions = {
       produceRequestId: produceRequestId,
       size: allData,
       isBaseline: true,
+    });
+  },
+  updatePredictionSummaries(
+    context: ViewContext,
+    args: { predictions: Predictions[] }
+  ) {
+    const produceRequestId = context.getters.getRouteProduceRequestId as string;
+    const fittedSolutionId = context.getters.getRouteFittedSolutionId as string;
+    const pred = getPredictionsById(
+      context.getters.getPredictions,
+      produceRequestId
+    );
+    const inferenceDataset = pred.dataset;
+    const highlights = context.getters.getDecodedHighlights as Highlight[];
+    const dataMode = context.getters.getDataMode;
+    const varMode = SummaryMode.Default;
+    // this is where rank and confidence should get updated
+    predictionActions.fetchPredictedSummaries(store, {
+      highlights: highlights,
+      fittedSolutionId: fittedSolutionId,
+      predictions: args.predictions,
+    });
+
+    args.predictions.forEach((p) => {
+      predictionActions.fetchConfidenceSummary(store, {
+        dataset: inferenceDataset,
+        highlights: highlights,
+        solutionId: p.resultId,
+        dataMode,
+        varMode,
+        target: p.feature,
+      });
+      predictionActions.fetchRankSummary(store, {
+        dataset: inferenceDataset,
+        highlights: highlights,
+        solutionId: p.resultId,
+        dataMode,
+        varMode,
+        target: p.feature,
+      });
     });
   },
   updatePredictions(context: ViewContext, args?: { isInit: boolean }) {

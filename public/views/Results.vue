@@ -209,8 +209,8 @@ export default Vue.extend({
     },
   },
   watch: {
-    openSolutions() {
-      viewActions.updateResultsSolution(this.$store);
+    openSolutions(requestIds: string[]) {
+      viewActions.updateResultSummaries(this.$store, { requestIds });
     },
     geoVarExists() {
       const route = routeGetters.getRoute(this.$store);
