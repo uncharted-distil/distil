@@ -32,7 +32,12 @@
   >
     <template v-slot:button-content>
       <div class="d-inline-flex align-items-center justify-content-center">
-        <i class="fas fa-palette fa-sm"></i>
+        <i
+          v-if="isSelected"
+          class="fa fa-times white-color"
+          @click.stop="onDisableScale"
+        />
+        <i v-else class="fas fa-palette fa-sm" />
         <div
           v-if="!isFacetScale || isSelected"
           class="selected-bar d-inline-flex ml-1"
@@ -158,6 +163,11 @@ export default Vue.extend({
       const colors = vals.map(COLOR_SCALES.get(colorScaleName));
       return `background: linear-gradient(to right, ${colors.join(", ")});`;
     },
+    onDisableScale() {
+      const route = routeGetters.getRoute(this.$store);
+      const entry = overlayRouteEntry(route, { colorScaleVariable: "" });
+      this.$router.push(entry).catch((err) => console.warn(err));
+    },
     onScaleClick(colorScaleName: ColorScaleNames) {
       const route = routeGetters.getRoute(this.$store);
       const routeArgs = { colorScale: colorScaleName } as RouteArgs;
@@ -172,6 +182,9 @@ export default Vue.extend({
 </script>
 
 <style scoped>
+.white-color:hover {
+  color: white;
+}
 .selected-dropdown {
   position: absolute;
   right: 120px;
