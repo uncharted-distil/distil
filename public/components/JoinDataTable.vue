@@ -21,6 +21,7 @@
     bordered
     hover
     small
+    show-empty
     sticky-header="100%"
     :items="items"
     :fields="emphasizedFields"
