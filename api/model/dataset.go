@@ -201,7 +201,10 @@ func (d *DiskDataset) SaveDataset() error {
 		return err
 	}
 
-	if d.FeaturizedDataset != nil {
+	// Check the schema path here to figure out if this featurized dataset is just a reference to
+	// the baseline datset.  The featurized dataset has the same ID as the baseline, so that comparison
+	// is not sufficient in this case.
+	if d.FeaturizedDataset != nil && d.schemaPath != d.FeaturizedDataset.schemaPath {
 		err = d.FeaturizedDataset.SaveDataset()
 		if err != nil {
 			return err
@@ -276,7 +279,6 @@ func (d *DiskDataset) GetLearningFolder() string {
 	if d.FeaturizedDataset != nil {
 		return d.FeaturizedDataset.GetLearningFolder()
 	}
-
 	return path.Dir(d.schemaPath)
 }
 

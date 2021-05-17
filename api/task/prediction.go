@@ -291,6 +291,12 @@ func PrepExistingPredictionDataset(params *PredictParams) (string, string, error
 		return "", "", err
 	}
 
+	alignmentUpdates := getPredictionDatasetAlignmentUpdates(params.Meta.GetMainDataResource().Variables, dsDisk.Dataset.Metadata.GetMainDataResource().Variables, params.Target)
+	err = updatePredictionAlignment(alignmentUpdates, dsCloned, dsDisk, params.MetaStorage, params.DataStorage)
+	if err != nil {
+		return "", "", err
+	}
+
 	// update the learning dataset
 	learningFolder := dsDisk.GetLearningFolder()
 
@@ -321,6 +327,144 @@ func PrepExistingPredictionDataset(params *PredictParams) (string, string, error
 	}
 
 	return cloneDatasetID, learningFolder, nil
+}
+
+type alignmentUpdates struct {
+	adds     []*model.Variable
+	reorders map[int]int
+}
+
+func getPredictionDatasetAlignmentUpdates(modelVariables []*model.Variable, predictionVariables []*model.Variable,
+	targetVariable *model.Variable) *alignmentUpdates {
+	// The model may have variables that our input dataset is missing.  To maximize compatibility, we will create any missing
+	// columns, set their type metadata appropriately, and leave them empty.  It may also be the case that the datasets have
+	// their variables ordered differently, which is a problem because D3M pipelines are driven by column index rather than
+	// name (we argued against this and lost).
+
+	predictVars := map[string]*model.Variable{}
+	for _, v := range predictionVariables {
+		predictVars[v.Key] = v
+	}
+
+	modelVars := map[string]*model.Variable{}
+	for _, v := range modelVariables {
+		modelVars[v.Key] = v
+	}
+
+	// First find the variables in the model list that are not in the predict list and store them.
+	missingList := []*model.Variable{}
+	for _, v := range modelVariables {
+		if _, ok := predictVars[v.Key]; !ok {
+			missingList = append(missingList, v)
+		}
+	}
+
+	// Append them to a temp list to use for determining re-ordering
+	extPredictionVariables := make([]*model.Variable, len(predictionVariables))
+	copy(extPredictionVariables, predictionVariables)
+	extPredictionVariables = append(extPredictionVariables, missingList...)
+
+	// Next, make sure the order of columns in the prediction dataset match the expected model ordering, and
+	// store a mapping for those that don't match.
+	nextVarIdx := len(modelVariables)
+	reorders := map[int]int{}
+	for _, p := range extPredictionVariables {
+		if m, ok := modelVars[p.Key]; ok {
+			if m.Index != p.Index {
+				reorders[p.Index] = m.Index
+			}
+		} else {
+			reorders[p.Index] = nextVarIdx
+			nextVarIdx++
+		}
+	}
+
+	return &alignmentUpdates{missingList, reorders}
+}
+
+func updatePredictionAlignment(updates *alignmentUpdates, dataset *api.Dataset, diskDataset *api.DiskDataset,
+	metaStorage api.MetadataStorage, dataStorage api.DataStorage) error {
+
+	// align the CSV data for the base prediction dataset
+	sourceData := diskDataset.Dataset.Data
+	alignedData := make([][]string, len(sourceData))
+
+	for i, row := range sourceData {
+		// Create a new row that will include the original prediction data, along with the columns for data
+		// that needs to be added to align with the dataset data.
+		alignedData[i] = make([]string, len(row)+len(updates.adds))
+
+		// First, add empty data for the missing variables at the locations the model expects them
+		for _, addVar := range updates.adds {
+			if i > 0 {
+				alignedData[i][addVar.Index] = ""
+			} else {
+				alignedData[i][addVar.Index] = addVar.Key
+			}
+		}
+
+		// Next, add the existing data, but re-map the colum order so they line up with what the model expects
+		for j, value := range row {
+			if mappedIndex, ok := updates.reorders[j]; ok {
+				alignedData[i][mappedIndex] = value
+			} else {
+				alignedData[i][j] = value
+			}
+		}
+	}
+	// update the disk dataset structure with aligned data
+	diskDataset.Dataset.Data = alignedData
+
+	if len(updates.adds) > 0 {
+		// update the in-memory dataset variables to reflect the new additions
+		dataset.Variables = append(dataset.Variables, updates.adds...)
+
+		// update the disk dataset variables to reflect the new additions
+		diskDataset.Dataset.Metadata.GetMainDataResource().Variables = append(diskDataset.Dataset.Metadata.GetMainDataResource().Variables, updates.adds...)
+
+		// update data storage with the added variables
+		for _, addVariable := range updates.adds {
+			err := dataStorage.AddVariable(dataset.ID, dataset.StorageName, addVariable.Key, addVariable.Type, "")
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(updates.reorders) > 0 {
+		// update the in-memory dataset and disk-based dataset variables to reflect any re-ordering that takes place
+		updateVariableIndices(diskDataset, dataset.Variables)
+		updateVariableIndices(diskDataset, diskDataset.Dataset.Metadata.GetMainDataResource().Variables)
+	}
+
+	// save the updates to disk - should hopefully just work
+	err := diskDataset.SaveDataset()
+	if err != nil {
+		return err
+	}
+
+	// save the updates to the metadata store
+	err = metaStorage.UpdateDataset(dataset)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func updateVariableIndices(diskDataset *api.DiskDataset, variables []*model.Variable) {
+	headerRow := diskDataset.Dataset.Data[0]
+	varIndices := map[string]int{}
+	for i, headerValue := range headerRow {
+		varIndices[headerValue] = i
+	}
+	for _, variable := range variables {
+		if idx, ok := varIndices[variable.Key]; ok {
+			variable.Index = idx
+		} else {
+			variable.Index = -1
+		}
+	}
 }
 
 // ImportPredictionDataset imports a dataset to be used for predictions.
