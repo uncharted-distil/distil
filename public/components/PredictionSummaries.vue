@@ -181,7 +181,8 @@ export default Vue.extend({
           !meta.rank &&
           !meta.confidence &&
           !meta.summary &&
-          !meta.prediction
+          !meta.prediction &&
+          !meta.summary.key
         ) {
           return;
         }

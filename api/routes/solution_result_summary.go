@@ -176,7 +176,7 @@ func SolutionResultSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor
 			handleError(w, err)
 			return
 		}
-		summary.Key = api.GetPredictedKey(res.SolutionID)
+		summary.Key = api.GetPredictedKey(res.ResultUUID)
 		summary.Label = "Predicted"
 
 		// marshal data and sent the response back

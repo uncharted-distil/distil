@@ -1104,13 +1104,7 @@ export const actions = {
     context: ViewContext,
     args: { predictions: Predictions[] }
   ) {
-    const produceRequestId = context.getters.getRouteProduceRequestId as string;
     const fittedSolutionId = context.getters.getRouteFittedSolutionId as string;
-    const pred = getPredictionsById(
-      context.getters.getPredictions,
-      produceRequestId
-    );
-    const inferenceDataset = pred.dataset;
     const highlights = context.getters.getDecodedHighlights as Highlight[];
     const dataMode = context.getters.getDataMode;
     const varMode = SummaryMode.Default;
@@ -1123,7 +1117,7 @@ export const actions = {
 
     args.predictions.forEach((p) => {
       predictionActions.fetchConfidenceSummary(store, {
-        dataset: inferenceDataset,
+        dataset: p.dataset,
         highlights: highlights,
         solutionId: p.resultId,
         dataMode,
@@ -1131,7 +1125,7 @@ export const actions = {
         target: p.feature,
       });
       predictionActions.fetchRankSummary(store, {
-        dataset: inferenceDataset,
+        dataset: p.dataset,
         highlights: highlights,
         solutionId: p.resultId,
         dataMode,
@@ -1182,17 +1176,17 @@ export const actions = {
 
     relPreds.forEach((p) => {
       predictionActions.fetchConfidenceSummary(store, {
-        dataset: inferenceDataset,
+        dataset: p.dataset,
         highlights: highlights,
-        solutionId: p.resultId,
+        solutionId: p.requestId,
         dataMode,
         varMode,
         target: p.feature,
       });
       predictionActions.fetchRankSummary(store, {
-        dataset: inferenceDataset,
+        dataset: p.dataset,
         highlights: highlights,
-        solutionId: p.resultId,
+        solutionId: p.requestId,
         dataMode,
         varMode,
         target: p.feature,

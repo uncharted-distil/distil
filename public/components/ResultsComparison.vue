@@ -76,9 +76,11 @@ import { resultSummariesToVariables } from "../util/summaries";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as resultsGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
+import { getters as requestGetters } from "../store/requests/module";
 import { Variable } from "../store/dataset/index";
 import { updateHighlight, UPDATE_ALL } from "../util/highlights";
 import { lexQueryToFiltersAndHighlight } from "../util/lex";
+import { getSolutionById } from "../util/solutions";
 
 const GEO_VIEW = "geo";
 const TABLE_VIEW = "table";
@@ -116,7 +118,11 @@ export default Vue.extend({
     },
     allVariables(): Variable[] {
       const solutionID = routeGetters.getRouteSolutionId(this.$store);
-      const resultVariables = resultSummariesToVariables(solutionID);
+      const solution = getSolutionById(
+        requestGetters.getRelevantSolutions(this.$store),
+        solutionID
+      );
+      const resultVariables = resultSummariesToVariables(solution?.resultId);
       return datasetGetters
         .getAllVariables(this.$store)
         .concat(resultVariables);
