@@ -541,23 +541,21 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 		// loop through each filter set
 		for _, set := range filterSets {
 			// pull the set out
-			filterSet := model.FilterSet{}
-			// put the set in a filter object
-			filterObject := model.FilterObject{}
+			filterSet := &model.FilterSet{}
 			setMode := ""
 			for _, filter := range set {
 				f, err := parseFilter(filter)
 				if err != nil {
 					return nil, err
 				}
-				filterObject.List = append(filterObject.List, f)
-				filterObject.Invert = invertFilters
+				filterObjectIndex := getOrAddFeatureFilterIndex(f.Key, filterSet)
+				filterSet.FeatureFilters[filterObjectIndex].List = append(filterSet.FeatureFilters[filterObjectIndex].List, f)
+				filterSet.FeatureFilters[filterObjectIndex].Invert = invertFilters
 				setMode = f.Mode
 			}
 			// put filterObject in a filterSet then append to filterParams
-			filterSet.FeatureFilters = append(filterSet.FeatureFilters, filterObject)
 			filterSet.Mode = setMode
-			filterParams.Filters = append(filterParams.Filters, &filterSet)
+			filterParams.Filters = append(filterParams.Filters, filterSet)
 		}
 	}
 	// We might need to throw an error if no variables are passed?
@@ -568,6 +566,20 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 	}
 
 	return filterParams, nil
+}
+
+func getOrAddFeatureFilterIndex(featureKey string, set *model.FilterSet) int {
+	for i, ff := range set.FeatureFilters {
+		for _, f := range ff.List {
+			if f.Key == featureKey {
+				return i
+			}
+		}
+	}
+
+	set.FeatureFilters = append(set.FeatureFilters, model.FilterObject{})
+
+	return len(set.FeatureFilters) - 1
 }
 
 // NaNReplacement defines the type of replacement value to use for NaNs

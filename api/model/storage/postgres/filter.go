@@ -278,24 +278,37 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, wheres []string, param
 
 	// exclusion set is the complement of the equivalent inclusion set
 	// ie: the exclusion set can be defined as NOT(inclusion set)
-	filters := []string{}
+	filtersInclusive := []string{}
+	filtersExclusive := []string{}
 	for _, set := range filterParams.Filters {
 		where := ""
 		where, params = s.buildSelectionFilter(dataset, params, alias, set.FeatureFilters)
 		if set.Mode == model.ExcludeFilter {
 			where = fmt.Sprintf("NOT(%s)", where)
+			filtersExclusive = append(filtersExclusive, where)
+		} else {
+			filtersInclusive = append(filtersInclusive, where)
 		}
-		filters = append(filters, where)
 	}
 
-	// AND all the filters by mode (combining exclusion and inclusion filters)
-	if len(filters) > 0 {
-		where := fmt.Sprintf("(%s)", strings.Join(filters, " AND "))
+	// OR all the inclusive filter sets because the data can be in any of them
+	if len(filtersInclusive) > 0 {
+		where := fmt.Sprintf("(%s)", strings.Join(filtersInclusive, " OR "))
 		if filterParams.Invert {
 			where = fmt.Sprintf("NOT%s", where)
 		}
 		wheres = append(wheres, where)
 	}
+
+	// AND all the exclusive filter sets because the data should not be in any of them
+	if len(filtersExclusive) > 0 {
+		where := fmt.Sprintf("(%s)", strings.Join(filtersExclusive, " AND "))
+		if filterParams.Invert {
+			where = fmt.Sprintf("NOT%s", where)
+		}
+		wheres = append(wheres, where)
+	}
+
 	return wheres, params
 }
 
