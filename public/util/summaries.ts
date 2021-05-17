@@ -71,28 +71,23 @@ export function summaryToVariable(summary: VariableSummary): Variable {
 }
 
 export function getSolutionResultSummary(solutionID: string): VariableSummary {
-  return resultGetters
-    .getPredictedSummaries(store)
-    .find((s) => getIDFromKey(s.key) === solutionID);
+  const solutions = resultGetters.getPredictedSummaries(store);
+  return solutions.find((s) => getIDFromKey(s.key) === solutionID);
 }
 
 export function getResidualSummary(solutionID: string): VariableSummary {
-  return resultGetters
-    .getResidualsSummaries(store)
-    .find((s) => getIDFromKey(s.key) === solutionID);
+  const residuals = resultGetters.getResidualsSummaries(store);
+  return residuals.find((s) => getIDFromKey(s.key) === solutionID);
 }
 
 export function getCorrectnessSummary(solutionID: string): VariableSummary {
-  return resultGetters
-    .getCorrectnessSummaries(store)
-    .find((s) => getIDFromKey(s.key) === solutionID);
-  return null;
+  const correctness = resultGetters.getCorrectnessSummaries(store);
+  return correctness.find((s) => getIDFromKey(s.key) === solutionID);
 }
 
 export function getPredictionResultSummary(requestId: string): VariableSummary {
-  return predictionGetters
-    .getPredictionSummaries(store)
-    .find((s) => getIDFromKey(s.key) === requestId);
+  const preds = predictionGetters.getPredictionSummaries(store);
+  return preds.find((s) => getIDFromKey(s.key) === requestId);
 }
 export function getPredictionConfidenceSummary(
   requestId: string
@@ -101,19 +96,14 @@ export function getPredictionConfidenceSummary(
   return sums.find((s) => s.solutionId === requestId);
 }
 export function getPredictionRankSummary(requestId: string): VariableSummary {
-  return predictionGetters
-    .getRankSummaries(store)
-    .find((s) => s.solutionId === requestId);
+  const preds = predictionGetters.getRankSummaries(store);
+  return preds.find((s) => s.solutionId === requestId);
 }
 export function getConfidenceSummary(solutionID: string): VariableSummary {
-  return resultGetters
-    .getConfidenceSummaries(store)
-    .find((s) => getIDFromKey(s.key) === solutionID);
-  return null;
+  const confidence = resultGetters.getConfidenceSummaries(store);
+  return confidence.find((s) => getIDFromKey(s.key) === solutionID);
 }
 export function getRankingSummary(solutionID: string): VariableSummary {
-  return resultGetters
-    .getRankingSummaries(store)
-    .find((s) => getIDFromKey(s.key) === solutionID);
-  return null;
+  const ranks = resultGetters.getRankingSummaries(store);
+  return ranks.find((s) => getIDFromKey(s.key) === solutionID);
 }

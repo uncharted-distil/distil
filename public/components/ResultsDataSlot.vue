@@ -309,11 +309,13 @@ export default Vue.extend({
         this.trainingVariables,
         summaryDictionary
       );
-      const predictedSummary = getSolutionResultSummary(this.solutionId);
+      const predictedSummary = getSolutionResultSummary(
+        this.solution?.resultId
+      );
       if (predictedSummary) {
         currentSummaries.push(predictedSummary);
       }
-      const residualSummary = getResidualSummary(this.solutionId);
+      const residualSummary = getResidualSummary(this.solution?.resultId);
       if (residualSummary) {
         currentSummaries.push(residualSummary);
       }
@@ -321,11 +323,11 @@ export default Vue.extend({
       if (correctnessSummary) {
         currentSummaries.push(correctnessSummary);
       }
-      const confidenceSummary = getConfidenceSummary(this.solutionId);
+      const confidenceSummary = getConfidenceSummary(this.solution?.resultId);
       if (confidenceSummary) {
         currentSummaries.push(confidenceSummary);
       }
-      const rankingSummary = getRankingSummary(this.solutionId);
+      const rankingSummary = getRankingSummary(this.solution?.resultId);
       if (rankingSummary) {
         currentSummaries.push(rankingSummary);
       }

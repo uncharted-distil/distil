@@ -125,7 +125,7 @@ func ConfidenceSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api
 			if confSummary.Baseline.IsEmpty() {
 				summary["confidence"] = nil
 			} else {
-				confSummary.Key = api.GetConfidenceKey(res.SolutionID)
+				confSummary.Key = api.GetConfidenceKey(res.ResultUUID)
 				confSummary.Label = "Confidence"
 			}
 		}
@@ -134,7 +134,7 @@ func ConfidenceSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api
 			if rankSummary.Baseline.IsEmpty() {
 				summary["rank"] = nil
 			} else {
-				rankSummary.Key = api.GetRankKey(res.SolutionID)
+				rankSummary.Key = api.GetRankKey(res.ResultUUID)
 				rankSummary.Label = "Rank"
 			}
 		}

@@ -75,7 +75,11 @@ import Vue from "vue";
 import _ from "lodash";
 import ResultGroup from "../components/ResultGroup.vue";
 import { VariableSummary } from "../store/dataset/index";
-import { SolutionRequestStatus, Score } from "../store/requests/index";
+import {
+  SolutionRequestStatus,
+  Score,
+  Solution,
+} from "../store/requests/index";
 import { getters as resultsGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
 import {
@@ -174,37 +178,39 @@ export default Vue.extend({
       const requestsMap = _.keyBy(solutionRequests, (s) => s.requestId);
 
       // Create a summary group for each search result.
-      const summaryGroups: SummaryGroup[] = solutions.map((solution) => {
-        const solutionId = solution.solutionId;
-        const requestId = solution.requestId;
-        const predictedSummary = getSolutionResultSummary(solutionId);
-        const residualSummary = this.showResiduals
-          ? getResidualSummary(solutionId)
-          : null;
-        const correctnessSummary = !this.showResiduals
-          ? getCorrectnessSummary(solutionId)
-          : null;
-        const confidenceSummary = !this.showResiduals
-          ? getConfidenceSummary(solutionId)
-          : null;
-        const rankingSummary = !this.showResiduals
-          ? getRankingSummary(solutionId)
-          : null;
-        const scores = solution.scores;
+      const summaryGroups: SummaryGroup[] = solutions.map(
+        (solution: Solution) => {
+          const solutionId = solution.resultId;
+          const requestId = solution.requestId;
+          const predictedSummary = getSolutionResultSummary(solutionId);
+          const residualSummary = this.showResiduals
+            ? getResidualSummary(solutionId)
+            : null;
+          const correctnessSummary = !this.showResiduals
+            ? getCorrectnessSummary(solutionId)
+            : null;
+          const confidenceSummary = !this.showResiduals
+            ? getConfidenceSummary(solutionId)
+            : null;
+          const rankingSummary = !this.showResiduals
+            ? getRankingSummary(solutionId)
+            : null;
+          const scores = solution.scores;
 
-        return {
-          requestId: requestId,
-          solutionId: solutionId,
-          groupName: solution.featureLabel,
-          predictedSummary: predictedSummary,
-          residualsSummary: residualSummary,
-          correctnessSummary: correctnessSummary,
-          confidenceSummary: confidenceSummary,
-          rankingSummary: rankingSummary,
-          targetSummary: this.resultTargetSummary,
-          scores: scores,
-        };
-      });
+          return {
+            requestId: requestId,
+            solutionId: solution.solutionId,
+            groupName: solution.featureLabel,
+            predictedSummary: predictedSummary,
+            residualsSummary: residualSummary,
+            correctnessSummary: correctnessSummary,
+            confidenceSummary: confidenceSummary,
+            rankingSummary: rankingSummary,
+            targetSummary: this.resultTargetSummary,
+            scores: scores,
+          };
+        }
+      );
 
       // Group the requests by their request ID.
       const summariesByRequestId = _.groupBy(summaryGroups, "requestId");

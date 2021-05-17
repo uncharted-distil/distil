@@ -127,7 +127,7 @@ func CorrectnessSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor ap
 			handleError(w, err)
 			return
 		}
-		summary.Key = api.GetErrorKey(res.SolutionID)
+		summary.Key = api.GetErrorKey(res.ResultUUID)
 		summary.Label = "Error"
 
 		// marshal data and sent the response back

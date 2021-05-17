@@ -112,6 +112,9 @@ func SolutionsHandler(solutionCtor api.SolutionStorageCtor, metadataCtor api.Met
 					// result
 					solution.ResultID = sol.Results[0].ResultUUID
 					solution.FittedSolutionID = sol.Results[0].FittedSolutionID
+					solution.PredictedKey = api.GetPredictedKey(sol.Results[0].ResultUUID)
+					solution.ErrorKey = api.GetErrorKey(sol.Results[0].ResultUUID)
+					solution.ConfidenceKey = api.GetConfidenceKey(sol.Results[0].ResultUUID)
 				}
 				solutions = append(solutions, solution)
 			}
