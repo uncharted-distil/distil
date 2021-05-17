@@ -22,6 +22,7 @@
       bordered
       hover
       small
+      show-empty
       :current-page="currentPage"
       :items="items"
       :fields="tableFields"
