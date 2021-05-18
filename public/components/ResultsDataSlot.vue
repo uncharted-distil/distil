@@ -319,7 +319,7 @@ export default Vue.extend({
       if (residualSummary) {
         currentSummaries.push(residualSummary);
       }
-      const correctnessSummary = getCorrectnessSummary(this.solutionId);
+      const correctnessSummary = getCorrectnessSummary(this.solution?.resultId);
       if (correctnessSummary) {
         currentSummaries.push(correctnessSummary);
       }

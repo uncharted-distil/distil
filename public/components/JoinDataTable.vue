@@ -21,7 +21,6 @@
     bordered
     hover
     small
-    show-empty
     sticky-header="100%"
     :items="items"
     :fields="emphasizedFields"
@@ -29,7 +28,7 @@
     @head-clicked="onColumnClicked"
   >
     <template v-slot:cell()="data">
-      {{ data.value.value }}
+      <span class="min-height-20">{{ data.value.value }}</span>
     </template>
 
     <template
@@ -287,7 +286,11 @@ export default Vue.extend({
   },
 });
 </script>
-
+<style scoped>
+.min-height-20 {
+  min-height: 20px;
+}
+</style>
 <style>
 table tr {
   cursor: pointer;
