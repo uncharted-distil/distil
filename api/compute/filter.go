@@ -143,29 +143,30 @@ func getPreFiltering(ds *api.Dataset, filterParams *api.FilterParams) (*api.Filt
 	}
 	clone := filterParams.Clone()
 
-	// filter if a clustering or outlier detection metadata feature exist
-	// remove pre filters from the rest of the filters since they should not be in the main pipeline
+	// pre filters should be every filter to remove it from the train and test split
+	// the remaining filters should exclude clustering and d3m index filters
 	preFilters := api.NewFilterParamsFromFilters(nil)
 	clone.Filters = []*model.FilterSet{}
 	for _, fs := range filterParams.Filters {
 		for _, ff := range fs.FeatureFilters {
 			for _, f := range ff.List {
+				isPipelineEmbed := true
 				variable := vars[f.Key]
-				params := clone
 				if variable.IsGrouping() {
 					cg, ok := variable.Grouping.(model.ClusteredGrouping)
 					if ok {
 						f.Key = cg.GetClusterCol()
-						params = preFilters
+						isPipelineEmbed = false
 					}
+				} else if variable.Key == model.D3MIndexFieldName {
+					// Pre-filters rows select by D3MIndex (i.e. row selection.)
+					isPipelineEmbed = false
 				}
 
-				// Pre-filters rows select by D3MIndex (i.e. row selection.)
-				if variable.Key == model.D3MIndexFieldName {
-					params = preFilters
+				preFilters.AddFilter(f)
+				if isPipelineEmbed {
+					clone.AddFilter(f)
 				}
-
-				params.AddFilter(f)
 			}
 		}
 	}
