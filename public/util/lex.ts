@@ -535,11 +535,18 @@ export function filtersToValueState(
       }
       return result;
     } else {
-      for (let i = 0; i < f[0].categories.length; ++i) {
-        result[`value_${i}`] = new ValueStateValue(f[0].categories[i], null, {
-          displayKey: f[0].categories[i],
-        });
-      }
+      let idx = 0;
+      for (let j = 0; j < f.length; j++)
+        for (let i = 0; i < f[j].categories.length; ++i) {
+          result[`value_${idx}`] = new ValueStateValue(
+            f[j].categories[i],
+            null,
+            {
+              displayKey: f[j].categories[i],
+            }
+          );
+          idx++;
+        }
       return result;
     }
   });
