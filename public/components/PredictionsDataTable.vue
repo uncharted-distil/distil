@@ -22,7 +22,6 @@
       bordered
       hover
       small
-      show-empty
       :current-page="currentPage"
       :items="items"
       :fields="tableFields"
@@ -36,7 +35,11 @@
         v-for="computedField in computedFields"
         v-slot:[cellSlot(computedField)]="data"
       >
-        <div :key="computedField" :title="data.value.value">
+        <div
+          :key="computedField"
+          :title="data.value.value"
+          class="min-height-20"
+        >
           {{ data.value.value }}
           <icon-base icon-name="fork" class="icon-fork" width="14" height="14">
             <icon-fork />
@@ -66,19 +69,20 @@
         v-for="(listField, index) in listFields"
         v-slot:[cellSlot(listField.key)]="data"
       >
-        <span :key="index" :title="formatList(data)">
+        <span :key="index" :title="formatList(data)" class="min-height-20">
           {{ formatList(data) }}
         </span>
       </template>
 
       <template v-slot:cell()="data">
         <template v-if="['min', 'max', 'mean'].includes(data.field.key)">
-          {{ data.value | cleanNumber }}
+          <span class="min-height-20">{{ data.value | cleanNumber }}</span>
         </template>
         <div
           v-else
           :title="data.value.value"
           :style="cellColor(data.value.weight, data)"
+          class="min-height-20"
         >
           {{ data.value.value }}
         </div>
@@ -464,7 +468,11 @@ export default Vue.extend({
   },
 });
 </script>
-
+<style scoped>
+.min-height-20 {
+  min-height: 20px;
+}
+</style>
 <style>
 table tr {
   cursor: pointer;

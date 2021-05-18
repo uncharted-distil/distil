@@ -22,7 +22,6 @@
       bordered
       hover
       small
-      show-empty
       :current-page="currentPage"
       :items="items"
       :fields="tableFields"
@@ -90,7 +89,7 @@
         v-for="(listField, index) in listFields"
         v-slot:[cellSlot(listField.key)]="data"
       >
-        <span :key="index" :title="formatList(data)">
+        <span :key="index" :title="formatList(data)" class="min-height-20">
           {{ formatList(data) }}
         </span>
       </template>
@@ -100,7 +99,7 @@
         <div>
           <div
             v-if="isTargetNumerical"
-            class="error-bar-container"
+            class="error-bar-container min-height-20"
             :title="data.value.value"
           >
             <div
@@ -116,10 +115,16 @@
 
           <!-- correctness error -->
           <div v-if="isTargetCategorical">
-            <div v-if="data.item[predictedCol].value == data.value.value">
+            <div
+              v-if="data.item[predictedCol].value == data.value.value"
+              class="min-height-20"
+            >
               Correct
             </div>
-            <div v-if="data.item[predictedCol].value != data.value.value">
+            <div
+              v-if="data.item[predictedCol].value != data.value.value"
+              class="min-height-20"
+            >
               Incorrect
             </div>
           </div>
@@ -128,12 +133,13 @@
 
       <template v-slot:cell()="data">
         <template v-if="['min', 'max', 'mean'].includes(data.field.key)">
-          {{ data.value | cleanNumber }}
+          <span class="min-height-20">{{ data.value | cleanNumber }}</span>
         </template>
         <div
           v-else
           :title="data.value.value"
           :style="cellColor(data.value.weight, data)"
+          class="min-height-20"
         >
           {{ data.value.value }}
         </div>
@@ -620,6 +626,9 @@ export default Vue.extend({
 </script>
 
 <style>
+.min-height-20 {
+  min-height: 20px;
+}
 table tr {
   cursor: pointer;
 }

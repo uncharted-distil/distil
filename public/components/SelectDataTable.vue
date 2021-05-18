@@ -22,7 +22,6 @@
       bordered
       hover
       small
-      show-empty
       :current-page="currentPage"
       :items="items"
       :fields="tableFields"
@@ -36,7 +35,11 @@
         v-for="computedField in computedFields"
         v-slot:[cellSlot(computedField)]="data"
       >
-        <span :key="computedField" :title="data.value.value">
+        <span
+          :key="computedField"
+          :title="data.value.value"
+          class="min-height-20"
+        >
           {{ data.value.value }}
           <icon-base icon-name="fork" class="icon-fork" width="14" height="14">
             <icon-fork />
@@ -91,7 +94,7 @@
         v-for="(listField, index) in listFields"
         v-slot:[cellSlot(listField.key)]="data"
       >
-        <span :key="index" :title="formatList(data)">
+        <span :key="index" :title="formatList(data)" class="min-height-20">
           {{ formatList(data) }}
         </span>
       </template>
@@ -100,7 +103,9 @@
         <template v-if="['min', 'max', 'mean'].includes(data.field.key)">
           {{ data.value | cleanNumber }}
         </template>
-        <span v-else :title="data.value.value">{{ data.value.value }}</span>
+        <span v-else :title="data.value.value" class="min-height-20">{{
+          data.value.value
+        }}</span>
       </template>
     </b-table>
     <b-pagination
@@ -519,6 +524,9 @@ export default Vue.extend({
 </script>
 
 <style>
+.min-height-20 {
+  min-height: 20px;
+}
 table tr {
   cursor: pointer;
 }

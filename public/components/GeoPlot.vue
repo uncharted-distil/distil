@@ -460,7 +460,7 @@ export default Vue.extend({
       }
 
       const solution = requestGetters.getActiveSolution(this.$store);
-      return solution ? `${solution.predictedKey}` : "";
+      return solution ? solution.predictedKey : "";
     },
 
     targetField(): string {
