@@ -63,6 +63,10 @@ type stratifiedSplitter struct {
 	trainTestSplit float64
 }
 
+type semiSupervisedSplitter struct {
+	splitter *stratifiedSplitter
+}
+
 func (t *timeseriesSplitter) hash(schemaFile string, params ...interface{}) (uint64, error) {
 	// generate the hash from the params
 	hashStruct := struct {
@@ -290,6 +294,78 @@ func (s *stratifiedSplitter) split(data [][]string) ([][]string, [][]string, err
 	return outputTrain, outputTest, nil
 }
 
+func (s *semiSupervisedSplitter) hash(schemaFile string, params ...interface{}) (uint64, error) {
+	// generate the hash from the params
+	hashStruct := struct {
+		Schema         string
+		Stratify       bool
+		Semi           bool
+		RowLimits      rowLimits
+		TargetCol      int
+		GroupingCol    int
+		TrainTestSplit float64
+		Params         []interface{}
+	}{
+		Schema:         schemaFile,
+		Stratify:       true,
+		Semi:           true,
+		RowLimits:      s.splitter.rowLimits,
+		TargetCol:      s.splitter.targetCol,
+		GroupingCol:    s.splitter.groupingCol,
+		TrainTestSplit: s.splitter.trainTestSplit,
+		Params:         params,
+	}
+	hash, err := hashstructure.Hash(hashStruct, nil)
+	if err != nil {
+		return 0, errors.Wrap(err, "failed to generate persisted data hash")
+	}
+	return hash, nil
+}
+
+func (s *semiSupervisedSplitter) sample(data [][]string, maxRows int) [][]string {
+	return s.splitter.sample(data, maxRows)
+}
+
+func (s *semiSupervisedSplitter) splitCategories(colIndex int, data [][]string) map[string][][]string {
+	return s.splitter.splitCategories(colIndex, data)
+}
+
+func (s *semiSupervisedSplitter) split(data [][]string) ([][]string, [][]string, error) {
+	log.Infof("performing split for semi supervised based on stratified sampling")
+	// create the output
+	outputTrain := [][]string{}
+	outputTest := [][]string{}
+
+	// handle the header
+	inputData, outputTrain, outputTest := splitTrainTestHeader(data, outputTrain, outputTest, true)
+
+	numDatasetRows := len(inputData)
+	numTrainingRows := s.splitter.rowLimits.trainingRows(numDatasetRows)
+	numTestRows := s.splitter.rowLimits.testRows(numDatasetRows)
+	// For statification we use a proportionate allocation strategy, dividing the dataset up into
+	// subsets by category, and then sampling the subsets using the supplied train/test ratio.
+
+	// first pass - create subsets by category
+	log.Infof("collecting categories")
+	categoryRowData := s.splitCategories(s.splitter.targetCol, inputData)
+
+	// second pass - randomly sample each category to generate train/test split
+	log.Infof("shuffling and splitting based on %d categories", len(categoryRowData))
+	for target, data := range categoryRowData {
+		maxCategoryTrainingRows := int(math.Max(1, float64(len(data))/float64(len(inputData))*float64(numTrainingRows)))
+		maxCategoryTestRows := int(math.Max(1, float64(len(data))/float64(len(inputData))*float64(numTestRows)))
+
+		// if the target is blank, then treat it all as training data
+		if target == "" {
+			maxCategoryTestRows = 0
+			maxCategoryTrainingRows = len(data)
+		}
+		outputTrain, outputTest = shuffleAndWrite(data, s.splitter.groupingCol, maxCategoryTrainingRows, maxCategoryTestRows, true, outputTrain, outputTest, s.splitter.trainTestSplit)
+	}
+
+	return outputTrain, outputTest, nil
+}
+
 // SplitDataset splits a dataset into train and test, using an approach to splitting
 // suitable to the task performed.
 func SplitDataset(schemaFile string, splitter datasetSplitter) (string, string, error) {
@@ -393,12 +469,32 @@ func loadData(sourceFolder string, meta *model.Metadata) ([][]string, error) {
 
 func createSplitter(taskType []string, targetFieldIndex int, groupingFieldIndex int, stratify bool, quality string, trainTestSplit float64, timestampValueSplit float64) datasetSplitter {
 
+	// build row limits
+	config, _ := env.LoadConfig()
+	limits := rowLimits{
+		MinTrainingRows: config.MinTrainingRows,
+		MinTestRows:     config.MinTestRows,
+		MaxTrainingRows: config.MaxTrainingRows,
+		MaxTestRows:     config.MaxTestRows,
+		Sample:          config.FastDataPercentage,
+		Quality:         quality,
+	}
+
 	for _, task := range taskType {
 		if task == compute.ForecastingTask {
 			return &timeseriesSplitter{
 				timeseriesCol:       groupingFieldIndex,
 				trainTestSplit:      trainTestSplit,
 				timestampValueSplit: timestampValueSplit,
+			}
+		} else if task == compute.SemiSupervisedTask {
+			return &semiSupervisedSplitter{
+				splitter: &stratifiedSplitter{
+					rowLimits:      limits,
+					targetCol:      targetFieldIndex,
+					groupingCol:    groupingFieldIndex,
+					trainTestSplit: trainTestSplit,
+				},
 			}
 		}
 	}
@@ -409,16 +505,6 @@ func createSplitter(taskType []string, targetFieldIndex int, groupingFieldIndex 
 			trainTestSplit:      trainTestSplit,
 			timestampValueSplit: timestampValueSplit,
 		}
-	}
-	// build row limits
-	config, _ := env.LoadConfig()
-	limits := rowLimits{
-		MinTrainingRows: config.MinTrainingRows,
-		MinTestRows:     config.MinTestRows,
-		MaxTrainingRows: config.MaxTrainingRows,
-		MaxTestRows:     config.MaxTestRows,
-		Sample:          config.FastDataPercentage,
-		Quality:         quality,
 	}
 
 	if stratify {
