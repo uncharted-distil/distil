@@ -81,7 +81,7 @@ export function colorByFacet(
   if (isCategoricalType(variable.type)) {
     const keyMap = new Map(
       variable.baseline.buckets.map((b, i) => {
-        return [b.key, i];
+        return [b.key === "<none>" ? "" : b.key, i];
       })
     );
     return (item: TableRow, idx: number) => {
@@ -90,6 +90,9 @@ export function colorByFacet(
   } else if (variable.varType === DATE_TIME_TYPE) {
     const diff = variable.baseline.extrema.max - variable.baseline.extrema.min;
     return (item: TableRow, idx: number) => {
+      if (diff === 0) {
+        return 0;
+      }
       return (
         (new Date(item[key].value).getTime() / 1000 -
           variable.baseline.extrema.min) /
