@@ -26,12 +26,76 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/otiai10/copy"
 	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
 )
+
+var (
+	deletes *deleteBuffer
+)
+
+type deleteBuffer struct {
+	files []string
+	mu    *sync.Mutex
+	stop  bool
+}
+
+func (b *deleteBuffer) add(filename string) {
+	b.files = append(b.files, filename)
+}
+
+func (b *deleteBuffer) popAll() []string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	copy := append([]string{}, b.files...)
+	b.files = []string{}
+
+	return copy
+}
+
+// InitializeDeleteBuffer will initialize the routines and channels used
+// to buffer deletions.
+func InitializeDeleteBuffer(bufferTimeSeconds int) {
+	deletes = &deleteBuffer{
+		files: []string{},
+		mu:    &sync.Mutex{},
+	}
+
+	// start process that will delete in the background
+}
+
+func bufferedDelete(buffer *deleteBuffer, bufferTimeSeconds int) {
+	for !buffer.stop {
+		time.Sleep(time.Duration(bufferTimeSeconds) * time.Second)
+		log.Infof("processing all buffered files to delete")
+		deletes := buffer.popAll()
+		for _, f := range deletes {
+			log.Infof("deleting '%s'", f)
+			err := RemoveContents(f, true)
+			if err != nil {
+				log.Warnf("unable to delete '%s': %+v", f, err)
+			}
+		}
+	}
+}
+
+// Delete removes the specified path from disk. It will buffer the delete
+// if the system initialized the buffering.
+func Delete(filename string) {
+	// delete directly if no channel available for buffering
+	if deletes == nil {
+		err := RemoveContents(filename, true)
+		if err != nil {
+			log.Warnf("unable to delete '%s': %+v", filename, err)
+		}
+	}
+
+	deletes.add(filename)
+}
 
 // WriteFileWithDirs writes the file and creates any missing directories along
 // the way.
