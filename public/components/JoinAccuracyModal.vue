@@ -134,6 +134,7 @@ export default Vue.extend({
           const key = ad.joinPair.first + ad.joinPair.second;
           return curMap.has(key);
         });
+        this.updateRoute();
       } else {
         const end = cur.length - 1;
         const unitType = this.getUnitTypes(cur[end]);
@@ -150,6 +151,7 @@ export default Vue.extend({
             unitType,
             unit: this.getDefaultUnit(unitType),
           });
+          this.updateRoute();
         }
       }
     },

@@ -51,33 +51,22 @@
       <i class="fa fa-exclamation-triangle warning-icon mr-2" />
       <span v-html="joinWarning" />
     </div>
-    <div class="search-input p-2">
-      <header>Join Pairs</header>
-      <main>
-        <badge
-          v-for="(pair, index) in joinPairs"
-          :key="index"
-          :content="`${pair.first}->${pair.second}`"
-          :identifier="pair"
-          @removed="badgeRemoved"
-        />
-      </main>
-    </div>
     <div class="d-flex justify-content-between bottom-margin form-height">
       <div class="d-flex">
         <b-button variant="primary" @click="swapDatasets" class="join-button">
           Swap Datasets
         </b-button>
       </div>
-      <div class="join-progress">
-        <b-progress
-          v-if="isPending"
-          :value="percentComplete"
-          variant="outline-secondary"
-          striped
-          :animated="true"
+      <main class="d-flex w-50">
+        <badge
+          v-for="(pair, index) in joinPairs"
+          class="d-flex justify-content-center align-items-center"
+          :key="index"
+          :content="`${pair.first}->${pair.second}`"
+          :identifier="pair"
+          @removed="badgeRemoved"
         />
-      </div>
+      </main>
       <div class="d-flex">
         <b-button-group>
           <b-button
@@ -104,7 +93,8 @@
           @click="previewJoin"
         >
           <div class="d-flex justify-content-center align-items-center">
-            <b>Join Datasets</b>
+            <b v-if="!isPending">Join Datasets</b>
+            <b-spinner v-if="isPending" small />
           </div>
         </b-button>
       </div>
@@ -353,10 +343,7 @@ export default Vue.extend({
 .form-height {
   max-height: 40px;
 }
-.join-progress {
-  width: 40%;
-  margin: 6px 10px;
-}
+
 .join-accuracy-label {
   text-align: center;
 }
