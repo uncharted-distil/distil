@@ -13,7 +13,7 @@
           class="p-2"
         >
           <b-col md>
-            <b>{{ ad.joinPair.first }}->{{ ad.joinPair.second }}</b>
+            <b>{{ ad.joinPair.first }} -> {{ ad.joinPair.second }}</b>
           </b-col>
           <b-col sm
             ><b-form-checkbox
