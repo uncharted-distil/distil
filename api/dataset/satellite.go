@@ -346,6 +346,11 @@ func (s *Satellite) GetDefinitiveTypes() []*model.Variable {
 	return s.definitiveTypes
 }
 
+// CleanupTempFiles does nothing since this creates no temp files.
+func (s *Satellite) CleanupTempFiles() {
+	util.Delete(s.ExtractedFilePath)
+}
+
 // removeValues removes values not needed based on supplied headernames
 func removeMissingValues(indices []int, values []string) []string {
 	result := []string{}

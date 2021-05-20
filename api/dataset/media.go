@@ -289,3 +289,7 @@ func getLabelFolders(folderPath string) ([]string, error) {
 func (m *Media) GetDefinitiveTypes() []*model.Variable {
 	return m.definitiveTypes
 }
+
+// CleanupTempFiles does nothing since this creates no temp files.
+func (m *Media) CleanupTempFiles() {
+}

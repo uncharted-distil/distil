@@ -38,6 +38,7 @@ import (
 type DatasetConstructor interface {
 	CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*serialization.RawDataset, error)
 	GetDefinitiveTypes() []*model.Variable
+	CleanupTempFiles()
 }
 
 // CreateDataset structures a raw csv file into a valid D3M dataset.
@@ -64,6 +65,7 @@ func CreateDataset(dataset string, datasetCtor DatasetConstructor, outputPath st
 	if err != nil {
 		return "", "", err
 	}
+	defer datasetCtor.CleanupTempFiles()
 
 	datasetStorage := serialization.GetStorage(dataPath)
 	err = datasetStorage.WriteData(dataPath, ds.Data)
@@ -510,6 +512,11 @@ func batchSubmitDataset(schemaFile string, dataset string, size int, submitFunc 
 	if err != nil {
 		return "", err
 	}
+	defer func() {
+		for _, sf := range schemaFiles {
+			util.Delete(sf)
+		}
+	}()
 
 	// submit each batch
 	batchedResultSchemaFiles := []string{}
