@@ -186,11 +186,16 @@ func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, params map[st
 		return "", nil, errors.Errorf("missing parameter 'joinPairs'")
 	}
 
-	accuracy := params["accuracy"].(float64)
-
+	accuracy, ok := params["accuracy"].([]interface{})
+	if !ok {
+		return "", nil, errors.Errorf("error converting accuracy to array interface")
+	}
 	joinPairs, ok := json.Array(params, "joinPairs")
 	if !ok {
 		return "", nil, errors.Errorf("joinPairs not a list of join pairs")
+	}
+	if len(accuracy) != len(joinPairs) {
+		return "", nil, errors.Errorf("accuracy length does not match join pairs length")
 	}
 	leftCols := make([]string, len(joinPairs))
 	rightCols := make([]string, len(joinPairs))
@@ -208,7 +213,10 @@ func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, params map[st
 		}
 		rightCols[i] = colName
 
-		accuracies[i] = accuracy
+		accuracies[i], ok = accuracy[i].(float64)
+		if !ok {
+			return "", nil, errors.Errorf("error converting accuracy to float64")
+		}
 	}
 
 	// need to read variables from disk for the variable list

@@ -68,21 +68,6 @@
         <b-button variant="primary" @click="swapDatasets" class="join-button">
           Swap Datasets
         </b-button>
-        <div
-          class="join-accuracy-label d-flex justify-content-center flex-column ml-1"
-        >
-          Join Accuracy
-          <vue-slider
-            :min="0"
-            :max="1"
-            :interval="0.01"
-            :value="joinAccuracy"
-            :lazy="true"
-            width="100px"
-            tooltip-dir="bottom"
-            @callback="onJoinAccuracyChanged"
-          />
-        </div>
       </div>
       <div class="join-progress">
         <b-progress
@@ -94,14 +79,24 @@
         />
       </div>
       <div class="d-flex">
-        <b-button
-          variant="primary"
-          class="h-100"
-          :disabled="disableAdd"
-          @click="addJoinRelation"
-        >
-          Add Join Relationship
-        </b-button>
+        <b-button-group>
+          <b-button
+            variant="primary"
+            class="h-100"
+            :disabled="disableAdd"
+            @click="addJoinRelation"
+          >
+            Add Join Relationship
+          </b-button>
+          <b-button
+            variant="primary"
+            class="h100"
+            :disabled="disableJoin"
+            v-b-modal.join-accuracy-modal
+          >
+            <i class="fa fa-cog" aria-hidden="true" />
+          </b-button>
+        </b-button-group>
         <b-button
           class="join-button"
           :disabled="disableJoin"
@@ -109,12 +104,12 @@
           @click="previewJoin"
         >
           <div class="d-flex justify-content-center align-items-center">
-            <i class="fa fa-check-circle mr-2" />
             <b>Join Datasets</b>
           </div>
         </b-button>
       </div>
     </div>
+    <join-accuracy-modal />
   </div>
 </template>
 
@@ -125,6 +120,7 @@ import Vue from "vue";
 import vueSlider from "vue-slider-component";
 import JoinDatasetsPreview from "../components/JoinDatasetsPreview.vue";
 import ErrorModal from "../components/ErrorModal.vue";
+import JoinAccuracyModal from "../components/JoinAccuracyModal.vue";
 import Badge from "./Badge.vue";
 import SaveModal from "./SaveModal.vue";
 import { getters as routeGetters } from "../store/route/module";
@@ -148,6 +144,7 @@ export default Vue.extend({
     Badge,
     SaveModal,
     vueSlider,
+    JoinAccuracyModal,
   },
 
   props: {
@@ -155,7 +152,7 @@ export default Vue.extend({
     datasetIdB: String as () => string,
     datasetAColumn: Object as () => TableColumn,
     datasetBColumn: Object as () => TableColumn,
-    joinAccuracy: Number as () => number,
+    joinAccuracy: Array as () => number[],
   },
 
   data() {
@@ -231,19 +228,16 @@ export default Vue.extend({
       // Note: It looks like joined column name is set to same as left column (a) name
       return a;
     },
-    joinPairs(): JoinPair[] {
+    joinPairs(): JoinPair<string>[] {
       return routeGetters.getJoinPairs(this.$store);
     },
   },
 
   methods: {
-    onJoinAccuracyChanged(value: number) {
-      this.$emit("join-accuracy", value);
-    },
     swapDatasets() {
       this.$emit("swap-datasets");
     },
-    badgeRemoved(joinPair: JoinPair) {
+    badgeRemoved(joinPair: JoinPair<string>) {
       const pairs = this.joinPairs.filter((jp) => {
         return jp.first !== joinPair.first || jp.second !== joinPair.second;
       });
@@ -348,7 +342,7 @@ export default Vue.extend({
 }
 .join-button {
   margin: 0 8px;
-  line-height: 32px !important;
+  line-height: 1.5 !important;
 }
 
 .join-preview-modal .modal-dialog {
