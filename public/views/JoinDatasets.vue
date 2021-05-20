@@ -90,7 +90,7 @@
               :dataset-id-b="bottomDataset"
               :dataset-a-column="topColumn"
               :dataset-b-column="bottomColumn"
-              :join-accuracy="joinAccuracy"
+              :join-accuracy="joinAccuracies"
               @join-accuracy="onJoinAccuracyChanged"
               @swap-datasets="swapDatasets"
             />
@@ -227,8 +227,14 @@ export default Vue.extend({
       const colKey = routeGetters.getJoinDatasetColumnA(this.$store);
       return colKey ? this.topDatasetFields[colKey] : null;
     },
-    joinAccuracy(): number {
-      return routeGetters.getJoinAccuracy(this.$store);
+    joinAccuracies(): number[] {
+      const info = routeGetters.getJoinInfo(this.$store);
+      if (!info) {
+        return [];
+      }
+      return info.map((i) => {
+        return i.accuracy;
+      });
     },
     topDataset(): string {
       return this.joinDatasets.length >= 1 ? this.joinDatasets[0] : null;

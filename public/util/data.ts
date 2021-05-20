@@ -109,10 +109,22 @@ export const FILE_PROVENANCE = "file";
 
 export const IMPORTANT_VARIABLE_RANKING_THRESHOLD = 0.5;
 export const LOW_SHOT_SCORE_COLUMN_PREFIX = "__query_";
-
-export interface JoinPair {
-  first: string;
-  second: string;
+export enum UnitTypes {
+  Time,
+  Distance,
+  None,
+  Disabled,
+}
+export interface AccuracyData {
+  joinPair: JoinPair<string>;
+  absolute: boolean;
+  accuracy: number;
+  unitType: UnitTypes;
+  unit: string;
+}
+export interface JoinPair<T> {
+  first: T;
+  second: T;
 }
 // LowShotLabels enum for labeling data in a binary classification
 export enum LowShotLabels {

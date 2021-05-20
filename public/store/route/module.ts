@@ -117,6 +117,7 @@ export const getters = {
     moduleGetters.getDecodedSolutionRequestFilterParams
   ),
   getJoinPairs: read(moduleGetters.getJoinPairs),
+  getJoinInfo: read(moduleGetters.getJoinInfo),
   getTrainingVariables: read(moduleGetters.getTrainingVariables),
   getTrainingVariableSummaries: read(
     moduleGetters.getTrainingVariableSummaries

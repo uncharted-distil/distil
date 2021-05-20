@@ -801,9 +801,9 @@ export const actions = {
     args: {
       datasetA: Dataset;
       datasetB: Dataset;
-      joinAccuracy: number;
+      joinAccuracy: number[];
       joinSuggestionIndex?: number;
-      joinPairs?: JoinPair[];
+      joinPairs?: JoinPair<string>[];
     }
   ): Promise<any> {
     if (!validateArgs(args, ["datasetA", "datasetB", "joinAccuracy"])) {

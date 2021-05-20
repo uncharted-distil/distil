@@ -18,7 +18,7 @@
 import _ from "lodash";
 import { $enum } from "ts-enum-util";
 import { Route } from "vue-router";
-import { JoinPair, minimumRouteKey } from "../../util/data";
+import { JoinPair, AccuracyData, minimumRouteKey } from "../../util/data";
 import { ColorScaleNames } from "../../util/color";
 import { Dictionary } from "../../util/dict";
 import { decodeFilters, Filter, FilterParams } from "../../util/filters";
@@ -95,7 +95,7 @@ export const getters = {
       ? (state.query.joinDatasets as string).split(",")
       : [];
   },
-  getJoinPairs(state: Route): JoinPair[] {
+  getJoinPairs(state: Route): JoinPair<string>[] {
     const pairs = state.query.joinPairs
       ? (state.query.joinPairs as string[])
       : [];
@@ -105,6 +105,13 @@ export const getters = {
     return pairs.map((pair) => {
       return JSON.parse(pair);
     });
+  },
+  getJoinInfo(state: Route): AccuracyData[] {
+    const value = state.query.joinInfo;
+    if (typeof value === "string" && value.length) {
+      return JSON.parse(value);
+    }
+    return null;
   },
   getRouteJoinDatasetsHash(state: Route): string {
     return state.query.joinDatasets as string;
