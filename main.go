@@ -120,6 +120,7 @@ func main() {
 	}
 
 	createOutputFolders(&config)
+	util.InitializeDeleteBuffer(config.DeleteBufferTime)
 
 	// initialize the pipeline cache and
 	pipelineCacheFilename := path.Join(env.GetTmpPath(), config.PipelineCacheFilename)

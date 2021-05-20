@@ -45,10 +45,12 @@ type deleteBuffer struct {
 }
 
 func (b *deleteBuffer) add(filename string) {
+	log.Infof("buffering delete of '%s'", filename)
 	b.files = append(b.files, filename)
 }
 
 func (b *deleteBuffer) popAll() []string {
+	log.Infof("popping all data to be deleted")
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	copy := append([]string{}, b.files...)
@@ -66,6 +68,8 @@ func InitializeDeleteBuffer(bufferTimeSeconds int) {
 	}
 
 	// start process that will delete in the background
+	log.Infof("starting background process that buffers deletions")
+	go bufferedDelete(deletes, bufferTimeSeconds)
 }
 
 func bufferedDelete(buffer *deleteBuffer, bufferTimeSeconds int) {
