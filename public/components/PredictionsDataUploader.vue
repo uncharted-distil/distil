@@ -68,7 +68,8 @@
         class="d-inline-block"
       >
         <b-button variant="primary" :disabled="!canApply" @click="ok()">
-          Apply Model to Input Data
+          <span v-if="!isWaiting">Apply Model to Input Data</span>
+          <b-spinner v-else small />
         </b-button>
       </b-overlay>
     </template>
@@ -233,7 +234,14 @@ export default Vue.extend({
     predictionFinish(err: Error, response: any) {
       this.isWaiting = false;
       this.uploadStatus = err ? "error" : "success";
-
+      if (this.uploadStatus === "error") {
+        console.error(err);
+        this.$bvToast.toast(err.message, {
+          title: "Error",
+          variant: "danger",
+          solid: true,
+        });
+      }
       if (this.uploadStatus !== "error" && !response.complete) {
         const predictionDataset = getPredictionsById(
           requestGetters.getPredictions(this.$store),
