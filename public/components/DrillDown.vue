@@ -50,6 +50,7 @@
                 :shouldFetchImage="false"
                 :shouldCleanUp="false"
                 :uniqueTrail="uniqueTrail"
+                :summaries="summaries"
                 @click="onImageClick"
               />
               <overlap-selection
@@ -78,6 +79,7 @@ import {
   TableColumn,
   D3M_INDEX_FIELD,
   RowSelection,
+  VariableSummary,
 } from "../store/dataset/index";
 import {
   addRowSelection,
@@ -136,6 +138,7 @@ export default Vue.extend({
       default: { imageUrl: "", item: null, coordinates: null },
     },
     instanceName: { type: String as () => string, default: "" },
+    summaries: { type: Array as () => VariableSummary[], default: () => [] },
   },
 
   data() {
