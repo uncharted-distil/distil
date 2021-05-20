@@ -37,6 +37,7 @@
       :tiles="drillDownState.tiles"
       :center-tile="drillDownState.centerTile"
       :bounds="drillDownState.bounds"
+      :summaries="summaries"
       @close="onFocusOut"
     />
     <geoplot-toggle-buttons
