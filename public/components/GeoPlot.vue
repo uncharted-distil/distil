@@ -1289,13 +1289,15 @@ export default Vue.extend({
       if (!this.overlay.getQuad(this.currentState.layerId())) {
         return;
       }
-      updateVertexPrimitiveColor(
-        this.overlay.getQuad(this.tileState.layerId()),
-        this.dataItems,
-        this.tileColor.bind(this),
-        this.areas.length,
-        this.baselineMap
-      );
+      if (this.overlay.getQuad(this.tileState.layerId())) {
+        updateVertexPrimitiveColor(
+          this.overlay.getQuad(this.tileState.layerId()),
+          this.dataItems,
+          this.tileColor.bind(this),
+          this.areas.length,
+          this.baselineMap
+        );
+      }
       updateVertexPrimitiveColor(
         this.overlay.getQuad(this.pointState.layerId()),
         this.dataItems,
