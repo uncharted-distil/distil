@@ -130,6 +130,10 @@ func (p *PredictionTimeseriesDataset) GetDefinitiveTypes() []*model.Variable {
 	return []*model.Variable{}
 }
 
+// CleanupTempFiles does nothing.
+func (p *PredictionTimeseriesDataset) CleanupTempFiles() {
+}
+
 func (p *predictionDataset) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*serialization.RawDataset, error) {
 	// need to do a bit of processing on the usual setup
 	ds, err := p.params.DatasetConstructor.CreateDataset(rootDataPath, datasetName, config)
@@ -166,6 +170,11 @@ func (p *predictionDataset) CreateDataset(rootDataPath string, datasetName strin
 // GetDefinitiveTypes returns an empty list as definitive types.
 func (p *predictionDataset) GetDefinitiveTypes() []*model.Variable {
 	return []*model.Variable{}
+}
+
+// CleanupTempFiles calls the cleanup on the dataset constructor used.
+func (p *predictionDataset) CleanupTempFiles() {
+	p.params.DatasetConstructor.CleanupTempFiles()
 }
 
 // PredictParams contains all parameters passed to the predict function.

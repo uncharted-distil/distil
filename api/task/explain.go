@@ -94,6 +94,10 @@ func (e explainDataset) GetDefinitiveTypes() []*model.Variable {
 	return []*model.Variable{}
 }
 
+// CleanupTempFiles does nothing since this creates no temp files.
+func (e explainDataset) CleanupTempFiles() {
+}
+
 // ClusterExplainOutput clusters the explained output from a model.
 func ClusterExplainOutput(variable string, resultURI string, explainURI string, config *env.Config) (bool, []*ClusterPoint, error) {
 	// create the SHAP values dataset

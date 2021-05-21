@@ -128,3 +128,7 @@ func (d *D3M) variableIsTyped(variable *model.Variable) bool {
 func (d *D3M) GetDefinitiveTypes() []*model.Variable {
 	return []*model.Variable{}
 }
+
+// CleanupTempFiles does nothing since this creates no temp files.
+func (d *D3M) CleanupTempFiles() {
+}

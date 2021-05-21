@@ -43,6 +43,7 @@ type Config struct {
 	DatamartNYUEnabled         bool    `env:"DATAMART_NYU_ENABLED" envDefault:"false"`
 	DatamartImportFolder       string  `env:"DATAMART_IMPORT_FOLDER" envDefault:"datamart"`
 	DatasetBatchSize           int     `env:"DATASET_BATCH_SIZE" envDefault:"10000"`
+	DeleteBufferTime           int     `env:"DELETE_BUFFER_TIME" envDefault:"600"`
 	ElasticEndpoint            string  `env:"ES_ENDPOINT" envDefault:"http://localhost:9200"`
 	ESDatasetsIndex            string  `env:"ES_DATASETS_INDEX" envDefault:"datasets"`
 	ESModelsIndex              string  `env:"ES_DATASETS_INDEX" envDefault:"models"`

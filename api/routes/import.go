@@ -21,6 +21,7 @@ import (
 	"math"
 	"net/http"
 	"path"
+	"strings"
 
 	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
@@ -52,6 +53,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		// prefeaturized. This is used instead of using the joined dataset because we do
 		// NOT want to sync the data that is already prefeaturized!
 		updateDatasetID := ""
+		datasetPathRaw := ""
 
 		ingestSteps := &task.IngestSteps{
 			ClassificationOverwrite: false,
@@ -152,7 +154,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 			}
 
 			if params["path"] != nil {
-				datasetPathRaw := params["path"].(string)
+				datasetPathRaw = params["path"].(string)
 				log.Infof("Creating dataset '%s' from '%s'", ingestParams.ID, datasetPathRaw)
 				creationResult, err := createDataset(datasetPathRaw, ingestParams.ID, config)
 				if err != nil {
@@ -261,6 +263,10 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		if err != nil {
 			handleError(w, err)
 			return
+		}
+
+		if !isPublicPath(datasetPathRaw) {
+			util.Delete(datasetPathRaw)
 		}
 		// marshal data and sent the response back
 		err = handleJSON(w, map[string]interface{}{
@@ -550,4 +556,8 @@ func syncPrefeaturizedDataset(datasetID string, updateDatasetID string, sourceLe
 	log.Infof("done syncing prefeaturized dataset '%s' on disk", datasetID)
 
 	return nil
+}
+
+func isPublicPath(filename string) bool {
+	return strings.HasPrefix(filename, env.GetPublicPath())
 }

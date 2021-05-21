@@ -109,3 +109,7 @@ func (t *Table) CreateDataset(rootDataPath string, datasetName string, config *e
 func (t *Table) GetDefinitiveTypes() []*model.Variable {
 	return []*model.Variable{}
 }
+
+// CleanupTempFiles does nothing since this creates no temp files.
+func (t *Table) CleanupTempFiles() {
+}
