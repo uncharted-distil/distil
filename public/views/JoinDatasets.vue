@@ -91,7 +91,6 @@
               :dataset-a-column="topColumn"
               :dataset-b-column="bottomColumn"
               :join-accuracy="joinAccuracies"
-              @join-accuracy="onJoinAccuracyChanged"
               @swap-datasets="swapDatasets"
             />
           </div>
@@ -384,12 +383,6 @@ export default Vue.extend({
         }
       });
       return result;
-    },
-    onJoinAccuracyChanged(value: number) {
-      const entry = overlayRouteEntry(this.$route, {
-        joinAccuracy: value.toString(),
-      });
-      this.$router.push(entry).catch((err) => console.warn(err));
     },
     swapDatasets() {
       if (this.joinDatasets.length >= 2) {
