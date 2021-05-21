@@ -82,31 +82,6 @@ func (d *RawDataset) AddField(variable *model.Variable) error {
 	return nil
 }
 
-// InsertField inserts a field in the dataset at the specified index, updating both the data
-// and the metadata.
-func (d *RawDataset) InsertField(variable *model.Variable, index int) error {
-	if d.FieldExists(variable) {
-		return errors.Errorf("field '%s' already exists in the raw dataset", variable.Key)
-	}
-	clone := variable.Clone()
-	clone.Index = index
-
-	// insert the variable
-	variables := d.Metadata.GetMainDataResource().Variables
-	variables = append(variables[:index+1], variables[index:]...)
-	variables[index] = clone
-
-	// the first row is the header row
-	d.Data[0] = append(d.Data[0][:index+1], d.Data[0][index:]...)
-	d.Data[0][index] = variable.HeaderName
-	for i, row := range d.Data[1:] {
-		d.Data[i+1] = append(row[:index+1], row[index:]...)
-		d.Data[i+1][index] = ""
-	}
-
-	return nil
-}
-
 // FieldExists returns true if a field is already part of the metadata.
 func (d *RawDataset) FieldExists(variable *model.Variable) bool {
 	for _, v := range d.Metadata.GetMainDataResource().Variables {
