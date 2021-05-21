@@ -32,7 +32,7 @@
             <b-form-input
               v-if="!ad.absolute"
               :id="ad.joinPair.first + ad.joinPair.second"
-              :number="true"
+              number
               v-model="ad.accuracy"
               type="range"
               min="0"
@@ -45,7 +45,7 @@
                 type="number"
                 class="d-flex max-width-200"
                 v-model="ad.accuracy"
-                :number="true"
+                number
               />
               <b-dropdown
                 v-if="ad.unitType != 2"
