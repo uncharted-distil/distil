@@ -20,40 +20,48 @@
     v-if="isToggle"
     @click="onToggleClick"
     variant="outline-secondary"
+    class="min-width-40"
     :class="toggleStyle"
   >
     <i class="fas fa-palette fa-sm"></i>
   </b-button>
-  <b-dropdown
+  <b-button
     v-else
     variant="outline-secondary p-0 pl-1 pr-1 shadow-none"
     size="dropdown"
-    class="shadow-none"
+    class="shadow-none min-width-40"
+    @click="toggleModal"
   >
-    <template v-slot:button-content>
-      <div class="d-inline-flex align-items-center justify-content-center">
-        <i
-          v-if="isSelected"
-          class="fa fa-times white-color"
-          @click.stop="onDisableScale"
-        />
-        <i v-else class="fas fa-palette fa-sm" />
-        <div
-          v-if="!isFacetScale || isSelected"
-          class="selected-bar d-inline-flex ml-1"
-          :style="selectedColorScale.gradient"
-        />
-      </div>
-    </template>
-    <b-dropdown-item
-      v-for="item in colorScales"
-      :key="item.name"
-      @click.stop="onScaleClick(item.name)"
-    >
-      {{ item.name[0].toUpperCase() + item.name.slice(1) }}
-      <div class="w-100 bar" :style="item.gradient" />
-    </b-dropdown-item>
-  </b-dropdown>
+    <div class="d-inline-flex align-items-center justify-content-center">
+      <i
+        v-if="isSelected"
+        class="fa fa-times white-color"
+        @click.stop="onDisableScale"
+      />
+      <i v-else class="fas fa-palette fa-sm" />
+      <div
+        v-if="!isFacetScale || isSelected"
+        class="selected-bar d-inline-flex ml-1"
+        :style="selectedColorScale.gradient"
+      />
+    </div>
+    <b-modal :id="variableSummary.key">
+      <b-listgroup>
+        <b-listgroup-item
+          v-for="item in colorScales"
+          :key="item.name"
+          class="p-2 d-block btn-outline-secondary list-item"
+          @click.stop="onScaleClick(item.name)"
+        >
+          {{ item.name[0].toUpperCase() + item.name.slice(1) }}
+          <div class="w-100 bar" :style="item.gradient" />
+        </b-listgroup-item>
+      </b-listgroup>
+      <template #modal-footer>
+        <div class="d-none"></div>
+      </template>
+    </b-modal>
+  </b-button>
 </template>
 <script lang="ts">
 import Vue from "vue";
@@ -169,6 +177,7 @@ export default Vue.extend({
       this.$router.push(entry).catch((err) => console.warn(err));
     },
     onScaleClick(colorScaleName: ColorScaleNames) {
+      this.$bvModal.hide(this.variableSummary.key);
       const route = routeGetters.getRoute(this.$store);
       const routeArgs = { colorScale: colorScaleName } as RouteArgs;
       if (this.isFacetScale && !!this.variableSummary) {
@@ -177,11 +186,20 @@ export default Vue.extend({
       const entry = overlayRouteEntry(route, routeArgs);
       this.$router.push(entry).catch((err) => console.warn(err));
     },
+    toggleModal() {
+      this.$bvModal.show(this.variableSummary.key);
+    },
   },
 });
 </script>
 
 <style scoped>
+.list-item {
+  color: #424242 !important;
+}
+.list-item:hover {
+  cursor: pointer;
+}
 .white-color:hover {
   color: white;
 }
@@ -209,5 +227,8 @@ export default Vue.extend({
   width: 100px;
   height: 13px;
   display: inline-block;
+}
+.min-width-40 {
+  min-width: 40px;
 }
 </style>
