@@ -190,32 +190,47 @@ func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, params map[st
 	if !ok {
 		return "", nil, errors.Errorf("error converting accuracy to array interface")
 	}
-	joinPairs, ok := json.Array(params, "joinPairs")
+	absoluteAccuracy, ok := params["absoluteAccuracy"].([]interface{})
+	if !ok {
+		return "", nil, errors.Errorf("error converting absolute accuracy to array interface")
+	}
+
+	joinPairsRaw, ok := json.Array(params, "joinPairs")
 	if !ok {
 		return "", nil, errors.Errorf("joinPairs not a list of join pairs")
 	}
-	if len(accuracy) != len(joinPairs) {
+	if len(accuracy) != len(joinPairsRaw) {
 		return "", nil, errors.Errorf("accuracy length does not match join pairs length")
 	}
-	leftCols := make([]string, len(joinPairs))
-	rightCols := make([]string, len(joinPairs))
-	accuracies := make([]float64, len(joinPairs))
-	for i, p := range joinPairs {
-		colName, ok := p["first"].(string)
+	if len(accuracy) != len(absoluteAccuracy) {
+		return "", nil, errors.Errorf("accuracy length does not match absolute accuracy length")
+	}
+	joinPairs := make([]*task.JoinPair, len(joinPairsRaw))
+	for i, p := range joinPairsRaw {
+		leftColName, ok := p["first"].(string)
 		if !ok {
 			return "", nil, errors.Errorf("join pair 'first' value is not a string")
 		}
-		leftCols[i] = colName
 
-		colName, ok = p["second"].(string)
+		rightColName, ok := p["second"].(string)
 		if !ok {
 			return "", nil, errors.Errorf("join pair 'second' value is not a string")
 		}
-		rightCols[i] = colName
 
-		accuracies[i], ok = accuracy[i].(float64)
+		acc, ok := accuracy[i].(float64)
 		if !ok {
 			return "", nil, errors.Errorf("error converting accuracy to float64")
+		}
+
+		absolute, ok := accuracy[i].(bool)
+		if !ok {
+			return "", nil, errors.Errorf("error converting absolute accuracy to bool")
+		}
+		joinPairs[i] = &task.JoinPair{
+			Left:             leftColName,
+			Right:            rightColName,
+			Accuracy:         acc,
+			AbsoluteAccuracy: absolute,
 		}
 	}
 
@@ -243,7 +258,7 @@ func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, params map[st
 	joinLeft.ExistingMetadata = metaLeft
 	joinRight.ExistingMetadata = metaRight
 
-	path, data, err := task.JoinDistil(dataStorage, joinLeft, joinRight, leftCols, rightCols, accuracies)
+	path, data, err := task.JoinDistil(dataStorage, joinLeft, joinRight, joinPairs)
 	if err != nil {
 		return "", nil, err
 	}

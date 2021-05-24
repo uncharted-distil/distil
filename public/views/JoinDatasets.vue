@@ -91,6 +91,7 @@
               :dataset-a-column="topColumn"
               :dataset-b-column="bottomColumn"
               :join-accuracy="joinAccuracies"
+              :join-absolute="joinAbsolute"
               @swap-datasets="swapDatasets"
             />
           </div>
@@ -233,6 +234,15 @@ export default Vue.extend({
       }
       return info.map((i) => {
         return i.accuracy;
+      });
+    },
+    joinAbsolute(): boolean[] {
+      const info = routeGetters.getJoinInfo(this.$store);
+      if (!info) {
+        return [];
+      }
+      return info.map((i) => {
+        return i.absolute;
       });
     },
     topDataset(): string {

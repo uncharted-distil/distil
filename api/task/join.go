@@ -48,6 +48,13 @@ type JoinSpec struct {
 	UpdatedVariables []*model.Variable
 }
 
+type JoinPair struct {
+	Left             string
+	Right            string
+	Accuracy         float64
+	AbsoluteAccuracy bool
+}
+
 // JoinDatamart will make all your dreams come true.
 func JoinDatamart(joinLeft *JoinSpec, joinRight *JoinSpec, rightOrigin *model.DatasetOrigin) (string, *apiModel.FilteredData, error) {
 	cfg, err := env.LoadConfig()
@@ -65,7 +72,7 @@ func JoinDatamart(joinLeft *JoinSpec, joinRight *JoinSpec, rightOrigin *model.Da
 }
 
 // JoinDistil will bring misery.
-func JoinDistil(dataStorage apiModel.DataStorage, joinLeft *JoinSpec, joinRight *JoinSpec, leftCols []string, rightCols []string, accuracies []float64) (string, *apiModel.FilteredData, error) {
+func JoinDistil(dataStorage apiModel.DataStorage, joinLeft *JoinSpec, joinRight *JoinSpec, joinPairs []*JoinPair) (string, *apiModel.FilteredData, error) {
 	cfg, err := env.LoadConfig()
 	if err != nil {
 		return "", nil, err
@@ -73,15 +80,16 @@ func JoinDistil(dataStorage apiModel.DataStorage, joinLeft *JoinSpec, joinRight 
 
 	varsLeftMapUpdated := apiModel.MapVariables(joinLeft.UpdatedVariables, func(variable *model.Variable) string { return variable.Key })
 	varsRightMapUpdated := apiModel.MapVariables(joinRight.UpdatedVariables, func(variable *model.Variable) string { return variable.Key })
-	joins := make([]*description.Join, len(leftCols))
-	rightVars := make([]*model.Variable, len(rightCols))
-	for i := range leftCols {
+	joins := make([]*description.Join, len(joinPairs))
+	rightVars := make([]*model.Variable, len(joinPairs))
+	for i := range joinPairs {
 		joins[i] = &description.Join{
-			Left:     varsLeftMapUpdated[leftCols[i]],
-			Right:    varsRightMapUpdated[rightCols[i]],
-			Accuracy: accuracies[i],
+			Left:     varsLeftMapUpdated[joinPairs[i].Left],
+			Right:    varsRightMapUpdated[joinPairs[i].Right],
+			Accuracy: joinPairs[i].Accuracy,
+			Absolute: joinPairs[i].AbsoluteAccuracy,
 		}
-		rightVars[i] = varsRightMapUpdated[rightCols[i]]
+		rightVars[i] = varsRightMapUpdated[joinPairs[i].Right]
 	}
 	isKey, err := dataStorage.IsKey(joinRight.DatasetID, joinRight.ExistingMetadata.StorageName, rightVars)
 	if err != nil {
