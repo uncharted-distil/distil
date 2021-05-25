@@ -385,6 +385,16 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 		return
 	}
 
+	var learningDataMeta *model.Metadata
+	if datasetES.LearningDataset != "" {
+		learningDataSchemaPath := path.Join(datasetES.LearningDataset, compute.D3MDataSchema)
+		learningDataMeta, err = metadata.LoadMetadataFromOriginalSchema(learningDataSchemaPath, false)
+		if err != nil {
+			handleErr(conn, msg, errors.Wrap(err, "unable to load metadata from source dataset schema doc"))
+			return
+		}
+	}
+
 	target := getTarget(req)
 
 	// In the case of grouped variables, the target will not be variable itself, but one of its property
@@ -415,6 +425,7 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 
 	predictParams := &task.PredictParams{
 		Meta:             meta,
+		LearningDataMeta: learningDataMeta,
 		Dataset:          request.DatasetID,
 		SolutionID:       sr.SolutionID,
 		FittedSolutionID: request.FittedSolutionID,
