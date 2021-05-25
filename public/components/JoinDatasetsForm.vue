@@ -143,6 +143,7 @@ export default Vue.extend({
     datasetAColumn: Object as () => TableColumn,
     datasetBColumn: Object as () => TableColumn,
     joinAccuracy: Array as () => number[],
+    joinAbsolute: Array as () => boolean[],
   },
 
   data() {
@@ -285,6 +286,7 @@ export default Vue.extend({
           datasetB: b,
           joinAccuracy: this.joinAccuracy,
           joinPairs: this.joinPairs,
+          joinAbsolute: this.joinAbsolute,
         })
         .then((tableData) => {
           this.pending = false;

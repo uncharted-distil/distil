@@ -477,6 +477,7 @@ export default Vue.extend({
         datasetA,
         datasetB,
         joinAccuracy: [1],
+        joinAbsolute: [false],
         joinSuggestionIndex: joinSuggestionIndex,
       };
 
