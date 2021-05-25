@@ -23,6 +23,7 @@
     :subselection.prop="subSelection"
     :disabled.prop="!enableHighlighting"
     @facet-element-updated="updateSelection"
+    :style="style"
   >
     <div slot="header-label" :class="headerClass" class="d-flex">
       <i :class="getGroupIcon(summary) + ' facet-header-icon'" />
@@ -85,8 +86,11 @@ import {
   viewMoreData,
   viewLessData,
   facetTypeChangeState,
+  applyColorScale,
 } from "../../util/facets";
 import { DISTIL_ROLES } from "../../util/types";
+import { getters as routeGetters } from "../../store/route/module";
+import { ColorScaleNames } from "../../util/color";
 
 export default Vue.extend({
   name: "FacetCategorical",
@@ -158,8 +162,24 @@ export default Vue.extend({
         ? "facet-header-container"
         : "facet-header-container-no-scroll";
     },
+    hasColorScale(): boolean {
+      return (
+        routeGetters.getColorScaleVariable(this.$store) === this.summary.key
+      );
+    },
+    colorScale(): ColorScaleNames {
+      return routeGetters.getColorScale(this.$store);
+    },
+    style(): string {
+      return this.hasColorScale ? applyColorScale(this.colorScale) : "";
+    },
     subSelection(): number[][] {
-      return getSubSelectionValues(this.summary, this.rowSelection, this.max);
+      return getSubSelectionValues(
+        this.summary,
+        this.rowSelection,
+        this.max,
+        this.hasColorScale ? this.colorScale : null
+      );
     },
     selection(): {} {
       if (!this.enableHighlighting || !this.isHighlightedGroup()) {
