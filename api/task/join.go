@@ -48,6 +48,7 @@ type JoinSpec struct {
 	UpdatedVariables []*model.Variable
 }
 
+// JoinPair captures the information required for a single join relationship.
 type JoinPair struct {
 	Left             string
 	Right            string

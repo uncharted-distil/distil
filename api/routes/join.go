@@ -222,7 +222,7 @@ func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, params map[st
 			return "", nil, errors.Errorf("error converting accuracy to float64")
 		}
 
-		absolute, ok := accuracy[i].(bool)
+		absolute, ok := absoluteAccuracy[i].(bool)
 		if !ok {
 			return "", nil, errors.Errorf("error converting absolute accuracy to bool")
 		}

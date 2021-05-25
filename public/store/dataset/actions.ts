@@ -802,6 +802,7 @@ export const actions = {
       datasetA: Dataset;
       datasetB: Dataset;
       joinAccuracy: number[];
+      joinAbsolute: boolean[];
       joinSuggestionIndex?: number;
       joinPairs?: JoinPair<string>[];
     }
@@ -820,6 +821,7 @@ export const actions = {
 
     const response = await axios.post(`/distil/join`, {
       accuracy: args.joinAccuracy,
+      absoluteAccuracy: args.joinAbsolute,
       datasetLeft: args.datasetA,
       datasetRight: datasetBrevised,
       joinPairs: args.joinPairs,
