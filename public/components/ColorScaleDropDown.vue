@@ -46,8 +46,8 @@
       />
     </div>
     <b-modal :id="variableSummary.key">
-      <b-listgroup>
-        <b-listgroup-item
+      <b-list-group>
+        <b-list-group-item
           v-for="item in colorScales"
           :key="item.name"
           class="p-2 d-block btn-outline-secondary list-item"
@@ -55,8 +55,8 @@
         >
           {{ item.name[0].toUpperCase() + item.name.slice(1) }}
           <div class="w-100 bar" :style="item.gradient" />
-        </b-listgroup-item>
-      </b-listgroup>
+        </b-list-group-item>
+      </b-list-group>
       <template #modal-footer>
         <div class="d-none"></div>
       </template>

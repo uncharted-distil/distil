@@ -45,6 +45,8 @@ import {
   TIMESERIES_TYPE,
   URI_TYPE,
 } from "../util/types";
+import { ColorScaleNames, DISCRETE_COLOR_MAPS } from "./color";
+import { color } from "d3-color";
 
 export const CATEGORICAL_CHUNK_SIZE = 5;
 export const IMAGE_CHUNK_SIZE = 5;
@@ -311,49 +313,116 @@ export function hasFiltered(summary: VariableSummary) {
     summary.filtered.buckets.length > 0
   );
 }
+export function applyColorScale(colorScaleName: ColorScaleNames): string {
+  const colors = [] as FacetColor[];
+  const colorScale = DISCRETE_COLOR_MAPS.get(colorScaleName);
+  if (!colorScale) {
+    return;
+  }
+  colorScale.forEach((cs) => {
+    colors.push({
+      color: cs,
+      colorHover: cs,
+    });
+  });
+  // this is the background color this get added last for painters algorithm
+  colors.push({ color: "#999999", colorHover: "#bbbbbb" });
+  return applyColor(colors, 4); // the first 4 are default colors for distil
+}
 // applyColor generates the string to change the facet dynamic css variables
-export function applyColor(colors: FacetColor[] | null): string {
+export function applyColor(
+  colors: FacetColor[] | null,
+  startIndex?: number
+): string {
   let result = "";
+  const start = startIndex ?? 0;
   colors.forEach((c, i) => {
+    const j = i + start;
     if (!!c?.color && !!c?.colorHover) {
-      result += `--facet-bars-${i}-normal: ${c.color};
-      --facet-bars-${i}-normal-contrast: ${c.colorHover};
-      --facet-bars-${i}-normal-contrast-hover: ${c.color};
-      --facet-bars-${i}-selected: ${c.color};
-      --facet-bars-${i}-selected-contrast: ${c.colorHover};
-      --facet-bars-${i}-selected-contrast-hover: ${c.color};
-      --facet-bars-${i}-unselected: ${c.colorHover};
-      --facet-bars-${i}-unselected-contrast: ${c.colorHover};
-      --facet-bars-${i}-unselected-contrast-hover: ${c.color};
-      --facet-bars-${i}-muted: ${c.color};
-      --facet-bars-${i}-muted-contrast: ${c.color};
-      --facet-bars-${i}-muted-contrast-hover: ${c.colorHover};
-      --facet-terms-bar-${i}-normal: ${c.color};
-      --facet-terms-bar-${i}-normal-contrast: ${c.colorHover};
-      --facet-terms-bar-${i}-normal-contrast-hover: ${c.color};
-      --facet-terms-bar-${i}-selected: ${c.color};
-      --facet-terms-bar-${i}-selected-contrast: ${c.colorHover};
-      --facet-terms-bar-${i}-selected-contrast-hover: ${c.color};
-      --facet-terms-bar-${i}-unselected: ${c.colorHover};
-      --facet-terms-bar-${i}-unselected-contrast: ${c.colorHover};
-      --facet-terms-bar-${i}-unselected-contrast-hover: ${c.color};
-      --facet-terms-bar-${i}-muted: ${c.color};
-      --facet-terms-bar-${i}-muted-contrast: ${c.color};
-      --facet-terms-bar-${i}-muted-contrast-hover: ${c.colorHover};`;
+      result += `--facet-bars-${j}-normal: ${c.color};
+      --facet-bars-${j}-normal-contrast: ${c.colorHover};
+      --facet-bars-${j}-normal-contrast-hover: ${c.color};
+      --facet-bars-${j}-selected: ${c.color};
+      --facet-bars-${j}-selected-contrast: ${c.colorHover};
+      --facet-bars-${j}-selected-contrast-hover: ${c.color};
+      --facet-bars-${j}-unselected: ${c.colorHover};
+      --facet-bars-${j}-unselected-contrast: ${c.colorHover};
+      --facet-bars-${j}-unselected-contrast-hover: ${c.color};
+      --facet-bars-${j}-muted: ${c.color};
+      --facet-bars-${j}-muted-contrast: ${c.color};
+      --facet-bars-${j}-muted-contrast-hover: ${c.colorHover};
+      --facet-terms-bar-${j}-normal: ${c.color};
+      --facet-terms-bar-${j}-normal-contrast: ${c.colorHover};
+      --facet-terms-bar-${j}-normal-contrast-hover: ${c.color};
+      --facet-terms-bar-${j}-selected: ${c.color};
+      --facet-terms-bar-${j}-selected-contrast: ${c.colorHover};
+      --facet-terms-bar-${j}-selected-contrast-hover: ${c.color};
+      --facet-terms-bar-${j}-unselected: ${c.colorHover};
+      --facet-terms-bar-${j}-unselected-contrast: ${c.colorHover};
+      --facet-terms-bar-${j}-unselected-contrast-hover: ${c.color};
+      --facet-terms-bar-${j}-muted: ${c.color};
+      --facet-terms-bar-${j}-muted-contrast: ${c.color};
+      --facet-terms-bar-${j}-muted-contrast-hover: ${c.colorHover};`;
     }
+  });
+  return result;
+}
+export function colorScaleSelectionValues(
+  summary: VariableSummary,
+  max: number,
+  colorScaleName: ColorScaleNames
+): number[][] {
+  const colorScale = DISCRETE_COLOR_MAPS.get(colorScaleName);
+  if (!colorScale) {
+    return;
+  }
+  let bucketCount = summary.filtered?.buckets.reduce((acc, b) => {
+    acc[b.key] = b.count;
+    return acc;
+  }, {});
+  if (!bucketCount) {
+    bucketCount = summary.baseline.buckets.reduce((acc, b) => {
+      acc[b.key] = b.count;
+      return acc;
+    }, {});
+  } else {
+    summary.baseline.buckets.map((b) => {
+      if (!bucketCount[b.key]) {
+        bucketCount[b.key] = 0;
+      }
+    });
+  }
+  const offset = 4;
+  const maxColorIdx = colorScale.length + offset + 1;
+  const result = Array.from({ length: summary.baseline.buckets.length }, () => {
+    return Array.from({ length: maxColorIdx }, () => {
+      return 0;
+    });
+  });
+  const end = maxColorIdx - 1;
+  const backgroundBar = 0;
+  summary.baseline.buckets.forEach((b, i) => {
+    const idx = Math.max(1, end - (i + offset));
+    const count = bucketCount[b.key];
+    result[i][idx] = count / max;
+    result[i][backgroundBar] = b.count / max;
   });
   return result;
 }
 export function getSubSelectionValues(
   summary: VariableSummary,
   rowSelection: RowSelection,
-  max: number
+  max: number,
+  colorScale?: ColorScaleNames
 ): number[][] {
   if (!summary.baseline?.buckets) {
     return [];
   }
   const include = routeGetters.getRouteInclude(store);
   const hasFilterBuckets = hasFiltered(summary);
+  if (colorScale) {
+    return colorScaleSelectionValues(summary, max, colorScale);
+  }
   if (!hasFilterBuckets && !rowSelection) {
     return summary.baseline?.buckets?.map((b) => [null, b.count / max]);
   }
