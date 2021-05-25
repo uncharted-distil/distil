@@ -180,6 +180,7 @@ func (p *predictionDataset) CleanupTempFiles() {
 // PredictParams contains all parameters passed to the predict function.
 type PredictParams struct {
 	Meta               *model.Metadata
+	LearningDataMeta   *model.Metadata
 	SourceDataset      *api.Dataset
 	Dataset            string
 	SchemaPath         string
@@ -291,10 +292,21 @@ func PrepExistingPredictionDataset(params *PredictParams) (string, string, error
 		return "", "", err
 	}
 
-	alignmentUpdates := getPredictionDatasetAlignmentUpdates(params.Meta.GetMainDataResource().Variables, dsDisk.Dataset.Metadata.GetMainDataResource().Variables, params.Target)
+	alignmentUpdates := getPredictionDatasetAlignmentUpdates(params.Meta.GetMainDataResource().Variables,
+		dsDisk.Dataset.Metadata.GetMainDataResource().Variables, params.Target)
 	err = updatePredictionAlignment(alignmentUpdates, dsCloned, dsDisk, params.MetaStorage, params.DataStorage)
 	if err != nil {
 		return "", "", err
+	}
+
+	// If there is learnign data present, we'll need to align the pre-featurized dataset as well
+	if params.LearningDataMeta != nil {
+		prefeaturizedAlignmentUpdates := getPredictionDatasetAlignmentUpdates(params.LearningDataMeta.GetMainDataResource().Variables,
+			dsDisk.FeaturizedDataset.Dataset.Metadata.GetMainDataResource().Variables, params.Target)
+		err = updatePredictionAlignment(prefeaturizedAlignmentUpdates, dsCloned, dsDisk.FeaturizedDataset, params.MetaStorage, params.DataStorage)
+		if err != nil {
+			return "", "", err
+		}
 	}
 
 	// update the learning dataset
@@ -341,9 +353,13 @@ func getPredictionDatasetAlignmentUpdates(modelVariables []*model.Variable, pred
 	// their variables ordered differently, which is a problem because D3M pipelines are driven by column index rather than
 	// name (we argued against this and lost).
 
+	generatedFeatureIdx := len(predictionVariables)
 	predictVars := map[string]*model.Variable{}
 	for _, v := range predictionVariables {
 		predictVars[v.Key] = v
+		if v.DistilRole == model.VarDistilRoleSystemData && v.Index < generatedFeatureIdx {
+			generatedFeatureIdx = v.Index
+		}
 	}
 
 	modelVars := map[string]*model.Variable{}
@@ -359,10 +375,12 @@ func getPredictionDatasetAlignmentUpdates(modelVariables []*model.Variable, pred
 		}
 	}
 
-	// Append them to a temp list to use for determining re-ordering
-	extPredictionVariables := make([]*model.Variable, len(predictionVariables))
-	copy(extPredictionVariables, predictionVariables)
-	extPredictionVariables = append(extPredictionVariables, missingList...)
+	// Insert the missing variables into to a temp list to use for determining re-ordering.  The insert happens
+	// prior to any generated features.
+	extPredictionVariables := make([]*model.Variable, len(predictionVariables)+len(missingList))
+	copy(extPredictionVariables, predictionVariables[:generatedFeatureIdx])
+	copy(extPredictionVariables[generatedFeatureIdx:], missingList)
+	copy(extPredictionVariables[generatedFeatureIdx+len(missingList):], predictionVariables[generatedFeatureIdx:])
 
 	// Next, make sure the order of columns in the prediction dataset match the expected model ordering, and
 	// store a mapping for those that don't match.
@@ -459,7 +477,7 @@ func updateVariableIndices(diskDataset *api.DiskDataset, variables []*model.Vari
 		varIndices[headerValue] = i
 	}
 	for _, variable := range variables {
-		if idx, ok := varIndices[variable.Key]; ok {
+		if idx, ok := varIndices[variable.HeaderName]; ok {
 			variable.Index = idx
 		} else {
 			variable.Index = -1
