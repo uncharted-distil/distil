@@ -686,6 +686,9 @@ export default Vue.extend({
           tileMap.set(i.imageUrl, i);
         }
       });
+      if (!tileMap.size) {
+        return;
+      }
       this.drillDownState.tiles = [...tileMap.values()];
       this.isImageDrilldown = true;
     },
@@ -1267,11 +1270,11 @@ export default Vue.extend({
 
     tileColor(item: any, idx: number) {
       let color = this.isExclude ? BLACK : BLUE; // Default
-      if (this.coloringByVariable) {
-        return this.colorScale(this.colorByVariable(item, idx));
-      }
       if (this.rowSelectionMap.has(item.d3mIndex)) {
         return SELECTION_RED;
+      }
+      if (this.coloringByVariable) {
+        return this.colorScale(this.colorByVariable(item, idx));
       }
       if (item.isExcluded) {
         return GRAY;

@@ -338,8 +338,16 @@ export default Vue.extend({
       }
       return dataset.clone === undefined ? false : dataset.clone;
     },
+    hasConfidence(): boolean {
+      return this.variables.some((v) => {
+        return v.key === this.labelScoreName;
+      });
+    },
   },
   watch: {
+    hasConfidence() {
+      viewActions.updateHighlight(this.$store);
+    },
     geoVarExists() {
       const route = routeGetters.getRoute(this.$store);
       const entry = overlayRouteEntry(route, { hasGeoData: this.geoVarExists });

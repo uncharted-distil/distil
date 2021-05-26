@@ -84,10 +84,24 @@ func MultiBandImagePackHandler(ctor api.MetadataStorageCtor, dataCtor api.DataSt
 		result := make(chan chanStruct)
 		// ImageThreadPool is an environment variable defaults to 2 (works great with 6)
 		numOfThreads := config.ImageThreadPool
+		// if no IDs return
+		if len(params.ImageIDs) == 0 {
+			err = handleJSON(w, ImagePackResult{
+				ImagesBuffer: [][]byte{},
+				ImageIDs:     []string{},
+				ErrorIDs:     []string{},
+			})
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable marshal dataset result into JSON"))
+				return
+			}
+			return
+		}
 		// reduce numOfThreads to the number of ImageIDs if it is lower than 6
 		if numOfThreads > len(params.ImageIDs) {
 			numOfThreads = len(params.ImageIDs)
 		}
+
 		for i := 0; i < numOfThreads; i++ {
 			go funcPointer(params, i, numOfThreads, result, ctor, dataCtor)
 		}

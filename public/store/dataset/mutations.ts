@@ -312,14 +312,18 @@ export const mutations = {
     Vue.set(state.files, args.url, args.file);
   },
   bulkUpdateFiles(state: DatasetState, args: { urls: string[]; files: any[] }) {
+    const clone = _.cloneDeep(state.files);
     for (let i = 0; i < args.urls.length; ++i) {
-      Vue.set(state.files, args.urls[i], args.files[i]);
+      clone[args.urls[i]] = args.files[i];
     }
+    Vue.set(state, "files", clone);
   },
   bulkRemoveFiles(state: DatasetState, args: { urls: string[] }) {
+    const clone = _.cloneDeep(state.files);
     args.urls.forEach((url) => {
-      Vue.delete(state.files, url);
+      delete clone[url];
     });
+    Vue.set(state, "files", clone);
   },
   removeFile(state: DatasetState, url: string) {
     Vue.delete(state.files, url);
