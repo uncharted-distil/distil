@@ -49,7 +49,7 @@ import {
   LowShotLabels,
 } from "../../util/data";
 import { actions as viewActions } from "../../store/view/module";
-import { INCLUDE_FILTER, Filter } from "../../util/filters";
+import { INCLUDE_FILTER, Filter, EXCLUDE_FILTER } from "../../util/filters";
 import { actions as datasetActions } from "../../store/dataset/module";
 import { bulkRowSelectionUpdate } from "../../util/row";
 
@@ -153,7 +153,7 @@ export default Vue.extend({
         maxY: data.bounds[0][0],
         minX: data.bounds[0][1],
         minY: data.bounds[1][0],
-        mode: INCLUDE_FILTER,
+        mode: EXCLUDE_FILTER,
         type: data.type,
         set: "",
       };

@@ -588,6 +588,7 @@ export const actions = {
         summary: null,
       });
     }
+
     return Promise.all([
       datasetActions.fetchIncludedVariableSummaries(store, {
         dataset,
@@ -641,11 +642,15 @@ export const actions = {
       .getDecodedSolutionRequestFilterParams as FilterParams;
     const highlights = context.getters.getDecodedHighlights as Highlight[];
     const dataMode = context.getters.getDataMode;
+    const variables = datasetGetters.getAllVariables(store);
     // artificially add filter but dont add it to the url
     // this is a hack to avoid adding an extra field just for the area of interest
     const clonedFilterParams = _.cloneDeep(filterParams);
     clonedFilterParams.filters.list.push(filter);
     clonedFilterParams.filters.invert = true;
+    clonedFilterParams.variables = variables.map((v) => {
+      return v.key;
+    });
     const clonedExcludeFilter = _.cloneDeep(filter);
     // the exclude has to invert all the filters -- the route does a collective NOT() and
     // for areaOfInterest we need compounded ands so therefore we invert client side pass in
