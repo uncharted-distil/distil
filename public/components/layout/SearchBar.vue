@@ -122,17 +122,6 @@ export default Vue.extend({
     isHighlightActive() {
       this.renderLex();
     },
-    filters(n, o) {
-      if (n !== o) {
-        this.setQuery();
-      }
-    },
-
-    highlights(n, o) {
-      if (n !== o) {
-        this.setQuery();
-      }
-    },
 
     language(n, o) {
       if (n !== o) {
@@ -144,7 +133,7 @@ export default Vue.extend({
     this.renderLex();
   },
   methods: {
-    renderLex(): void {
+    async renderLex(): Promise<void> {
       // Initialize lex instance
       this.lex = new Lex({
         language: this.language,
@@ -159,16 +148,16 @@ export default Vue.extend({
 
       // Render our search bar into our desired element
       this.lex.render(this.lexContainerRef);
-      this.setQuery();
+      await this.setQuery();
     },
 
-    setQuery(): void {
+    async setQuery(): Promise<void> {
       if (!this.lex || !(this.filters || this.highlights)) return;
       const lexQuery = filterParamsToLexQuery(
         this.templateInfo,
         this.variableMap
       );
-      this.lex.setQuery(lexQuery, false);
+      await this.lex.setQuery(lexQuery, false);
     },
   },
 });
