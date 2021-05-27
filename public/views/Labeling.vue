@@ -338,11 +338,6 @@ export default Vue.extend({
       }
       return dataset.clone === undefined ? false : dataset.clone;
     },
-    hasConfidence(): boolean {
-      return this.variables.some((v) => {
-        return v.key === this.labelScoreName;
-      });
-    },
   },
   watch: {
     hasConfidence() {

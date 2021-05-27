@@ -16,7 +16,7 @@
 -->
 
 <template>
-  <div class="pt-2">
+  <div>
     <b-button title="Select all items on page" @click="onSelectAll"
       >Select All</b-button
     >
@@ -45,20 +45,14 @@
       @click="onButtonClick(unlabeled)"
       >Unlabeled</b-button
     >
-    <layer-selection v-if="isRemoteSensing" />
   </div>
 </template>
 
 <script lang="ts">
 import Vue from "vue";
 import { LowShotLabels } from "../../util/data";
-import LayerSelection from "../LayerSelection.vue";
-import { getters as routeGetters } from "../../store/route/module";
 export default Vue.extend({
   name: "label-header-buttons",
-  components: {
-    LayerSelection,
-  },
   computed: {
     negative(): string {
       return LowShotLabels.negative;
@@ -76,9 +70,6 @@ export default Vue.extend({
     },
     onSelectAll() {
       this.$emit("select-all");
-    },
-    isRemoteSensing(): boolean {
-      return routeGetters.isMultiBandImage(this.$store);
     },
   },
 });

@@ -140,7 +140,9 @@ export default Vue.extend({
       }
     },
   },
-
+  mounted() {
+    this.renderLex();
+  },
   methods: {
     renderLex(): void {
       // Initialize lex instance

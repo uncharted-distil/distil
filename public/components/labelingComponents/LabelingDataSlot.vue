@@ -17,44 +17,49 @@
 
 <template>
   <div class="flex-1 d-flex flex-column pb-1 pt-2">
-    <div class="fake-search-input">
-      <filter-badge
-        v-for="(highlight, index) in activeHighlights"
-        :key="index"
-        :filter="highlight"
-      />
-      <filter-badge
-        v-for="(filter, index) in filters"
-        :key="index"
-        :filter="filter"
-      />
-    </div>
-    <div class="d-flex justify-content-between m-1">
-      <p v-if="!isGeoView" class="selection-data-slot-summary">
-        <strong class="matching-color">matching</strong> samples of
-        {{ numRows }} to model<template v-if="selectionNumRows > 0">
-          , {{ selectionNumRows }}
-          <strong class="selected-color">selected</strong>
-        </template>
-      </p>
-      <p v-else class="selection-data-slot-summary">
-        Selected Area Coverage:
-        <strong class="matching-color">{{ areaCoverage }}km<sup>2</sup></strong>
-        <template v-if="selectionNumRows > 0">
-          , {{ selectionNumRows }}
-          <strong class="selected-color">selected</strong>
-        </template>
-      </p>
-      <label-header-buttons
-        @button-event="onAnnotationClicked"
-        @select-all="onSelectAll"
-      />
-      <view-type-toggle
-        v-model="viewTypeModel"
-        :variables="variables"
-        :available-variables="variables"
-      />
-    </div>
+    <search-bar
+      class="mb-3"
+      :variables="allVariables"
+      :highlights="routeHighlights"
+      @lex-query="updateFilterAndHighlightFromLexQuery"
+    />
+    <b-container class="m-0 p-0 mw-100">
+      <b-row class="d-flex justify-content-between m-0 w-100">
+        <label-header-buttons
+          class="height-36"
+          @button-event="onAnnotationClicked"
+          @select-all="onSelectAll"
+        />
+        <div class="d-flex">
+          <layer-selection />
+          <view-type-toggle
+            v-model="viewTypeModel"
+            class="m-0 p-0 pl-2 height-36"
+            :variables="variables"
+            :available-variables="variables"
+          />
+        </div>
+      </b-row>
+      <b-row class="m-0 mt-2 mb-1 w-100">
+        <p v-if="!isGeoView" class="selection-data-slot-summary">
+          <strong class="matching-color">matching</strong> samples of
+          {{ numRows }} to model<template v-if="selectionNumRows > 0">
+            , {{ selectionNumRows }}
+            <strong class="selected-color">selected</strong>
+          </template>
+        </p>
+        <p v-else class="selection-data-slot-summary">
+          Selected Area Coverage:
+          <strong class="matching-color"
+            >{{ areaCoverage }}km<sup>2</sup></strong
+          >
+          <template v-if="selectionNumRows > 0">
+            , {{ selectionNumRows }}
+            <strong class="selected-color">selected</strong>
+          </template>
+        </p>
+      </b-row>
+    </b-container>
     <div class="label-data-container">
       <component
         :is="viewComponent"
@@ -80,7 +85,9 @@ import _ from "lodash";
 import ViewTypeToggle from "../ViewTypeToggle.vue";
 import { Dictionary } from "../../util/dict";
 import LabelGeoPlot from "./LabelGeoplot.vue";
+import SearchBar from "../layout/SearchBar.vue";
 import ImageMosaic from "../ImageMosaic.vue";
+import LayerSelection from "../LayerSelection.vue";
 import SelectDataTable from "../SelectDataTable.vue";
 import {
   Variable,
@@ -93,10 +100,18 @@ import {
 import { getters as datasetGetters } from "../../store/dataset/module";
 import { getters as routeGetters } from "../../store/route/module";
 import { LowShotLabels, totalAreaCoverage } from "../../util/data";
-import { createFiltersFromHighlights } from "../../util/highlights";
-import { Filter, INCLUDE_FILTER } from "../../util/filters";
+import {
+  createFiltersFromHighlights,
+  UPDATE_ALL,
+  updateHighlight,
+} from "../../util/highlights";
+import {
+  Filter,
+  INCLUDE_FILTER,
+  deepUpdateFiltersInRoute,
+} from "../../util/filters";
+import { lexQueryToFiltersAndHighlight } from "../../util/lex";
 import LabelHeaderButtons from "./LabelHeaderButtons.vue";
-import FilterBadge from "../FilterBadge.vue";
 import { getNumIncludedRows } from "../../util/row";
 
 const GEO_VIEW = "geo";
@@ -113,7 +128,8 @@ export default Vue.extend({
     ImageMosaic,
     SelectDataTable,
     LabelHeaderButtons,
-    FilterBadge,
+    SearchBar,
+    LayerSelection,
   },
   props: {
     variables: {
@@ -146,8 +162,14 @@ export default Vue.extend({
       }
       return createFiltersFromHighlights(this.highlights, INCLUDE_FILTER);
     },
+    allVariables(): Variable[] {
+      return datasetGetters.getAllVariables(this.$store);
+    },
     highlights(): Highlight[] {
       return routeGetters.getDecodedHighlights(this.$store);
+    },
+    routeHighlights(): string {
+      return routeGetters.getRouteHighlight(this.$store);
     },
     filters(): Filter[] {
       return routeGetters
@@ -213,6 +235,11 @@ export default Vue.extend({
       const dataView = (this.$refs.dataView as unknown) as DataView;
       dataView.selectAll();
     },
+    updateFilterAndHighlightFromLexQuery(lexQuery) {
+      const lqfh = lexQueryToFiltersAndHighlight(lexQuery, this.dataset);
+      deepUpdateFiltersInRoute(this.$router, lqfh.filters);
+      updateHighlight(this.$router, lqfh.highlights, UPDATE_ALL);
+    },
   },
 });
 </script>
@@ -231,14 +258,8 @@ export default Vue.extend({
   display: flex;
   justify-content: space-around;
 }
-.fake-search-input {
-  background-color: var(--gray-300);
-  border: 1px solid var(--gray-500);
-  border-radius: 0.2rem;
-  display: flex;
-  flex-wrap: wrap;
-  min-height: 2.5rem;
-  padding: 3px;
+.height-36 {
+  height: 36px;
 }
 .selection-data-slot-summary {
   font-size: 90%;
