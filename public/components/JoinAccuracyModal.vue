@@ -126,7 +126,7 @@ export default Vue.extend({
   },
   watch: {
     joinPairs(cur: JoinPair<string>[], prev: JoinPair<string>[]) {
-      if (!cur.length) {
+      if (!cur.length && !prev.length) {
         return;
       }
       if (cur.length < prev.length) {
@@ -152,7 +152,7 @@ export default Vue.extend({
           this.accuracyData.push({
             joinPair: cur[end],
             absolute: false,
-            accuracy: 0.8,
+            accuracy: 1.0,
             unitType,
             unit: this.getDefaultUnit(unitType),
           });
