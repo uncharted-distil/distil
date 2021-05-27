@@ -26,6 +26,7 @@
     :fields="emphasizedFields"
     class="distil-table mb-1"
     @head-clicked="onColumnClicked"
+    :no-local-sorting="true"
   >
     <template v-slot:cell()="data">
       <span class="min-height-20">{{ data.value.value }}</span>

@@ -72,12 +72,6 @@ import {
   TimeseriesGrouping,
 } from "../store/dataset/index";
 import { getters as datasetGetters } from "../store/dataset/module";
-import { getters as routeGetters } from "../store/route/module";
-import {
-  IMAGE_TYPE,
-  TIMESERIES_TYPE,
-  MULTIBAND_IMAGE_TYPE,
-} from "../util/types";
 import {
   getTimeseriesGroupingsFromFields,
   formatFieldsAsArray,
