@@ -1,0 +1,262 @@
+{
+  "about": {
+    "datasetID": "196_autoMpg_MIN_METADATA_dataset_TRAIN-f539e00d-9d05-47a7-82e2-ace29e65d69c",
+    "datasetName": "NULL",
+    "datasetSchemaVersion": "4.0.0",
+    "description": "",
+    "digest": "",
+    "license": "Unknown",
+    "mergedSchema": "false",
+    "parentDatasetIDs": null,
+    "rawData": false,
+    "redacted": true,
+    "storageName": "d_196_autompg_min_metadata_dataset_train_f539e00d_"
+  },
+  "dataResources": [
+    {
+      "columns": [
+        {
+          "colDescription": "",
+          "colDisplayName": "d3mIndex",
+          "colIndex": 0,
+          "colName": "d3mIndex",
+          "colOriginalName": "d3mIndex",
+          "colOriginalType": "integer",
+          "colType": "integer",
+          "deleted": false,
+          "distilRole": "data",
+          "grouping": null,
+          "importance": 0,
+          "key": "d3mIndex",
+          "max": 0,
+          "min": 0,
+          "refersTo": null,
+          "role": ["index"],
+          "selectedRole": "index",
+          "suggestedTypes": [
+            {
+              "type": "integer",
+              "probability": 1,
+              "provenance": "schema"
+            }
+          ]
+        },
+        {
+          "colDescription": "",
+          "colDisplayName": "cylinders",
+          "colIndex": 1,
+          "colName": "cylinders",
+          "colOriginalName": "cylinders",
+          "colOriginalType": "unknown",
+          "colType": "unknown",
+          "deleted": false,
+          "distilRole": "data",
+          "grouping": null,
+          "importance": 0,
+          "key": "cylinders",
+          "max": 0,
+          "min": 0,
+          "refersTo": null,
+          "role": ["attribute"],
+          "selectedRole": "attribute",
+          "suggestedTypes": [
+            {
+              "type": "unknown",
+              "probability": 0,
+              "provenance": "schema"
+            }
+          ]
+        },
+        {
+          "colDescription": "",
+          "colDisplayName": "displacement",
+          "colIndex": 2,
+          "colName": "displacement",
+          "colOriginalName": "displacement",
+          "colOriginalType": "unknown",
+          "colType": "unknown",
+          "deleted": false,
+          "distilRole": "data",
+          "grouping": null,
+          "importance": 0,
+          "key": "displacement",
+          "max": 0,
+          "min": 0,
+          "refersTo": null,
+          "role": ["attribute"],
+          "selectedRole": "attribute",
+          "suggestedTypes": [
+            {
+              "type": "unknown",
+              "probability": 0,
+              "provenance": "schema"
+            }
+          ]
+        },
+        {
+          "colDescription": "",
+          "colDisplayName": "horsepower",
+          "colIndex": 3,
+          "colName": "horsepower",
+          "colOriginalName": "horsepower",
+          "colOriginalType": "unknown",
+          "colType": "unknown",
+          "deleted": false,
+          "distilRole": "data",
+          "grouping": null,
+          "importance": 0,
+          "key": "horsepower",
+          "max": 0,
+          "min": 0,
+          "refersTo": null,
+          "role": ["attribute"],
+          "selectedRole": "attribute",
+          "suggestedTypes": [
+            {
+              "type": "unknown",
+              "probability": 0,
+              "provenance": "schema"
+            }
+          ]
+        },
+        {
+          "colDescription": "",
+          "colDisplayName": "weight",
+          "colIndex": 4,
+          "colName": "weight",
+          "colOriginalName": "weight",
+          "colOriginalType": "unknown",
+          "colType": "unknown",
+          "deleted": false,
+          "distilRole": "data",
+          "grouping": null,
+          "importance": 0,
+          "key": "weight",
+          "max": 0,
+          "min": 0,
+          "refersTo": null,
+          "role": ["attribute"],
+          "selectedRole": "attribute",
+          "suggestedTypes": [
+            {
+              "type": "unknown",
+              "probability": 0,
+              "provenance": "schema"
+            }
+          ]
+        },
+        {
+          "colDescription": "",
+          "colDisplayName": "acceleration",
+          "colIndex": 5,
+          "colName": "acceleration",
+          "colOriginalName": "acceleration",
+          "colOriginalType": "unknown",
+          "colType": "unknown",
+          "deleted": false,
+          "distilRole": "data",
+          "grouping": null,
+          "importance": 0,
+          "key": "acceleration",
+          "max": 0,
+          "min": 0,
+          "refersTo": null,
+          "role": ["attribute"],
+          "selectedRole": "attribute",
+          "suggestedTypes": [
+            {
+              "type": "unknown",
+              "probability": 0,
+              "provenance": "schema"
+            }
+          ]
+        },
+        {
+          "colDescription": "",
+          "colDisplayName": "model",
+          "colIndex": 6,
+          "colName": "model",
+          "colOriginalName": "model",
+          "colOriginalType": "unknown",
+          "colType": "unknown",
+          "deleted": false,
+          "distilRole": "data",
+          "grouping": null,
+          "importance": 0,
+          "key": "model",
+          "max": 0,
+          "min": 0,
+          "refersTo": null,
+          "role": ["attribute"],
+          "selectedRole": "attribute",
+          "suggestedTypes": [
+            {
+              "type": "unknown",
+              "probability": 0,
+              "provenance": "schema"
+            }
+          ]
+        },
+        {
+          "colDescription": "",
+          "colDisplayName": "origin",
+          "colIndex": 7,
+          "colName": "origin",
+          "colOriginalName": "origin",
+          "colOriginalType": "unknown",
+          "colType": "unknown",
+          "deleted": false,
+          "distilRole": "data",
+          "grouping": null,
+          "importance": 0,
+          "key": "origin",
+          "max": 0,
+          "min": 0,
+          "refersTo": null,
+          "role": ["attribute"],
+          "selectedRole": "attribute",
+          "suggestedTypes": [
+            {
+              "type": "unknown",
+              "probability": 0,
+              "provenance": "schema"
+            }
+          ]
+        },
+        {
+          "colDescription": "",
+          "colDisplayName": "class",
+          "colIndex": 8,
+          "colName": "class",
+          "colOriginalName": "class",
+          "colOriginalType": "unknown",
+          "colType": "unknown",
+          "deleted": false,
+          "distilRole": "data",
+          "grouping": null,
+          "importance": 0,
+          "key": "class",
+          "max": 0,
+          "min": 0,
+          "refersTo": null,
+          "role": ["attribute"],
+          "selectedRole": "attribute",
+          "suggestedTypes": [
+            {
+              "type": "unknown",
+              "probability": 0,
+              "provenance": "schema"
+            }
+          ]
+        }
+      ],
+      "isCollection": false,
+      "resFormat": {
+        "text/csv": ["csv"]
+      },
+      "resID": "learningData",
+      "resPath": "/media/zhills/hdd/distil/datasets/196_autoMpg_MIN_METADATA/TRAIN/dataset_TRAIN-f539e00d-9d05-47a7-82e2-ace29e65d69c/tables/learningData.csv",
+      "resType": "table"
+    }
+  ]
+}

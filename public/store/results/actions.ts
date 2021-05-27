@@ -137,10 +137,12 @@ export const actions = {
       }
     });
     const values = await Promise.all(promises);
-    values.map((v) => {
-      if (!v) return;
-      mutations.updateTrainingSummary(context, v.summary);
-    });
+    mutations.updateTrainingSummaries(
+      context,
+      values.map((v) => {
+        return v.summary;
+      })
+    );
   },
 
   async fetchTrainingSummary(

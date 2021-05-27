@@ -147,6 +147,7 @@ export const mutations = {
   // training / target
   clearTrainingSummaries: commit(moduleMutations.clearTrainingSummaries),
   clearTargetSummary: commit(moduleMutations.clearTargetSummary),
+  updateTrainingSummaries: commit(moduleMutations.updateTrainingSummaries),
   updateTrainingSummary: commit(moduleMutations.updateTrainingSummary),
   updateTargetSummary: commit(moduleMutations.updateTargetSummary),
   // result
