@@ -435,23 +435,6 @@ export async function cloneDatasetUpdateRoute(): Promise<Location> {
   });
   return entry;
 }
-export function bulkUpdateSummaries(
-  summaries: VariableSummary[],
-  variableSummaryDictionary: Dictionary<Dictionary<VariableSummary>>
-): Dictionary<Dictionary<VariableSummary>> {
-  const routeKey = minimumRouteKey();
-  const clone = _.cloneDeep(variableSummaryDictionary);
-  summaries.forEach((summary) => {
-    const summaryKey = summary.key;
-    const dataset = summary.dataset;
-    const compositeKey = VariableSummaryKey(summaryKey, dataset);
-    if (!clone[compositeKey]) {
-      clone[compositeKey] = {};
-    }
-    clone[compositeKey][routeKey] = Object.freeze(summary);
-  });
-  return clone;
-}
 export function updateSummariesPerVariable(
   summary: VariableSummary,
   variableSummaryDictionary: Dictionary<Dictionary<VariableSummary>>

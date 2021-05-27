@@ -17,11 +17,7 @@
 
 import { Dictionary } from "lodash";
 import Vue from "vue";
-import {
-  updateSummaries,
-  updateSummariesPerVariable,
-  bulkUpdateSummaries,
-} from "../../util/data";
+import { updateSummaries, updateSummariesPerVariable } from "../../util/data";
 import { Extrema, TableData, VariableSummary } from "../dataset/index";
 import { TimeSeriesForecastUpdate } from "../dataset/mutations";
 import { ResultsState } from "./index";
@@ -40,13 +36,7 @@ export const mutations = {
   clearTargetSummary(state: ResultsState) {
     state.targetSummary = null;
   },
-  updateTrainingSummaries(state: ResultsState, summaries: VariableSummary[]) {
-    Vue.set(
-      state,
-      "trainingSummaries",
-      bulkUpdateSummaries(summaries, state.trainingSummaries)
-    );
-  },
+
   updateTrainingSummary(state: ResultsState, summary: VariableSummary) {
     updateSummariesPerVariable(summary, state.trainingSummaries);
   },
