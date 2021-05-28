@@ -284,7 +284,7 @@ func (d *DiskDataset) GetLearningFolder() string {
 
 // Update updates a dataset, optionally filtering rows not being updated.
 func (d *DiskDataset) Update(updates map[string]map[string]string, filterNotFound bool) error {
-	if filterNotFound {
+	if filterNotFound && len(updates) > 0 {
 		// do an initial filter pass to keep only the rows found in the updates
 		filterMap := map[string]bool{}
 		for _, colUpdates := range updates {
