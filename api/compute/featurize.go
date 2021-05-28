@@ -78,6 +78,14 @@ func (s *SolutionRequest) createPreFeaturizedPipeline(learningDataset string,
 			selectedVariables = append(selectedVariables, v)
 		}
 	}
+
+	// image feature variables are m system data role and should be included in our selected set
+	for _, featurizedVariable := range featurizedVariables {
+		if featurizedVariable.DistilRole == model.VarDistilRoleSystemData {
+			selectedVariables = append(selectedVariables, featurizedVariable.Key)
+		}
+	}
+
 	expandedFilters.Variables = selectedVariables
 
 	prefeaturizedPipeline, err := description.CreatePreFeaturizedDatasetPipeline(name, desc,
