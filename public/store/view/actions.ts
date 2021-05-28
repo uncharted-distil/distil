@@ -452,13 +452,14 @@ export const actions = {
   },
 
   async fetchSelectTargetData(context: ViewContext, clearSummaries: boolean) {
+    const dataset = context.getters.getRouteDataset;
     // clear previous state
     if (clearSummaries) {
       clearVariableSummaries(context);
+      datasetMutations.setVariables(store, []);
+      await datasetActions.fetchVariables(store, { dataset });
     }
-
     // fetch new state
-    const dataset = context.getters.getRouteDataset;
     return fetchVariableSummaries(context, { dataset });
   },
 
