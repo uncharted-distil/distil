@@ -52,6 +52,7 @@ import { getters as predictGetters } from "../store/predictions/module";
 import LabelAnnotation from "./labelingComponents/LabelAnnotation.vue";
 import _ from "lodash";
 import { minimumRouteKey } from "../util/data";
+import { isCategoricalType } from "../util/types";
 
 interface Label {
   status: string;
@@ -120,7 +121,10 @@ export default Vue.extend({
         // Display the label
         if (key === this.targetField || key === this.predictedField) {
           const fullLabel = <string>this.item[key].value;
-          if (this.shortenLabels) {
+          if (
+            this.shortenLabels &&
+            isCategoricalType(this.dataFields[key].type)
+          ) {
             labels.push({
               status,
               value: this.shortenLabel(fullLabel),
