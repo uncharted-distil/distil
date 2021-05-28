@@ -42,6 +42,12 @@ var excludedTypes = map[string]bool{
 	model.GeoCoordinateType:  true,
 }
 
+var excludedRoles = map[string]bool{
+	model.VarDistilRoleAugmented:  true,
+	model.VarDistilRoleMetadata:   true,
+	model.VarDistilRoleSystemData: true,
+}
+
 // TargetRank will rank the dataset relative to a target variable using
 // a primitive.
 func TargetRank(dataset *api.Dataset, target string, features []*model.Variable, source metadata.DatasetSource) (map[string]float64, error) {
@@ -120,7 +126,7 @@ func filterFeatures(features []*model.Variable, target string) map[string]bool {
 		}
 
 		// check if this is a feature that we've marked as elligible for ranking and save it if so
-		if !excludedTypes[feature.Type] && !model.ExcludedDistilRoles[feature.DistilRole] && feature.Key != target {
+		if !excludedTypes[feature.Type] && !excludedRoles[feature.DistilRole] && feature.Key != target {
 			filteredFeatures[feature.Key] = feature
 		}
 	}
