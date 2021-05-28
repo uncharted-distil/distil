@@ -38,8 +38,8 @@
     </div>
     <facet-template target="facet-terms-value" class="facet-content-container">
       <div slot="header" class="facet-image-preview-display">${metadata}</div>
-      <div slot="label" class="facet-image-label" title="${value} ${label}">
-        ${value} ${label}
+      <div slot="label" class="facet-image-label" title="${label} ${value}">
+        ${label} ${value}
       </div>
       <div slot="annotation" class="collapse-unused" />
       <div slot="value" class="collapse-unused" />
