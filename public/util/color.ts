@@ -103,8 +103,9 @@ export function colorByFacet(
   // assume range
   else {
     const diff = variable.baseline.extrema.max - variable.baseline.extrema.min;
-    return (item: TableRow, idx: number) => {
-      return (item[key].value - variable.baseline.extrema.min) / diff;
+    return (item: TableRow) => {
+      const itemValue = item[key]?.value ?? 0;
+      return (itemValue - variable.baseline.extrema.min) / diff;
     };
   }
 }

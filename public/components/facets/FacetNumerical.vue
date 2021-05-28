@@ -191,7 +191,10 @@ export default Vue.extend({
       // so we can show the latest selection made.
       const highlightAsSelection = buckets.reduce((acc, val, ind) => {
         const key = _.toNumber(val.key);
-        if (highlightValues[0].from === key || highlightValues[0].to === key) {
+        if (
+          highlightValues[0]?.from === key ||
+          highlightValues[0]?.to === key
+        ) {
           acc.push(ind);
         }
         return acc;
