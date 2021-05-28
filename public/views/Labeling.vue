@@ -76,7 +76,16 @@
         class="h-18"
       />
     </div>
-    <b-modal :id="modalId" :title="labelModalTitle" @hide="onLabelSubmit">
+    <b-modal
+      :id="modalId"
+      @hide="onLabelSubmit"
+      no-close-on-backdrop
+      ok-only
+      no-close-on-esc
+    >
+      <template #modal-header>
+        {{ labelModalTitle }}
+      </template>
       <b-form-group
         v-if="!isClone"
         id="input-group-1"
