@@ -87,6 +87,38 @@ func JoinHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor)
 			return
 		}
 
+		// When joining a multiband image dataset with another we always force the multiband dataset
+		// to be the left.  Because we perform a left outer join, this ensures that we effectively clip the
+		// data to the area we have imagery for.
+		for _, v := range rightVariables {
+			if model.IsMultiBandImage(v.Type) {
+				temp := leftJoin
+				leftJoin = rightJoin
+				rightJoin = temp
+
+				tempVars := leftVariables
+				leftVariables = rightVariables
+				rightVariables = tempVars
+
+				tempDataset := datasetLeft
+				datasetLeft = datasetRight
+				datasetRight = tempDataset
+
+				joinPairsRaw, ok := json.Array(params, "joinPairs")
+				if !ok {
+					handleError(w, errors.Errorf("joinPairs not a list of join pairs"))
+					return
+				}
+				for _, p := range joinPairsRaw {
+					temp := p["first"]
+					p["first"] = p["second"]
+					p["second"] = temp
+				}
+
+				break
+			}
+		}
+
 		dataStorage, err := dataCtor()
 		if err != nil {
 			handleError(w, err)
