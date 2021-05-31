@@ -87,6 +87,7 @@
           v-for="summary in predictedSummaries"
           :key="summary.key"
           ref="predicted-summaries"
+          v-if="!isRoc"
         >
           <component
             :is="getFacetByType(summary.type)"
@@ -104,7 +105,7 @@
           />
         </div>
 
-        <div class="residual-group-container">
+        <div class="residual-group-container" v-if="!isRoc">
           <component
             :is="getFacetByType(summary.type)"
             v-for="summary in residualSummaries"
@@ -127,6 +128,7 @@
 
         <component
           :is="getFacetByType(summary.type)"
+          v-if="!isRoc"
           v-for="summary in correctnessSummaries"
           :key="summary.key"
           enable-highlighting
@@ -218,7 +220,13 @@ import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import _ from "lodash";
 import store from "../store/store";
-
+interface Score {
+  label: string;
+  metric: string;
+  solutionId: string;
+  sortMultiplier: number;
+  value: number;
+}
 export default Vue.extend({
   name: "ResultGroup",
 
@@ -233,7 +241,7 @@ export default Vue.extend({
     requestId: String as () => string,
     solutionId: String as () => string,
     singleSolution: Boolean as () => boolean,
-    scores: Array as () => number[],
+    scores: Array as () => Score[],
     targetSummary: Object as () => VariableSummary,
     predictedSummary: Object as () => VariableSummary,
     residualsSummary: Object as () => VariableSummary,
@@ -438,6 +446,9 @@ export default Vue.extend({
     },
     openSolutions(): string[] {
       return routeGetters.getRouteOpenSolutions(this.$store);
+    },
+    isRoc(): boolean {
+      return "ROC AUC" === this.scores[0]?.label;
     },
   },
   mounted() {
