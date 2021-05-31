@@ -136,13 +136,21 @@ func parseVariables(variablesRaw []interface{}) ([]*model.Variable, error) {
 		// groups need to be handled separately as they depend on type
 		var groupingParsed model.BaseGrouping
 		if varData["grouping"] != nil {
-			if model.IsTimeSeries(varData["colType"].(string)) {
+			groupingType := varData["colType"].(string)
+			if model.IsTimeSeries(groupingType) {
 				groupingTimeseries := model.TimeseriesGrouping{}
 				err := json.MapToStruct(&groupingTimeseries, varData["grouping"].(map[string]interface{}))
 				if err != nil {
 					return nil, errors.Wrap(err, "Unable to parse timeseries grouping")
 				}
 				groupingParsed = &groupingTimeseries
+			} else if model.IsGeoBounds(groupingType) {
+				groupingGeo := model.GeoBoundsGrouping{}
+				err := json.MapToStruct(&groupingGeo, varData["grouping"].(map[string]interface{}))
+				if err != nil {
+					return nil, errors.Wrap(err, "Unable to parse geobounds grouping")
+				}
+				groupingParsed = &groupingGeo
 			}
 			varData["grouping"] = nil
 		}

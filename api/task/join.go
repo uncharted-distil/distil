@@ -79,8 +79,9 @@ func JoinDistil(dataStorage apiModel.DataStorage, joinLeft *JoinSpec, joinRight 
 		return "", nil, err
 	}
 
-	varsLeftMapUpdated := apiModel.MapVariables(joinLeft.UpdatedVariables, func(variable *model.Variable) string { return variable.Key })
-	varsRightMapUpdated := apiModel.MapVariables(joinRight.UpdatedVariables, func(variable *model.Variable) string { return variable.Key })
+	isKey := false
+	varsLeftMapUpdated := mapDistilJoinVars(joinLeft.UpdatedVariables)
+	varsRightMapUpdated := mapDistilJoinVars(joinRight.UpdatedVariables)
 	joins := make([]*description.Join, len(joinPairs))
 	rightVars := make([]*model.Variable, len(joinPairs))
 	for i := range joinPairs {
@@ -91,17 +92,32 @@ func JoinDistil(dataStorage apiModel.DataStorage, joinLeft *JoinSpec, joinRight 
 			Absolute: joinPairs[i].AbsoluteAccuracy,
 		}
 		rightVars[i] = varsRightMapUpdated[joinPairs[i].Right]
+
+		// assume groupings are valid keys for the join
+		if joins[i].Right.IsGrouping() {
+			isKey = true
+		}
 	}
-	isKey, err := dataStorage.IsKey(joinRight.DatasetID, joinRight.ExistingMetadata.StorageName, rightVars)
-	if err != nil {
-		return "", nil, err
+	if !isKey {
+		isKey, err = dataStorage.IsKey(joinRight.DatasetID, joinRight.ExistingMetadata.StorageName, rightVars)
+		if err != nil {
+			return "", nil, err
+		}
 	}
 	if !isKey {
 		return "", nil, errors.Errorf("specified right join columns do not specify a unique key")
 	}
 
 	rightExcludes := generateRightExcludes(joinLeft.UpdatedVariables, joinRight.UpdatedVariables)
-	pipelineDesc, err := description.CreateJoinPipeline("Joiner", "Join existing data", joins, []*model.Variable{}, rightExcludes, description.JoinTypeLeft)
+	joinInfo := &description.JoinDescription{
+		Joins:          joins,
+		LeftExcludes:   []*model.Variable{},
+		LeftVariables:  joinLeft.UpdatedVariables,
+		RightExcludes:  rightExcludes,
+		RightVariables: joinRight.UpdatedVariables,
+		Type:           description.JoinTypeLeft,
+	}
+	pipelineDesc, err := description.CreateJoinPipeline("Joiner", "Join existing data", joinInfo)
 	if err != nil {
 		return "", nil, err
 	}
@@ -325,4 +341,18 @@ func generateRightExcludes(leftVariables []*model.Variable, rightVariables []*mo
 		}
 	}
 	return rightExcludes
+}
+
+func mapDistilJoinVars(variables []*model.Variable) map[string]*model.Variable {
+	varsMapped := apiModel.MapVariables(variables, func(variable *model.Variable) string { return variable.Key })
+
+	// geobounds group should map the coordinates field to the grouping columns
+	for _, g := range variables {
+		if g.IsGrouping() && model.IsGeoBounds(g.Type) {
+			geoGrouping := g.Grouping.(*model.GeoBoundsGrouping)
+			varsMapped[geoGrouping.CoordinatesCol] = g
+		}
+	}
+
+	return varsMapped
 }
