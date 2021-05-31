@@ -305,11 +305,11 @@ func generateRightExcludes(leftVariables []*model.Variable, rightVariables []*mo
 	// driven by the UI, as having multiple bounds columns isn't properly handled by our
 	// mapping approach.
 	toRemove := map[string]bool{}
-	for _, v := range leftVariables {
-		if v.IsGrouping() && model.IsGeoBounds(v.Type) {
-			for _, v := range rightVariables {
-				if v.IsGrouping() && model.IsGeoBounds(v.Type) {
-					gb := v.Grouping.(*model.GeoBoundsGrouping)
+	for _, leftVar := range leftVariables {
+		if leftVar.IsGrouping() && model.IsGeoBounds(leftVar.Type) {
+			for _, rightVar := range rightVariables {
+				if rightVar.IsGrouping() && model.IsGeoBounds(rightVar.Type) {
+					gb := rightVar.Grouping.(*model.GeoBoundsGrouping)
 					// don't need to remove polygon col here - we force the multiband image data to be the left
 					// part of the join, and that's the only time the polygon col will be present
 					toRemove[gb.CoordinatesCol] = true
