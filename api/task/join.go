@@ -310,7 +310,8 @@ func generateRightExcludes(leftVariables []*model.Variable, rightVariables []*mo
 			for _, v := range rightVariables {
 				if v.IsGrouping() && model.IsGeoBounds(v.Type) {
 					gb := v.Grouping.(*model.GeoBoundsGrouping)
-					toRemove[gb.PolygonCol] = true
+					// don't need to remove polygon col here - we force the multiband image data to be the left
+					// part of the join, and that's the only time the polygon col will be present
 					toRemove[gb.CoordinatesCol] = true
 					break
 				}
