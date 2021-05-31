@@ -28,6 +28,7 @@ import (
 	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/task"
 	"github.com/uncharted-distil/distil/api/util/json"
+	log "github.com/unchartedsoftware/plog"
 )
 
 func missingParamErr(w http.ResponseWriter, paramName string) {
@@ -92,6 +93,7 @@ func JoinHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor)
 		// data to the area we have imagery for.
 		for _, v := range rightVariables {
 			if model.IsMultiBandImage(v.Type) {
+				log.Warnf("Multiband image set %s used as right join argument and will be forced to the left.", rightJoin.DatasetID)
 				temp := leftJoin
 				leftJoin = rightJoin
 				rightJoin = temp
