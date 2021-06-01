@@ -16,63 +16,32 @@
 -->
 
 <template>
-  <div class="type-change-menu">
-    <div class="type-change-dropdown-wrapper">
-      <b-dropdown
-        id="type-change-dropdown"
-        class="var-type-button"
-        variant="secondary"
-        :text="label"
-        :disabled="isDisabled"
-        :boundary="boundary"
-        menu-class="multi-columns"
-        lazy
-      >
-        <template v-if="!isComputedFeature">
-          <template v-if="!isGroupedCluster">
-            <b-dropdown-item
-              v-for="suggested in getSuggestedList()"
-              :key="suggested.type"
-              :class="{
-                selected: suggested.isSelected,
-                recommended: suggested.isRecommended,
-              }"
-              @click.stop="onTypeChange(suggested.type)"
-            >
-              <i
-                v-if="suggested.isSelected"
-                class="fa fa-check"
-                aria-hidden="true"
-              />
-              {{ suggested.label }}
-              <icon-base
-                v-if="suggested.isRecommended"
-                icon-name="bookmark"
-                class="recommended-icon"
-              >
-                <icon-bookmark />
-              </icon-base>
-            </b-dropdown-item>
-          </template>
-          <b-dropdown-item
-            v-for="grouping in groupingOptions()"
-            :key="grouping.type"
-            @click.stop="onGroupingSelect(grouping.type)"
-          >
-            {{ grouping.label }}
-          </b-dropdown-item>
-        </template>
-      </b-dropdown>
-      <i v-if="isUnsure" class="unsure-type-icon fa fa-circle" />
-    </div>
-    <b-tooltip
-      :delay="delay"
-      :disabled="!isDisabled"
-      target="type-change-dropdown"
+  <div class="type-change-dropdown-wrapper">
+    <d-drop-down
+      id="type-change-dropdown"
+      :value="label"
+      label="label"
+      class="btn-secondary"
+      fontColor="#fff"
+      :disabled="isDisabled"
+      :options="getSuggestedList()"
+      @input="onTypeChange"
     >
-      Cannot change type when actively filtering or viewing models or
-      predictions
-    </b-tooltip>
+      <template v-slot:option="option">
+        <div class="option-slot">
+          <i v-if="option.isSelected" class="fa fa-check" aria-hidden="true" />
+          {{ option.label }}
+          <icon-base
+            v-if="option.isRecommended"
+            icon-name="bookmark"
+            class="recommended-icon"
+          >
+            <icon-bookmark />
+          </icon-base>
+        </div>
+      </template>
+    </d-drop-down>
+    <i v-if="isUnsure" class="unsure-type-icon fa fa-circle" />
   </div>
 </template>
 
@@ -109,18 +78,25 @@ import {
   PREDICTION_ROUTE,
   RESULTS_ROUTE,
 } from "../store/route";
+import DDropDown from "./DDropDown.vue";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { hasHighlightInRoute } from "../util/highlights";
 
 const PROBABILITY_THRESHOLD = 0.8;
-
+interface SuggestedInfo {
+  type: string;
+  label: string;
+  isRecommended: boolean;
+  isSelected: boolean;
+}
 export default Vue.extend({
   name: "TypeChangeMenu",
 
   components: {
     IconBase,
     IconBookmark,
+    DDropDown,
   },
 
   props: {
@@ -248,18 +224,6 @@ export default Vue.extend({
     },
   },
 
-  mounted() {
-    this.$root.$on("bv::dropdown::show", () => {
-      const dataset = this.dataset;
-      const field = this.field;
-    });
-
-    // Change the boundary of the dropdown so that it display appropriately.
-    // https://bootstrap-vue.org/docs/components/dropdown#boundary-constraint
-    const varFacet = this.$el.closest("[class^=variable]") as HTMLElement;
-    this.boundary = (varFacet.offsetParent as HTMLElement) ?? this.boundary;
-  },
-
   methods: {
     groupingOptions() {
       const options = [];
@@ -342,7 +306,7 @@ export default Vue.extend({
       ]);
       return menuSuggestions;
     },
-    getSuggestedList() {
+    getSuggestedList(): SuggestedInfo[] {
       const currentNormalizedType = normalizedEquivalentType(this.type);
       const combinedSuggestions = this.addMissingSuggestions().map((type) => {
         const normalizedType = normalizedEquivalentType(type);
@@ -357,8 +321,8 @@ export default Vue.extend({
       });
       return combinedSuggestions;
     },
-    onTypeChange(suggestedType) {
-      const type = suggestedType;
+    onTypeChange(suggestedType: SuggestedInfo) {
+      const type = suggestedType.type;
       const field = this.field;
       const dataset = this.dataset;
 
@@ -411,27 +375,10 @@ export default Vue.extend({
 </script>
 
 <style>
-.var-type-button button {
-  border: none;
-  border-radius: 0;
-  padding: 2px 4px;
-  width: 100%;
-  text-align: left;
-  outline: none;
-  font-size: 0.75rem;
-  color: white;
-}
-.var-type-button button:hover,
-.var-type-button button:active,
-.var-type-button button:focus,
-.var-type-button.show > .dropdown-toggle {
-  border: none;
-  border-radius: 0;
-  padding: 2px 4px;
-  color: white;
-  background-color: var(--gray-900);
-  border-color: var(--gray-900);
-  box-shadow: none;
+.option-slot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 .type-change-menu .dropdown-item {
   font-size: 0.867rem;
@@ -444,9 +391,7 @@ export default Vue.extend({
   padding-left: 0;
 }
 .recommended-icon {
-  position: absolute;
-  right: 10px;
-  bottom: 5px;
+  margin: auto;
 }
 .unsure-type-icon {
   position: absolute;
@@ -457,12 +402,5 @@ export default Vue.extend({
 }
 .type-change-dropdown-wrapper {
   position: relative;
-}
-
-/* Display the dropdown menu in a multi-columns fashion. */
-.dropdown-menu.show.multi-columns {
-  column-gap: 1em;
-  display: grid;
-  grid-template-columns: repeat(3, 10em);
 }
 </style>

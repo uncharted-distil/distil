@@ -324,7 +324,6 @@ export default Vue.extend({
   color: rgba(0, 0, 0, 0.54);
   display: flex;
   align-items: center;
-  overflow-y: scroll !important;
 }
 
 .facet-header-container-no-scroll {
