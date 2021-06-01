@@ -6,7 +6,7 @@
     :calculate-position="withPopper"
     :disabled="disabled"
     :options="options"
-    :clearable="false"
+    :clearable="clearable"
     :searchable="false"
     :style="style"
     @input="onInput"
@@ -36,9 +36,10 @@ export default Vue.extend({
   props: {
     disabled: { type: Boolean as () => boolean, default: false },
     options: { type: Array, default: [] }, // this can really receive anything
-    value: { type: String, default: "" },
+    value: null, // this can receive string and object input. if there is a way to use generics here we should use it.
     label: { type: String, default: "" },
     fontColor: { type: String, default: "" },
+    clearable: { type: Boolean as () => boolean, default: false },
   },
   computed: {
     style(): string {
