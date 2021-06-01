@@ -9,6 +9,7 @@
     :clearable="false"
     :searchable="false"
     :style="style"
+    @input="onInput"
   >
     <!-- Pass on all named slots -->
     <slot v-for="slot in Object.keys($slots)" :name="slot" :slot="slot" />
@@ -48,6 +49,9 @@ export default Vue.extend({
     },
   },
   methods: {
+    onInput(data) {
+      this.$emit("input", data);
+    },
     withPopper(dropdownList, component, { width }) {
       dropdownList.style.width = width;
       const popper = createPopper(component.$refs.toggle, dropdownList, {

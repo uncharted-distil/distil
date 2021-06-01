@@ -25,24 +25,20 @@
       fontColor="#fff"
       :disabled="isDisabled"
       :options="getSuggestedList()"
+      @input="onTypeChange"
     >
-      <template
-        v-slot:option="option"
-        :class="{
-          selected: option.isSelected,
-          recommended: option.isRecommended,
-        }"
-        @click.stop="onTypeChange(option.type)"
-      >
-        <i v-if="option.isSelected" class="fa fa-check" aria-hidden="true" />
-        {{ option.label }}
-        <icon-base
-          v-if="option.isRecommended"
-          icon-name="bookmark"
-          class="recommended-icon"
-        >
-          <icon-bookmark />
-        </icon-base>
+      <template v-slot:option="option">
+        <div class="option-slot">
+          <i v-if="option.isSelected" class="fa fa-check" aria-hidden="true" />
+          {{ option.label }}
+          <icon-base
+            v-if="option.isRecommended"
+            icon-name="bookmark"
+            class="recommended-icon"
+          >
+            <icon-bookmark />
+          </icon-base>
+        </div>
       </template>
     </d-drop-down>
     <i v-if="isUnsure" class="unsure-type-icon fa fa-circle" />
@@ -88,7 +84,12 @@ import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { hasHighlightInRoute } from "../util/highlights";
 
 const PROBABILITY_THRESHOLD = 0.8;
-
+interface SuggestedInfo {
+  type: string;
+  label: string;
+  isRecommended: boolean;
+  isSelected: boolean;
+}
 export default Vue.extend({
   name: "TypeChangeMenu",
 
@@ -305,7 +306,7 @@ export default Vue.extend({
       ]);
       return menuSuggestions;
     },
-    getSuggestedList() {
+    getSuggestedList(): SuggestedInfo[] {
       const currentNormalizedType = normalizedEquivalentType(this.type);
       const combinedSuggestions = this.addMissingSuggestions().map((type) => {
         const normalizedType = normalizedEquivalentType(type);
@@ -320,8 +321,8 @@ export default Vue.extend({
       });
       return combinedSuggestions;
     },
-    onTypeChange(suggestedType) {
-      const type = suggestedType;
+    onTypeChange(suggestedType: SuggestedInfo) {
+      const type = suggestedType.type;
       const field = this.field;
       const dataset = this.dataset;
 
@@ -374,6 +375,11 @@ export default Vue.extend({
 </script>
 
 <style>
+.option-slot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
 .type-change-menu .dropdown-item {
   font-size: 0.867rem;
   text-transform: none;
@@ -385,9 +391,7 @@ export default Vue.extend({
   padding-left: 0;
 }
 .recommended-icon {
-  position: absolute;
-  right: 10px;
-  bottom: 5px;
+  margin: auto;
 }
 .unsure-type-icon {
   position: absolute;
