@@ -16,63 +16,37 @@
 -->
 
 <template>
-  <div class="type-change-menu">
-    <div class="type-change-dropdown-wrapper">
-      <b-dropdown
-        id="type-change-dropdown"
-        class="var-type-button"
-        variant="secondary"
-        :text="label"
-        :disabled="isDisabled"
-        :boundary="boundary"
-        menu-class="multi-columns"
-        lazy
-      >
-        <template v-if="!isComputedFeature">
-          <template v-if="!isGroupedCluster">
-            <b-dropdown-item
-              v-for="suggested in getSuggestedList()"
-              :key="suggested.type"
-              :class="{
-                selected: suggested.isSelected,
-                recommended: suggested.isRecommended,
-              }"
-              @click.stop="onTypeChange(suggested.type)"
-            >
-              <i
-                v-if="suggested.isSelected"
-                class="fa fa-check"
-                aria-hidden="true"
-              />
-              {{ suggested.label }}
-              <icon-base
-                v-if="suggested.isRecommended"
-                icon-name="bookmark"
-                class="recommended-icon"
-              >
-                <icon-bookmark />
-              </icon-base>
-            </b-dropdown-item>
-          </template>
-          <b-dropdown-item
-            v-for="grouping in groupingOptions()"
-            :key="grouping.type"
-            @click.stop="onGroupingSelect(grouping.type)"
-          >
-            {{ grouping.label }}
-          </b-dropdown-item>
-        </template>
-      </b-dropdown>
-      <i v-if="isUnsure" class="unsure-type-icon fa fa-circle" />
-    </div>
-    <b-tooltip
-      :delay="delay"
-      :disabled="!isDisabled"
-      target="type-change-dropdown"
+  <div class="type-change-dropdown-wrapper">
+    <v-select
+      id="type-change-dropdown"
+      :value="label"
+      append-to-body
+      :calculate-position="withPopper"
+      :disabled="isDisabled"
+      :options="getSuggestedList()"
+      :clearable="false"
+      :searchable="false"
     >
-      Cannot change type when actively filtering or viewing models or
-      predictions
-    </b-tooltip>
+      <template
+        v-slot:option="option"
+        :class="{
+          selected: option.isSelected,
+          recommended: option.isRecommended,
+        }"
+        @click.stop="onTypeChange(option.type)"
+      >
+        <i v-if="option.isSelected" class="fa fa-check" aria-hidden="true" />
+        {{ option.label }}
+        <icon-base
+          v-if="option.isRecommended"
+          icon-name="bookmark"
+          class="recommended-icon"
+        >
+          <icon-bookmark />
+        </icon-base>
+      </template>
+    </v-select>
+    <i v-if="isUnsure" class="unsure-type-icon fa fa-circle" />
   </div>
 </template>
 
@@ -112,6 +86,7 @@ import {
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { hasHighlightInRoute } from "../util/highlights";
+import { createPopper } from "@popperjs/core";
 
 const PROBABILITY_THRESHOLD = 0.8;
 
@@ -248,19 +223,37 @@ export default Vue.extend({
     },
   },
 
-  mounted() {
-    this.$root.$on("bv::dropdown::show", () => {
-      const dataset = this.dataset;
-      const field = this.field;
-    });
-
-    // Change the boundary of the dropdown so that it display appropriately.
-    // https://bootstrap-vue.org/docs/components/dropdown#boundary-constraint
-    const varFacet = this.$el.closest("[class^=variable]") as HTMLElement;
-    this.boundary = (varFacet.offsetParent as HTMLElement) ?? this.boundary;
-  },
-
   methods: {
+    withPopper(dropdownList, component, { width }) {
+      dropdownList.style.width = width;
+      const popper = createPopper(component.$refs.toggle, dropdownList, {
+        modifiers: [
+          {
+            name: "offset",
+            options: {
+              offset: [0, -1],
+            },
+          },
+          {
+            name: "toggleClass",
+            enabled: true,
+            phase: "write",
+            fn({ state }) {
+              component.$el.classList.toggle(
+                "drop-up",
+                state.placement === "top"
+              );
+            },
+          },
+        ],
+      });
+
+      /**
+       * To prevent memory leaks Popper needs to be destroyed.
+       * If you return function, it will be called just before dropdown is removed from DOM.
+       */
+      return () => popper.destroy();
+    },
     groupingOptions() {
       const options = [];
       if (this.isGrouping) {
@@ -411,28 +404,6 @@ export default Vue.extend({
 </script>
 
 <style>
-.var-type-button button {
-  border: none;
-  border-radius: 0;
-  padding: 2px 4px;
-  width: 100%;
-  text-align: left;
-  outline: none;
-  font-size: 0.75rem;
-  color: white;
-}
-.var-type-button button:hover,
-.var-type-button button:active,
-.var-type-button button:focus,
-.var-type-button.show > .dropdown-toggle {
-  border: none;
-  border-radius: 0;
-  padding: 2px 4px;
-  color: white;
-  background-color: var(--gray-900);
-  border-color: var(--gray-900);
-  box-shadow: none;
-}
 .type-change-menu .dropdown-item {
   font-size: 0.867rem;
   text-transform: none;
@@ -458,11 +429,31 @@ export default Vue.extend({
 .type-change-dropdown-wrapper {
   position: relative;
 }
-
-/* Display the dropdown menu in a multi-columns fashion. */
-.dropdown-menu.show.multi-columns {
-  column-gap: 1em;
-  display: grid;
-  grid-template-columns: repeat(3, 10em);
+.vs--single.vs--open .vs__selected {
+  position: relative !important;
+  opacity: 0.4;
+}
+.vs__actions {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  padding: 0px !important;
+  margin-right: 5px;
+}
+.vs__dropdown-toggle {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  padding: 0px !important;
+  background: none;
+  border: 1px solid rgba(60, 60, 60, 0.26);
+  border-radius: 4px;
+  white-space: normal;
+}
+div.vs__actions > svg {
+  width: 17px;
 }
 </style>
