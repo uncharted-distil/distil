@@ -17,15 +17,12 @@
 
 <template>
   <div class="type-change-dropdown-wrapper">
-    <v-select
+    <d-drop-down
       id="type-change-dropdown"
       :value="label"
-      append-to-body
-      :calculate-position="withPopper"
+      label="label"
       :disabled="isDisabled"
       :options="getSuggestedList()"
-      :clearable="false"
-      :searchable="false"
     >
       <template
         v-slot:option="option"
@@ -45,7 +42,7 @@
           <icon-bookmark />
         </icon-base>
       </template>
-    </v-select>
+    </d-drop-down>
     <i v-if="isUnsure" class="unsure-type-icon fa fa-circle" />
   </div>
 </template>
@@ -83,10 +80,10 @@ import {
   PREDICTION_ROUTE,
   RESULTS_ROUTE,
 } from "../store/route";
+import DDropDown from "./DDropDown.vue";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { hasHighlightInRoute } from "../util/highlights";
-import { createPopper } from "@popperjs/core";
 
 const PROBABILITY_THRESHOLD = 0.8;
 
@@ -96,6 +93,7 @@ export default Vue.extend({
   components: {
     IconBase,
     IconBookmark,
+    DDropDown,
   },
 
   props: {
@@ -224,36 +222,6 @@ export default Vue.extend({
   },
 
   methods: {
-    withPopper(dropdownList, component, { width }) {
-      dropdownList.style.width = width;
-      const popper = createPopper(component.$refs.toggle, dropdownList, {
-        modifiers: [
-          {
-            name: "offset",
-            options: {
-              offset: [0, -1],
-            },
-          },
-          {
-            name: "toggleClass",
-            enabled: true,
-            phase: "write",
-            fn({ state }) {
-              component.$el.classList.toggle(
-                "drop-up",
-                state.placement === "top"
-              );
-            },
-          },
-        ],
-      });
-
-      /**
-       * To prevent memory leaks Popper needs to be destroyed.
-       * If you return function, it will be called just before dropdown is removed from DOM.
-       */
-      return () => popper.destroy();
-    },
     groupingOptions() {
       const options = [];
       if (this.isGrouping) {
@@ -428,32 +396,5 @@ export default Vue.extend({
 }
 .type-change-dropdown-wrapper {
   position: relative;
-}
-.vs--single.vs--open .vs__selected {
-  position: relative !important;
-  opacity: 0.4;
-}
-.vs__actions {
-  display: -webkit-box;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
-  padding: 0px !important;
-  margin-right: 5px;
-}
-.vs__dropdown-toggle {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  padding: 0px !important;
-  background: none;
-  border: 1px solid rgba(60, 60, 60, 0.26);
-  border-radius: 4px;
-  white-space: normal;
-}
-div.vs__actions > svg {
-  width: 17px;
 }
 </style>

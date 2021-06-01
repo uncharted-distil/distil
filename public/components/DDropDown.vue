@@ -1,16 +1,24 @@
 <template>
   <v-select
-    id="type-change-dropdown"
-    :value="value"
     append-to-body
+    :value="value"
+    :label="label"
     :calculate-position="withPopper"
     :disabled="disabled"
     :options="options"
     :clearable="false"
     :searchable="false"
   >
-    <slot name="search" slot="search"></slot>
-    <slot name="option" slot="option"></slot>
+    <!-- Pass on all named slots -->
+    <slot v-for="slot in Object.keys($slots)" :name="slot" :slot="slot" />
+
+    <!-- Pass on all scoped slots -->
+    <template
+      v-for="slot in Object.keys($scopedSlots)"
+      :slot="slot"
+      slot-scope="scope"
+      ><slot :name="slot" v-bind="scope"
+    /></template>
   </v-select>
 </template>
 
@@ -24,6 +32,7 @@ export default Vue.extend({
     disabled: { type: Boolean as () => boolean, default: false },
     options: { type: Array, default: [] }, // this can really receive anything
     value: { type: String, default: "" },
+    label: { type: String, default: "" },
   },
   methods: {
     withPopper(dropdownList, component, { width }) {
