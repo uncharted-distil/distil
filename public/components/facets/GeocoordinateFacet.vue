@@ -1171,7 +1171,6 @@ export default Vue.extend({
 
 .facet-card .group-header .type-change-dropdown-wrapper {
   float: right;
-  bottom: 20px;
 }
 
 .geofacet-container .type-change-dropdown-wrapper .dropdown-menu {
