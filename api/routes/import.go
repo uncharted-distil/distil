@@ -181,7 +181,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 							handleError(w, errors.Wrap(err, "unable to get joining dataset groups"))
 							return
 						}
-						ingestParams.RawGroupings = append(groups, groupsJoin...)
+						ingestParams.RawGroupings = combineDatasetGroupings(groups, groupsJoin)
 
 						// final step - on join we drop the right column, which may be referred to by a group
 						// we replace any refs to the right col with a ref to the left col
@@ -461,6 +461,23 @@ func getDatasetGroups(dsRaw map[string]interface{}) ([]map[string]interface{}, e
 	}
 
 	return groups, nil
+}
+
+func combineDatasetGroupings(groupingsFirst []map[string]interface{}, groupingsSecond []map[string]interface{}) []map[string]interface{} {
+	// keep the first set of groupings, and add the second set provided that type of group does not already exist
+	combined := append([]map[string]interface{}{}, groupingsFirst...)
+	groupingTypes := map[string]bool{}
+	for _, g := range groupingsFirst {
+		groupingTypes[g["type"].(string)] = true
+	}
+
+	for _, g := range groupingsSecond {
+		if !groupingTypes[g["type"].(string)] {
+			combined = append(combined, g)
+		}
+	}
+
+	return combined
 }
 
 type nameUpdate struct {
