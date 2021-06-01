@@ -24,7 +24,7 @@
       class="btn-secondary"
       fontColor="#fff"
       :disabled="isDisabled"
-      :options="getSuggestedList()"
+      :options="optionList"
       @input="onTypeChange"
     >
       <template v-slot:option="option">
@@ -117,6 +117,11 @@ export default Vue.extend({
   },
 
   computed: {
+    optionList(): any[] {
+      return this.isGroupedCluster
+        ? this.groupingOptions()
+        : this.getSuggestedList();
+    },
     isPredictionOrResultsView(): boolean {
       const routePath = routeGetters.getRoutePath(this.$store);
       return (
@@ -322,6 +327,9 @@ export default Vue.extend({
       return combinedSuggestions;
     },
     onTypeChange(suggestedType: SuggestedInfo) {
+      if (this.isGroupedCluster) {
+        this.onGroupingSelect(suggestedType.type);
+      }
       const type = suggestedType.type;
       const field = this.field;
       const dataset = this.dataset;
