@@ -108,7 +108,7 @@ func JoinDistil(dataStorage apiModel.DataStorage, joinLeft *JoinSpec, joinRight 
 		return "", nil, errors.Errorf("specified right join columns do not specify a unique key")
 	}
 
-	rightExcludes := generateRightExcludes(joinLeft.UpdatedVariables, joinRight.UpdatedVariables)
+	rightExcludes := generateRightExcludes(joinLeft.UpdatedVariables, joinRight.UpdatedVariables, joinPairs)
 	joinInfo := &description.JoinDescription{
 		Joins:          joins,
 		LeftExcludes:   []*model.Variable{},
@@ -316,7 +316,7 @@ func joinMetadataVariables(headerNames []string, leftMetadata *model.Metadata, r
 	return mergedVariables, mergedResources
 }
 
-func generateRightExcludes(leftVariables []*model.Variable, rightVariables []*model.Variable) []*model.Variable {
+func generateRightExcludes(leftVariables []*model.Variable, rightVariables []*model.Variable, joins []*JoinPair) []*model.Variable {
 	// There is only allowed to be one set of geo coords after a join.  This is a constraint
 	// driven by the UI, as having multiple bounds columns isn't properly handled by our
 	// mapping approach.
@@ -335,6 +335,14 @@ func generateRightExcludes(leftVariables []*model.Variable, rightVariables []*mo
 			break
 		}
 	}
+
+	// right join columns should NOT be excluded since they are needed for the join itself
+	for _, j := range joins {
+		if toRemove[j.Right] {
+			toRemove[j.Right] = false
+		}
+	}
+
 	rightExcludes := []*model.Variable{}
 	for _, v := range rightVariables {
 		if toRemove[v.Key] {
