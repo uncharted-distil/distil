@@ -8,6 +8,7 @@
     :options="options"
     :clearable="false"
     :searchable="false"
+    :style="style"
   >
     <!-- Pass on all named slots -->
     <slot v-for="slot in Object.keys($slots)" :name="slot" :slot="slot" />
@@ -19,6 +20,9 @@
       slot-scope="scope"
       ><slot :name="slot" v-bind="scope"
     /></template>
+    <template #open-indicator="{ attributes }">
+      <span v-bind="attributes"><i class="fas fa-caret-down"></i></span>
+    </template>
   </v-select>
 </template>
 
@@ -33,6 +37,15 @@ export default Vue.extend({
     options: { type: Array, default: [] }, // this can really receive anything
     value: { type: String, default: "" },
     label: { type: String, default: "" },
+    fontColor: { type: String, default: "" },
+  },
+  computed: {
+    style(): string {
+      if (!this.fontColor.length) {
+        return "--dropdown-font-color:#333;";
+      }
+      return `--dropdown-font-color:${this.fontColor};`;
+    },
   },
   methods: {
     withPopper(dropdownList, component, { width }) {
@@ -68,6 +81,7 @@ export default Vue.extend({
   },
 });
 </script>
+
 <style>
 .vs--single.vs--open .vs__selected {
   position: relative !important;
@@ -84,16 +98,20 @@ export default Vue.extend({
   margin-right: 5px;
 }
 .vs__dropdown-toggle {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
   padding: 0px !important;
-  background: none;
-  border: 1px solid rgba(60, 60, 60, 0.26);
-  border-radius: 4px;
-  white-space: normal;
+  border: none !important;
 }
 div.vs__actions > svg {
   width: 17px;
+}
+div.vs__selected-options > span {
+  color: var(--dropdown-font-color);
+}
+div.vs__actions > svg {
+  fill: var(--dropdown-font-color);
+}
+.vs__search {
+  padding: 0px !important;
+  margin: 0px !important;
 }
 </style>

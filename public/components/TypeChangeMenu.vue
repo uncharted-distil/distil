@@ -21,6 +21,8 @@
       id="type-change-dropdown"
       :value="label"
       label="label"
+      class="btn-secondary"
+      fontColor="#fff"
       :disabled="isDisabled"
       :options="getSuggestedList()"
     >
