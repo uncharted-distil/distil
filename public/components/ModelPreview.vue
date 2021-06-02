@@ -29,6 +29,14 @@
       <a class="nav-link"><b>Dateset Name:</b> {{ model.datasetName }}</a>
       <a class="nav-link"><b>Features:</b> {{ model.variables.length }}</a>
       <a class="nav-link"><b>Target:</b> {{ model.target.displayName }}</a>
+      <b-button
+        variant="danger"
+        data-toggle="tooltip"
+        title="Delete model"
+        @click.stop="onDeleteClicked(model)"
+      >
+        <i class="fa fa-trash" aria-hidden="true" />
+      </b-button>
     </div>
     <div class="card-body">
       <div class="row">
@@ -117,6 +125,9 @@ export default Vue.extend({
   },
 
   methods: {
+    onDeleteClicked(model: Model) {
+      this.$emit("model-delete", model);
+    },
     onResult() {
       openModelSolution(this.$router, {
         datasetId: this.model.datasetId,
@@ -135,6 +146,10 @@ export default Vue.extend({
 <style>
 .highlight {
   background-color: #87cefa;
+}
+.delete-button {
+  background-color: transparent;
+  border: none;
 }
 .model-header {
   display: flex;

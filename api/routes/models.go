@@ -77,9 +77,9 @@ func ModelsHandler(modelCtor model.ExportedModelStorageCtor) func(http.ResponseW
 
 		var models []*model.ExportedModel
 		if terms != "" {
-			models, err = storage.SearchModels(terms)
+			models, err = storage.SearchModels(terms, false)
 		} else {
-			models, err = storage.FetchModels()
+			models, err = storage.FetchModels(false)
 		}
 		if err != nil {
 			handleError(w, err)

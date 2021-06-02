@@ -300,6 +300,7 @@ func main() {
 	registerRoutePost(mux, "/distil/event", routes.UserEventHandler(discoveryLogger))
 	registerRoutePost(mux, "/distil/save/:solution-id/:fitted", routes.SaveHandler(esExportedModelStorageCtor, pgSolutionStorageCtor, esMetadataStorageCtor))
 	registerRoutePost(mux, "/distil/delete-dataset/:dataset", routes.DeletingDatasetHandler(esMetadataStorageCtor, pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/delete-model/:model", routes.DeletingModelHandler(esExportedModelStorageCtor))
 
 	// static
 	registerRoute(mux, "/distil/image/:dataset/:file/:is-thumbnail", routes.ImageHandler(esMetadataStorageCtor, &config))

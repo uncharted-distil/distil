@@ -216,6 +216,7 @@ type ExportedModelStorage interface {
 	PersistExportedModel(exportedModel *ExportedModel) error
 	FetchModel(model string) (*ExportedModel, error)
 	FetchModelByID(fittedSolutionID string) (*ExportedModel, error)
-	FetchModels() ([]*ExportedModel, error)
-	SearchModels(terms string) ([]*ExportedModel, error)
+	FetchModels(includeDeleted bool) ([]*ExportedModel, error)
+	SearchModels(terms string, includeDeleted bool) ([]*ExportedModel, error)
+	DeleteModel(fittedSolutionID string) error
 }
