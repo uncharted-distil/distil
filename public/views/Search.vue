@@ -148,19 +148,17 @@
               :dataset="result.dataset"
               allow-join
               allow-import
-              @dataset-delete="onDeletionClicked"
+              @dataset-delete="onDatasetDeletionClicked"
             />
             <model-preview
               v-if="result.type === 'model'"
               :key="result.model.fittedSolutionId"
               :model="result.model"
+              @model-delete="onModelDeletionClicked"
             />
           </template>
         </div>
-        <deletion-modal
-          :target="deletionTarget"
-          @ok="onDatasetDeletionConfirmed"
-        />
+        <deletion-modal :target="deletionTarget" @ok="onDeletionConfirmed" />
       </div>
     </section>
 
@@ -183,6 +181,7 @@ import {
   getters as datasetGetters,
   actions as datasetActions,
 } from "../store/dataset/module";
+import { actions as modelActions } from "../store/model/module";
 import { Model } from "../store/model/index";
 import { getters as appGetters } from "../store/app/module";
 import { getters as modelGetters } from "../store/model/module";
@@ -235,6 +234,7 @@ export default Vue.extend({
       },
       deletionTarget: "",
       deletionInfo: null,
+      deletionInfoModel: null,
     };
   },
 
@@ -391,16 +391,29 @@ export default Vue.extend({
         this.isPending = false;
       });
     },
-    onDeletionClicked(dataset: Dataset) {
+    onDatasetDeletionClicked(dataset: Dataset) {
       this.deletionTarget = dataset.name;
       this.deletionInfo = dataset;
     },
-    onDatasetDeletionConfirmed() {
+    onModelDeletionClicked(model: Model) {
+      this.deletionTarget = model.modelName;
+      this.deletionInfoModel = model;
+    },
+    onDeletionConfirmed() {
       const terms = routeGetters.getRouteTerms(this.$store);
-      datasetActions.deleteDataset(this.$store, {
-        dataset: this.deletionInfo.id,
-        terms: terms,
-      });
+      if (this.deletionInfo != null) {
+        datasetActions.deleteDataset(this.$store, {
+          dataset: this.deletionInfo.id,
+          terms: terms,
+        });
+        this.deletionInfo = null;
+      } else if (this.deletionInfoModel != null) {
+        modelActions.deleteModel(this.$store, {
+          model: this.deletionInfoModel.fittedSolutionId,
+          terms: terms,
+        });
+        this.deletionInfoModel = null;
+      }
     },
     onUploadStart(uploadData) {
       this.uploadData = uploadData;

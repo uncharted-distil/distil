@@ -79,7 +79,7 @@ func (s *Storage) parseSolutionVariables(src map[string]interface{}) ([]*api.Sol
 	return solutionVariables, nil
 }
 
-func (s *Storage) parseModels(res *elastic.SearchResult) ([]*api.ExportedModel, error) {
+func (s *Storage) parseModels(res *elastic.SearchResult, includeDeleted bool) ([]*api.ExportedModel, error) {
 	var models []*api.ExportedModel
 	for _, hit := range res.Hits.Hits {
 		// parse hit into JSON
@@ -87,6 +87,16 @@ func (s *Storage) parseModels(res *elastic.SearchResult) ([]*api.ExportedModel, 
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to parse model")
 		}
+
+		// ignore deleted models
+		deleted, ok := json.Bool(src, "deleted")
+		if !ok {
+			deleted = false
+		}
+		if deleted && !includeDeleted {
+			continue
+		}
+
 		// extract the model name
 		modelName, ok := json.String(src, "modelName")
 		if !ok {
@@ -146,6 +156,7 @@ func (s *Storage) parseModels(res *elastic.SearchResult) ([]*api.ExportedModel, 
 			Target:           target,
 			Variables:        variables,
 			VariableDetails:  variableDetails,
+			Deleted:          deleted,
 		})
 	}
 	return models, nil
@@ -172,7 +183,7 @@ func (s *Storage) PersistExportedModel(model *api.ExportedModel) error {
 }
 
 // FetchModels returns all exported models  in the provided index.
-func (s *Storage) FetchModels() ([]*api.ExportedModel, error) {
+func (s *Storage) FetchModels(includeDeleted bool) ([]*api.ExportedModel, error) {
 	// execute the ES query
 	res, err := s.client.Search().
 		Index(s.modelIndex).
@@ -182,7 +193,7 @@ func (s *Storage) FetchModels() ([]*api.ExportedModel, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "elasticsearch model fetch query failed")
 	}
-	return s.parseModels(res)
+	return s.parseModels(res, includeDeleted)
 }
 
 // FetchModel returns a model in the provided index.  Model name is the named assigend
@@ -199,7 +210,7 @@ func (s *Storage) FetchModel(modelName string) (*api.ExportedModel, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "elasticsearch model fetch query failed")
 	}
-	models, err := s.parseModels(res)
+	models, err := s.parseModels(res, true)
 	if err != nil {
 		return nil, err
 	}
@@ -222,7 +233,7 @@ func (s *Storage) FetchModelByID(fittedSolutionID string) (*api.ExportedModel, e
 	if err != nil {
 		return nil, errors.Wrap(err, "elasticsearch model fetch query failed")
 	}
-	models, err := s.parseModels(res)
+	models, err := s.parseModels(res, true)
 	if err != nil {
 		return nil, err
 	}
@@ -234,7 +245,7 @@ func (s *Storage) FetchModelByID(fittedSolutionID string) (*api.ExportedModel, e
 
 // SearchModels returns the models that match the search criteria in the
 // provided index.
-func (s *Storage) SearchModels(terms string) ([]*api.ExportedModel, error) {
+func (s *Storage) SearchModels(terms string, includeDeleted bool) ([]*api.ExportedModel, error) {
 	query := elastic.NewMultiMatchQuery(terms, "_id", "modelName", "modelDescription", "datasetId", "datasetName", "target", "variables").
 		Analyzer("standard")
 	// execute the ES query
@@ -247,5 +258,11 @@ func (s *Storage) SearchModels(terms string) ([]*api.ExportedModel, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "elasticsearch model search query failed")
 	}
-	return s.parseModels(res)
+	return s.parseModels(res, includeDeleted)
+}
+
+// DeleteModel deletes a model from ES.
+func (s *Storage) DeleteModel(fittedSolutionID string) error {
+	_, err := s.client.Delete().Index(s.modelIndex).Id(fittedSolutionID).Refresh("true").Do(context.Background())
+	return err
 }

@@ -44,6 +44,7 @@ export const getters = {
 export const actions = {
   searchModels: dispatch(moduleActions.searchModels),
   fetchModels: dispatch(moduleActions.fetchModels),
+  deleteModel: dispatch(moduleActions.deleteModel),
 };
 
 export const mutations = {

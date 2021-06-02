@@ -48,4 +48,22 @@ export const actions = {
       mutations.setModels(context, []);
     }
   },
+
+  // deletes the specified model and then does a search using the terms to refresh the list
+  async deleteModel(
+    context: ModelContext,
+    payload: { model: string; terms: string }
+  ): Promise<void> {
+    if (!payload.model) {
+      return;
+    }
+    try {
+      // delete dataset
+      await axios.post(`/distil/delete-model/${payload.model}`);
+      // update current list of models
+      await actions.searchModels(context, payload.terms);
+    } catch (err) {
+      console.error(err);
+    }
+  },
 };

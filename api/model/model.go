@@ -45,6 +45,7 @@ type ExportedModel struct {
 	Target           *SolutionVariable   `json:"target"`
 	Variables        []string            `json:"variables"`
 	VariableDetails  []*SolutionVariable `json:"variableDetails"`
+	Deleted          bool                `json:"deleted"`
 }
 
 // Request represents the request metadata.
