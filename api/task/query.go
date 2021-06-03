@@ -17,6 +17,7 @@ package task
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"path"
 	"strconv"
@@ -241,11 +242,28 @@ func persistQueryResults(params QueryParams, storageName string, resultData [][]
 			return err
 		}
 	}
-
+	// create filter for positive only labels
+	filterParams := api.FilterParams{Size: math.MaxInt32, Variables: []string{params.TargetName}, Filters: []*model.FilterSet{}, Invert: false, DataMode: 0}
+	filter := model.Filter{Key: params.TargetName, Categories: []string{"positive"}, Type: model.CategoricalType, Mode: model.IncludeFilter}
+	filterParams.AddFilter(&filter)
+	// fetch positive label data
+	data, err := params.DataStorage.FetchData(params.Dataset, storageName, &filterParams, false, nil)
+	if err != nil {
+		return err
+	}
 	// restructure the results to match expected collection format
 	updates := map[string]string{}
 	for _, r := range resultData[1:] {
 		updates[r[0]] = r[1]
+	}
+	// parse all positive labels and assign confidence of 1
+	for _, v := range data.Values {
+		d3mIdx, ok := v[0].Value.(float64)
+		if !ok {
+			return errors.New("Error parsing positive labels")
+		}
+
+		updates[strconv.Itoa(int(d3mIdx))] = "0.99"
 	}
 
 	// overwrite the stored ranking
