@@ -25,6 +25,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/postgres"
 )
 
 // DateTimeField defines behaviour for the numerical field type.
@@ -128,6 +129,7 @@ func (f *DateTimeField) fetchHistogramWithJoins(filterParams *api.FilterParams, 
 
 	// create the filter for the query.
 	wheres, params = f.Storage.buildFilteredQueryWhere(f.GetDatasetName(), wheres, params, "", filterParams)
+	wheres = append(wheres, f.getDefaultFilter())
 
 	// need the extrema to calculate the histogram interval
 	extrema, err := f.fetchExtrema()
@@ -170,6 +172,7 @@ func (f *DateTimeField) fetchHistogramByResult(resultURI string, filterParams *a
 	if err != nil {
 		return nil, err
 	}
+	wheres = append(wheres, f.getDefaultFilter())
 
 	params = append(params, resultURI)
 
@@ -221,7 +224,7 @@ func (f *DateTimeField) fetchExtrema() (*api.Extrema, error) {
 	aggQuery := f.getMinMaxAggsQuery()
 
 	// create a query that does min and max aggregations for each variable
-	queryString := fmt.Sprintf("SELECT %s FROM %s;", aggQuery, fromClause)
+	queryString := fmt.Sprintf("SELECT %s FROM %s WHERE %s;", aggQuery, fromClause, f.getDefaultFilter())
 
 	// execute the postgres query
 	// NOTE: We may want to use the regular Query operation since QueryRow
@@ -367,8 +370,8 @@ func (f *DateTimeField) fetchExtremaByURI(resultURI string) (*api.Extrema, error
 	aggQuery := f.getMinMaxAggsQuery()
 
 	// create a query that does min and max aggregations for each variable
-	queryString := fmt.Sprintf("SELECT %s FROM %s INNER JOIN %s result ON %s.\"%s\" = result.index WHERE result.result_id = $1;",
-		aggQuery, fromClause, f.Storage.getResultTable(f.DatasetStorageName), baseTableAlias, model.D3MIndexFieldName)
+	queryString := fmt.Sprintf("SELECT %s FROM %s INNER JOIN %s result ON %s.\"%s\" = result.index WHERE result.result_id = $1 AND %s;",
+		aggQuery, fromClause, f.Storage.getResultTable(f.DatasetStorageName), baseTableAlias, model.D3MIndexFieldName, f.getDefaultFilter())
 
 	// execute the postgres query
 	// NOTE: We may want to use the regular Query operation since QueryRow
@@ -554,4 +557,8 @@ func (f *DateTimeField) fetchExtremaStorage() (*api.Extrema, error) {
 	}
 
 	return f.parseExtrema(res)
+}
+
+func (f *DateTimeField) getDefaultFilter() string {
+	return fmt.Sprintf("\"%s\" != %v", f.Key, postgres.DefaultPostgresValueFromD3MType(model.DateTimeType))
 }
