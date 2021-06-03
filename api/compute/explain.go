@@ -263,6 +263,10 @@ func parseFeatureWeight(resultURI string, outputURI string, d3mIndexLookup map[i
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to read feature weight output")
 	}
+	if len(res) == 0 {
+		log.Warnf("empty feature weight file received ('%s')", outputURI)
+		return nil, nil
+	}
 
 	res = addD3MIndex(d3mIndexLookup, res)
 	return &api.SolutionExplainResult{
