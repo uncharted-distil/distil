@@ -534,14 +534,19 @@ func addCorrectnessFilterToWhere(wheres []string, params []interface{}, correctn
 		if len(correctnessFilter.Categories[0]) == 0 {
 			return nil, nil, fmt.Errorf("no category")
 		}
-		// filter for result correctness which is based on well know category values
-		op := ""
-		if strings.EqualFold(correctnessFilter.Categories[0], CorrectCategory) {
-			op = "="
-		} else if strings.EqualFold(correctnessFilter.Categories[0], IncorrectCategory) {
-			op = "!="
+		for _, category := range correctnessFilter.Categories {
+			// filter for result correctness which is based on well know category values
+			op := ""
+			if strings.EqualFold(category, CorrectCategory) {
+				op = "="
+			} else if strings.EqualFold(category, IncorrectCategory) {
+				op = "!="
+			}
+			if op == "" {
+				return nil, nil, errors.New(fmt.Sprintf("Error correctness category is not within set [%s, %s]", IncorrectCategory, CorrectCategory))
+			}
+			wheresFilter = append(wheresFilter, fmt.Sprintf("(predicted.value %s data.\"%s\")", op, target.Key))
 		}
-		wheresFilter = append(wheresFilter, fmt.Sprintf("(predicted.value %s data.\"%s\")", op, target.Key))
 	}
 	return append(wheres, fmt.Sprintf("(%s)", strings.Join(wheresFilter, " OR "))), params, nil
 }

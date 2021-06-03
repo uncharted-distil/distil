@@ -479,7 +479,7 @@ export default Vue.extend({
     onResultCategoricalClick(
       context: string,
       key: string,
-      value: string,
+      value: string[],
       dataset: string
     ) {
       let highlight = this.highlights.find((h) => {
@@ -507,7 +507,7 @@ export default Vue.extend({
     onCorrectnessCategoricalClick(
       context: string,
       key: string,
-      value: string,
+      value: string[],
       dataset: string
     ) {
       let highlight = this.highlights.find((h) => {
