@@ -267,7 +267,7 @@ export default Vue.extend({
       );
     },
     errorColor(): string {
-      return applyColor([FACET_COLOR_ERROR]);
+      return applyColor([FACET_COLOR_ERROR, null, null, FACET_COLOR_FILTERED]);
     },
     facetColors(): string {
       return applyColor([
