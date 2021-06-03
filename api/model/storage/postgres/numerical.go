@@ -187,7 +187,6 @@ func (f *NumericalField) fetchHistogramWithJoins(filterParams *api.FilterParams,
 
 func (f *NumericalField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, numBuckets int) (*api.Histogram, error) {
 	fromClause := f.getFromClause(false)
-
 	// get filter where / params
 	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams, baseTableAlias)
 	if err != nil {

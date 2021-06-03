@@ -64,7 +64,10 @@ func (s *Storage) FetchCorrectnessSummary(dataset string, storageName string, re
 
 func (s *Storage) fetchHistogram(dataset string, storageName string, variable *model.Variable, targetName string, resultURI string, filterParams *api.FilterParams, mode api.SummaryMode) (*api.Histogram, error) {
 	storageNameResult := s.getResultTable(storageName)
-
+	err := updateClusterFilters(s.metadata, dataset, filterParams, mode)
+	if err != nil {
+		return nil, err
+	}
 	// get filter where / params
 	wheres, params, err := s.buildResultQueryFilters(dataset, storageName, resultURI, filterParams, baseTableAlias)
 	if err != nil {

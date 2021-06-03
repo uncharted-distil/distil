@@ -76,6 +76,10 @@ func (s *Storage) FetchConfidenceSummary(dataset string, storageName string, res
 func (s *Storage) fetchExplainHistogram(dataset string, storageName string, targetName string, explainFieldName string,
 	resultURI string, filterParams *api.FilterParams, mode api.SummaryMode) (*api.Histogram, error) {
 	explainFieldAlias := fmt.Sprintf("%s_nested", explainFieldName)
+	err := updateClusterFilters(s.metadata, dataset, filterParams, mode)
+	if err != nil {
+		return nil, err
+	}
 	// use a numerical sub select
 	field := NewNumericalFieldSubSelect(s, dataset, storageName, explainFieldAlias, explainFieldName, model.RealType, "", s.explainSubSelect(storageName, explainFieldName, explainFieldAlias))
 
