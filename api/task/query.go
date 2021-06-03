@@ -269,7 +269,7 @@ func persistQueryResults(params QueryParams, storageName string, resultData [][]
 		if !ok {
 			return errors.New("Error parsing positive labels")
 		}
-
+		// range filters upper range is exclusive, therefore if the confidence value is 1 it would be out of range of filtering
 		updates[strconv.Itoa(int(d3mIdx))] = "0.99"
 	}
 
