@@ -144,7 +144,7 @@ func (p *predictionDataset) CreateDataset(rootDataPath string, datasetName strin
 	// updated the new dataset to match the var types and ordering of the source dataset - required
 	// so that the model lines up
 	variables := p.params.Meta.GetMainDataResource().Variables
-	csvDataAugmented, err := augmentPredictionDataset(ds.Data, variables, ds.Metadata.GetMainDataResource().Variables)
+	csvDataAugmented, err := augmentPredictionDataset(ds.Data, p.params.Target, variables, ds.Metadata.GetMainDataResource().Variables)
 	if err != nil {
 		return nil, err
 	}
@@ -737,7 +737,8 @@ func persistPredictionResults(datasetName string, params *PredictParams, meta *m
 	return nil
 }
 
-func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Variable, predictionVariables []*model.Variable) ([][]string, error) {
+func augmentPredictionDataset(csvData [][]string, target *model.Variable,
+	sourceVariables []*model.Variable, predictionVariables []*model.Variable) ([][]string, error) {
 	log.Infof("augmenting prediction dataset fields")
 
 	// map fields to indices
@@ -751,6 +752,7 @@ func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Varia
 	}
 
 	addIndex := true
+	addTarget := true
 	predictVariablesMap := make(map[int]int)
 
 	// If the variable list for prediction set is empty (as is the case for tabular data) then we just use the
@@ -761,6 +763,9 @@ func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Varia
 			if sourceVariableHeaderMap[varName] != nil {
 				predictVariablesMap[i] = sourceVariableHeaderMap[varName].Index
 				log.Infof("mapped '%s' to index %d", varName, predictVariablesMap[i])
+				if sourceVariableHeaderMap[varName].Key == target.Key {
+					addTarget = false
+				}
 			}
 		}
 	} else {
@@ -786,8 +791,15 @@ func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Varia
 			}
 			if predictVariable.Key == model.D3MIndexFieldName {
 				addIndex = false
+			} else if predictVariable.Key == target.Key {
+				addTarget = false
 			}
 		}
+	}
+
+	// add target if it isnt part of prediction dataset
+	if addTarget {
+		predictVariablesMap[len(csvData[0])] = target.Index
 	}
 
 	// check if a variable the model needs is missing

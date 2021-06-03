@@ -81,14 +81,7 @@ func OutlierDetectionHandler(metaCtor api.MetadataStorageCtor) func(http.Respons
 
 		// create an output
 		output := OutlierOutput{
-			Success: false,
-		}
-
-		// update the output with the results if it exists.
-		if points != nil {
-			output = OutlierOutput{
-				Success: true,
-			}
+			Success: points != nil,
 		}
 
 		// marshal output into JSON
