@@ -767,10 +767,9 @@ func DefaultPostgresValueFromD3MType(typ string) interface{} {
 	}
 }
 
-// IsDatabaseFloatingPoint indicates whether or not a database type is a floating point
-// value.
-func IsDatabaseFloatingPoint(typ string) bool {
-	return typ == dataTypeFloat
+// IsNullable indicates whether or not a database type can be empty.
+func IsNullable(typ string) bool {
+	return typ == dataTypeFloat || typ == dataTypeDate
 }
 
 // ValueForFieldType generates the select field value for a given variable type.
@@ -880,7 +879,7 @@ func IsColumnType(client DatabaseDriver, tableName string, variable *model.Varia
 		viewSelect = fmt.Sprintf("%s::%s", viewSelect, colType)
 	}
 	// generate view query
-	viewQuery := fmt.Sprintf("CREATE TEMPORARY VIEW temp_view_%[1]s AS SELECT %[3]s AS \"%[1]s\" FROM %[2]s", variable.Key, tableName, viewSelect)
+	viewQuery := fmt.Sprintf("CREATE TEMPORARY VIEW temp_view_%[1]s AS SELECT %[3]s AS \"%[1]s\" FROM %[2]s WHERE \"%[1]s\" != ''", variable.Key, tableName, viewSelect)
 	// test query
 	testQuery := fmt.Sprintf("SELECT COUNT(\"%[1]s\") FROM temp_view_%[1]s %[2]s", variable.Key, where)
 

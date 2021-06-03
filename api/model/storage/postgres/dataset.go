@@ -189,11 +189,11 @@ func (s *Storage) cloneTable(existingTable string, newTable string, copyData boo
 	return nil
 }
 
-func (s *Storage) getViewField(fieldSelect string, displayName string, typ string, defaultValue interface{}) string {
+func (s *Storage) getViewField(fieldName string, fieldSelect string, displayName string, typ string, defaultValue interface{}) string {
 	viewField := fmt.Sprintf("COALESCE(CAST(%s AS %s), %v)", fieldSelect, typ, defaultValue)
-	if postgres.IsDatabaseFloatingPoint(typ) {
+	if postgres.IsNullable(typ) {
 		// handle missing values
-		viewField = fmt.Sprintf("CASE WHEN %s = '' THEN %v ELSE %s END", fieldSelect, defaultValue, viewField)
+		viewField = fmt.Sprintf("CASE WHEN \"%s\" = '' THEN %v ELSE %s END", fieldName, defaultValue, viewField)
 	}
 	viewField = fmt.Sprintf("%s AS \"%s\"", viewField, displayName)
 	return viewField
@@ -248,7 +248,7 @@ func (s *Storage) createView(storageName string, fields map[string]*model.Variab
 	// Build the select statement of the query.
 	fieldList := make([]string, 0)
 	for _, v := range fields {
-		fieldList = append(fieldList, s.getViewField(postgres.ValueForFieldType(v.Type, v.Key),
+		fieldList = append(fieldList, s.getViewField(v.Key, postgres.ValueForFieldType(v.Type, v.Key),
 			v.Key, postgres.MapD3MTypeToPostgresType(v.Type), postgres.DefaultPostgresValueFromD3MType(v.Type)))
 	}
 	sql = fmt.Sprintf(sql, storageName, strings.Join(fieldList, ","), storageName)
@@ -406,7 +406,8 @@ func (s *Storage) IsValidDataType(dataset string, storageName string, varName st
 
 	// check if the new field type works with the data
 	// a count on the field with the updated type should error if invalid
-	verificationSQL := fmt.Sprintf("SELECT COUNT(\"%s\") FROM %s_tmp;", varName, storageName)
+	verificationSQL := fmt.Sprintf("SELECT COUNT(\"%s\") FROM %s_tmp WHERE \"%s\" != %v;",
+		varName, storageName, varName, postgres.DefaultPostgresValueFromD3MType(varType))
 	_, err = s.client.Exec(verificationSQL)
 	_, _ = s.client.Exec(fmt.Sprintf("DROP VIEW %s_tmp;", storageName))
 	if err != nil {

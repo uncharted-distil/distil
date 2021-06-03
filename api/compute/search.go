@@ -116,11 +116,15 @@ func (s *SolutionRequest) dispatchSolutionExplainPipeline(client *compute.Client
 				log.Infof("explaining feature output from URI '%s'", explainURI)
 				explainDatasetURI = compute.BuildSchemaFileURI(explainDatasetURI)
 				parsedExplainResult, err := ExplainFeatureOutput(explainDatasetURI, explainURI)
-				parsedExplainResult.ResultURI = searchResult.resultURI
 				if err != nil {
 					log.Warnf("failed to fetch output explanation - %v", err)
 					continue
 				}
+				if parsedExplainResult == nil {
+					log.Warnf("empty output explanation")
+					continue
+				}
+				parsedExplainResult.ResultURI = searchResult.resultURI
 				parsedExplainResult.ParsingFunction = explain.parsingFunction
 				explainedResults[explain.typ] = parsedExplainResult
 			}
