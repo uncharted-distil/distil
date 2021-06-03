@@ -251,14 +251,21 @@ func persistQueryResults(params QueryParams, storageName string, resultData [][]
 	if err != nil {
 		return err
 	}
+	idx := 0
+	for _, c := range data.Columns {
+		if c.Key == model.D3MIndexFieldName {
+			idx = c.Index
+		}
+	}
 	// restructure the results to match expected collection format
 	updates := map[string]string{}
 	for _, r := range resultData[1:] {
 		updates[r[0]] = r[1]
 	}
+
 	// parse all positive labels and assign confidence of 1
 	for _, v := range data.Values {
-		d3mIdx, ok := v[0].Value.(float64)
+		d3mIdx, ok := v[idx].Value.(float64)
 		if !ok {
 			return errors.New("Error parsing positive labels")
 		}
