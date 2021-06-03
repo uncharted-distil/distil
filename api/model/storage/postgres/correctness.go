@@ -64,9 +64,7 @@ func (s *Storage) FetchCorrectnessSummary(dataset string, storageName string, re
 
 func (s *Storage) fetchHistogram(dataset string, storageName string, variable *model.Variable, targetName string, resultURI string, filterParams *api.FilterParams, mode api.SummaryMode) (*api.Histogram, error) {
 	storageNameResult := s.getResultTable(storageName)
-	// create a BasicField to get access to updateClusterHighlight
-	basicField := BasicField{Storage: s, DatasetName: dataset}
-	err:=basicField.updateClusterHighlight(filterParams, mode)
+	err := updateClusterFilters(s.metadata, dataset, filterParams, mode)
 	if err != nil {
 		return nil, err
 	}
