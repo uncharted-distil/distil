@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
@@ -43,7 +42,6 @@ const (
 	dataTypeLat      = "LATITUDE"
 	dataTypeLon      = "LONGITUDE"
 	dataTypeCoord    = "SPECIAL_COORD"
-	dateFormat       = "2006-01-02T15:04:05Z"
 
 	metadataTableCreationSQL = `CREATE TABLE %s (
 			name	text	NOT NULL,
@@ -753,10 +751,8 @@ func DefaultPostgresValueFromD3MType(typ string) interface{} {
 		return float64(0)
 	case model.LongitudeType, model.LatitudeType, model.RealType:
 		return "'NaN'::double precision"
-	case model.IntegerType, model.TimestampType:
-		return int(0)
-	case model.DateTimeType:
-		return fmt.Sprintf("'%s'", time.Time{}.Format(dateFormat))
+	case model.IntegerType, model.TimestampType, model.DateTimeType:
+		return "NULL"
 	case model.GeoBoundsType:
 		return "'POLYGON EMPTY'"
 	case model.RealVectorType, model.RealListType:
