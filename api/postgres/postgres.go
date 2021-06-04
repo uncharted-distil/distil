@@ -619,7 +619,7 @@ func (d *Database) InitializeTable(tableName string, ds *Dataset) error {
 	varsExplain := ""
 	for _, variable := range ds.Variables {
 		tableType := dataTypeText
-		viewVar := GetViewField(variable.Key, ValueForFieldType(variable.Type, variable.Key), MapD3MTypeToPostgresType(variable.Type), DefaultPostgresValueFromD3MType(variable.Type))
+		viewVar := GetViewField(variable)
 
 		// it needs to be a geometry if it was originally typed as a geobounds
 		if variable.Type == model.GeoBoundsType || variable.OriginalType == model.GeoBoundsType {
@@ -927,12 +927,14 @@ func IsColumnType(client DatabaseDriver, tableName string, variable *model.Varia
 }
 
 // GetViewField returns a SQL string that does a typed select, defaulting as necessary.
-func GetViewField(fieldName string, fieldSelect string, typ string, defaultValue interface{}) string {
-	viewField := fmt.Sprintf("COALESCE(CAST(%s AS %s), %v)", fieldSelect, typ, defaultValue)
+func GetViewField(variable *model.Variable) string {
+	typ := MapD3MTypeToPostgresType(variable.Type)
+	defaultValue := DefaultPostgresValueFromD3MType(variable.Type)
+	viewField := fmt.Sprintf("COALESCE(CAST(%s AS %s), %v)", ValueForFieldType(variable.Type, variable.Key), typ, defaultValue)
 	if IsNullable(typ) {
 		// handle missing values
-		viewField = fmt.Sprintf("CASE WHEN \"%s\" = '' THEN %v ELSE %s END", fieldName, defaultValue, viewField)
+		viewField = fmt.Sprintf("CASE WHEN \"%s\" = '' THEN %v ELSE %s END", variable.Key, defaultValue, viewField)
 	}
-	viewField = fmt.Sprintf("%s AS \"%s\"", viewField, fieldName)
+	viewField = fmt.Sprintf("%s AS \"%s\"", viewField, variable.Key)
 	return viewField
 }
