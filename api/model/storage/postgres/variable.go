@@ -129,6 +129,12 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 		return nil, errors.Wrap(err, "failed to fetch summary data")
 	}
 
+	// add the default buckets
+	err = addDefaultBuckets(summary, field)
+	if err != nil {
+		return nil, err
+	}
+
 	// add dataset
 	summary.Dataset = dataset
 
@@ -302,4 +308,23 @@ func (s *Storage) createField(dataset string, storageName string, variable *mode
 	}
 
 	return field, nil
+}
+
+func addDefaultBuckets(summary *api.VariableSummary, field Field) error {
+	var err error
+	if summary.Baseline != nil {
+		summary.Baseline.DefaultBucket, err = field.fetchDefaultBucket()
+		if err != nil {
+			return err
+		}
+	}
+
+	if summary.Filtered != nil {
+		summary.Filtered.DefaultBucket, err = field.fetchDefaultBucket()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

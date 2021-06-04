@@ -18,8 +18,11 @@ package postgres
 import (
 	"fmt"
 
+	"github.com/pkg/errors"
+
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/postgres"
 )
 
 const (
@@ -38,6 +41,7 @@ type Field interface {
 	GetType() string
 	fetchExtremaStorage() (*api.Extrema, error)
 	fetchExtremaByURI(resultURI string) (*api.Extrema, error)
+	fetchDefaultBucket() (*api.Bucket, error)
 }
 
 // TimelineField defines the behaviour of a field which can be used as a timeline.
@@ -94,6 +98,37 @@ func (b *BasicField) fetchExtremaStorage() (*api.Extrema, error) {
 
 func (b *BasicField) fetchExtremaByURI(resultURI string) (*api.Extrema, error) {
 	return &api.Extrema{}, nil
+}
+
+func (b *BasicField) fetchDefaultBucket() (*api.Bucket, error) {
+	defaultValue := fmt.Sprintf("%v", postgres.DefaultPostgresValueFromD3MType(b.GetType()))
+	op := "="
+	if defaultValue == "NULL" {
+		op = "is"
+	}
+	whereClause := fmt.Sprintf("\"%s\" %s %s", b.GetKey(), op, defaultValue)
+	sql := fmt.Sprintf("SELECT COUNT(*) WHERE %s", whereClause)
+
+	res, err := b.Storage.client.Query(sql)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch default bucket count")
+	}
+	defer res.Close()
+
+	count := int64(0)
+	if res.Next() {
+		err := res.Scan(&count)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("unable to read default bucket"))
+		}
+	}
+
+	bucket := &api.Bucket{
+		Key:   defaultValue,
+		Count: count,
+	}
+
+	return bucket, nil
 }
 
 func createJoinStatements(joins []*joinDefinition) string {
