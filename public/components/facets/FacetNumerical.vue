@@ -19,6 +19,7 @@
   <div>
     <component v-bind:is="comp" v-html="cssStyle"></component>
     <facet-bars
+      :id="id"
       :data.prop="facetData"
       :selection.prop="selection"
       :subselection.prop="subSelection"
