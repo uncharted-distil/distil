@@ -267,7 +267,7 @@ export default Vue.extend({
       );
     },
     errorColor(): string {
-      return applyColor([FACET_COLOR_ERROR]);
+      return applyColor([FACET_COLOR_ERROR, null, null, FACET_COLOR_FILTERED]);
     },
     facetColors(): string {
       return applyColor([
@@ -479,7 +479,7 @@ export default Vue.extend({
     onResultCategoricalClick(
       context: string,
       key: string,
-      value: string,
+      value: string[],
       dataset: string
     ) {
       let highlight = this.highlights.find((h) => {
@@ -507,7 +507,7 @@ export default Vue.extend({
     onCorrectnessCategoricalClick(
       context: string,
       key: string,
-      value: string,
+      value: string[],
       dataset: string
     ) {
       let highlight = this.highlights.find((h) => {
