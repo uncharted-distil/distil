@@ -573,6 +573,11 @@ export const actions = {
           // close streampredict
           conn.close();
           requestStreams.delete(response.requestId);
+          // fetch solutions after completed to update resultUUID for confidence and error keys
+          actions.fetchSolutions(context, {
+            dataset: request.dataset,
+            target: request.target,
+          });
         }
       });
 
