@@ -14,57 +14,59 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 -->
-
 <template>
-  <facet-terms
-    :data.prop="facetData"
-    action-buttons="0"
-    :selection.prop="selection"
-    :subselection.prop="subSelection"
-    :disabled.prop="!enableHighlighting"
-    @facet-element-updated="updateSelection"
-    :style="style"
-  >
-    <div slot="header-label" :class="headerClass" class="d-flex">
-      <i :class="getGroupIcon(summary) + ' facet-header-icon'" />
-      <span>{{ summary.label.toUpperCase() }}</span>
-      <importance-bars :importance="importance" />
-      <div class="facet-header-dropdown d-flex align-items-center">
-        <color-scale-drop-down
-          v-if="geoEnabled"
-          :is-toggle="colorScaleToggle"
-          :variableSummary="summary"
-          isFacetScale
-          class="mr-1"
-        />
-        <type-change-menu
-          v-if="facetEnableTypeChanges"
-          :dataset="summary.dataset"
-          :field="summary.key"
-          :expand-collapse="expandCollapse"
-        />
-      </div>
-    </div>
-
-    <div slot="footer" class="facet-footer-container">
-      <div v-if="facetDisplayMore" class="facet-footer-more">
-        <div class="facet-footer-more-section">
-          <div class="facet-footer-more-count">
-            <span v-if="facetMoreCount > 0">{{ facetMoreCount }} more</span>
-          </div>
-          <div class="facet-footer-more-controls">
-            <span v-if="hasLess" @click="viewLess"> show less</span>
-            <span v-if="hasMore" @click="viewMore"> show more</span>
-          </div>
+  <div>
+    <component v-bind:is="comp" v-html="cssStyle"></component>
+    <facet-terms
+      :id="id"
+      :data.prop="facetData"
+      action-buttons="0"
+      :selection.prop="selection"
+      :subselection.prop="subSelection"
+      :disabled.prop="!enableHighlighting"
+      @facet-element-updated="updateSelection"
+    >
+      <div slot="header-label" :class="headerClass" class="d-flex">
+        <i :class="getGroupIcon(summary) + ' facet-header-icon'" />
+        <span>{{ summary.label.toUpperCase() }}</span>
+        <importance-bars :importance="importance" />
+        <div class="facet-header-dropdown d-flex align-items-center">
+          <color-scale-drop-down
+            v-if="geoEnabled"
+            :is-toggle="colorScaleToggle"
+            :variableSummary="summary"
+            isFacetScale
+            class="mr-1"
+          />
+          <type-change-menu
+            v-if="facetEnableTypeChanges"
+            :dataset="summary.dataset"
+            :field="summary.key"
+            :expand-collapse="expandCollapse"
+          />
         </div>
       </div>
-      <div
-        v-if="displayFooter"
-        v-child="computeCustomHTML()"
-        class="facet-footer-custom-html"
-      />
-    </div>
-  </facet-terms>
+
+      <div slot="footer" class="facet-footer-container">
+        <div v-if="facetDisplayMore" class="facet-footer-more">
+          <div class="facet-footer-more-section">
+            <div class="facet-footer-more-count">
+              <span v-if="facetMoreCount > 0">{{ facetMoreCount }} more</span>
+            </div>
+            <div class="facet-footer-more-controls">
+              <span v-if="hasLess" @click="viewLess"> show less</span>
+              <span v-if="hasMore" @click="viewMore"> show more</span>
+            </div>
+          </div>
+        </div>
+        <div
+          v-if="displayFooter"
+          v-child="computeCustomHTML()"
+          class="facet-footer-custom-html"
+        />
+      </div>
+    </facet-terms>
+  </div>
 </template>
 
 <script lang="ts">
@@ -86,7 +88,7 @@ import {
   viewMoreData,
   viewLessData,
   facetTypeChangeState,
-  applyColorScale,
+  generateFacetDiscreteStyle,
 } from "../../util/facets";
 import { DISTIL_ROLES } from "../../util/types";
 import { getters as routeGetters } from "../../store/route/module";
@@ -136,6 +138,9 @@ export default Vue.extend({
   },
 
   computed: {
+    comp(): string {
+      return "style";
+    },
     facetData(): FacetTermsData {
       const values = [];
       const summary = this.summary;
@@ -170,16 +175,21 @@ export default Vue.extend({
     colorScale(): ColorScaleNames {
       return routeGetters.getColorScale(this.$store);
     },
-    style(): string {
-      return this.hasColorScale ? applyColorScale(this.colorScale) : "";
+    id(): string {
+      return this.summary.key;
+    },
+    cssStyle(): string {
+      return this.hasColorScale
+        ? generateFacetDiscreteStyle(
+            this.id,
+            "facet-terms-value-bar-0",
+            this.summary,
+            this.colorScale
+          )
+        : "";
     },
     subSelection(): number[][] {
-      return getSubSelectionValues(
-        this.summary,
-        this.rowSelection,
-        this.max,
-        this.hasColorScale ? this.colorScale : null
-      );
+      return getSubSelectionValues(this.summary, this.rowSelection, this.max);
     },
     selection(): {} {
       if (!this.enableHighlighting || !this.isHighlightedGroup()) {
