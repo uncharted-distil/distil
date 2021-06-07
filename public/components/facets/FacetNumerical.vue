@@ -16,60 +16,64 @@
 -->
 
 <template>
-  <facet-bars
-    :data.prop="facetData"
-    :selection.prop="selection"
-    :subselection.prop="subSelection"
-    :disabled.prop="!enableHighlighting"
-    @facet-element-updated="updateSelection"
-  >
-    <div slot="header-label" :class="headerClass" class="d-flex">
-      <span>{{ summary.label.toUpperCase() }}</span>
-      <importance-bars :importance="importance" />
-      <div class="facet-header-dropdown d-flex align-items-center">
-        <color-scale-drop-down
-          v-if="geoEnabled"
-          :variableSummary="summary"
-          isFacetScale
-          class="mr-1"
+  <div>
+    <component v-bind:is="comp" v-html="cssStyle"></component>
+    <facet-bars
+      :id="id"
+      :data.prop="facetData"
+      :selection.prop="selection"
+      :subselection.prop="subSelection"
+      :disabled.prop="!enableHighlighting"
+      @facet-element-updated="updateSelection"
+    >
+      <div slot="header-label" :class="headerClass" class="d-flex">
+        <span>{{ summary.label.toUpperCase() }}</span>
+        <importance-bars :importance="importance" />
+        <div class="facet-header-dropdown d-flex align-items-center">
+          <color-scale-drop-down
+            v-if="geoEnabled"
+            :variableSummary="summary"
+            isFacetScale
+            class="mr-1"
+          />
+          <type-change-menu
+            v-if="facetEnableTypeChanges"
+            :dataset="summary.dataset"
+            :field="summary.key"
+            :expand-collapse="expandCollapse"
+          />
+        </div>
+      </div>
+
+      <facet-template
+        v-if="facetData.values.length > 0"
+        target="facet-bars-value"
+        title="${tooltip}"
+      />
+
+      <div v-else slot="content" />
+
+      <div
+        v-if="facetData.values.length > 0"
+        slot="footer"
+        class="facet-footer-container"
+      >
+        <facet-plugin-zoom-bar
+          min-bar-width="8"
+          auto-hide="true"
+          round-caps="true"
         />
-        <type-change-menu
-          v-if="facetEnableTypeChanges"
-          :dataset="summary.dataset"
-          :field="summary.key"
-          :expand-collapse="expandCollapse"
+        <div
+          v-if="displayFooter"
+          class="facet-footer-custom-html d-flex justify-content-between"
+          v-child="computeCustomHTML()"
         />
       </div>
-    </div>
-
-    <facet-template
-      v-if="facetData.values.length > 0"
-      target="facet-bars-value"
-      title="${tooltip}"
-    />
-
-    <div v-else slot="content" />
-
-    <div
-      v-if="facetData.values.length > 0"
-      slot="footer"
-      class="facet-footer-container"
-    >
-      <facet-plugin-zoom-bar
-        min-bar-width="8"
-        auto-hide="true"
-        round-caps="true"
-      />
-      <div
-        v-if="displayFooter"
-        class="facet-footer-custom-html d-flex justify-content-between"
-        v-child="computeCustomHTML()"
-      />
-    </div>
-    <div v-else slot="footer" class="facet-footer-container">
-      No Data Available
-    </div>
-  </facet-bars>
+      <div v-else slot="footer" class="facet-footer-container">
+        No Data Available
+      </div>
+    </facet-bars>
+  </div>
 </template>
 
 <script lang="ts">
@@ -86,9 +90,12 @@ import {
   getSubSelectionValues,
   hasBaseline,
   facetTypeChangeState,
+  generateFacetLinearStyle,
 } from "../../util/facets";
+import { getters as routeGetters } from "../../store/route/module";
 import _ from "lodash";
 import { DISTIL_ROLES } from "../../util/types";
+import { ColorScaleNames } from "../../util/color";
 
 export default Vue.extend({
   name: "FacetNumerical",
@@ -129,6 +136,30 @@ export default Vue.extend({
   },
 
   computed: {
+    id(): string {
+      return this.summary.key;
+    },
+    comp(): string {
+      return "style";
+    },
+    hasColorScale(): boolean {
+      return (
+        routeGetters.getColorScaleVariable(this.$store) === this.summary.key
+      );
+    },
+    colorScale(): ColorScaleNames {
+      return routeGetters.getColorScale(this.$store);
+    },
+    cssStyle(): string {
+      return this.hasColorScale
+        ? generateFacetLinearStyle(
+            this.id,
+            "facet-bars-value-bar-0",
+            this.summary,
+            this.colorScale
+          )
+        : "";
+    },
     maxBucketCount(): number {
       if (hasBaseline(this.summary)) {
         const buckets = this.summary.baseline.buckets;

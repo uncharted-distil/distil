@@ -45,8 +45,8 @@ import {
   TIMESERIES_TYPE,
   URI_TYPE,
 } from "../util/types";
-import { ColorScaleNames, DISCRETE_COLOR_MAPS } from "./color";
-import { color } from "d3-color";
+import { ColorScaleNames, COLOR_SCALES, DISCRETE_COLOR_MAPS } from "./color";
+import { Color, color } from "d3-color";
 
 export const CATEGORICAL_CHUNK_SIZE = 5;
 export const IMAGE_CHUNK_SIZE = 5;
@@ -313,22 +313,7 @@ export function hasFiltered(summary: VariableSummary) {
     summary.filtered.buckets.length > 0
   );
 }
-export function applyColorScale(colorScaleName: ColorScaleNames): string {
-  const colors = [] as FacetColor[];
-  const colorScale = DISCRETE_COLOR_MAPS.get(colorScaleName);
-  if (!colorScale) {
-    return;
-  }
-  colorScale.forEach((cs) => {
-    colors.push({
-      color: cs,
-      colorHover: cs,
-    });
-  });
-  // this is the background color this get added last for painters algorithm
-  colors.push({ color: "#999999", colorHover: "#bbbbbb" });
-  return applyColor(colors, 4); // the first 4 are default colors for distil
-}
+
 // applyColor generates the string to change the facet dynamic css variables
 export function applyColor(
   colors: FacetColor[] | null,
@@ -367,71 +352,50 @@ export function applyColor(
   });
   return result;
 }
-export function colorScaleSelectionValues(
-  summary: VariableSummary,
-  max: number,
+export function generateFacetDiscreteStyle(
+  facetId: string,
+  partId: string,
+  variableSummary: VariableSummary,
   colorScaleName: ColorScaleNames
-): number[][] {
-  // we only use discrete maps currently because we only color the category type facets
+): string {
+  let result = "";
   const colorScale = DISCRETE_COLOR_MAPS.get(colorScaleName);
-  if (!colorScale) {
-    return;
-  }
-  // apply filtered buckets first
-  let bucketCount = summary.filtered?.buckets.reduce((acc, b) => {
-    acc[b.key] = b.count;
-    return acc;
-  }, {});
-  // if no filtered buckets add baseline
-  if (!bucketCount) {
-    bucketCount = summary.baseline.buckets.reduce((acc, b) => {
-      acc[b.key] = b.count;
-      return acc;
-    }, {});
-  } else {
-    // for some reason the filtered buckets only have the inclusive keys of the filter so we add the rest with count 0
-    summary.baseline.buckets.map((b) => {
-      if (!bucketCount[b.key]) {
-        bucketCount[b.key] = 0;
-      }
-    });
-  }
-  // the first 4 variables are used elsewhere to avoid collision we start after 4
-  const offset = 4;
-  // + 1 is due to the grey bar being added on
-  const maxColorIdx = colorScale.length + offset + 1;
-  // create double array the 2nd array correlates to what color the bar will be
-  const result = Array.from({ length: summary.baseline.buckets.length }, () => {
-    return Array.from({ length: maxColorIdx }, () => {
-      return 0;
-    });
-  });
-  const end = maxColorIdx - 1;
-  const backgroundBar = 0;
-  summary.baseline.buckets.forEach((b, i) => {
-    const idx = Math.max(1, end - (i + offset));
-    const count = bucketCount[b.key];
-    // set color bar
-    result[i][idx] = count / max;
-    // set grey bar
-    result[i][backgroundBar] = b.count / max;
+  const end = colorScale.length - 1;
+  variableSummary.baseline.buckets.forEach((_, idx) => {
+    const idSelector = idx.toString().split("").join(" ");
+    const colorIdx = Math.min(idx, end);
+    result += `#${facetId} #\\3${idSelector}::part(${partId}){background-color:${colorScale[colorIdx]}}`;
   });
   return result;
 }
+export function generateFacetLinearStyle(
+  facetId: string,
+  partId: string,
+  variableSummary: VariableSummary,
+  colorScaleName: ColorScaleNames
+): string {
+  let result = "";
+  const colorScale = COLOR_SCALES.get(colorScaleName);
+  const end = variableSummary.baseline.buckets.length - 1;
+  variableSummary.baseline.buckets.forEach((_, idx) => {
+    const idSelector = idx.toString().split("").join(" ");
+    result += `#${facetId} #\\3${idSelector}::part(${partId}){background-color:${colorScale(
+      idx / end
+    )}}`;
+  });
+  return result;
+}
+
 export function getSubSelectionValues(
   summary: VariableSummary,
   rowSelection: RowSelection,
-  max: number,
-  colorScale?: ColorScaleNames
+  max: number
 ): number[][] {
   if (!summary.baseline?.buckets) {
     return [];
   }
   const include = routeGetters.getRouteInclude(store);
   const hasFilterBuckets = hasFiltered(summary);
-  if (colorScale) {
-    return colorScaleSelectionValues(summary, max, colorScale);
-  }
   if (!hasFilterBuckets && !rowSelection) {
     return summary.baseline?.buckets?.map((b) => [null, b.count / max]);
   }
