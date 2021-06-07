@@ -36,6 +36,11 @@ const (
 	ClusterDataMode
 )
 
+var (
+	// FilterModeInverse provides a quick way to inverse filter modes
+	FilterModeInverse = map[string]string{model.ExcludeFilter: model.IncludeFilter, model.IncludeFilter: model.ExcludeFilter}
+)
+
 // DataModeFromString creates a DataMode from the supplied string
 func DataModeFromString(s string) (DataMode, error) {
 	switch s {
@@ -202,6 +207,17 @@ func (f *FilterParams) InvertFilters() {
 		}
 	}
 	f.Invert = !f.Invert
+}
+
+// ToJSON creates a string representation of the json representation
+// of the filter params.
+func (f *FilterParams) ToJSON() string {
+	bin, err := json.Marshal(f)
+	if err != nil {
+		return "error creating json"
+	}
+
+	return string(bin)
 }
 
 func filtersEqual(first *model.Filter, second *model.Filter) bool {
@@ -516,7 +532,6 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 			}
 			if _, ok := highlightMap[h.Key]; !ok {
 				highlightMap[h.Key] = &model.FilterObject{}
-				highlightMap[h.Key].Invert = invertHighlights
 			}
 			highlightMap[h.Key].List = append((highlightMap[h.Key]).List, h)
 		}
@@ -526,6 +541,9 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 		highlightSet := model.FilterSet{}
 		for _, val := range highlightMap {
 			highlightSet.FeatureFilters = append(highlightSet.FeatureFilters, *val)
+		}
+		if invertHighlights {
+			modeHighlights = FilterModeInverse[modeHighlights]
 		}
 		highlightSet.Mode = modeHighlights
 		filterParams.Filters = append(filterParams.Filters, &highlightSet)
@@ -542,6 +560,7 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 		for _, set := range filterSets {
 			// pull the set out
 			filterSet := &model.FilterSet{}
+			// given the input structure, use the last filter's mode for the whole set
 			setMode := ""
 			for _, filter := range set {
 				f, err := parseFilter(filter)
@@ -550,10 +569,12 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 				}
 				filterObjectIndex := getOrAddFeatureFilterIndex(f.Key, filterSet)
 				filterSet.FeatureFilters[filterObjectIndex].List = append(filterSet.FeatureFilters[filterObjectIndex].List, f)
-				filterSet.FeatureFilters[filterObjectIndex].Invert = invertFilters
 				setMode = f.Mode
 			}
 			// put filterObject in a filterSet then append to filterParams
+			if invertFilters {
+				setMode = FilterModeInverse[setMode]
+			}
 			filterSet.Mode = setMode
 			filterParams.Filters = append(filterParams.Filters, filterSet)
 		}
