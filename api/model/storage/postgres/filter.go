@@ -435,8 +435,8 @@ func (s *Storage) buildCorrectnessResultWhere(wheres []string, params []interfac
 	// to the target category
 	wheresFilter := []string{}
 	for _, f := range resultFilter.List {
-		op := ""
 		for _, category := range f.Categories {
+			op := ""
 			if strings.EqualFold(category, CorrectCategory) {
 				op = "="
 			} else if strings.EqualFold(category, IncorrectCategory) {
