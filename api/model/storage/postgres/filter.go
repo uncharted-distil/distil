@@ -284,7 +284,6 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, wheres []string, param
 		where := ""
 		where, params = s.buildSelectionFilter(dataset, params, alias, set.FeatureFilters)
 		if set.Mode == model.ExcludeFilter {
-			where = fmt.Sprintf("NOT(%s)", where)
 			filtersExclusive = append(filtersExclusive, where)
 		} else {
 			filtersInclusive = append(filtersInclusive, where)
@@ -302,7 +301,7 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, wheres []string, param
 
 	// AND all the exclusive filter sets because the data should not be in any of them
 	if len(filtersExclusive) > 0 {
-		where := fmt.Sprintf("(%s)", strings.Join(filtersExclusive, " AND "))
+		where := fmt.Sprintf("(NOT(%s))", strings.Join(filtersExclusive, " OR "))
 		if filterParams.Invert {
 			where = fmt.Sprintf("NOT%s", where)
 		}
