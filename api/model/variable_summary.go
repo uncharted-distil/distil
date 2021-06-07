@@ -42,6 +42,7 @@ type Bucket struct {
 // Histogram represents a single variable histogram.
 type Histogram struct {
 	Extrema         *Extrema             `json:"extrema,omitempty"`
+	DefaultBucket   *Bucket              `json:"defaultBucket"`
 	Buckets         []*Bucket            `json:"buckets"`
 	CategoryBuckets map[string][]*Bucket `json:"categoryBuckets"`
 	Exemplars       []string             `json:"exemplars"`

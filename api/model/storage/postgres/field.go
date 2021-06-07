@@ -18,8 +18,11 @@ package postgres
 import (
 	"fmt"
 
+	"github.com/pkg/errors"
+
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/postgres"
 )
 
 const (
@@ -38,6 +41,8 @@ type Field interface {
 	GetType() string
 	fetchExtremaStorage() (*api.Extrema, error)
 	fetchExtremaByURI(resultURI string) (*api.Extrema, error)
+	fetchDefaultBucket() (*api.Bucket, error)
+	getFromClause(alias bool) string
 }
 
 // TimelineField defines the behaviour of a field which can be used as a timeline.
@@ -94,6 +99,53 @@ func (b *BasicField) fetchExtremaStorage() (*api.Extrema, error) {
 
 func (b *BasicField) fetchExtremaByURI(resultURI string) (*api.Extrema, error) {
 	return &api.Extrema{}, nil
+}
+
+func (b *BasicField) fetchDefaultBucket() (*api.Bucket, error) {
+	// get the count of rows that match the default value (ex: empty string)
+	whereClause := b.getDefaultFilter(false)
+	sql := fmt.Sprintf("SELECT COUNT(*) FROM %s WHERE %s", b.getFromClause(false), whereClause)
+
+	res, err := b.Storage.client.Query(sql)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch default bucket count")
+	}
+	defer res.Close()
+
+	count := int64(0)
+	if res.Next() {
+		err := res.Scan(&count)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to read default bucket")
+		}
+	}
+
+	bucket := &api.Bucket{
+		Key:   fmt.Sprintf("%v", postgres.DefaultPostgresValueFromD3MType(b.GetType())),
+		Count: count,
+	}
+
+	return bucket, nil
+}
+
+func (b *BasicField) getDefaultFilter(inverse bool) string {
+	defaultValue := fmt.Sprintf("%v", postgres.DefaultPostgresValueFromD3MType(b.GetType()))
+
+	// null comparison is done with "is" rather than "="
+	op := "="
+	if defaultValue == "NULL" {
+		op = "is"
+	}
+	negate := ""
+	if inverse {
+		negate = "NOT"
+	}
+
+	return fmt.Sprintf("%s(\"%s\" %s %s)", negate, b.GetKey(), op, defaultValue)
+}
+
+func (b *BasicField) getFromClause(alias bool) string {
+	return b.GetDatasetStorageName()
 }
 
 func createJoinStatements(joins []*joinDefinition) string {

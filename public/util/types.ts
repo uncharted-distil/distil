@@ -344,6 +344,10 @@ export function formatValue(colValue: any, colType: string): any {
 
   // If the schema type is an integer, round.
   if (isIntegerType(colType)) {
+    // missing integer values will be null
+    if (!colValue) {
+      return colValue;
+    }
     return Math.round(colValue).toFixed(0);
   }
 

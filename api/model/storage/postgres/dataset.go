@@ -189,16 +189,6 @@ func (s *Storage) cloneTable(existingTable string, newTable string, copyData boo
 	return nil
 }
 
-func (s *Storage) getViewField(fieldName string, fieldSelect string, displayName string, typ string, defaultValue interface{}) string {
-	viewField := fmt.Sprintf("COALESCE(CAST(%s AS %s), %v)", fieldSelect, typ, defaultValue)
-	if postgres.IsNullable(typ) {
-		// handle missing values
-		viewField = fmt.Sprintf("CASE WHEN \"%s\" = '' THEN %v ELSE %s END", fieldName, defaultValue, viewField)
-	}
-	viewField = fmt.Sprintf("%s AS \"%s\"", viewField, displayName)
-	return viewField
-}
-
 func (s *Storage) getDatabaseFields(tableName string) ([]string, error) {
 	sql := "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1;"
 
@@ -248,8 +238,7 @@ func (s *Storage) createView(storageName string, fields map[string]*model.Variab
 	// Build the select statement of the query.
 	fieldList := make([]string, 0)
 	for _, v := range fields {
-		fieldList = append(fieldList, s.getViewField(v.Key, postgres.ValueForFieldType(v.Type, v.Key),
-			v.Key, postgres.MapD3MTypeToPostgresType(v.Type), postgres.DefaultPostgresValueFromD3MType(v.Type)))
+		fieldList = append(fieldList, postgres.GetViewField(v))
 	}
 	sql = fmt.Sprintf(sql, storageName, strings.Join(fieldList, ","), storageName)
 

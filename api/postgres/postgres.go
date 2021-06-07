@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
@@ -43,7 +42,6 @@ const (
 	dataTypeLat      = "LATITUDE"
 	dataTypeLon      = "LONGITUDE"
 	dataTypeCoord    = "SPECIAL_COORD"
-	dateFormat       = "2006-01-02T15:04:05Z"
 
 	metadataTableCreationSQL = `CREATE TABLE %s (
 			name	text	NOT NULL,
@@ -619,8 +617,7 @@ func (d *Database) InitializeTable(tableName string, ds *Dataset) error {
 	varsExplain := ""
 	for _, variable := range ds.Variables {
 		tableType := dataTypeText
-		viewVar := fmt.Sprintf("COALESCE(CAST(%s AS %s), %v) AS \"%s\"", ValueForFieldType(variable.Type, variable.Key),
-			MapD3MTypeToPostgresType(variable.Type), DefaultPostgresValueFromD3MType(variable.Type), variable.Key)
+		viewVar := GetViewField(variable)
 
 		// it needs to be a geometry if it was originally typed as a geobounds
 		if variable.Type == model.GeoBoundsType || variable.OriginalType == model.GeoBoundsType {
@@ -754,10 +751,8 @@ func DefaultPostgresValueFromD3MType(typ string) interface{} {
 		return float64(0)
 	case model.LongitudeType, model.LatitudeType, model.RealType:
 		return "'NaN'::double precision"
-	case model.IntegerType, model.TimestampType:
-		return int(0)
-	case model.DateTimeType:
-		return fmt.Sprintf("'%s'", time.Time{}.Format(dateFormat))
+	case model.IntegerType, model.TimestampType, model.DateTimeType:
+		return "NULL"
 	case model.GeoBoundsType:
 		return "'POLYGON EMPTY'"
 	case model.RealVectorType, model.RealListType:
@@ -925,4 +920,17 @@ func IsColumnType(client DatabaseDriver, tableName string, variable *model.Varia
 	}
 
 	return true
+}
+
+// GetViewField returns a SQL string that does a typed select, defaulting as necessary.
+func GetViewField(variable *model.Variable) string {
+	typ := MapD3MTypeToPostgresType(variable.Type)
+	defaultValue := DefaultPostgresValueFromD3MType(variable.Type)
+	viewField := fmt.Sprintf("COALESCE(CAST(%s AS %s), %v)", ValueForFieldType(variable.Type, variable.Key), typ, defaultValue)
+	if IsNullable(typ) {
+		// handle missing values
+		viewField = fmt.Sprintf("CASE WHEN \"%s\" = '' THEN %v ELSE %s END", variable.Key, defaultValue, viewField)
+	}
+	viewField = fmt.Sprintf("%s AS \"%s\"", viewField, variable.Key)
+	return viewField
 }

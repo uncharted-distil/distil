@@ -120,6 +120,7 @@ func (s *Storage) updateStats(storageName string) {
 
 // VerifyData checks each column in the table against every supported type, then updates what types are valid in the SuggestedType
 func (s *Storage) VerifyData(datasetID string, tableName string) error {
+	tableName = getBaseTableName(tableName)
 	validTypes := postgres.GetValidTypes()
 	ds, err := s.metadata.FetchDataset(datasetID, true, true, false)
 	if err != nil {
