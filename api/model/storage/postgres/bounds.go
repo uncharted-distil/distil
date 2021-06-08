@@ -24,6 +24,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/postgres"
 )
 
 // BoundsField defines behaviour for the remote sensing field type.
@@ -459,4 +460,20 @@ func getGeoBoundsBuckets(xExtrema *api.Extrema, yExtrema *api.Extrema,
 	}
 
 	return buckets
+}
+
+func (f *BoundsField) getDefaultFilter(inverse bool) string {
+	defaultValue := fmt.Sprintf("%v", postgres.DefaultPostgresValueFromD3MType(f.GetType()))
+
+	// null comparison is done with "is" rather than "="
+	op := "="
+	if defaultValue == "NULL" {
+		op = "is"
+	}
+	negate := ""
+	if inverse {
+		negate = "NOT"
+	}
+
+	return fmt.Sprintf("%s(\"%s\" %s %s)", negate, f.PolygonCol, op, defaultValue)
 }
