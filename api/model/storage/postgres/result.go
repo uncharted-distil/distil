@@ -898,6 +898,11 @@ func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resu
 		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Key, variable.Type)
 	}
 
+	// update the highlight key to use the cluster if necessary
+	if err = updateClusterFilters(s.metadata, dataset, filterParams, mode); err != nil {
+		return nil, err
+	}
+
 	summary, err := field.FetchPredictedSummaryData(resultURI, storageNameResult, filterParams, extrema, mode)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to fetch result summary")

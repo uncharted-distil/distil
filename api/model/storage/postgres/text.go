@@ -215,11 +215,6 @@ func (f *TextField) FetchPredictedSummaryData(resultURI string, datasetResult st
 	var filtered *api.Histogram
 	var err error
 
-	// update the highlight key to use the cluster if necessary
-	if err = f.updateClusterHighlight(filterParams, mode); err != nil {
-		return nil, err
-	}
-
 	baseline, err = f.fetchPredictedSummaryData(resultURI, datasetResult, nil, extrema)
 	if err != nil {
 		return nil, err
