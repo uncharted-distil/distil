@@ -55,7 +55,9 @@
         <available-training-variables
           class="col-12 col-md-3 d-flex h-100"
           :variables="availableVariables"
-          :variableDict=""
+          :summaries="availableSummaries"
+          title="Features Available For Training"
+          group-btn-title="Add All"
           @var-change="addVar"
           @group-change="addAll"
         />
@@ -76,16 +78,29 @@ import StatusPanel from "../components/StatusPanel.vue";
 import StatusSidebar from "../components/StatusSidebar.vue";
 import CreateSolutionsForm from "../components/CreateSolutionsForm.vue";
 import SelectDataSlot from "../components/SelectDataSlot.vue";
-import AvailableTrainingVariables from "../components/AvailableTrainingVariables.vue";
+import AvailableTrainingVariables, {
+  GroupChangeParams,
+} from "../components/AvailableTrainingVariables.vue";
 import { Variable, VariableSummary } from "../store/dataset/index";
-import { datasetGetters, viewActions, routeGetters } from "../store";
+import {
+  datasetActions,
+  datasetGetters,
+  viewActions,
+  routeGetters,
+} from "../store";
 import TrainingVariables from "../components/TrainingVariables.vue";
 import TargetVariable from "../components/TargetVariable.vue";
 import { DataMode } from "../store/dataset";
 import { overlayRouteEntry } from "../util/routes";
-import { searchVariables } from "../util/data";
+import {
+  searchVariables,
+  NUM_PER_PAGE,
+  getVariableSummariesByState,
+  addVariableToTraining,
+} from "../util/data";
 import { Dictionary } from "../util/dict";
 import { Route } from "vue-router";
+import { Group } from "../util/facets";
 
 export default Vue.extend({
   name: "SelectTrainingView",
@@ -138,16 +153,6 @@ export default Vue.extend({
     ranking(): boolean {
       return routeGetters.getRouteIsTrainingVariablesRanked(this.$store);
     },
-    targetSampleValues(): any[] {
-      const summaries = routeGetters.getTargetVariableSummaries(this.$store);
-      if (summaries.length > 0) {
-        const summary = summaries[0];
-        if (summary.baseline) {
-          return summary.baseline.buckets;
-        }
-      }
-      return [];
-    },
     availableTrainingVarsPage(): number {
       return routeGetters.getRouteAvailableTrainingVarsPage(this.$store);
     },
@@ -159,6 +164,19 @@ export default Vue.extend({
     },
     trainingVarsSearch(): string {
       return routeGetters.getRouteTrainingVarsSearch(this.$store);
+    },
+    availableSummaries(): VariableSummary[] {
+      const pageIndex = routeGetters.getRouteAvailableTrainingVarsPage(
+        this.$store
+      );
+      const currentSummaries = getVariableSummariesByState(
+        pageIndex,
+        NUM_PER_PAGE,
+        this.availableVariables,
+        this.variableDict
+      );
+
+      return currentSummaries;
     },
     availableVariables(): Variable[] {
       return searchVariables(
@@ -175,7 +193,27 @@ export default Vue.extend({
         : datasetGetters.getExcludedVariableSummariesDictionary(this.$store);
     },
   },
+  methods: {
+    async addVar(group: Group) {
+      this.$router;
+      addVariableToTraining(group, this.$router);
+    },
+    async addAll(params: GroupChangeParams) {
+      // update task based on the current training data
+      const taskResponse = await datasetActions.fetchTask(this.$store, {
+        dataset: params.dataset,
+        targetName: params.targetName,
+        variableNames: params.variableNames,
+      });
+      const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
+        training: params.variableNames.join(","),
+        availableTrainingVarsPage: 1,
+        task: taskResponse.data.task.join(","),
+      });
 
+      this.$router.push(entry).catch((err) => console.warn(err));
+    },
+  },
   watch: {
     trainingStr() {
       viewActions.updateSelectTrainingData(this.$store);

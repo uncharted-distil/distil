@@ -59,12 +59,6 @@ import Vue from "vue";
 import { overlayRouteEntry } from "../util/routes";
 import { Variable, VariableSummary } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
-import {
-  getComposedVariableKey,
-  getVariableSummariesByState,
-  NUM_PER_PAGE,
-  searchVariables,
-} from "../util/data";
 import { Dictionary } from "../util/dict";
 import { AVAILABLE_TRAINING_VARS_INSTANCE } from "../store/route/index";
 import { Group } from "../util/facets";
@@ -90,10 +84,6 @@ export default Vue.extend({
     summaries: {
       type: Array as () => VariableSummary[],
       default: [] as VariableSummary[],
-    },
-    variableDict: {
-      type: Object as () => Dictionary<Dictionary<VariableSummary>>,
-      default: {} as Dictionary<Dictionary<VariableSummary>>,
     },
     title: { type: String as () => string, default: "" },
     groupBtnTitle: { type: String as () => string, default: "" },
@@ -137,10 +127,6 @@ export default Vue.extend({
       const total = this.availableVariableSummariesForTraining?.length ?? 0;
       if (total < 1) return;
       return `${total} features available`;
-    },
-
-    numRowsPerPage(): number {
-      return NUM_PER_PAGE;
     },
 
     instanceName(): string {
