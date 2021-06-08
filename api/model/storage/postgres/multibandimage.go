@@ -24,6 +24,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/postgres"
 )
 
 // MultiBandImageField defines behaviour for the image field type.
@@ -353,6 +354,22 @@ func (f *MultiBandImageField) fetchPredictedSummaryData(resultURI string, datase
 	}
 	histogram.Exemplars = files
 	return histogram, nil
+}
+
+func (f *MultiBandImageField) getDefaultFilter(inverse bool) string {
+	defaultValue := fmt.Sprintf("%v", postgres.DefaultPostgresValueFromD3MType(f.GetType()))
+
+	// null comparison is done with "is" rather than "="
+	op := "="
+	if defaultValue == "NULL" {
+		op = "is"
+	}
+	negate := ""
+	if inverse {
+		negate = "NOT"
+	}
+
+	return fmt.Sprintf("%s(\"%s\" %s %s)", negate, f.IDCol, op, defaultValue)
 }
 
 func getEqualBivariateBuckets(numBuckets int, xExtrema *api.Extrema, yExtrema *api.Extrema) (int, int) {

@@ -23,6 +23,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/postgres"
 )
 
 const (
@@ -313,18 +314,45 @@ func (s *Storage) createField(dataset string, storageName string, variable *mode
 func addDefaultBuckets(summary *api.VariableSummary, field Field) error {
 	var err error
 	if summary.Baseline != nil {
-		summary.Baseline.DefaultBucket, err = field.fetchDefaultBucket()
+		summary.Baseline.DefaultBucket, err = fetchDefaultBucket(field)
 		if err != nil {
 			return err
 		}
 	}
 
 	if summary.Filtered != nil {
-		summary.Filtered.DefaultBucket, err = field.fetchDefaultBucket()
+		summary.Filtered.DefaultBucket, err = fetchDefaultBucket(field)
 		if err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func fetchDefaultBucket(field Field) (*api.Bucket, error) {
+	// get the count of rows that match the default value (ex: empty string)
+	whereClause := field.getDefaultFilter(false)
+	sql := fmt.Sprintf("SELECT COUNT(*) FROM %s WHERE %s", field.getFromClause(false), whereClause)
+
+	res, err := field.GetStorage().client.Query(sql)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch default bucket count")
+	}
+	defer res.Close()
+
+	count := int64(0)
+	if res.Next() {
+		err := res.Scan(&count)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to read default bucket")
+		}
+	}
+
+	bucket := &api.Bucket{
+		Key:   fmt.Sprintf("%v", postgres.DefaultPostgresValueFromD3MType(field.GetType())),
+		Count: count,
+	}
+
+	return bucket, nil
 }
