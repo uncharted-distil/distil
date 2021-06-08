@@ -16,12 +16,9 @@
 -->
 
 <template>
-  <div
-    class="available-training-variables"
-    :class="{ included: includedActive, excluded: !includedActive }"
-  >
+  <div class="available-training-variables">
     <p class="nav-link font-weight-bold">
-      Available Features
+      {{ title }}
       <i class="float-right fa fa-angle-right fa-lg" />
     </p>
     <variable-facets
@@ -29,14 +26,12 @@
       enable-highlighting
       enable-search
       enable-type-change
-      :facet-count="availableVariables && availableVariables.length"
+      :facet-count="variables && variables.length"
       :html="html"
       :is-available-features="true"
       :isfeatures-to-model="false"
       :instance-name="instanceName"
-      :pagination="
-        availableVariables && availableVariables.length > numRowsPerPage
-      "
+      :pagination="variables && variables.length > numRowsPerPage"
       :rows-per-page="numRowsPerPage"
       :summaries="availableVariableSummaries"
     >
@@ -52,7 +47,7 @@
           variant="outline-secondary"
           @click="addAll"
         >
-          Add All
+          {{ groupBtnTitle }}
         </b-button>
       </div>
     </variable-facets>
@@ -63,10 +58,6 @@
 import Vue from "vue";
 import { overlayRouteEntry } from "../util/routes";
 import { Variable, VariableSummary } from "../store/dataset/index";
-import {
-  actions as datasetActions,
-  getters as datasetGetters,
-} from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import {
   getComposedVariableKey,
@@ -74,6 +65,7 @@ import {
   NUM_PER_PAGE,
   searchVariables,
 } from "../util/data";
+import { Dictionary } from "../util/dict";
 import { AVAILABLE_TRAINING_VARS_INSTANCE } from "../store/route/index";
 import { Group } from "../util/facets";
 import VariableFacets from "./facets/VariableFacets.vue";
@@ -81,64 +73,64 @@ import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { DISTIL_ROLES } from "../util/types";
 
+export interface GroupChangeParams {
+  dataset: string;
+  targetName: string;
+  variableNames: string[];
+}
+
 export default Vue.extend({
   name: "AvailableTrainingVariables",
 
   components: {
     VariableFacets,
   },
-
+  props: {
+    variables: { type: Array as () => Variable[], default: [] as Variable[] },
+    summaries: {
+      type: Array as () => VariableSummary[],
+      default: [] as VariableSummary[],
+    },
+    variableDict: {
+      type: Object as () => Dictionary<Dictionary<VariableSummary>>,
+      default: {} as Dictionary<Dictionary<VariableSummary>>,
+    },
+    title: { type: String as () => string, default: "" },
+    groupBtnTitle: { type: String as () => string, default: "" },
+  },
   computed: {
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
-    },
-
-    includedActive(): boolean {
-      return routeGetters.getRouteInclude(this.$store);
     },
 
     availableTrainingVarsSearch(): string {
       return routeGetters.getRouteAvailableTrainingVarsSearch(this.$store);
     },
 
-    availableVariableSummaries(): VariableSummary[] {
-      const pageIndex = routeGetters.getRouteAvailableTrainingVarsPage(
-        this.$store
-      );
-      const include = routeGetters.getRouteInclude(this.$store);
-      const summaryDictionary = include
-        ? datasetGetters.getIncludedVariableSummariesDictionary(this.$store)
-        : datasetGetters.getExcludedVariableSummariesDictionary(this.$store);
-
-      const currentSummaries = getVariableSummariesByState(
-        pageIndex,
-        this.numRowsPerPage,
-        this.availableVariables,
-        summaryDictionary
-      );
-
-      return currentSummaries;
-    },
+    // availableVariableSummaries(): VariableSummary[] {
+    //   const pageIndex = routeGetters.getRouteAvailableTrainingVarsPage(
+    //     this.$store
+    //   );
+    //   const summaryDictionary = this.variableDict;
+    //
+    //   const currentSummaries = getVariableSummariesByState(
+    //     pageIndex,
+    //     this.numRowsPerPage,
+    //     this.variables,
+    //     summaryDictionary
+    //   );
+    //
+    //   return currentSummaries;
+    // },
 
     availableVariableSummariesForTraining(): VariableSummary[] {
-      return this.availableVariableSummaries.filter(
+      return this.summaries.filter(
         (variable) => variable.distilRole != DISTIL_ROLES.Augmented
       );
     },
 
     displayAddAll(): boolean {
       return this.availableVariableSummariesForTraining.length > 0;
-    },
-
-    availableVariables(): Variable[] {
-      return searchVariables(
-        routeGetters.getAvailableVariables(this.$store),
-        this.availableTrainingVarsSearch
-      );
-    },
-
-    variables(): Variable[] {
-      return datasetGetters.getVariables(this.$store);
     },
 
     subtitle(): string {
@@ -165,7 +157,6 @@ export default Vue.extend({
 
     html(): (group: Group) => HTMLElement {
       return (group: Group) => {
-        const variable = group.key;
         const trainingElem = document.createElement("button");
         trainingElem.className += "btn btn-sm btn-outline-secondary mb-2";
         trainingElem.textContent = "Add";
@@ -185,47 +176,47 @@ export default Vue.extend({
             subActivity: SubActivity.DATA_TRANSFORMATION,
             details: { feature: group.key },
           });
-
-          const dataset = routeGetters.getRouteDataset(this.$store);
-          const targetName = routeGetters.getRouteTargetVariable(this.$store);
-
-          // get an updated view of the training data list
-          const training = routeGetters
-            .getDecodedTrainingVariableNames(this.$store)
-            .concat([group.key]);
-
-          // update task based on the current training data
-          const taskResponse = await datasetActions.fetchTask(this.$store, {
-            dataset,
-            targetName,
-            variableNames: training,
-          });
-
-          // update route with training data
-          const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-            training: training.join(","),
-            task: taskResponse.data.task.join(","),
-          });
-
-          if (this.isTimeseries && isCategorical) {
-            // Fetch the information of the timeseries grouping
-            const currentGrouping = datasetGetters
-              .getGroupings(this.$store)
-              .find((v) => v.key === targetName)?.grouping;
-
-            // Simply duplicate its grouping information and add the new variable
-            const grouping = JSON.parse(JSON.stringify(currentGrouping));
-            grouping.subIds.push(variable);
-            grouping.idCol = getComposedVariableKey(grouping.subIds);
-
-            // Request to update the timeserie grouping
-            await datasetActions.updateGrouping(this.$store, {
-              variable: targetName,
-              grouping,
-            });
-          }
-
-          this.$router.push(entry).catch((err) => console.warn(err));
+          this.variableChange(group.key);
+          // const dataset = routeGetters.getRouteDataset(this.$store);
+          // const targetName = routeGetters.getRouteTargetVariable(this.$store);
+          //
+          // // get an updated view of the training data list
+          // const training = routeGetters
+          //   .getDecodedTrainingVariableNames(this.$store)
+          //   .concat([group.key]);
+          //
+          // // update task based on the current training data
+          // const taskResponse = await datasetActions.fetchTask(this.$store, {
+          //   dataset,
+          //   targetName,
+          //   variableNames: training,
+          // });
+          //
+          // // update route with training data
+          // const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
+          //   training: training.join(","),
+          //   task: taskResponse.data.task.join(","),
+          // });
+          //
+          // if (this.isTimeseries && isCategorical) {
+          //   // Fetch the information of the timeseries grouping
+          //   const currentGrouping = datasetGetters
+          //     .getGroupings(this.$store)
+          //     .find((v) => v.key === targetName)?.grouping;
+          //
+          //   // Simply duplicate its grouping information and add the new variable
+          //   const grouping = JSON.parse(JSON.stringify(currentGrouping));
+          //   grouping.subIds.push(variable);
+          //   grouping.idCol = getComposedVariableKey(grouping.subIds);
+          //
+          //   // Request to update the timeserie grouping
+          //   await datasetActions.updateGrouping(this.$store, {
+          //     variable: targetName,
+          //     grouping,
+          //   });
+          // }
+          //
+          // this.$router.push(entry).catch((err) => console.warn(err));
         });
 
         return trainingElem;
@@ -234,7 +225,10 @@ export default Vue.extend({
   },
 
   methods: {
-    async addAll() {
+    variableChange(key: string) {
+      this.$emit("var-change", { variableKey: key });
+    },
+    addAll() {
       // log UI event on server
       appActions.logUserEvent(this.$store, {
         feature: Feature.ADD_ALL_FEATURES,
@@ -247,25 +241,30 @@ export default Vue.extend({
         this.$store
       );
 
-      this.availableVariables.forEach((variable) => {
+      this.variables.forEach((variable) => {
         if (variable.distilRole === DISTIL_ROLES.Augmented) return;
         training.push(variable.key);
       });
       const dataset = routeGetters.getRouteDataset(this.$store);
       const targetName = routeGetters.getRouteTargetVariable(this.$store);
-      // update task based on the current training data
-      const taskResponse = await datasetActions.fetchTask(this.$store, {
+      this.$emit("group-change", {
         dataset,
         targetName,
         variableNames: training,
-      });
-      const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-        training: training.join(","),
-        availableTrainingVarsPage: 1,
-        task: taskResponse.data.task.join(","),
-      });
-
-      this.$router.push(entry).catch((err) => console.warn(err));
+      } as GroupChangeParams);
+      // update task based on the current training data
+      // const taskResponse = await datasetActions.fetchTask(this.$store, {
+      //   dataset,
+      //   targetName,
+      //   variableNames: training,
+      // });
+      // const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
+      //   training: training.join(","),
+      //   availableTrainingVarsPage: 1,
+      //   task: taskResponse.data.task.join(","),
+      // });
+      //
+      // this.$router.push(entry).catch((err) => console.warn(err));
     },
   },
 });
