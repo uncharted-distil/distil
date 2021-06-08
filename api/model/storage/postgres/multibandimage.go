@@ -62,11 +62,6 @@ func (f *MultiBandImageField) FetchSummaryData(resultURI string, filterParams *a
 	var filtered *api.Histogram
 	var err error
 
-	// update the highlight key to use the cluster if necessary
-	if err = f.updateClusterHighlight(filterParams, mode); err != nil {
-		return nil, err
-	}
-
 	if resultURI == "" {
 		baseline, err = f.fetchHistogram(nil, mode)
 		if err != nil {

@@ -55,11 +55,6 @@ func NewVectorField(storage *Storage, datasetName string, datasetStorageName str
 // FetchSummaryData pulls summary data from the database and builds a histogram.
 func (f *VectorField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.VariableSummary, error) {
 
-	// update the highlight key to use the cluster if necessary
-	if err := f.updateClusterHighlight(filterParams, mode); err != nil {
-		return nil, err
-	}
-
 	var underlyingField Field
 	if f.isNumerical() {
 		underlyingField = NewNumericalFieldSubSelect(f.Storage, f.DatasetName, f.DatasetStorageName, f.Key, f.Label, f.Type, f.Count, f.subSelect)

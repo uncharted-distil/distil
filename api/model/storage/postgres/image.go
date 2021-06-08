@@ -56,11 +56,6 @@ func (f *ImageField) FetchSummaryData(resultURI string, filterParams *api.Filter
 	var filtered *api.Histogram
 	var err error
 
-	// update the highlight key to use the cluster if necessary
-	if err = f.updateClusterHighlight(filterParams, mode); err != nil {
-		return nil, err
-	}
-
 	if resultURI == "" {
 		baseline, err = f.fetchHistogram(nil, mode)
 		if err != nil {
