@@ -119,4 +119,11 @@ div.vs__actions > svg {
   padding: 0px !important;
   margin: 0px !important;
 }
+.vs--disabled .vs__clear,
+.vs--disabled .vs__dropdown-toggle,
+.vs--disabled .vs__open-indicator,
+.vs--disabled .vs__search,
+.vs--disabled .vs__selected {
+  background-color: transparent !important;
+}
 </style>
