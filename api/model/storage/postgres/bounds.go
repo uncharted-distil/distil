@@ -72,11 +72,6 @@ func (f *BoundsField) FetchSummaryData(resultURI string, filterParams *api.Filte
 	var filtered *api.Histogram
 	var err error
 
-	// update the highlight key to use the cluster if necessary
-	if err = f.updateClusterHighlight(filterParams, mode); err != nil {
-		return nil, err
-	}
-
 	if resultURI == "" {
 		baseline, err = f.fetchHistogram(api.GetBaselineFilter(filterParams), coordinateBuckets)
 		if err != nil {

@@ -79,11 +79,6 @@ func (f *CategoricalField) FetchSummaryData(resultURI string, filterParams *api.
 	var filtered *api.Histogram
 	var err error
 
-	// update the highlight key to use the cluster if necessary
-	if err = f.updateClusterHighlight(filterParams, mode); err != nil {
-		return nil, err
-	}
-
 	if resultURI == "" {
 		baseline, err = f.fetchHistogram(api.GetBaselineFilter(filterParams))
 		if err != nil {
@@ -278,11 +273,6 @@ func (f *CategoricalField) FetchPredictedSummaryData(resultURI string, datasetRe
 	var baseline *api.Histogram
 	var filtered *api.Histogram
 	var err error
-
-	// update the highlight key to use the cluster if necessary
-	if err = f.updateClusterHighlight(filterParams, mode); err != nil {
-		return nil, err
-	}
 
 	baseline, err = f.fetchPredictedSummaryData(resultURI, datasetResult, api.GetBaselineFilter(filterParams), extrema)
 	if err != nil {

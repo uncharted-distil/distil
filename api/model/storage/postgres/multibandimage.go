@@ -62,11 +62,6 @@ func (f *MultiBandImageField) FetchSummaryData(resultURI string, filterParams *a
 	var filtered *api.Histogram
 	var err error
 
-	// update the highlight key to use the cluster if necessary
-	if err = f.updateClusterHighlight(filterParams, mode); err != nil {
-		return nil, err
-	}
-
 	if resultURI == "" {
 		baseline, err = f.fetchHistogram(nil, mode)
 		if err != nil {
@@ -290,11 +285,6 @@ func (f *MultiBandImageField) FetchPredictedSummaryData(resultURI string, datase
 	var baseline *api.Histogram
 	var filtered *api.Histogram
 	var err error
-
-	// update the highlight key to use the cluster if necessary
-	if err = f.updateClusterHighlight(filterParams, mode); err != nil {
-		return nil, err
-	}
 
 	baseline, err = f.fetchPredictedSummaryData(resultURI, datasetResult, nil, extrema, mode)
 	if err != nil {

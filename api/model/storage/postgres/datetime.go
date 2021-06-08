@@ -80,11 +80,6 @@ func (f *DateTimeField) FetchSummaryData(resultURI string, filterParams *api.Fil
 	var filtered *api.Histogram
 	var err error
 
-	// update the highlight key to use the cluster if necessary
-	if err = f.updateClusterHighlight(filterParams, mode); err != nil {
-		return nil, err
-	}
-
 	if resultURI == "" {
 		baseline, err = f.fetchHistogram(api.GetBaselineFilter(filterParams), api.MaxNumBuckets)
 		if err != nil {
@@ -392,11 +387,6 @@ func (f *DateTimeField) FetchPredictedSummaryData(resultURI string, datasetResul
 	var baseline *api.Histogram
 	var filtered *api.Histogram
 	var err error
-
-	// update the highlight key to use the cluster if necessary
-	if err = f.updateClusterHighlight(filterParams, mode); err != nil {
-		return nil, err
-	}
 
 	baseline, err = f.fetchPredictedSummaryData(resultURI, datasetResult, nil, extrema, api.MaxNumBuckets)
 	if err != nil {

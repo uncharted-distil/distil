@@ -125,6 +125,11 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 		return nil, err
 	}
 
+	// update the highlight key to use the cluster if necessary
+	if err = updateClusterFilters(s.metadata, dataset, filterParams, mode); err != nil {
+		return nil, err
+	}
+
 	summary, err := field.FetchSummaryData(resultURI, filterParams, extrema, mode)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch summary data")
