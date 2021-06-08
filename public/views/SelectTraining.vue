@@ -52,7 +52,13 @@
 
       <!-- Content -->
       <div class="row flex-1 pb-3">
-        <available-training-variables class="col-12 col-md-3 d-flex h-100" />
+        <available-training-variables
+          class="col-12 col-md-3 d-flex h-100"
+          :variables="availableVariables"
+          :variableDict=""
+          @var-change="addVar"
+          @group-change="addAll"
+        />
         <training-variables class="col-12 col-md-3 nopadding d-flex h-100" />
 
         <div class="col-12 col-md-6 d-flex flex-column h-100">
@@ -71,12 +77,14 @@ import StatusSidebar from "../components/StatusSidebar.vue";
 import CreateSolutionsForm from "../components/CreateSolutionsForm.vue";
 import SelectDataSlot from "../components/SelectDataSlot.vue";
 import AvailableTrainingVariables from "../components/AvailableTrainingVariables.vue";
+import { Variable, VariableSummary } from "../store/dataset/index";
+import { datasetGetters, viewActions, routeGetters } from "../store";
 import TrainingVariables from "../components/TrainingVariables.vue";
 import TargetVariable from "../components/TargetVariable.vue";
-import { actions as viewActions } from "../store/view/module";
-import { getters as routeGetters } from "../store/route/module";
 import { DataMode } from "../store/dataset";
 import { overlayRouteEntry } from "../util/routes";
+import { searchVariables } from "../util/data";
+import { Dictionary } from "../util/dict";
 import { Route } from "vue-router";
 
 export default Vue.extend({
@@ -151,6 +159,20 @@ export default Vue.extend({
     },
     trainingVarsSearch(): string {
       return routeGetters.getRouteTrainingVarsSearch(this.$store);
+    },
+    availableVariables(): Variable[] {
+      return searchVariables(
+        routeGetters.getAvailableVariables(this.$store),
+        this.availableTrainingVarsSearch
+      );
+    },
+    include(): boolean {
+      return routeGetters.getRouteInclude(this.$store);
+    },
+    variableDict(): Dictionary<Dictionary<VariableSummary>> {
+      return this.include
+        ? datasetGetters.getIncludedVariableSummariesDictionary(this.$store)
+        : datasetGetters.getExcludedVariableSummariesDictionary(this.$store);
     },
   },
 
