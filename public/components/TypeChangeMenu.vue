@@ -22,6 +22,7 @@
       :value="label"
       label="label"
       class="btn-secondary"
+      :class="{ active: !isDisabled, disabled: isDisabled }"
       fontColor="#fff"
       :disabled="isDisabled"
       :options="optionList"
