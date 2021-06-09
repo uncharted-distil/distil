@@ -29,7 +29,7 @@
       class="mb-3"
       :variables="allVariables"
       :highlights="routeHighlight"
-      @lex-query="updateFilterAndHighlightFromLexQuery"
+      handle-updates
     />
     <p v-if="hasResults && !isGeoView" class="predictions-data-slot-summary">
       <data-size
@@ -109,8 +109,6 @@ import {
   summaryToVariable,
 } from "../util/summaries";
 import { getVariableSummariesByState, totalAreaCoverage } from "../util/data";
-import { updateHighlight, UPDATE_ALL } from "../util/highlights";
-import { lexQueryToFiltersAndHighlight } from "../util/lex";
 import { overlayRouteEntry } from "../util/routes";
 const TABLE_VIEW = "table";
 const IMAGE_VIEW = "image";
@@ -328,10 +326,6 @@ export default Vue.extend({
   },
 
   methods: {
-    updateFilterAndHighlightFromLexQuery(lexQuery) {
-      const lqfh = lexQueryToFiltersAndHighlight(lexQuery, this.dataset);
-      updateHighlight(this.$router, lqfh.highlights, UPDATE_ALL);
-    },
     async onTileClick(data: TileClickData) {
       // build filter
       const filter: Filter = {

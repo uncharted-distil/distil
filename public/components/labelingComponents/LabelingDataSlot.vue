@@ -21,7 +21,7 @@
       class="mb-3"
       :variables="allVariables"
       :highlights="routeHighlights"
-      @lex-query="updateFilterAndHighlightFromLexQuery"
+      handle-updates
     />
     <b-container class="m-0 p-0 mw-100">
       <b-row class="d-flex justify-content-between m-0 w-100">
@@ -100,17 +100,8 @@ import {
 import { getters as datasetGetters } from "../../store/dataset/module";
 import { getters as routeGetters } from "../../store/route/module";
 import { LowShotLabels, totalAreaCoverage } from "../../util/data";
-import {
-  createFiltersFromHighlights,
-  UPDATE_ALL,
-  updateHighlight,
-} from "../../util/highlights";
-import {
-  Filter,
-  INCLUDE_FILTER,
-  deepUpdateFiltersInRoute,
-} from "../../util/filters";
-import { lexQueryToFiltersAndHighlight } from "../../util/lex";
+import { createFiltersFromHighlights } from "../../util/highlights";
+import { Filter, INCLUDE_FILTER } from "../../util/filters";
 import LabelHeaderButtons from "./LabelHeaderButtons.vue";
 import { getNumIncludedRows } from "../../util/row";
 
@@ -234,11 +225,6 @@ export default Vue.extend({
     onSelectAll() {
       const dataView = (this.$refs.dataView as unknown) as DataView;
       dataView.selectAll();
-    },
-    updateFilterAndHighlightFromLexQuery(lexQuery) {
-      const lqfh = lexQueryToFiltersAndHighlight(lexQuery, this.dataset);
-      deepUpdateFiltersInRoute(this.$router, lqfh.filters);
-      updateHighlight(this.$router, lqfh.highlights, UPDATE_ALL);
     },
   },
 });

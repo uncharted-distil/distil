@@ -54,12 +54,16 @@ import Vue from "vue";
 import _ from "lodash";
 import { Lex } from "@uncharted.software/lex";
 import { Variable } from "../../store/dataset/index";
+import { getters as routeGetters } from "../../store/route/module";
 import {
   variablesToLexLanguage,
   filterParamsToLexQuery,
   variableAggregation,
   TemplateInfo,
+  lexQueryToFiltersAndHighlight,
 } from "../../util/lex";
+import { deepUpdateFiltersInRoute } from "../../util/filters";
+import { updateHighlight, UPDATE_ALL } from "../../util/highlights";
 import "../../../node_modules/@uncharted.software/lex/dist/lex.css";
 import "../../../node_modules/flatpickr/dist/flatpickr.min.css";
 
@@ -77,6 +81,7 @@ export default Vue.extend({
     filters: { type: String, default: "" },
     variables: { type: Array as () => Variable[], default: [] },
     isSelectView: { type: Boolean as () => boolean, default: false },
+    handleUpdates: { type: Boolean as () => boolean, default: false },
   },
 
   data: () => ({
@@ -85,6 +90,9 @@ export default Vue.extend({
   }),
 
   computed: {
+    dataset(): string {
+      return routeGetters.getRouteDataset(this.$store);
+    },
     language(): Lex {
       return variablesToLexLanguage(
         this.templateInfo.activeVariables,
@@ -143,7 +151,23 @@ export default Vue.extend({
       this.lex.on("query changed", (
         ...args /* [newModel, oldModel, newUnboxedModel, oldUnboxedModel, nextTokenStarted] */
       ) => {
-        this.$emit("lex-query", args);
+        if (!this.handleUpdates) {
+          this.$emit("lex-query", args);
+          return;
+        }
+        const lqfh = lexQueryToFiltersAndHighlight(args, this.dataset);
+        if (
+          !this.isSelectView ||
+          (this.isSelectView && !this.isHighlightActive)
+        ) {
+          deepUpdateFiltersInRoute(this.$router, lqfh.filters);
+        }
+        if (
+          !this.isSelectView ||
+          (this.isSelectView && this.isHighlightActive)
+        ) {
+          updateHighlight(this.$router, lqfh.highlights, UPDATE_ALL);
+        }
       });
 
       // Render our search bar into our desired element
