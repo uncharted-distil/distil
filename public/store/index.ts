@@ -1,4 +1,9 @@
 import {
+  actions as aActions,
+  getters as aGetters,
+  mutations as aMutations,
+} from "./app/module";
+import {
   actions as dActions,
   getters as dGetters,
   mutations as dMutations,
@@ -58,3 +63,10 @@ export const viewMutations = vMutations;
 export const requestGetters = reqGetters;
 export const requestActions = reqActions;
 export const requestMutations = reqMutations;
+
+/**
+ * App Store Module Exports
+ */
+export const appGetters = aGetters;
+export const appActions = aActions;
+export const appMutations = aMutations;

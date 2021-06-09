@@ -130,9 +130,11 @@ import ViewTypeToggle from "./ViewTypeToggle.vue";
 import LayerSelection from "./LayerSelection.vue";
 import { overlayRouteEntry } from "../util/routes";
 import {
-  actions as datasetActions,
-  getters as datasetGetters,
-} from "../store/dataset/module";
+  datasetActions,
+  datasetGetters,
+  viewActions,
+  appActions,
+} from "../store";
 import {
   TableRow,
   Variable,
@@ -158,8 +160,6 @@ import {
   getNumExcludedRows,
   createFilterFromRowSelection,
 } from "../util/row";
-import { actions as appActions } from "../store/app/module";
-import { actions as viewActions } from "../store/view/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { Dictionary } from "lodash";
 import { getAllVariablesSummaries, totalAreaCoverage } from "../util/data";

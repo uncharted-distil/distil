@@ -179,18 +179,13 @@ import {
   Highlight,
 } from "../store/dataset/index";
 import {
-  getters as datasetGetters,
-  mutations as datasetMutations,
-  actions as datasetActions,
-} from "../store/dataset/module";
-import {
-  getters as resultsGetters,
-  actions as resultsActions,
-} from "../store/results/module";
+  datasetGetters,
+  appActions,
+  requestGetters,
+  resultGetters,
+  resultActions,
+} from "../store";
 import { getters as routeGetters } from "../store/route/module";
-import { getters as requestGetters } from "../store/requests/module";
-
-import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { Solution } from "../store/requests/index";
 import { Dictionary } from "../util/dict";
@@ -323,7 +318,7 @@ export default Vue.extend({
     },
 
     residualExtrema(): Extrema {
-      return resultsGetters.getResidualsExtrema(this.$store);
+      return resultGetters.getResidualsExtrema(this.$store);
     },
 
     hasData(): boolean {
@@ -495,7 +490,7 @@ export default Vue.extend({
     },
 
     timeserieInfo(id: string): Extrema {
-      const timeseries = resultsGetters.getPredictedTimeseries(this.$store);
+      const timeseries = resultGetters.getPredictedTimeseries(this.$store);
       return timeseries?.[this.solutionId]?.info?.[id];
     },
 
@@ -608,7 +603,7 @@ export default Vue.extend({
       }
       this.timeseriesVariables.forEach((tsv) => {
         const tsg = tsv.grouping as TimeseriesGrouping;
-        resultsActions.fetchForecastedTimeseries(this.$store, {
+        resultActions.fetchForecastedTimeseries(this.$store, {
           dataset: this.dataset,
           variableKey: tsv.key,
           xColName: tsg.xCol,

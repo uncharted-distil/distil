@@ -129,11 +129,7 @@ import IconBase from "./icons/IconBase.vue";
 import IconFork from "./icons/IconFork.vue";
 import SparklinePreview from "./SparklinePreview.vue";
 import ImagePreview from "./ImagePreview.vue";
-import {
-  getters as datasetGetters,
-  actions as datasetActions,
-  mutations as datasetMutations,
-} from "../store/dataset/module";
+import { datasetGetters, datasetActions, appActions } from "../store";
 import { Dictionary } from "../util/dict";
 import { Filter } from "../util/filters";
 import {
@@ -167,7 +163,6 @@ import {
   bulkRemoveImages,
   debounceFetchImagePack,
 } from "../util/data";
-import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import ImageLabel from "./ImageLabel.vue";
 
@@ -223,10 +218,7 @@ export default Vue.extend({
     },
 
     items(): TableRow[] {
-      let items = this.includedActive
-        ? datasetGetters.getIncludedTableDataItems(this.$store)
-        : datasetGetters.getExcludedTableDataItems(this.$store);
-      items = this.dataItems.length > 0 ? this.dataItems : items;
+      let items = this.dataItems;
       if (items === null) {
         items = [];
       }
