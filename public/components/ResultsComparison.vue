@@ -32,8 +32,8 @@
       <p class="font-weight-bold" :class="{ 'mr-auto': !hasWeight }">Samples</p>
       <legend-weight v-if="hasWeight" class="ml-5 mr-auto" />
       <layer-selection
-        :hasImageAttention="true"
         v-if="isMultiBandImage"
+        :has-image-attention="true"
         class="layer-button"
       />
     </view-type-toggle>
@@ -41,7 +41,7 @@
       class="mb-3"
       :variables="allVariables"
       :highlights="routeHighlight"
-      @lex-query="updateFilterAndHighlightFromLexQuery"
+      handle-updates
     />
     <div v-if="hasHighlights && !isGeoView" class="h-80">
       <results-data-slot
@@ -78,8 +78,6 @@ import { getters as resultsGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
 import { Variable } from "../store/dataset/index";
-import { updateHighlight, UPDATE_ALL } from "../util/highlights";
-import { lexQueryToFiltersAndHighlight } from "../util/lex";
 import { getSolutionById } from "../util/solutions";
 
 const GEO_VIEW = "geo";
@@ -138,12 +136,6 @@ export default Vue.extend({
     },
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
-    },
-  },
-  methods: {
-    updateFilterAndHighlightFromLexQuery(lexQuery) {
-      const lqfh = lexQueryToFiltersAndHighlight(lexQuery, this.dataset);
-      updateHighlight(this.$router, lqfh.highlights, UPDATE_ALL);
     },
   },
 });

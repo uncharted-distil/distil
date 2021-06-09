@@ -45,8 +45,8 @@
       :variables="allVariables"
       :filters="routeFilters"
       :highlights="routeHighlight"
-      isSelectView
-      @lex-query="updateFilterAndHighlightFromLexQuery"
+      is-select-view
+      handle-updates
     />
 
     <div class="table-title-container">
@@ -145,17 +145,13 @@ import { getters as routeGetters } from "../store/route/module";
 import {
   Filter,
   addFilterToRoute,
-  deepUpdateFiltersInRoute,
   EXCLUDE_FILTER,
   INCLUDE_FILTER,
 } from "../util/filters";
 import {
   clearHighlight,
   createFiltersFromHighlights,
-  updateHighlight,
-  UPDATE_ALL,
 } from "../util/highlights";
-import { lexQueryToFiltersAndHighlight } from "../util/lex";
 import {
   clearRowSelection,
   getNumIncludedRows,
@@ -453,12 +449,6 @@ export default Vue.extend({
       } else {
         clearRowSelection(this.$router);
       }
-    },
-
-    updateFilterAndHighlightFromLexQuery(lexQuery) {
-      const lqfh = lexQueryToFiltersAndHighlight(lexQuery, this.dataset);
-      deepUpdateFiltersInRoute(this.$router, lqfh.filters);
-      updateHighlight(this.$router, lqfh.highlights, UPDATE_ALL);
     },
   },
   watch: {
