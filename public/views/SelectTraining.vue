@@ -52,8 +52,32 @@
 
       <!-- Content -->
       <div class="row flex-1 pb-3">
-        <available-training-variables class="col-12 col-md-3 d-flex h-100" />
-        <training-variables class="col-12 col-md-3 nopadding d-flex h-100" />
+        <available-training-variables
+          is-available-features
+          class="col-12 col-md-3 d-flex h-100"
+          :variables="availableVariables"
+          :summaries="availableSummaries"
+          :instance-name="availableInstance"
+          title="Available Features"
+          subtitle="features available"
+          group-btn-title="Add All"
+          btn-title="Add"
+          @var-change="addVar"
+          @group-change="addAll"
+        />
+        <available-training-variables
+          check-geo-type
+          class="col-12 col-md-3 nopadding d-flex h-100"
+          title="Features to Model"
+          group-btn-title="Remove All"
+          btn-title="Remove"
+          subtitle="features selected"
+          :variables="trainingVariables"
+          :summaries="trainingVariableSummaries"
+          :instance-name="trainingInstance"
+          @var-change="removeVar"
+          @group-change="removeAll"
+        />
 
         <div class="col-12 col-md-6 d-flex flex-column h-100">
           <select-data-slot class="flex-1 d-flex flex-column pb-1 pt-2" />
@@ -66,18 +90,33 @@
 
 <script lang="ts">
 import Vue from "vue";
+import { datasetActions, datasetGetters, viewActions } from "../store";
+import { getters as routeGetters } from "../store/route/module";
 import StatusPanel from "../components/StatusPanel.vue";
 import StatusSidebar from "../components/StatusSidebar.vue";
 import CreateSolutionsForm from "../components/CreateSolutionsForm.vue";
 import SelectDataSlot from "../components/SelectDataSlot.vue";
-import AvailableTrainingVariables from "../components/AvailableTrainingVariables.vue";
-import TrainingVariables from "../components/TrainingVariables.vue";
+import AvailableTrainingVariables, {
+  GroupChangeParams,
+} from "../components/AvailableTrainingVariables.vue";
+import { Variable, VariableSummary } from "../store/dataset/index";
 import TargetVariable from "../components/TargetVariable.vue";
-import { actions as viewActions } from "../store/view/module";
-import { getters as routeGetters } from "../store/route/module";
 import { DataMode } from "../store/dataset";
 import { overlayRouteEntry } from "../util/routes";
+import {
+  searchVariables,
+  NUM_PER_PAGE,
+  getVariableSummariesByState,
+  addVariableToTraining,
+  removeVariableFromTraining,
+} from "../util/data";
+import {
+  TRAINING_VARS_INSTANCE,
+  AVAILABLE_TRAINING_VARS_INSTANCE,
+} from "../store/route/index";
+import { Dictionary } from "../util/dict";
 import { Route } from "vue-router";
+import { Group } from "../util/facets";
 
 export default Vue.extend({
   name: "SelectTrainingView",
@@ -86,7 +125,6 @@ export default Vue.extend({
     CreateSolutionsForm,
     SelectDataSlot,
     AvailableTrainingVariables,
-    TrainingVariables,
     TargetVariable,
     StatusPanel,
     StatusSidebar,
@@ -130,30 +168,69 @@ export default Vue.extend({
     ranking(): boolean {
       return routeGetters.getRouteIsTrainingVariablesRanked(this.$store);
     },
-    targetSampleValues(): any[] {
-      const summaries = routeGetters.getTargetVariableSummaries(this.$store);
-      if (summaries.length > 0) {
-        const summary = summaries[0];
-        if (summary.baseline) {
-          return summary.baseline.buckets;
-        }
-      }
-      return [];
-    },
     availableTrainingVarsPage(): number {
       return routeGetters.getRouteAvailableTrainingVarsPage(this.$store);
     },
     trainingVarsPage(): number {
       return routeGetters.getRouteTrainingVarsPage(this.$store);
     },
+    availableInstance(): string {
+      return AVAILABLE_TRAINING_VARS_INSTANCE;
+    },
     availableTrainingVarsSearch(): string {
       return routeGetters.getRouteAvailableTrainingVarsSearch(this.$store);
+    },
+    trainingInstance(): string {
+      return TRAINING_VARS_INSTANCE;
     },
     trainingVarsSearch(): string {
       return routeGetters.getRouteTrainingVarsSearch(this.$store);
     },
-  },
+    availableSummaries(): VariableSummary[] {
+      const pageIndex = routeGetters.getRouteAvailableTrainingVarsPage(
+        this.$store
+      );
+      const currentSummaries = getVariableSummariesByState(
+        pageIndex,
+        NUM_PER_PAGE,
+        this.availableVariables,
+        this.variableDict
+      );
 
+      return currentSummaries;
+    },
+    availableVariables(): Variable[] {
+      return searchVariables(
+        routeGetters.getAvailableVariables(this.$store),
+        this.availableTrainingVarsSearch
+      );
+    },
+    include(): boolean {
+      return routeGetters.getRouteInclude(this.$store);
+    },
+    variableDict(): Dictionary<Dictionary<VariableSummary>> {
+      return this.include
+        ? datasetGetters.getIncludedVariableSummariesDictionary(this.$store)
+        : datasetGetters.getExcludedVariableSummariesDictionary(this.$store);
+    },
+    trainingVariables(): Variable[] {
+      return searchVariables(
+        routeGetters.getTrainingVariables(this.$store),
+        this.trainingVarsSearch
+      );
+    },
+    trainingVariableSummaries(): VariableSummary[] {
+      const pageIndex = routeGetters.getRouteTrainingVarsPage(this.$store);
+      const currentSummaries = getVariableSummariesByState(
+        pageIndex,
+        NUM_PER_PAGE,
+        this.trainingVariables,
+        this.variableDict
+      );
+
+      return currentSummaries;
+    },
+  },
   watch: {
     trainingStr() {
       viewActions.updateSelectTrainingData(this.$store);
@@ -198,6 +275,44 @@ export default Vue.extend({
   beforeMount() {
     viewActions.fetchSelectTrainingData(this.$store, false);
     viewActions.updateHighlight(this.$store);
+  },
+  methods: {
+    async addVar(group: Group) {
+      this.$router;
+      addVariableToTraining(group, this.$router);
+    },
+    async addAll(params: GroupChangeParams) {
+      // update task based on the current training data
+      const taskResponse = await datasetActions.fetchTask(this.$store, {
+        dataset: params.dataset,
+        targetName: params.targetName,
+        variableNames: params.variableNames,
+      });
+      const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
+        training: params.variableNames.join(","),
+        availableTrainingVarsPage: 1,
+        task: taskResponse.data.task.join(","),
+      });
+
+      this.$router.push(entry).catch((err) => console.warn(err));
+    },
+    async removeVar(group: Group) {
+      removeVariableFromTraining(group, this.$router);
+    },
+    async removeAll() {
+      // Fetch the variables in the timeseries grouping.
+      const timeseriesGrouping = datasetGetters.getTimeseriesGroupingVariables(
+        this.$store
+      );
+
+      // Retain only variables used in group on remove all since they can't
+      // be actually be removed without ungrouping
+      const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
+        training: timeseriesGrouping.join(","),
+        trainingVarsPage: 1,
+      });
+      this.$router.push(entry).catch((err) => console.warn(err));
+    },
   },
 });
 </script>
