@@ -285,7 +285,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(varCounter, "__geo_coordinates", "coordinates", "geo_coordinates", "__geo_coordinates", model.GeoBoundsType,
 			model.GeoBoundsType, "postgis structure for the bounding box coordinates of the tile", []string{},
-			model.VarDistilRoleMetadata, nil, dr.Variables, false))
+			model.VarDistilRoleData, nil, dr.Variables, false))
 	varCounter++
 	if len(expectedHeaders) == len(headerNames) {
 		dr.Variables = append(dr.Variables,
