@@ -87,7 +87,7 @@ import {
 } from "../util/types";
 import { Dictionary } from "./dict";
 import { Group } from "./facets";
-import { FilterParams, FilterSetsParams } from "./filters";
+import { FilterParams, FilterSetsParams, removeFiltersByName } from "./filters";
 import { overlayRouteEntry } from "./routes";
 
 // Postfixes for special variable names
@@ -833,6 +833,53 @@ export function sortVariablesByImportance(variables: Variable[]): Variable[] {
     return rankMap[b.key] - rankMap[a.key];
   });
   return variables;
+}
+// remove variable from training
+export async function removeVariableFromTraining(
+  group: Group,
+  router: VueRouter
+) {
+  const dataset = routeGetters.getRouteDataset(store);
+  const targetName = routeGetters.getRouteTargetVariable(store);
+  const isCategorical: boolean = group.type === "categorical";
+  const isTimeseries = routeGetters.isTimeseries(store);
+  // get an updated view of the training data list
+  const training = routeGetters.getDecodedTrainingVariableNames(store);
+  training.splice(training.indexOf(group.key), 1);
+
+  // update task based on the current training data
+  const taskResponse = await datasetActions.fetchTask(store, {
+    dataset,
+    targetName,
+    variableNames: training,
+  });
+
+  // update route with training data
+  const entry = overlayRouteEntry(routeGetters.getRoute(store), {
+    training: training.join(","),
+    task: taskResponse.data.task.join(","),
+  });
+
+  if (isTimeseries && isCategorical) {
+    // Fetch the information of the timeseries grouping
+    const currentGrouping = datasetGetters
+      .getGroupings(store)
+      .find((v) => v.key === targetName)?.grouping;
+
+    // Simply duplicate its grouping information and remove the series ID
+    const grouping = JSON.parse(JSON.stringify(currentGrouping));
+    grouping.subIds = grouping.subIds.filter((subId) => subId !== group.key);
+    grouping.idCol = getComposedVariableKey(grouping.subIds);
+
+    // Request to update the timeseries grouping without this series ID
+    await datasetActions.updateGrouping(store, {
+      variable: targetName,
+      grouping,
+    });
+  }
+
+  router.push(entry).catch((err) => console.warn(err));
+  removeFiltersByName(router, group.key);
 }
 // add variable to training data
 export async function addVariableToTraining(group: Group, router: VueRouter) {

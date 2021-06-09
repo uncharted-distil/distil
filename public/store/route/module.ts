@@ -18,7 +18,6 @@
 import { Route } from "vue-router";
 import { Module } from "vuex";
 import { getStoreAccessors } from "vuex-typescript";
-import { modelModule } from "../model/module";
 import { DistilState } from "../store";
 import { getters as moduleGetters } from "./getters";
 

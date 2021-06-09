@@ -28,18 +28,19 @@
       enable-type-change
       :facet-count="variables && variables.length"
       :html="html"
-      :is-available-features="true"
-      :isfeatures-to-model="false"
+      :is-available-features="isAvailableFeatures"
+      :is-features-to-model="!isAvailableFeatures"
       :instance-name="instanceName"
       :pagination="variables && variables.length > numRowsPerPage"
       :rows-per-page="numRowsPerPage"
-      :summaries="availableVariableSummaries"
+      :summaries="summaries"
+      :enable-color-scales="geoVarExists"
     >
       <div
         class="d-flex flex-row justify-content-between align-items-center my-2 mx-1"
       >
         <div>
-          {{ subtitle }}
+          {{ subtitleInfo }}
         </div>
         <b-button
           v-if="displayAddAll"
@@ -56,16 +57,16 @@
 
 <script lang="ts">
 import Vue from "vue";
-import { overlayRouteEntry } from "../util/routes";
 import { Variable, VariableSummary } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
-import { Dictionary } from "../util/dict";
-import { AVAILABLE_TRAINING_VARS_INSTANCE } from "../store/route/index";
 import { Group } from "../util/facets";
+import { NUM_PER_PAGE } from "../util/data";
 import VariableFacets from "./facets/VariableFacets.vue";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { DISTIL_ROLES } from "../util/types";
+import { isGeoLocatedType } from "../util/types";
+import { overlayRouteEntry } from "../util/routes";
 
 export interface GroupChangeParams {
   dataset: string;
@@ -80,13 +81,21 @@ export default Vue.extend({
     VariableFacets,
   },
   props: {
-    variables: { type: Array as () => Variable[], default: [] as Variable[] },
+    variables: {
+      type: Array as () => Variable[],
+      default: [] as Variable[],
+    },
     summaries: {
       type: Array as () => VariableSummary[],
       default: [] as VariableSummary[],
     },
     title: { type: String as () => string, default: "" },
     groupBtnTitle: { type: String as () => string, default: "" },
+    btnTitle: { type: String as () => string, default: "" },
+    instanceName: { type: String as () => string, default: "" },
+    subtitle: { type: String as () => string, default: "" },
+    checkGeoType: { type: Boolean as () => boolean, default: false },
+    isAvailableFeatures: { type: Boolean as () => boolean, default: false },
   },
   computed: {
     dataset(): string {
@@ -96,22 +105,6 @@ export default Vue.extend({
     availableTrainingVarsSearch(): string {
       return routeGetters.getRouteAvailableTrainingVarsSearch(this.$store);
     },
-
-    // availableVariableSummaries(): VariableSummary[] {
-    //   const pageIndex = routeGetters.getRouteAvailableTrainingVarsPage(
-    //     this.$store
-    //   );
-    //   const summaryDictionary = this.variableDict;
-    //
-    //   const currentSummaries = getVariableSummariesByState(
-    //     pageIndex,
-    //     this.numRowsPerPage,
-    //     this.variables,
-    //     summaryDictionary
-    //   );
-    //
-    //   return currentSummaries;
-    // },
 
     availableVariableSummariesForTraining(): VariableSummary[] {
       return this.summaries.filter(
@@ -123,14 +116,13 @@ export default Vue.extend({
       return this.availableVariableSummariesForTraining.length > 0;
     },
 
-    subtitle(): string {
+    subtitleInfo(): string {
       const total = this.availableVariableSummariesForTraining?.length ?? 0;
       if (total < 1) return;
-      return `${total} features available`;
+      return `${total} ${this.subtitle}`;
     },
-
-    instanceName(): string {
-      return AVAILABLE_TRAINING_VARS_INSTANCE;
+    numRowsPerPage(): number {
+      return NUM_PER_PAGE;
     },
 
     isTimeseries(): boolean {
@@ -145,7 +137,7 @@ export default Vue.extend({
       return (group: Group) => {
         const trainingElem = document.createElement("button");
         trainingElem.className += "btn btn-sm btn-outline-secondary mb-2";
-        trainingElem.textContent = "Add";
+        trainingElem.textContent = this.btnTitle;
 
         // In the case of a categorical variable with a timeserie selected.
         const isCategorical: boolean = group.type === "categorical";
@@ -162,57 +154,31 @@ export default Vue.extend({
             subActivity: SubActivity.DATA_TRANSFORMATION,
             details: { feature: group.key },
           });
-          this.variableChange(group.key);
-          // const dataset = routeGetters.getRouteDataset(this.$store);
-          // const targetName = routeGetters.getRouteTargetVariable(this.$store);
-          //
-          // // get an updated view of the training data list
-          // const training = routeGetters
-          //   .getDecodedTrainingVariableNames(this.$store)
-          //   .concat([group.key]);
-          //
-          // // update task based on the current training data
-          // const taskResponse = await datasetActions.fetchTask(this.$store, {
-          //   dataset,
-          //   targetName,
-          //   variableNames: training,
-          // });
-          //
-          // // update route with training data
-          // const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-          //   training: training.join(","),
-          //   task: taskResponse.data.task.join(","),
-          // });
-          //
-          // if (this.isTimeseries && isCategorical) {
-          //   // Fetch the information of the timeseries grouping
-          //   const currentGrouping = datasetGetters
-          //     .getGroupings(this.$store)
-          //     .find((v) => v.key === targetName)?.grouping;
-          //
-          //   // Simply duplicate its grouping information and add the new variable
-          //   const grouping = JSON.parse(JSON.stringify(currentGrouping));
-          //   grouping.subIds.push(variable);
-          //   grouping.idCol = getComposedVariableKey(grouping.subIds);
-          //
-          //   // Request to update the timeserie grouping
-          //   await datasetActions.updateGrouping(this.$store, {
-          //     variable: targetName,
-          //     grouping,
-          //   });
-          // }
-          //
-          // this.$router.push(entry).catch((err) => console.warn(err));
+          this.variableChange(group);
         });
 
         return trainingElem;
       };
     },
+    geoVarExists(): boolean {
+      if (this.checkGeoType) {
+        return this.summaries.some((v) => {
+          return isGeoLocatedType(v.type);
+        });
+      }
+      return false;
+    },
   },
-
+  watch: {
+    geoVarExists() {
+      const route = routeGetters.getRoute(this.$store);
+      const entry = overlayRouteEntry(route, { hasGeoData: this.geoVarExists });
+      this.$router.push(entry).catch((err) => console.warn(err));
+    },
+  },
   methods: {
-    variableChange(key: string) {
-      this.$emit("var-change", { variableKey: key });
+    variableChange(group: Group) {
+      this.$emit("var-change", group);
     },
     addAll() {
       // log UI event on server
@@ -238,19 +204,6 @@ export default Vue.extend({
         targetName,
         variableNames: training,
       } as GroupChangeParams);
-      // update task based on the current training data
-      // const taskResponse = await datasetActions.fetchTask(this.$store, {
-      //   dataset,
-      //   targetName,
-      //   variableNames: training,
-      // });
-      // const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-      //   training: training.join(","),
-      //   availableTrainingVarsPage: 1,
-      //   task: taskResponse.data.task.join(","),
-      // });
-      //
-      // this.$router.push(entry).catch((err) => console.warn(err));
     },
   },
 });

@@ -18,12 +18,12 @@ import {
   getters as rGetters,
   mutations as rMutations,
 } from "./results/module";
-import { getters as roGetters } from "./route/module";
 import {
   actions as vActions,
   getters as vGetters,
   mutations as vMutations,
 } from "./view/module";
+
 /**
  * Dataset Store Module Exports
  */
@@ -58,8 +58,3 @@ export const viewMutations = vMutations;
 export const requestGetters = reqGetters;
 export const requestActions = reqActions;
 export const requestMutations = reqMutations;
-
-/**
- * Route Store Module Exports
- */
-export const routeGetters = roGetters;
