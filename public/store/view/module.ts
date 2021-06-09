@@ -16,12 +16,12 @@
  */
 
 import { Module } from "vuex";
-import { state, ViewState } from "./index";
-import { getters as moduleGetters } from "./getters";
-import { actions as moduleActions } from "./actions";
-import { mutations as moduleMutations } from "./mutations";
-import { DistilState } from "../store";
 import { getStoreAccessors } from "vuex-typescript";
+import { DistilState } from "../store";
+import { actions as moduleActions } from "./actions";
+import { getters as moduleGetters } from "./getters";
+import { state, ViewState } from "./index";
+import { mutations as moduleMutations } from "./mutations";
 
 export const viewModule: Module<ViewState, DistilState> = {
   state: state,
@@ -55,6 +55,7 @@ export const actions = {
   fetchSelectTargetData: dispatch(moduleActions.fetchSelectTargetData),
   fetchSelectTrainingData: dispatch(moduleActions.fetchSelectTrainingData),
   updateSelectTrainingData: dispatch(moduleActions.updateSelectTrainingData),
+  updateSelectVariables: dispatch(moduleActions.updateSelectVariables),
   updateLabelData: dispatch(moduleActions.updateLabelData),
   updateHighlight: dispatch(moduleActions.updateHighlight),
   clearHighlight: dispatch(moduleActions.clearHighlight),

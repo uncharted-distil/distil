@@ -33,6 +33,7 @@ import {
   invertFilter,
 } from "../../util/filters";
 import { getPredictionsById } from "../../util/predictions";
+import { filterBadRequests } from "../../util/solutions";
 import {
   DataMode,
   Highlight,
@@ -50,10 +51,7 @@ import {
   actions as modelActions,
   mutations as modelMutations,
 } from "../model/module";
-import {
-  actions as predictionActions,
-  mutations as predictionMutations,
-} from "../predictions/module";
+import { actions as predictionActions } from "../predictions/module";
 import { Predictions } from "../requests";
 import {
   actions as requestActions,
@@ -62,10 +60,8 @@ import {
 } from "../requests/module";
 import {
   actions as resultActions,
-  getters as resultGetters,
   mutations as resultMutations,
 } from "../results/module";
-import { filterBadRequests } from "../../util/solutions";
 import { SELECT_TARGET_ROUTE } from "../route";
 import { getters as routeGetters } from "../route/module";
 import store, { DistilState } from "../store";
@@ -529,7 +525,19 @@ export const actions = {
 
     return actions.updateSelectTrainingData(context);
   },
-
+  updateSelectVariables(context: ViewContext) {
+    const args = {
+      dataset: context.getters.getRouteDataset,
+      filterParams: context.getters
+        .getDecodedSolutionRequestFilterParams as FilterParams,
+      highlights: context.getters.getDecodedHighlights as Highlight[],
+    };
+    const variableArgs = {
+      ...args,
+      varModes: context.getters.getDecodedVarModes,
+    };
+    return fetchVariableSummaries(context, variableArgs);
+  },
   updateSelectTrainingData(context: ViewContext) {
     const args = {
       dataset: context.getters.getRouteDataset,

@@ -239,16 +239,16 @@ export default Vue.extend({
       viewActions.updateSelectTrainingData(this.$store);
     },
     availableTrainingVarsPage() {
-      viewActions.updateSelectTrainingData(this.$store);
+      viewActions.updateSelectVariables(this.$store);
     },
     trainingVarsPage() {
-      viewActions.updateSelectTrainingData(this.$store);
+      viewActions.updateSelectVariables(this.$store);
     },
     availableTrainingVarsSearch() {
-      viewActions.updateSelectTrainingData(this.$store);
+      viewActions.updateSelectVariables(this.$store);
     },
     trainingVarsSearch() {
-      viewActions.updateSelectTrainingData(this.$store);
+      viewActions.updateSelectVariables(this.$store);
     },
     dataset() {
       viewActions.fetchSelectTrainingData(this.$store, true);
