@@ -58,7 +58,7 @@
       :url="imageUrl"
       :visible="!!zoomImage"
       :datasetName="dataset"
-      @hide="hideZoomImage"
+      @close="hideZoomImage"
     />
   </div>
 </template>
@@ -84,6 +84,7 @@ import { isRowSelected } from "../util/row";
 import { Dictionary } from "../util/dict";
 import { MULTIBAND_IMAGE_TYPE, IMAGE_TYPE } from "../util/types";
 import { COLOR_SCALES, colorByFacet } from "../util/color";
+import { EventList } from "../util/events";
 
 export default Vue.extend({
   name: "ImagePreview",
@@ -325,7 +326,7 @@ export default Vue.extend({
 
   methods: {
     handleShiftClick() {
-      this.$emit("shift-click", this.row);
+      this.$emit(EventList.BASIC.SHIFT_CLICK_EVENT, this.row);
     },
 
     async visibilityChanged(isVisible: boolean) {
@@ -362,7 +363,7 @@ export default Vue.extend({
     },
 
     handleClick() {
-      this.$emit("click", {
+      this.$emit(EventList.BASIC.CLICK_EVENT, {
         row: this.row,
         imageUrl: this.imageUrl,
         image: this.image,

@@ -56,6 +56,7 @@ import Vue from "vue";
 import { Variable } from "../store/dataset/index";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { isTimeType } from "../util/types";
+import { EventList } from "../util/events";
 
 export default Vue.extend({
   name: "timeseries-analysis-model",
@@ -93,7 +94,10 @@ export default Vue.extend({
 
   methods: {
     onClose(arg: boolean) {
-      this.$emit("close", arg ? { col: this.timeCol } : null);
+      this.$emit(
+        EventList.BASIC.CLOSE_EVENT,
+        arg ? { col: this.timeCol } : null
+      );
     },
   },
 });

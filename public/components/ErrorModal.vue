@@ -40,6 +40,7 @@
 <script lang="ts">
 import _ from "lodash";
 import Vue from "vue";
+import { EventList } from "../util/events";
 
 export default Vue.extend({
   name: "error-model",
@@ -58,7 +59,7 @@ export default Vue.extend({
 
   methods: {
     onClose() {
-      this.$emit("close");
+      this.$emit(EventList.BASIC.CLOSE_EVENT);
     },
   },
 });

@@ -27,6 +27,8 @@
 
 <script lang="ts">
 import Vue from "vue";
+import { EventList } from "../util/events";
+
 export default Vue.extend({
   name: "badge",
   props: {
@@ -35,7 +37,7 @@ export default Vue.extend({
   },
   methods: {
     onRemove() {
-      this.$emit("removed", this.identifier);
+      this.$emit(EventList.BASIC.REMOVE_EVENT, this.identifier);
     },
   },
 });

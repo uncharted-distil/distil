@@ -85,7 +85,7 @@ import { ColorScaleNames } from "../../util/color";
 import { numToDate, dateToNum, DISTIL_ROLES } from "../../util/types";
 import { getters as routeGetters } from "../../store/route/module";
 import _ from "lodash";
-
+import { EventList } from "../../util/events";
 export default Vue.extend({
   name: "FacetDateTime",
 
@@ -288,7 +288,7 @@ export default Vue.extend({
         !_.isEqual(facet.selection, this.selection)
       ) {
         this.$emit(
-          "range-change",
+          EventList.FACETS.RANGE_CHANGE_EVENT,
           this.instanceName,
           this.summary.key,
           this.getRange(facet),

@@ -25,7 +25,7 @@
     :area-of-interest-items="{ inner: inner, outer: outer }"
     :confidence-access-func="confidenceGetter"
     enable-selection-tool-event
-    @tileClicked="onTileClick"
+    @tile-clicked="onTileClick"
     @selection-tool-event="onToolSelection"
   />
 </template>

@@ -52,7 +52,7 @@
         :area-of-interest-items="{ inner: inner, outer: outer }"
         :is-result="true"
         :dataset="dataset"
-        @tileClicked="onTileClick"
+        @tile-clicked="onTileClick"
       />
     </div>
   </div>

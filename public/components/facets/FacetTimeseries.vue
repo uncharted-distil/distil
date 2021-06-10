@@ -72,7 +72,7 @@ import {
   TimeseriesGrouping,
 } from "../../store/dataset";
 import { EXPAND_ACTION_TYPE, COLLAPSE_ACTION_TYPE } from "../../util/types";
-
+import { EventList } from "../../util/events";
 /**
  * Timeseries Facet.
  * @param {Boolean} [expanded=false] - To display the facet expanded; Collapsed by default.
@@ -165,16 +165,16 @@ export default Vue.extend({
       }
     },
     onCategoricalClick(...args) {
-      this.$emit("categorical-click", ...args);
+      this.$emit(EventList.FACETS.CATEGORICAL_CLICK_EVENT, ...args);
     },
     onFacetClick(...args) {
-      this.$emit("facet-click", ...args);
+      this.$emit(EventList.FACETS.CLICK_EVENT, ...args);
     },
     onNumericalClick(...args) {
-      this.$emit("numerical-click", ...args);
+      this.$emit(EventList.FACETS.NUMERICAL_CLICK_EVENT, ...args);
     },
     onRangeChange(...args) {
-      this.$emit("range-change", ...args);
+      this.$emit(EventList.FACETS.RANGE_CHANGE_EVENT, ...args);
     },
     onHistogramCategoricalClick(...args) {
       this.$emit("histogram-categorical-click", ...args);

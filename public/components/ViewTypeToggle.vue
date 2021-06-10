@@ -69,9 +69,7 @@
 <script lang="ts">
 import Vue from "vue";
 import { Variable } from "../store/dataset/index";
-import { getters as routeGetters } from "../store/route/module";
 import {
-  TIMESERIES_TYPE,
   IMAGE_TYPE,
   LONGITUDE_TYPE,
   LATITUDE_TYPE,
@@ -79,6 +77,7 @@ import {
   MULTIBAND_IMAGE_TYPE,
   GEOBOUNDS_TYPE,
 } from "../util/types";
+import { EventList } from "../util/events";
 
 const TABLE_VIEW = "table";
 const IMAGE_VIEW = "image";
@@ -121,7 +120,7 @@ export default Vue.extend({
       },
       set(value: string) {
         this.internalVal = value;
-        this.$emit("input", this.internalVal);
+        this.$emit(EventList.BASIC.INPUT_EVENT, this.internalVal);
       },
     },
     hasImageVariables(): boolean {

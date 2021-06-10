@@ -225,6 +225,7 @@ import {
   clearHighlight,
   UPDATE_FOR_KEY,
 } from "../../util/highlights";
+import { EventList } from "../../util/events";
 import Vue from "vue";
 
 export default Vue.extend({
@@ -279,7 +280,7 @@ export default Vue.extend({
           [this.routePageKey()]: page,
         });
         this.$router.push(entry).catch((err) => console.warn(err));
-        this.$emit("page", page);
+        this.$emit(EventList.FACETS.PAGE_EVENT, page);
       },
       get(): number {
         return getRouteFacetPage(this.routePageKey(), this.$route);
@@ -408,7 +409,7 @@ export default Vue.extend({
       this.$router.push(entry).catch((err) => console.warn(err));
 
       // If the term searched has been updated, we emit an event.
-      this.$emit("search", this.search);
+      this.$emit(EventList.FACETS.SEARCH_EVENT, this.search);
     },
   },
 
@@ -448,7 +449,7 @@ export default Vue.extend({
       } else {
         clearHighlight(this.$router, key);
       }
-      this.$emit("range-change", key, value);
+      this.$emit(EventList.FACETS.RANGE_CHANGE_EVENT, key, value);
       appActions.logUserEvent(this.$store, {
         feature: Feature.CHANGE_HIGHLIGHT,
         activity: this.logActivity,
@@ -485,7 +486,7 @@ export default Vue.extend({
           details: { key: key, value: value },
         });
       }
-      this.$emit("facet-click", context, key, value);
+      this.$emit(EventList.FACETS.CLICK_EVENT, context, key, value);
     },
     onFacetClick(
       context: string,
@@ -514,11 +515,11 @@ export default Vue.extend({
           details: { key: key, value: value },
         });
       }
-      this.$emit("facet-click", context, key, value);
+      this.$emit(EventList.FACETS.CLICK_EVENT, context, key, value);
     },
 
     onCategoricalClick(context: string, key: string) {
-      this.$emit("categorical-click", key);
+      this.$emit(EventList.FACETS.CATEGORICAL_CLICK_EVENT, key);
     },
 
     onNumericalClick(
@@ -545,7 +546,7 @@ export default Vue.extend({
           }
         }
       }
-      this.$emit("numerical-click", key);
+      this.$emit(EventList.FACETS.NUMERICAL_CLICK_EVENT, key);
     },
 
     isSeriesID(key: string): boolean {

@@ -129,15 +129,10 @@ import IconBase from "./icons/IconBase.vue";
 import IconFork from "./icons/IconFork.vue";
 import SparklinePreview from "./SparklinePreview.vue";
 import ImagePreview from "./ImagePreview.vue";
-import {
-  getters as datasetGetters,
-  actions as datasetActions,
-  mutations as datasetMutations,
-} from "../store/dataset/module";
+import { appActions } from "../store";
 import { Dictionary } from "../util/dict";
 import { Filter } from "../util/filters";
 import {
-  Extrema,
   TableColumn,
   TableRow,
   Variable,
@@ -145,6 +140,7 @@ import {
   RowSelection,
   TimeseriesGrouping,
   TableValue,
+  TimeSeries,
 } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
 import { hasComputedVarPrefix, Field } from "../util/types";
@@ -167,9 +163,9 @@ import {
   bulkRemoveImages,
   debounceFetchImagePack,
 } from "../util/data";
-import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import ImageLabel from "./ImageLabel.vue";
+import { EventList } from "../util/events";
 
 export default Vue.extend({
   name: "SelectedDataTable",
@@ -199,6 +195,19 @@ export default Vue.extend({
     },
     includedActive: { type: Boolean, default: true },
     labelFeatureName: { type: String, default: "" },
+    dataFields: {
+      type: Object as () => Dictionary<TableColumn>,
+      default: {} as Dictionary<TableColumn>,
+    },
+    variables: {
+      type: Array as () => Variable[],
+      default: () => [] as Variable[],
+    },
+    itemCount: { type: Number as () => number, default: 0 },
+    timeseriesInfo: {
+      type: Object as () => Dictionary<TimeSeries>,
+      default: {} as Dictionary<TimeSeries>,
+    },
   },
 
   data() {
@@ -218,15 +227,8 @@ export default Vue.extend({
       return routeGetters.getRouteDataset(this.$store);
     },
 
-    variables(): Variable[] {
-      return datasetGetters.getVariables(this.$store);
-    },
-
     items(): TableRow[] {
-      let items = this.includedActive
-        ? datasetGetters.getIncludedTableDataItems(this.$store)
-        : datasetGetters.getExcludedTableDataItems(this.$store);
-      items = this.dataItems.length > 0 ? this.dataItems : items;
+      let items = this.dataItems;
       if (items === null) {
         items = [];
       }
@@ -235,9 +237,9 @@ export default Vue.extend({
       if (this.isTimeseries) {
         items = items?.map((item) => {
           const timeserieId = item[this.timeseriesVariables?.[0]?.key]?.value;
-          const minMaxMean = this.timeseriesInfo(
+          const minMaxMean = this.timeseriesInfo?.[this.dataset]?.info?.[
             timeserieId + this.uniqueTrail
-          );
+          ];
           return { ...item, ...minMaxMean };
         });
       }
@@ -256,20 +258,8 @@ export default Vue.extend({
       return this.items.slice((this.currentPage - 1) * this.perPage, end);
     },
 
-    itemCount(): number {
-      return this.includedActive
-        ? datasetGetters.getIncludedTableDataLength(this.$store)
-        : datasetGetters.getExcludedTableDataLength(this.$store);
-    },
-
-    fields(): Dictionary<TableColumn> {
-      return this.includedActive
-        ? datasetGetters.getIncludedTableDataFields(this.$store)
-        : datasetGetters.getExcludedTableDataFields(this.$store);
-    },
-
     tableFields(): TableColumn[] {
-      const tableFields = formatFieldsAsArray(this.fields);
+      const tableFields = formatFieldsAsArray(this.dataFields);
 
       if (!this.isTimeseries || _.isEmpty(tableFields)) return tableFields;
       // For Timeseries we want to display the Min/Max/Mean
@@ -294,26 +284,26 @@ export default Vue.extend({
     },
 
     imageFields(): Field[] {
-      return getImageFields(this.fields);
+      return getImageFields(this.dataFields);
     },
 
     timeseriesGroupings(): TimeseriesGrouping[] {
-      return getTimeseriesGroupingsFromFields(this.variables, this.fields);
+      return getTimeseriesGroupingsFromFields(this.variables, this.dataFields);
     },
 
     timeseriesVariables(): Variable[] {
-      return getTimeseriesVariablesFromFields(this.variables, this.fields);
+      return getTimeseriesVariablesFromFields(this.variables, this.dataFields);
     },
 
     computedFields(): string[] {
-      const computedColumns = Object.keys(this.fields).filter((key) => {
+      const computedColumns = Object.keys(this.dataFields).filter((key) => {
         return hasComputedVarPrefix(key);
       });
       return computedColumns;
     },
 
     listFields(): Field[] {
-      return getListFields(this.fields);
+      return getListFields(this.dataFields);
     },
 
     filters(): Filter[] {
@@ -385,18 +375,10 @@ export default Vue.extend({
       if (!this.isTimeseries) {
         return;
       }
-      this.timeseriesVariables.forEach((tsv) => {
-        const grouping = tsv.grouping as TimeseriesGrouping;
-        datasetActions.fetchTimeseries(this.$store, {
-          dataset: this.dataset,
-          variableKey: tsv.key,
-          xColName: grouping.xCol,
-          yColName: grouping.yCol,
-          uniqueTrail: this.uniqueTrail,
-          timeseriesIds: this.pageItems.map((item) => {
-            return item[tsv.key].value as string;
-          }),
-        });
+      this.$emit(EventList.TABLE.FETCH_TIMESERIES_EVENT, {
+        variables: this.timeseriesVariables,
+        uniqueTrail: this.uniqueTrail,
+        timeseriesIds: this.pageItems,
       });
     },
 
@@ -428,11 +410,6 @@ export default Vue.extend({
         this.rowSelection,
         this.pageItems.map((pi) => pi.d3mIndex)
       );
-    },
-
-    timeseriesInfo(id: string): Extrema {
-      const timeseries = datasetGetters.getTimeseries(this.$store);
-      return timeseries?.[this.dataset]?.info?.[id];
     },
 
     onRowClick(row: TableRow, idx: number, event) {

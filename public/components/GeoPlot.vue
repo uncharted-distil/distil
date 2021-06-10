@@ -142,6 +142,7 @@ import {
 } from "../util/rendering/coordinates";
 import { isGeoLocatedType } from "../util/types";
 import { overlayRouteEntry } from "../util/routes";
+import { EventList } from "../util/events";
 
 const SINGLE_FIELD = 1;
 const SPLIT_FIELD = 2;
@@ -969,7 +970,7 @@ export default Vue.extend({
       }
       this.drillDownState.centerTile = this.areas[id];
       this.drillDownState.bounds = this.getInterestBounds(this.areas[id]);
-      this.$emit("tileClicked", {
+      this.$emit(EventList.MAP.TILE_CLICKED_EVENT, {
         bounds: this.drillDownState.bounds,
         key: this.geoSummary[0].key,
         displayName: this.geoSummary[0].label,
@@ -1221,7 +1222,7 @@ export default Vue.extend({
         return;
       }
       if (this.enableSelectionToolEvent) {
-        this.$emit("selection-tool-event", {
+        this.$emit(EventList.MAP.SELECTION_TOOL_EVENT, {
           context: this.instanceName,
           dataset: this.dataset,
           key: key,

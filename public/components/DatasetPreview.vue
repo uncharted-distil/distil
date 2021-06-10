@@ -150,6 +150,7 @@ import {
   getters as appGetters,
 } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
+import { EventList } from "../util/events";
 
 const NUM_TOP_FEATURES = 5;
 
@@ -201,7 +202,7 @@ export default Vue.extend({
 
   methods: {
     onDeleteClicked(dataset: Dataset) {
-      this.$emit("dataset-delete", dataset);
+      this.$emit(EventList.DATASETS.DELETE_EVENT, dataset);
     },
     formatBytes(n: number): string {
       return formatBytes(n);

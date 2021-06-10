@@ -59,7 +59,7 @@ import {
 } from "../util/data";
 import { formatBytes } from "../util/bytes";
 import { Dataset, Variable } from "../store/dataset/index";
-
+import { EventList } from "../util/events";
 const NUM_TOP_FEATURES = 5;
 
 export default Vue.extend({
@@ -86,7 +86,7 @@ export default Vue.extend({
     },
 
     removeFromJoin(arg) {
-      this.$emit("remove-from-join", arg);
+      this.$emit(EventList.JOIN.REMOVE_EVENT, arg);
     },
   },
 });

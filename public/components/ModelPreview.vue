@@ -97,6 +97,7 @@ import _ from "lodash";
 import Vue from "vue";
 import { Model, VariableDetail } from "../store/model/index";
 import { openModelSolution } from "../util/solutions";
+import { EventList } from "../util/events";
 
 const NUM_TOP_FEATURES = 5;
 
@@ -126,7 +127,7 @@ export default Vue.extend({
 
   methods: {
     onDeleteClicked(model: Model) {
-      this.$emit("model-delete", model);
+      this.$emit(EventList.MODEL.DELETE_EVENT, model);
     },
     onResult() {
       openModelSolution(this.$router, {

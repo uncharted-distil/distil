@@ -66,7 +66,7 @@ import { deepUpdateFiltersInRoute } from "../../util/filters";
 import { updateHighlight, UPDATE_ALL } from "../../util/highlights";
 import "../../../node_modules/@uncharted.software/lex/dist/lex.css";
 import "../../../node_modules/flatpickr/dist/flatpickr.min.css";
-
+import { EventList } from "../../util/events";
 /** SearchBar component to display LexBar utility
  *
  * @param {string} [filters] - Accept filter from queryString to fill the LexBar with a query.
@@ -152,7 +152,7 @@ export default Vue.extend({
         ...args /* [newModel, oldModel, newUnboxedModel, oldUnboxedModel, nextTokenStarted] */
       ) => {
         if (!this.handleUpdates) {
-          this.$emit("lex-query", args);
+          this.$emit(EventList.LEXBAR.QUERY_CHANGE_EVENT, args);
           return;
         }
         const lqfh = lexQueryToFiltersAndHighlight(args, this.dataset);

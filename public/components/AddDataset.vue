@@ -83,6 +83,7 @@ import {
 } from "../util/uploads";
 import { actions as datasetActions } from "../store/dataset/module";
 import { isEmpty } from "lodash";
+import { EventList } from "../util/events";
 
 export default Vue.extend({
   name: "AddDataset",
@@ -199,7 +200,7 @@ export default Vue.extend({
       if (!path) return;
 
       // Notify external listeners that the file upload is starting
-      this.$emit("uploadstart", {
+      this.$emit(EventList.UPLOAD.START_EVENT, {
         name: this.availableDatasetSelected.name,
         datasetID: this.deconflictedName,
       });
@@ -210,15 +211,15 @@ export default Vue.extend({
           { datasetID: this.deconflictedName, path }
         );
 
-        this.$emit("uploadfinish", null, response);
+        this.$emit(EventList.UPLOAD.FINISHED_EVENT, null, response);
       } catch (error) {
-        this.$emit("uploadfinish", error, null);
+        this.$emit(EventList.UPLOAD.FINISHED_EVENT, error, null);
       }
     },
 
     async uploadFile() {
       // Notify external listeners that the file upload is starting
-      this.$emit("uploadstart", {
+      this.$emit(EventList.UPLOAD.START_EVENT, {
         file: this.file,
         name: this.file?.name ?? this.name,
         datasetID: this.deconflictedName,
@@ -230,9 +231,9 @@ export default Vue.extend({
           datasetID: this.deconflictedName,
           file: this.file,
         });
-        this.$emit("uploadfinish", null, response);
+        this.$emit(EventList.UPLOAD.FINISHED_EVENT, null, response);
       } catch (err) {
-        this.$emit("uploadfinish", err, null);
+        this.$emit(EventList.UPLOAD.FINISHED_EVENT, err, null);
       }
     },
   },

@@ -63,7 +63,7 @@
         :summaries="summaries"
         :area-of-interest-items="{ inner: inner, outer: outer }"
         :dataset="dataset"
-        @tileClicked="onTileClick"
+        @tile-clicked="onTileClick"
       />
     </div>
   </div>

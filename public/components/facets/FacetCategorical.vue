@@ -93,7 +93,7 @@ import {
 import { DISTIL_ROLES } from "../../util/types";
 import { getters as routeGetters } from "../../store/route/module";
 import { ColorScaleNames } from "../../util/color";
-
+import { EventList } from "../../util/events";
 export default Vue.extend({
   name: "FacetCategorical",
 
@@ -295,7 +295,7 @@ export default Vue.extend({
           );
         }
         this.$emit(
-          "facet-click",
+          EventList.FACETS.CLICK_EVENT,
           this.instanceName,
           this.summary.key,
           values,
