@@ -78,7 +78,7 @@ import Vue from "vue";
 import { SEARCH_ROUTE, SELECT_TARGET_ROUTE } from "../../store/route";
 import { createRouteEntry } from "../../util/routes";
 import router from "../../router/router";
-
+import { EventList } from "../../util/events";
 export default Vue.extend({
   name: "save-dataset",
 
@@ -148,7 +148,11 @@ export default Vue.extend({
 
     // save model
     async saveDataset() {
-      this.$emit("save", this.saveName, this.retainUnlabeled);
+      this.$emit(
+        EventList.DATASETS.SAVE_EVENT,
+        this.saveName,
+        this.retainUnlabeled
+      );
     },
 
     // ensure required fields are filled out

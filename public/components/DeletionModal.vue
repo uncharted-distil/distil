@@ -24,6 +24,8 @@
 
 <script lang="ts">
 import Vue from "vue";
+import { EventList } from "../util/events";
+
 export default Vue.extend({
   name: "deletion-modal",
   props: {
@@ -43,7 +45,7 @@ export default Vue.extend({
   },
   methods: {
     okHandler() {
-      this.$emit("ok");
+      this.$emit(EventList.MODEL.DELETE_EVENT);
     },
   },
 });

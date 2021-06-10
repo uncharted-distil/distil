@@ -113,6 +113,7 @@
         :summaries="summaries"
         :item-count="numItems"
         :timeseries-info="timeseries"
+        :variables="variables"
         @fetch-timeseries="fetchTimeseries"
       />
     </div>

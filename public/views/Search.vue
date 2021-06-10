@@ -158,7 +158,10 @@
             />
           </template>
         </div>
-        <deletion-modal :target="deletionTarget" @ok="onDeletionConfirmed" />
+        <deletion-modal
+          :target="deletionTarget"
+          @model-delete="onDeletionConfirmed"
+        />
       </div>
     </section>
 

@@ -15,6 +15,12 @@ export class EventList {
     CLOSE_EVENT: "close",
     // something has been removed
     REMOVE_EVENT: "removed",
+    // input event
+    INPUT_EVENT: "input",
+    // click event
+    CLICK_EVENT: "click",
+    // shift click event
+    SHIFT_CLICK_EVENT: "shift-click",
   };
   /********UPLOAD EVENTS*************/
   static readonly UPLOAD = {
@@ -73,6 +79,19 @@ export class EventList {
     SUCCESS_EVENT: "success",
     // join failed
     FAILURE_EVENT: "failure",
+    // remove pair from join
+    REMOVE_EVENT: "remove-from-join",
+  };
+  /***********LEXBAR EVENTS***********/
+  static readonly LEXBAR = {
+    // lex query has changed, therefore change filters/highlights
+    QUERY_CHANGE_EVENT: "lex-query",
+  };
+  static readonly MODEL = {
+    // save model event typically happens on result screen
+    SAVE_EVENT: "save",
+    // delete the model
+    DELETE_EVENT: "model-delete",
   };
 }
 // these interfaces should probably be within namespaces to be condusive with the EventList

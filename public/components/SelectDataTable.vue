@@ -199,7 +199,10 @@ export default Vue.extend({
       type: Object as () => Dictionary<TableColumn>,
       default: {} as Dictionary<TableColumn>,
     },
-    variables: { type: Array as () => Variable[], default: [] as Variable[] },
+    variables: {
+      type: Array as () => Variable[],
+      default: () => [] as Variable[],
+    },
     itemCount: { type: Number as () => number, default: 0 },
     timeseriesInfo: {
       type: Object as () => Dictionary<TimeSeries>,

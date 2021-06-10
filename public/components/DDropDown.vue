@@ -30,6 +30,7 @@
 <script lang="ts">
 import Vue from "vue";
 import { createPopper } from "@popperjs/core";
+import { EventList } from "../util/events";
 
 export default Vue.extend({
   name: "d-drop-down",
@@ -51,7 +52,7 @@ export default Vue.extend({
   },
   methods: {
     onInput(data) {
-      this.$emit("input", data);
+      this.$emit(EventList.BASIC.INPUT_EVENT, data);
     },
     withPopper(dropdownList, component, { width }) {
       dropdownList.style.width = width;

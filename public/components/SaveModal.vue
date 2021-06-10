@@ -84,6 +84,7 @@ import { SEARCH_ROUTE } from "../store/route";
 import { getters as routeGetters } from "../store/route/module";
 import { createRouteEntry } from "../util/routes";
 import router from "../router/router";
+import { EventList } from "../util/events";
 
 export interface SaveInfo {
   solutionId: string;
@@ -196,7 +197,7 @@ export default Vue.extend({
       if (!this.validForm()) {
         return;
       }
-      this.$emit("save", {
+      this.$emit(EventList.MODEL.SAVE_EVENT, {
         solutionId: this.solutionId,
         fittedSolution: this.fittedSolutionId,
         name: this.saveName,
