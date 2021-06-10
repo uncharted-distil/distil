@@ -151,7 +151,7 @@ import LeftSidePanel from "../components/layout/LeftSidePanel.vue";
 import ImageMosaic from "../components/ImageMosaic.vue";
 import SearchBar from "../components/layout/SearchBar.vue";
 import SelectDataTable from "../components/SelectDataTable.vue";
-import SelectGeoPlot from "../components/SelectGeoPlot.vue";
+import GeoPlot from "../components/GeoPlot.vue";
 import SelectGraphView from "../components/SelectGraphView.vue";
 import SelectTimeseriesView from "../components/SelectTimeseriesView.vue";
 import StatusPanel from "../components/StatusPanel.vue";
@@ -230,7 +230,7 @@ export default Vue.extend({
     ImageMosaic,
     SearchBar,
     SelectDataTable,
-    SelectGeoPlot,
+    GeoPlot,
     SelectGraphView,
     SelectTimeseriesView,
     StatusPanel,
@@ -421,7 +421,7 @@ export default Vue.extend({
 
     viewComponent() {
       const viewType = this.activeViews[this.activeView] as string;
-      if (viewType === GEO_VIEW) return "SelectGeoPlot";
+      if (viewType === GEO_VIEW) return "GeoPlot";
       if (viewType === GRAPH_VIEW) return "SelectGraphView";
       if (viewType === IMAGE_VIEW) return "ImageMosaic";
       if (viewType === TABLE_VIEW) return "SelectDataTable";
