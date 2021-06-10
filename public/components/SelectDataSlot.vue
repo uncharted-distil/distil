@@ -112,9 +112,13 @@
         :data-fields="fields"
         :summaries="summaries"
         :item-count="numItems"
+        :baseline-items="baselineItems"
         :timeseries-info="timeseries"
         :variables="variables"
+        :is-exclude="!includedActive"
+        :area-of-interest-items="{ inner: inner, outer: outer }"
         @fetch-timeseries="fetchTimeseries"
+        @tile-clicked="onTileClick"
       />
     </div>
   </div>
@@ -128,7 +132,7 @@ import SelectDataTable from "./SelectDataTable.vue";
 import ImageMosaic from "./ImageMosaic.vue";
 import SearchBar from "../components/layout/SearchBar.vue";
 import SelectTimeseriesView from "./SelectTimeseriesView.vue";
-import SelectGeoPlot from "./SelectGeoPlot.vue";
+import GeoPlot, { TileClickData } from "./GeoPlot.vue";
 import SelectGraphView from "./SelectGraphView.vue";
 import ViewTypeToggle from "./ViewTypeToggle.vue";
 import LayerSelection from "./LayerSelection.vue";
@@ -148,6 +152,7 @@ import {
   VariableSummary,
   TimeseriesGrouping,
   TimeSeries,
+  D3M_INDEX_FIELD,
 } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
 import {
@@ -185,7 +190,7 @@ export default Vue.extend({
     LayerSelection,
     SearchBar,
     SelectDataTable,
-    SelectGeoPlot,
+    GeoPlot,
     SelectGraphView,
     SelectTimeseriesView,
     ViewTypeToggle,
@@ -222,6 +227,13 @@ export default Vue.extend({
     availableVariables(): Variable[] {
       return routeGetters.getAvailableVariables(this.$store);
     },
+    baselineItems(): TableRow[] {
+      const bItems =
+        datasetGetters.getBaselineIncludeTableDataItems(this.$store) ?? [];
+      return bItems.sort((a, b) => {
+        return a[D3M_INDEX_FIELD] - b[D3M_INDEX_FIELD];
+      });
+    },
     trainingVariables(): Variable[] {
       return routeGetters.getTrainingVariables(this.$store);
     },
@@ -233,7 +245,16 @@ export default Vue.extend({
     target(): string {
       return routeGetters.getRouteTargetVariable(this.$store);
     },
-
+    inner(): TableRow[] {
+      return this.includedActive
+        ? datasetGetters.getAreaOfInterestIncludeInnerItems(this.$store)
+        : datasetGetters.getAreaOfInterestExcludeInnerItems(this.$store);
+    },
+    outer(): TableRow[] {
+      return this.includedActive
+        ? datasetGetters.getAreaOfInterestIncludeOuterItems(this.$store)
+        : datasetGetters.getAreaOfInterestExcludeOuterItems(this.$store);
+    },
     numRows(): number {
       return this.hasData
         ? this.includedActive
@@ -354,7 +375,7 @@ export default Vue.extend({
     },
     /* Select which component to display the data. */
     viewComponent(): string {
-      if (this.viewTypeModel === GEO_VIEW) return "SelectGeoPlot";
+      if (this.viewTypeModel === GEO_VIEW) return "GeoPlot";
       if (this.viewTypeModel === GRAPH_VIEW) return "SelectGraphView";
       if (this.viewTypeModel === IMAGE_VIEW) return "ImageMosaic";
       if (this.viewTypeModel === TIMESERIES_VIEW) return "SelectTimeseriesView";
@@ -383,6 +404,22 @@ export default Vue.extend({
   },
 
   methods: {
+    async onTileClick(data: TileClickData) {
+      // filter for area of interests
+      const filter: Filter = {
+        displayName: data.displayName,
+        key: data.key,
+        maxX: data.bounds[1][1],
+        maxY: data.bounds[0][0],
+        minX: data.bounds[0][1],
+        minY: data.bounds[1][0],
+        mode: EXCLUDE_FILTER,
+        type: data.type,
+        set: "",
+      };
+      // fetch area of interests
+      await viewActions.updateAreaOfInterest(this.$store, filter);
+    },
     fetchTimeseries(args: FetchTimeseriesEvent) {
       args.variables.forEach((tsv) => {
         const grouping = tsv.grouping as TimeseriesGrouping;
