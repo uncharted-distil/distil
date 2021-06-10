@@ -92,13 +92,6 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 		}
 		storageName := ds.StorageName
 
-		// replace any grouped variables in filter params with the group's
-		expandedFilterParams, err := api.ExpandFilterParams(dataset, filterParams, false, metaStore)
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to expand filter params"))
-			return
-		}
-
 		fittedSolutionID := ""
 		produceRequestID := ""
 		if params["solutionId"] != nil {
@@ -124,7 +117,14 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 				handleError(w, errors.Errorf("solution id `%s` cannot be mapped to result URI", solutionID))
 				return
 			}
-			expandedFilterParams.Variables = req.Filters.Variables
+			filterParams.Variables = req.Filters.Variables
+
+			// replace any grouped variables in filter params with the group's
+			expandedFilterParams, err := api.ExpandFilterParams(dataset, filterParams, false, metaStore)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable to expand filter params"))
+				return
+			}
 
 			// get the result URI
 			res, err := solution.FetchSolutionResults(solutionID)
@@ -159,6 +159,13 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 						break
 					}
 				}
+			}
+
+			// replace any grouped variables in filter params with the group's
+			expandedFilterParams, err := api.ExpandFilterParams(dataset, filterParams, false, metaStore)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable to expand filter params"))
+				return
 			}
 
 			// fetch filtered data based on the supplied search parameters
