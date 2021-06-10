@@ -1532,10 +1532,10 @@ export const actions = {
         );
         filterParams = setInvert(filterParams, false);
         try {
-          const response = await axios.post(
-            `distil/data/${dataset}/true`,
-            filterParams
-          );
+          const response = await axios.post(`distil/data/${dataset}`, {
+            ...filterParams,
+            includeGroupingCol: true,
+          });
           mutations.setJoinDatasetsTableData(context, {
             dataset: dataset,
             data: response.data,
@@ -1668,9 +1668,10 @@ export const actions = {
     filterParams.dataMode = dataModeDefault;
 
     try {
-      const response = await axios.post(`distil/data/${args.dataset}/false`, {
+      const response = await axios.post(`distil/data/${args.dataset}`, {
         ...filterParams,
         orderBy: args.orderBy,
+        includeGroupingCol: false,
       });
       return response.data;
     } catch (error) {

@@ -22,7 +22,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
-	"github.com/uncharted-distil/distil/api/util/json"
 	"goji.io/v3/pat"
 )
 
@@ -68,14 +67,6 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 		}
 
 		dataset := pat.Param(r, "dataset")
-		includeGroupingCol := params["include-grouping-col"]
-		includeGroupingColBool := parseBoolParam(includeGroupingCol.(string))
-
-		solutionID, err := url.PathUnescape(params["solution-id"].(string))
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to unescape solution id"))
-			return
-		}
 
 		// get filter client
 		storage, err := storageCtor()
@@ -110,7 +101,13 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 
 		fittedSolutionID := ""
 		produceRequestID := ""
-		if solutionID != "" {
+		if params["solutionId"] != nil {
+			solutionID, err := url.PathUnescape(params["solutionId"].(string))
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable to unescape solution id"))
+				return
+			}
+
 			// get results using the solution id
 			solution, err := solutionCtor()
 			if err != nil {
@@ -127,6 +124,7 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 				handleError(w, errors.Errorf("solution id `%s` cannot be mapped to result URI", solutionID))
 				return
 			}
+			expandedFilterParams.Variables = req.Filters.Variables
 
 			// get the result URI
 			res, err := solution.FetchSolutionResults(solutionID)
@@ -152,6 +150,7 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 			fittedSolutionID = res[0].FittedSolutionID
 			produceRequestID = res[0].ProduceRequestID
 		} else {
+			includeGroupingColBool := params["includeGroupingCol"].(bool)
 			var orderByVar *model.Variable
 			if params[orderBy] != nil {
 				for _, v := range vars {
@@ -175,17 +174,10 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 		dataTransformed.FittedSolutionID = fittedSolutionID
 		dataTransformed.ProduceRequestID = produceRequestID
 
-		// marshal output into JSON
-		bytes, err := json.Marshal(dataTransformed)
+		// marshal data and sent the response back
+		err = handleJSON(w, dataTransformed)
 		if err != nil {
-			handleError(w, errors.Wrap(err, "unable marshal filtered data result into JSON"))
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		_, err = w.Write(bytes)
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable marshal version into JSON and write response"))
+			handleError(w, errors.Wrap(err, "unable marshal result rows into JSON"))
 			return
 		}
 	}

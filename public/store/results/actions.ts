@@ -326,12 +326,10 @@ export const actions = {
     }
 
     try {
-      const response = await axios.post(
-        `/distil/results/${args.dataset}/${encodeURIComponent(
-          args.solutionId
-        )}`,
-        filterParams
-      );
+      const response = await axios.post(`/distil/data/${args.dataset}`, {
+        ...filterParams,
+        solutionId: encodeURIComponent(args.solutionId),
+      });
       mutator(context, response.data);
     } catch (error) {
       console.error(
@@ -378,12 +376,10 @@ export const actions = {
     }
 
     try {
-      const response = await axios.post(
-        `/distil/results/${args.dataset}/${encodeURIComponent(
-          args.solutionId
-        )}`,
-        filterParams
-      );
+      const response = await axios.post(`/distil/data/${args.dataset}`, {
+        ...filterParams,
+        solutionId: encodeURIComponent(args.solutionId),
+      });
       mutator(context, response.data);
     } catch (error) {
       console.error(
@@ -427,12 +423,10 @@ export const actions = {
     }
 
     try {
-      const response = await axios.post(
-        `/distil/results/${args.dataset}/${encodeURIComponent(
-          args.solutionId
-        )}`,
-        filterParams
-      );
+      const response = await axios.post(`/distil/data/${args.dataset}`, {
+        ...filterParams,
+        solutionId: encodeURIComponent(args.solutionId),
+      });
       mutations.setAreaOfInterestInner(context, response.data);
     } catch (error) {
       console.error(
@@ -485,12 +479,10 @@ export const actions = {
       return;
     }
     try {
-      const response = await axios.post(
-        `/distil/results/${args.dataset}/${encodeURIComponent(
-          args.solutionId
-        )}`,
-        filterParams
-      );
+      const response = await axios.post(`/distil/data/${args.dataset}`, {
+        ...filterParams,
+        solutionId: encodeURIComponent(args.solutionId),
+      });
       mutations.setAreaOfInterestOuter(context, response.data);
     } catch (error) {
       console.error(
