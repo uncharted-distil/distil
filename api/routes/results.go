@@ -25,11 +25,6 @@ import (
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
-// Results represents a results response for a variable.
-type Results struct {
-	Results *api.FilteredData `json:"results"`
-}
-
 // ResultsHandler fetches predicted solution values and returns them to the client
 // in a JSON structure
 func ResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
