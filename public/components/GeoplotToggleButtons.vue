@@ -58,6 +58,7 @@
 import Vue from "vue";
 import IconBase from "./icons/IconBase.vue";
 import IconCropFree from "./icons/IconCropFree.vue";
+import { EventList } from "../util/events";
 export default Vue.extend({
   name: "GeoplotToggleButtons",
   components: {
@@ -73,16 +74,16 @@ export default Vue.extend({
   },
   methods: {
     baselineToggle() {
-      this.$emit("baseline-toggle");
+      this.$emit(EventList.MAP.BASELINE_TOGGLE_EVENT);
     },
     mapToggle() {
-      this.$emit("map-toggle");
+      this.$emit(EventList.MAP.MAP_TOGGLE_EVENT);
     },
     clusteringToggle() {
-      this.$emit("clustering-toggle");
+      this.$emit(EventList.MAP.CLUSTERING_TOGGLE_EVENT);
     },
     selectionToolToggle() {
-      this.$emit("selection-tool-toggle");
+      this.$emit(EventList.MAP.SELECTION_TOOL_TOGGLE_EVENT);
     },
   },
 });

@@ -85,7 +85,7 @@ import {
   facetTypeChangeState,
 } from "../../util/facets";
 import { DISTIL_ROLES } from "../../util/types";
-
+import { EventList } from "../../util/events";
 export default Vue.extend({
   name: "FacetImage",
 
@@ -293,7 +293,7 @@ export default Vue.extend({
           );
         }
         this.$emit(
-          "facet-click",
+          EventList.FACETS.CLICK_EVENT,
           this.instanceName,
           this.summary.key,
           values,

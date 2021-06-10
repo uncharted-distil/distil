@@ -220,6 +220,8 @@ import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import _ from "lodash";
 import store from "../store/store";
+import { EventList } from "../util/events";
+
 interface Score {
   label: string;
   metric: string;
@@ -583,7 +585,7 @@ export default Vue.extend({
         subActivity: SubActivity.MODEL_EXPLANATION,
         details: { key: key, value: value },
       });
-      this.$emit("range-change", key, value);
+      this.$emit(EventList.FACETS.RANGE_CHANGE_EVENT, key, value);
     },
 
     onResidualNumericalClick(
@@ -636,7 +638,7 @@ export default Vue.extend({
         subActivity: SubActivity.MODEL_EXPLANATION,
         details: { key: key, value: value },
       });
-      this.$emit("range-change", key, value);
+      this.$emit(EventList.FACETS.RANGE_CHANGE_EVENT, key, value);
     },
 
     onConfidenceClick(
@@ -685,7 +687,7 @@ export default Vue.extend({
         subActivity: SubActivity.MODEL_EXPLANATION,
         details: { key: key, value: value },
       });
-      this.$emit("range-change", key, value);
+      this.$emit(EventList.FACETS.RANGE_CHANGE_EVENT, key, value);
     },
 
     onClick() {

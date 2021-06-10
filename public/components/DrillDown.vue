@@ -96,6 +96,7 @@ import {
   actions as datasetActions,
   mutations as datasetMutations,
 } from "../store/dataset/module";
+import { EventList } from "../util/events";
 
 interface Tile {
   imageUrl: string;
@@ -284,7 +285,7 @@ export default Vue.extend({
       return result;
     },
     onExitClicked() {
-      this.$emit("close");
+      this.$emit(EventList.CLOSE_EVENT);
       this.clearImages();
       clearAreaOfInterest();
     },

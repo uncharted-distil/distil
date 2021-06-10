@@ -111,6 +111,9 @@
         :data-items="items"
         :data-fields="fields"
         :summaries="summaries"
+        :item-count="numItems"
+        :timeseries-info="timeseries"
+        @fetch-timeseries="fetchTimeseries"
       />
     </div>
   </div>
@@ -142,6 +145,8 @@ import {
   RowSelection,
   TableColumn,
   VariableSummary,
+  TimeseriesGrouping,
+  TimeSeries,
 } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
 import {
@@ -163,7 +168,7 @@ import {
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { Dictionary } from "lodash";
 import { getAllVariablesSummaries, totalAreaCoverage } from "../util/data";
-
+import { FetchTimeseriesEvent } from "../util/events";
 const GEO_VIEW = "geo";
 const GRAPH_VIEW = "graph";
 const IMAGE_VIEW = "image";
@@ -337,7 +342,9 @@ export default Vue.extend({
     isFilteringSelection(): boolean {
       return !!this.rowSelection;
     },
-
+    timeseries(): Dictionary<TimeSeries> {
+      return datasetGetters.getTimeseries(this.$store);
+    },
     isMultiBandImage(): boolean {
       return routeGetters.isMultiBandImage(this.$store);
     },
@@ -375,6 +382,21 @@ export default Vue.extend({
   },
 
   methods: {
+    fetchTimeseries(args: FetchTimeseriesEvent) {
+      args.variables.forEach((tsv) => {
+        const grouping = tsv.grouping as TimeseriesGrouping;
+        datasetActions.fetchTimeseries(this.$store, {
+          dataset: this.dataset,
+          variableKey: tsv.key,
+          xColName: grouping.xCol,
+          yColName: grouping.yCol,
+          uniqueTrail: args.uniqueTrail,
+          timeseriesIds: args.timeseriesIds.map((item) => {
+            return item[tsv.key].value as string;
+          }),
+        });
+      });
+    },
     onExcludeClick() {
       let filter = null;
       if (this.isFilteringHighlights) {

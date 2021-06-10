@@ -136,6 +136,8 @@ import {
 } from "../util/highlights";
 import { reviseOpenSolutions } from "../util/solutions";
 import moment from "moment";
+import { EventList } from "../util/events";
+
 export default Vue.extend({
   name: "prediction-summaries",
 
@@ -353,7 +355,7 @@ export default Vue.extend({
         subActivity: SubActivity.MODEL_EXPLANATION,
         details: { key: args.key, value: args.value },
       });
-      this.$emit("range-change", args.key, args.value);
+      this.$emit(EventList.FACETS.RANGE_CHANGE_EVENT, args.key, args.value);
     },
 
     active(summaryKey: string): string {

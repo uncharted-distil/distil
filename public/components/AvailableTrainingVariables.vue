@@ -67,13 +67,7 @@ import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { DISTIL_ROLES } from "../util/types";
 import { isGeoLocatedType } from "../util/types";
 import { overlayRouteEntry } from "../util/routes";
-
-export interface GroupChangeParams {
-  dataset: string;
-  targetName: string;
-  variableNames: string[];
-}
-
+import { EventList, GroupChangeParams } from "../util/events";
 export default Vue.extend({
   name: "AvailableTrainingVariables",
 
@@ -178,7 +172,7 @@ export default Vue.extend({
   },
   methods: {
     variableChange(group: Group) {
-      this.$emit("var-change", group);
+      this.$emit(EventList.VAR_SET_CHANGE_EVENT, group);
     },
     addAll() {
       // log UI event on server
@@ -199,7 +193,7 @@ export default Vue.extend({
       });
       const dataset = routeGetters.getRouteDataset(this.$store);
       const targetName = routeGetters.getRouteTargetVariable(this.$store);
-      this.$emit("group-change", {
+      this.$emit(EventList.VAR_SET_GROUP_CHANGE_EVENT, {
         dataset,
         targetName,
         variableNames: training,

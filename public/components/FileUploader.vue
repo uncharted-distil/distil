@@ -60,7 +60,7 @@
 import Vue from "vue";
 import { actions as datasetActions } from "../store/dataset/module";
 import { removeExtension, generateUniqueDatasetName } from "../util/uploads";
-
+import { EventList } from "../util/events";
 export default Vue.extend({
   name: "file-uploader",
 
@@ -113,7 +113,7 @@ export default Vue.extend({
       const deconflictedName = generateUniqueDatasetName(this.importDataName);
 
       // Notify external listeners that the file upload is starting
-      this.$emit("uploadstart", {
+      this.$emit(EventList.UPLOAD.START_EVENT, {
         file: this.file,
         filename: this.file.name,
         datasetID: deconflictedName,
@@ -125,9 +125,9 @@ export default Vue.extend({
           datasetID: deconflictedName,
           file: this.file,
         });
-        this.$emit("uploadfinish", null, response);
+        this.$emit(EventList.UPLOAD.FINISHED_EVENT, null, response);
       } catch (err) {
-        this.$emit("uploadfinish", err, null);
+        this.$emit(EventList.UPLOAD.FINISHED_EVENT, err, null);
       }
     },
   },

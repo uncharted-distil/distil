@@ -58,7 +58,7 @@
       :url="imageUrl"
       :visible="!!zoomImage"
       :datasetName="dataset"
-      @hide="hideZoomImage"
+      @close="hideZoomImage"
     />
   </div>
 </template>

@@ -125,7 +125,7 @@ import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
 import { IMAGE_TYPE, MULTIBAND_IMAGE_TYPE } from "../util/types";
 import ImageTransformer from "./ImageTransformer.vue";
-
+import { EventList } from "../util/events";
 const IMAGE_MAX_SIZE = 750; // Maximum size of an image in the drill-down in pixels.
 const IMAGE_MAX_ZOOM = 2.5; // We don't want an image to be too magnified to avoid blurriness.
 
@@ -324,7 +324,7 @@ export default Vue.extend({
     },
     hide() {
       this.hidden = true;
-      this.$emit("hide");
+      this.$emit(EventList.CLOSE_EVENT);
     },
 
     onBrightnessChanged(e) {

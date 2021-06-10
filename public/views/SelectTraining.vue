@@ -96,13 +96,12 @@ import StatusPanel from "../components/StatusPanel.vue";
 import StatusSidebar from "../components/StatusSidebar.vue";
 import CreateSolutionsForm from "../components/CreateSolutionsForm.vue";
 import SelectDataSlot from "../components/SelectDataSlot.vue";
-import AvailableTrainingVariables, {
-  GroupChangeParams,
-} from "../components/AvailableTrainingVariables.vue";
+import AvailableTrainingVariables from "../components/AvailableTrainingVariables.vue";
 import { Variable, VariableSummary } from "../store/dataset/index";
 import TargetVariable from "../components/TargetVariable.vue";
 import { DataMode } from "../store/dataset";
 import { overlayRouteEntry } from "../util/routes";
+import { GroupChangeParams } from "../util/events";
 import {
   searchVariables,
   NUM_PER_PAGE,

@@ -63,7 +63,7 @@ import { getFacetByType } from "../util/facets";
 import { Predictions } from "../store/requests";
 import { isTopPredictionByTime } from "../util/predictions";
 import { reviseOpenSolutions } from "../util/solutions";
-
+import { EventList } from "../util/events";
 export default Vue.extend({
   name: "PredictionGroup",
   components: {
@@ -150,7 +150,12 @@ export default Vue.extend({
       value: string,
       dataset: string
     ) {
-      this.$emit("categorical-click", { context, key, value, dataset });
+      this.$emit(EventList.FACETS.CATEGORICAL_CLICK_EVENT, {
+        context,
+        key,
+        value,
+        dataset,
+      });
     },
 
     onNumericalClick(
@@ -159,7 +164,12 @@ export default Vue.extend({
       value: { from: number; to: number },
       dataset: string
     ) {
-      this.$emit("numerical-click", { context, key, value, dataset });
+      this.$emit(EventList.FACETS.NUMERICAL_CLICK_EVENT, {
+        context,
+        key,
+        value,
+        dataset,
+      });
     },
 
     onRangeChange(
@@ -168,7 +178,12 @@ export default Vue.extend({
       value: { from: { label: string[] }; to: { label: string[] } },
       dataset: string
     ) {
-      this.$emit("range-change", { context, key, value, dataset });
+      this.$emit(EventList.FACETS.RANGE_CHANGE_EVENT, {
+        context,
+        key,
+        value,
+        dataset,
+      });
     },
   },
 });

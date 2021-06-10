@@ -24,7 +24,7 @@
     :summaries="summaries"
     :areaOfInterestItems="{ inner: inner, outer: outer }"
     :is-exclude="!includedActive"
-    @tileClicked="onTileClick"
+    @tile-clicked="onTileClick"
   >
   </geo-plot>
 </template>
