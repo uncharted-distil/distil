@@ -303,7 +303,6 @@ func main() {
 
 	// static
 	registerRoute(mux, "/distil/image/:dataset/:file/:is-thumbnail", routes.ImageHandler(esMetadataStorageCtor, &config))
-	registerRoute(mux, "/distil/graphs/:dataset/:file", routes.GraphsHandler(config.D3MInputDir))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 
 	// catch kill signals for graceful shutdown
