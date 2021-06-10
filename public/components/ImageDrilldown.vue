@@ -324,7 +324,7 @@ export default Vue.extend({
     },
     hide() {
       this.hidden = true;
-      this.$emit(EventList.CLOSE_EVENT);
+      this.$emit(EventList.BASIC.CLOSE_EVENT);
     },
 
     onBrightnessChanged(e) {

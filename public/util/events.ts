@@ -9,9 +9,13 @@ export class EventList {
   static readonly VAR_SET_CHANGE_EVENT = "var-change";
   // occurs when a group of variables is removed or added to the training set
   static readonly VAR_SET_GROUP_CHANGE_EVENT = "group-change";
-  // close event use when something is closing
-  static readonly CLOSE_EVENT = "close";
-  static readonly BASIC = {};
+  /********BASIC EVENTS*************/
+  static readonly BASIC = {
+    // close event use when something is closing
+    CLOSE_EVENT: "close",
+    // something has been removed
+    REMOVE_EVENT: "removed",
+  };
   /********UPLOAD EVENTS*************/
   static readonly UPLOAD = {
     // upload has begun
@@ -45,10 +49,31 @@ export class EventList {
     CATEGORICAL_CLICK_EVENT: "categorical-click",
     // numerical facet was clicked
     NUMERICAL_CLICK_EVENT: "numerical-click",
+    // this event occurs when the variable facet is paged
+    PAGE_EVENT: "page",
+    // this event occurs when the variable facet is searched
+    SEARCH_EVENT: "search",
   };
   /*********TABLE EVENTS*************/
-  static readonly FETCH_TIMESERIES_EVENT = "fetch-timeseries";
+  static readonly TABLE = {
+    COLUMN_CLICKED_EVENT: "col-clicked",
+    FETCH_TIMESERIES_EVENT: "fetch-timeseries",
+  };
+
   /*********DATASET EVENTS***********/
+  static readonly DATASETS = {
+    SAVE_EVENT: "save",
+    DELETE_EVENT: "dataset-delete",
+  };
+  /**********JOIN EVENTS*************/
+  static readonly JOIN = {
+    // swap datasets event
+    SWAP_EVENT: "swap-datasets",
+    // join was successful
+    SUCCESS_EVENT: "success",
+    // join failed
+    FAILURE_EVENT: "failure",
+  };
 }
 // these interfaces should probably be within namespaces to be condusive with the EventList
 // use this interface for timeseries fetch events

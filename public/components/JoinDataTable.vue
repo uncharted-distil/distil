@@ -88,7 +88,7 @@ import {
   bulkRemoveImages,
   sameData,
 } from "../util/data";
-
+import { EventList } from "../util/events";
 function findSuggestionIndex(columnSuggestions: string[], key: string): number {
   return columnSuggestions.findIndex((col) => {
     // col can be something like "lat+lng" for multi column suggestions
@@ -276,9 +276,9 @@ export default Vue.extend({
     },
     onColumnClicked(key, field) {
       if (this.selectedColumn && this.selectedColumn.key === key) {
-        this.$emit("col-clicked", null);
+        this.$emit(EventList.TABLE.COLUMN_CLICKED_EVENT, null);
       } else {
-        this.$emit("col-clicked", field);
+        this.$emit(EventList.TABLE.COLUMN_CLICKED_EVENT, field);
       }
     },
     cellSlot(key: string): string {

@@ -285,7 +285,7 @@ export default Vue.extend({
       return result;
     },
     onExitClicked() {
-      this.$emit(EventList.CLOSE_EVENT);
+      this.$emit(EventList.BASIC.CLOSE_EVENT);
       this.clearImages();
       clearAreaOfInterest();
     },

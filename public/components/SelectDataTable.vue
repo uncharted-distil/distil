@@ -372,24 +372,11 @@ export default Vue.extend({
       if (!this.isTimeseries) {
         return;
       }
-      this.$emit(EventList.FETCH_TIMESERIES_EVENT, {
+      this.$emit(EventList.TABLE.FETCH_TIMESERIES_EVENT, {
         variables: this.timeseriesVariables,
         uniqueTrail: this.uniqueTrail,
         timeseriesIds: this.pageItems,
       });
-      //  this.timeseriesVariables.forEach((tsv) => {
-      //    const grouping = tsv.grouping as TimeseriesGrouping;
-      //    datasetActions.fetchTimeseries(this.$store, {
-      //      dataset: this.dataset,
-      //      variableKey: tsv.key,
-      //      xColName: grouping.xCol,
-      //      yColName: grouping.yCol,
-      //      uniqueTrail: this.uniqueTrail,
-      //      timeseriesIds: this.pageItems.map((item) => {
-      //        return item[tsv.key].value as string;
-      //      }),
-      //    });
-      //  });
     },
 
     removeImages() {
@@ -421,11 +408,6 @@ export default Vue.extend({
         this.pageItems.map((pi) => pi.d3mIndex)
       );
     },
-
-    // timeseriesInfo(id: string): Extrema {
-    //   const timeseries = datasetGetters.getTimeseries(this.$store);
-    //   return timeseries?.[this.dataset]?.info?.[id];
-    // },
 
     onRowClick(row: TableRow, idx: number, event) {
       if (event.shiftKey) {

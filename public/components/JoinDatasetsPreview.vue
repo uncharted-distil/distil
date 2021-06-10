@@ -84,7 +84,7 @@ import {
 } from "../store/dataset/index";
 import { actions as datasetActions } from "../store/dataset/module";
 import { getTableDataItems, getTableDataFields } from "../util/data";
-import { pairs } from "d3-array";
+import { EventList } from "../util/events";
 
 export default Vue.extend({
   name: "JoinDatasetsPreview",
@@ -183,16 +183,16 @@ export default Vue.extend({
       datasetActions
         .importDataset(this.$store, importDatasetArgs)
         .then(() => {
-          this.$emit("success", args.name);
+          this.$emit(EventList.JOIN.SUCCESS_EVENT, args.name);
           this.pending = false;
         })
         .catch(() => {
-          this.$emit("failure");
+          this.$emit(EventList.JOIN.FAILURE_EVENT);
           this.pending = false;
         });
     },
     onClose() {
-      this.$emit("close");
+      this.$emit(EventList.BASIC.CLOSE_EVENT);
     },
   },
 });

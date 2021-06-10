@@ -124,6 +124,7 @@ import { getTableDataItems, getTableDataFields, JoinPair } from "../util/data";
 import { isJoinable } from "../util/types";
 import { loadJoinedDataset } from "../util/join";
 import { overlayRouteEntry, overlayRouteReplace } from "../util/routes";
+import { EventList } from "../util/events";
 
 export default Vue.extend({
   name: "JoinDatasetsForm",
@@ -226,7 +227,7 @@ export default Vue.extend({
 
   methods: {
     swapDatasets() {
-      this.$emit("swap-datasets");
+      this.$emit(EventList.JOIN.SWAP_EVENT);
     },
     badgeRemoved(joinPair: JoinPair<string>) {
       const pairs = this.joinPairs.filter((jp) => {

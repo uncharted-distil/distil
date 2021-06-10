@@ -59,7 +59,7 @@ export default Vue.extend({
 
   methods: {
     onClose() {
-      this.$emit(EventList.CLOSE_EVENT);
+      this.$emit(EventList.BASIC.CLOSE_EVENT);
     },
   },
 });

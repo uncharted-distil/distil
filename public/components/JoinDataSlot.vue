@@ -63,7 +63,7 @@ import { lexQueryToFiltersAndHighlight } from "../util/lex";
 // components
 import JoinDataTable from "./JoinDataTable.vue";
 import SearchBar from "./layout/SearchBar.vue";
-
+import { EventList } from "../util/events";
 export default Vue.extend({
   name: "join-data-slot",
 
@@ -116,7 +116,7 @@ export default Vue.extend({
 
   methods: {
     onColumnClicked(field) {
-      this.$emit("col-clicked", field);
+      this.$emit(EventList.TABLE.COLUMN_CLICKED_EVENT, field);
     },
     updateFilterAndHighlightFromLexQuery(lexQuery) {
       const lqfh = lexQueryToFiltersAndHighlight(lexQuery, this.dataset);

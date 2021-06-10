@@ -280,7 +280,7 @@ export default Vue.extend({
           [this.routePageKey()]: page,
         });
         this.$router.push(entry).catch((err) => console.warn(err));
-        this.$emit("page", page);
+        this.$emit(EventList.FACETS.PAGE_EVENT, page);
       },
       get(): number {
         return getRouteFacetPage(this.routePageKey(), this.$route);
@@ -409,7 +409,7 @@ export default Vue.extend({
       this.$router.push(entry).catch((err) => console.warn(err));
 
       // If the term searched has been updated, we emit an event.
-      this.$emit("search", this.search);
+      this.$emit(EventList.FACETS.SEARCH_EVENT, this.search);
     },
   },
 
