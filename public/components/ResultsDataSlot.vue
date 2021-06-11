@@ -62,7 +62,7 @@
 import Vue from "vue";
 import _ from "lodash";
 import DataSize from "../components/buttons/DataSize.vue";
-import GeoPlot, { TileClickData } from "./GeoPlot.vue";
+import GeoPlot from "./GeoPlot.vue";
 import ImageMosaic from "./ImageMosaic.vue";
 import ResultsDataTable from "./ResultsDataTable.vue";
 import ResultsTimeseriesView from "./ResultsTimeseriesView.vue";
@@ -101,7 +101,7 @@ import {
 } from "../util/summaries";
 import { Filter, INCLUDE_FILTER } from "../util/filters";
 import { overlayRouteEntry } from "../util/routes";
-
+import { EI } from "../util/events";
 const GEO_VIEW = "geo";
 const GRAPH_VIEW = "graph";
 const IMAGE_VIEW = "image";
@@ -366,7 +366,7 @@ export default Vue.extend({
         this.$router.push(entry).catch((err) => console.warn(err));
       }
     },
-    async onTileClick(data: TileClickData) {
+    async onTileClick(data: EI.MAP.TileClickData) {
       // build filter
       const filter: Filter = {
         displayName: data.displayName,

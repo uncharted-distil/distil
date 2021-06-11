@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-namespace */
 import { Variable, TableRow } from "../store/dataset/index";
 /**
  * ALL EVENT RELATED CODE SHOULD BE HERE
@@ -5,10 +6,6 @@ import { Variable, TableRow } from "../store/dataset/index";
 
 // holds all event names (this will help keep things consistent)
 export class EventList {
-  // occurs when a variable is removed or added to the training set
-  static readonly VAR_SET_CHANGE_EVENT = "var-change";
-  // occurs when a group of variables is removed or added to the training set
-  static readonly VAR_SET_GROUP_CHANGE_EVENT = "group-change";
   /********BASIC EVENTS*************/
   static readonly BASIC = {
     // close event use when something is closing
@@ -60,9 +57,19 @@ export class EventList {
     // this event occurs when the variable facet is searched
     SEARCH_EVENT: "search",
   };
+  static readonly VARIABLES = {
+    // fetch variable rankings
+    FETCH_RANK_EVENT: "fetch-variable-rankings",
+    // occurs when a variable is removed or added to the training set
+    VAR_SET_CHANGE_EVENT: "var-change",
+    // occurs when a group of variables is removed or added to the training set
+    VAR_SET_GROUP_CHANGE_EVENT: "group-change",
+  };
   /*********TABLE EVENTS*************/
   static readonly TABLE = {
+    // table column was click
     COLUMN_CLICKED_EVENT: "col-clicked",
+    // fetch timeseries data
     FETCH_TIMESERIES_EVENT: "fetch-timeseries",
   };
 
@@ -94,17 +101,36 @@ export class EventList {
     DELETE_EVENT: "model-delete",
   };
 }
-// these interfaces should probably be within namespaces to be condusive with the EventList
-// use this interface for timeseries fetch events
-export interface FetchTimeseriesEvent {
-  variables: Variable[];
-  uniqueTrail: string;
-  timeseriesIds: TableRow[];
-}
 
 // contains dataset name, target name and a list of variables
 export interface GroupChangeParams {
   dataset: string;
   targetName: string;
   variableNames: string[];
+}
+/*********EVENT INTERFACES*************/
+export declare namespace EI {
+  /**
+   * MAP INTERFACES
+   */
+  namespace MAP {
+    interface TileClickData {
+      bounds: number[][];
+      key: string;
+      displayName: string;
+      type: string;
+      callback: (inner: TableRow[], outer: TableRow[]) => void;
+    }
+  }
+  /**
+   * TIMESERIES INTERFACES
+   */
+  namespace TIMESERIES {
+    // use this interface for timeseries fetch events
+    interface FetchTimeseriesEvent {
+      variables: Variable[];
+      uniqueTrail: string;
+      timeseriesIds: TableRow[];
+    }
+  }
 }

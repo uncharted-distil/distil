@@ -24,6 +24,7 @@
       :available-variables="trainingVariables"
       is-select-view
     >
+      <slot name="header" />
       <b-nav-item
         class="font-weight-bold"
         :active="includedActive"
@@ -50,53 +51,60 @@
     />
 
     <div class="table-title-container">
-      <p v-if="!isGeoView" class="selection-data-slot-summary">
-        <data-size
-          :current-size="numItems"
-          :total="numRows"
-          @submit="onDataSizeSubmit"
-        />
-        <strong class="matching-color">matching</strong> samples of
-        {{ numRows }} to model
-        <template v-if="selectionNumRows > 0">
-          , {{ selectionNumRows }}
-          <strong class="selected-color">selected</strong>
-        </template>
-      </p>
-      <p v-else class="selection-data-slot-summary">
-        Selected Area Coverage:
-        <strong class="matching-color">{{ areaCoverage }}km<sup>2</sup></strong>
-      </p>
+      <slot name="sub-header">
+        <p v-if="!isGeoView" class="selection-data-slot-summary">
+          <data-size
+            :current-size="numItems"
+            :total="numRows"
+            @submit="onDataSizeSubmit"
+          />
+          <strong class="matching-color">matching</strong> samples of
+          {{ numRows }} to model
+          <template v-if="selectionNumRows > 0">
+            , {{ selectionNumRows }}
+            <strong class="selected-color">selected</strong>
+          </template>
+        </p>
+        <p v-else class="selection-data-slot-summary">
+          Selected Area Coverage:
+          <strong class="matching-color"
+            >{{ areaCoverage }}km<sup>2</sup></strong
+          >
+        </p>
 
-      <layer-selection v-if="isMultiBandImage" class="layer-select-dropdown" />
-      <b-button
-        v-if="includedActive"
-        class="select-data-action-exclude"
-        variant="outline-secondary"
-        :disabled="isExcludeDisabled"
-        @click="onExcludeClick"
-      >
-        <i
-          class="fa fa-minus-circle pr-1"
-          :class="{
-            'exclude-highlight': isFilteringHighlights,
-            'exclude-selection': isFilteringSelection,
-          }"
+        <layer-selection
+          v-if="isMultiBandImage"
+          class="layer-select-dropdown"
         />
-        Exclude
-      </b-button>
-      <b-button
-        v-if="!includedActive"
-        variant="outline-secondary"
-        :disabled="!isFilteringSelection"
-        @click="onReincludeClick"
-      >
-        <i
-          class="fa fa-plus-circle pr-1"
-          :class="{ 'include-selection': isFilteringSelection }"
-        />
-        Reinclude
-      </b-button>
+        <b-button
+          v-if="includedActive"
+          class="select-data-action-exclude"
+          variant="outline-secondary"
+          :disabled="isExcludeDisabled"
+          @click="onExcludeClick"
+        >
+          <i
+            class="fa fa-minus-circle pr-1"
+            :class="{
+              'exclude-highlight': isFilteringHighlights,
+              'exclude-selection': isFilteringSelection,
+            }"
+          />
+          Exclude
+        </b-button>
+        <b-button
+          v-if="!includedActive"
+          variant="outline-secondary"
+          :disabled="!isFilteringSelection"
+          @click="onReincludeClick"
+        >
+          <i
+            class="fa fa-plus-circle pr-1"
+            :class="{ 'include-selection': isFilteringSelection }"
+          />
+          Reinclude
+        </b-button>
+      </slot>
     </div>
 
     <div class="select-data-container" :class="{ pending: !hasData }">
@@ -132,12 +140,12 @@ import SelectDataTable from "./SelectDataTable.vue";
 import ImageMosaic from "./ImageMosaic.vue";
 import SearchBar from "../components/layout/SearchBar.vue";
 import SelectTimeseriesView from "./SelectTimeseriesView.vue";
-import GeoPlot, { TileClickData } from "./GeoPlot.vue";
+import GeoPlot from "./GeoPlot.vue";
 import SelectGraphView from "./SelectGraphView.vue";
 import ViewTypeToggle from "./ViewTypeToggle.vue";
 import LayerSelection from "./LayerSelection.vue";
 import { overlayRouteEntry } from "../util/routes";
-import { datasetActions, viewActions, appActions } from "../store";
+import { appActions } from "../store";
 import {
   TableRow,
   Variable,
@@ -145,9 +153,7 @@ import {
   RowSelection,
   TableColumn,
   VariableSummary,
-  TimeseriesGrouping,
   TimeSeries,
-  D3M_INDEX_FIELD,
 } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
 import {
@@ -169,7 +175,7 @@ import {
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { Dictionary } from "lodash";
 import { getAllVariablesSummaries, totalAreaCoverage } from "../util/data";
-import { FetchTimeseriesEvent } from "../util/events";
+import { EventList, EI } from "../util/events";
 const GEO_VIEW = "geo";
 const GRAPH_VIEW = "graph";
 const IMAGE_VIEW = "image";
@@ -215,6 +221,18 @@ export default Vue.extend({
       type: Array as () => TableRow[],
       default: () => [] as TableRow[],
     },
+    inner: {
+      type: Array as () => TableRow[],
+      default: () => [] as TableRow[],
+    },
+    outer: {
+      type: Array as () => TableRow[],
+      default: () => [] as TableRow[],
+    },
+    baselineItems: {
+      type: Array as () => TableRow[],
+      default: () => [] as TableRow[],
+    },
     hasData: { type: Boolean as () => boolean, default: false },
     numRows: { type: Number as () => number, default: 0 },
     numItems: { type: Number as () => number, default: 0 },
@@ -247,13 +265,6 @@ export default Vue.extend({
     availableVariables(): Variable[] {
       return routeGetters.getAvailableVariables(this.$store);
     },
-    baselineItems(): TableRow[] {
-      const bItems =
-        datasetGetters.getBaselineIncludeTableDataItems(this.$store) ?? [];
-      return bItems.sort((a, b) => {
-        return a[D3M_INDEX_FIELD] - b[D3M_INDEX_FIELD];
-      });
-    },
     trainingVariables(): Variable[] {
       return routeGetters.getTrainingVariables(this.$store);
     },
@@ -264,54 +275,6 @@ export default Vue.extend({
 
     target(): string {
       return routeGetters.getRouteTargetVariable(this.$store);
-    },
-    inner(): TableRow[] {
-      return this.includedActive
-        ? datasetGetters.getAreaOfInterestIncludeInnerItems(this.$store)
-        : datasetGetters.getAreaOfInterestExcludeInnerItems(this.$store);
-    },
-    outer(): TableRow[] {
-      return this.includedActive
-        ? datasetGetters.getAreaOfInterestIncludeOuterItems(this.$store)
-        : datasetGetters.getAreaOfInterestExcludeOuterItems(this.$store);
-    },
-    numRows(): number {
-      return this.hasData
-        ? this.includedActive
-          ? datasetGetters.getIncludedTableDataNumRows(this.$store)
-          : datasetGetters.getExcludedTableDataNumRows(this.$store)
-        : 0;
-    },
-
-    hasData(): boolean {
-      return this.includedActive
-        ? datasetGetters.hasIncludedTableData(this.$store)
-        : datasetGetters.hasExcludedTableData(this.$store);
-    },
-
-    // extracts the table data from the store
-    items(): TableRow[] {
-      return this.hasData
-        ? this.includedActive
-          ? datasetGetters.getIncludedTableDataItems(this.$store)
-          : datasetGetters.getExcludedTableDataItems(this.$store)
-        : [];
-    },
-
-    numItems(): number {
-      return this.hasData
-        ? this.includedActive
-          ? datasetGetters.getIncludedTableDataLength(this.$store)
-          : datasetGetters.getExcludedTableDataLength(this.$store)
-        : 0;
-    },
-
-    fields(): Dictionary<TableColumn> {
-      return this.hasData
-        ? this.includedActive
-          ? datasetGetters.getIncludedTableDataFields(this.$store)
-          : datasetGetters.getExcludedTableDataFields(this.$store)
-        : {};
     },
 
     // return as filters for easier comparison in setting include/exclude state options.
@@ -420,38 +383,14 @@ export default Vue.extend({
   methods: {
     setIncludedActive(val: boolean) {
       this.includedActive = val;
+      // this event is strictly for v-model on this component and is not a system event
       this.$emit("change", val);
     },
-    async onTileClick(data: TileClickData) {
-      // filter for area of interests
-      const filter: Filter = {
-        displayName: data.displayName,
-        key: data.key,
-        maxX: data.bounds[1][1],
-        maxY: data.bounds[0][0],
-        minX: data.bounds[0][1],
-        minY: data.bounds[1][0],
-        mode: EXCLUDE_FILTER,
-        type: data.type,
-        set: "",
-      };
-      // fetch area of interests
-      await viewActions.updateAreaOfInterest(this.$store, filter);
+    async onTileClick(data: EI.MAP.TileClickData) {
+      this.$emit(EventList.MAP.TILE_CLICKED_EVENT, data);
     },
-    fetchTimeseries(args: FetchTimeseriesEvent) {
-      args.variables.forEach((tsv) => {
-        const grouping = tsv.grouping as TimeseriesGrouping;
-        datasetActions.fetchTimeseries(this.$store, {
-          dataset: this.dataset,
-          variableKey: tsv.key,
-          xColName: grouping.xCol,
-          yColName: grouping.yCol,
-          uniqueTrail: args.uniqueTrail,
-          timeseriesIds: args.timeseriesIds.map((item) => {
-            return item[tsv.key].value as string;
-          }),
-        });
-      });
+    fetchTimeseries(args: EI.TIMESERIES.FetchTimeseriesEvent) {
+      this.$emit(EventList.TABLE.FETCH_TIMESERIES_EVENT, args);
     },
     onExcludeClick() {
       let filter = null;
@@ -466,12 +405,7 @@ export default Vue.extend({
 
       addFilterToRoute(this.$router, filter);
       this.resetHighlightsOrRow();
-
-      datasetActions.fetchVariableRankings(this.$store, {
-        dataset: this.dataset,
-        target: this.target,
-      });
-
+      this.$emit(EventList.VARIABLES.FETCH_RANK_EVENT);
       appActions.logUserEvent(this.$store, {
         feature: Feature.FILTER_DATA,
         activity: Activity.DATA_PREPARATION,
@@ -493,12 +427,7 @@ export default Vue.extend({
 
       addFilterToRoute(this.$router, filter);
       this.resetHighlightsOrRow();
-
-      datasetActions.fetchVariableRankings(this.$store, {
-        dataset: this.dataset,
-        target: this.target,
-      });
-
+      this.$emit(EventList.VARIABLES.FETCH_RANK_EVENT);
       appActions.logUserEvent(this.$store, {
         feature: Feature.UNFILTER_DATA,
         activity: Activity.DATA_PREPARATION,
@@ -521,11 +450,6 @@ export default Vue.extend({
       } else {
         clearRowSelection(this.$router);
       }
-    },
-  },
-  watch: {
-    dataSize() {
-      viewActions.updateSelectTrainingData(this.$store);
     },
   },
 });

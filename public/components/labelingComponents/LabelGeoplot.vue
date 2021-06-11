@@ -32,7 +32,7 @@
 
 <script lang="ts">
 import Vue from "vue";
-import GeoPlot, { TileClickData, SelectionHighlight } from "../GeoPlot.vue";
+import GeoPlot, { SelectionHighlight } from "../GeoPlot.vue";
 import { getters as datasetGetters } from "../../store/dataset/module";
 import { Dictionary } from "../../util/dict";
 import {
@@ -52,7 +52,7 @@ import { actions as viewActions } from "../../store/view/module";
 import { Filter, EXCLUDE_FILTER } from "../../util/filters";
 import { actions as datasetActions } from "../../store/dataset/module";
 import { bulkRowSelectionUpdate } from "../../util/row";
-
+import { EI } from "../../util/events";
 export default Vue.extend({
   name: "label-geo-plot",
 
@@ -143,7 +143,7 @@ export default Vue.extend({
       }
       return undefined;
     },
-    async onTileClick(data: TileClickData) {
+    async onTileClick(data: EI.MAP.TileClickData) {
       // filter for area of interests
       const filter: Filter = {
         displayName: data.displayName,

@@ -174,7 +174,7 @@ export default Vue.extend({
   },
   methods: {
     variableChange(group: Group) {
-      this.$emit(EventList.VAR_SET_CHANGE_EVENT, group);
+      this.$emit(EventList.VARIABLES.VAR_SET_CHANGE_EVENT, group);
     },
     addAll() {
       // log UI event on server
@@ -195,7 +195,7 @@ export default Vue.extend({
       });
       const dataset = routeGetters.getRouteDataset(this.$store);
       const targetName = routeGetters.getRouteTargetVariable(this.$store);
-      this.$emit(EventList.VAR_SET_GROUP_CHANGE_EVENT, {
+      this.$emit(EventList.VARIABLES.VAR_SET_GROUP_CHANGE_EVENT, {
         dataset,
         targetName,
         variableNames: training,
