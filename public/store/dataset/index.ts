@@ -445,7 +445,7 @@ export interface Metric {
 }
 
 export interface Metrics {
-  metrics: Metric[];
+  combinations: Metric[];
 }
 
 export interface MetricDropdownItem {

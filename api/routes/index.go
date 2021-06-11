@@ -64,13 +64,10 @@ func IndexDataHandler(ctor api.MetadataStorageCtor) func(http.ResponseWriter, *h
 		case "metrics":
 			task := params["task"].(string)
 			combinations = getModelMetrics(task)
-			break
 		case "bands":
 			combinations = getBandCombinations()
-			break
 		default:
 			err = errors.Errorf("unrecognized index data type '%s'", typ)
-			break
 		}
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal result histogram into JSON"))
