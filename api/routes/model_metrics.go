@@ -26,13 +26,6 @@ import (
 	"goji.io/v3/pat"
 )
 
-// ModelMetricDesc provides a scoring ID, display name, and description.
-type ModelMetricDesc struct {
-	ID          util.MetricID `json:"id"`
-	DisplayName string        `json:"displayName"`
-	Description string        `json:"description"`
-}
-
 // ModelMetrics provides a lit of combinations to be serialized to JSON for transport to the
 // client.
 type ModelMetrics struct {

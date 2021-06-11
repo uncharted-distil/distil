@@ -23,12 +23,6 @@ import (
 	"github.com/uncharted-distil/distil/api/util"
 )
 
-// MultiBandCombinationDesc provides a band combination ID and display name.
-type MultiBandCombinationDesc struct {
-	ID          util.BandCombinationID `json:"id"`
-	DisplayName string                 `json:"displayName"`
-}
-
 // MultiBandCombinations provides a lit of combinations to be serialized to JSON for transport to the
 // client.
 type MultiBandCombinations struct {

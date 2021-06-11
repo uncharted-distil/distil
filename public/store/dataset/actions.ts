@@ -1700,8 +1700,8 @@ export const actions = {
     }
 
     try {
-      const repsonse = await axios.get<BandCombinations>(
-        `distil/multiband-combinations/${args.dataset}`
+      const repsonse = await axios.post<BandCombinations>(
+        `distil/index-data/bands`
       );
       const bands = repsonse.data.combinations;
       mutations.updateBands(context, bands);
