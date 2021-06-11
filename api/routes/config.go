@@ -27,22 +27,16 @@ import (
 func ConfigHandler(config env.Config, version string, timestamp string, ta2Version string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		target := "unknown"
-		dataset := "unknown"
-		var metrics []string
-
 		// marshal version
 		err := handleJSON(w, map[string]interface{}{
 			"version":                  version,
 			"timestamp":                timestamp,
-			"dataset":                  dataset,
-			"target":                   target,
-			"metrics":                  metrics,
 			"help":                     config.HelpURL,
 			"ta2version":               ta2Version,
 			"trainTestSplit":           config.TrainTestSplit,
 			"trainTestSplitTimeSeries": config.TrainTestSplitTimeSeries,
 			"shouldScaleImages":        config.ShouldScaleImages,
+			"logUserAction":            config.LogUserAction,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal version into JSON and write response"))

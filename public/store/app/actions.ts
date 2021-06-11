@@ -108,9 +108,7 @@ export const actions = {
       mutations.setVersionNumber(context, response.data.version);
       mutations.setHelpURL(context, response.data.help);
       mutations.setVersionTimestamp(context, response.data.timestamp);
-      mutations.setProblemDataset(context, response.data.dataset);
-      mutations.setProblemTarget(context, response.data.target);
-      mutations.setProblemMetrics(context, response.data.metrics);
+      mutations.setLogUserAction(context, response.data.logUserAction);
       mutations.setTA2VersionNumber(context, response.data.ta2version);
       mutations.setTrainTestSplit(context, response.data.trainTestSplit);
       mutations.setTrainTestSplitTimeSeries(

@@ -56,6 +56,7 @@ type Config struct {
 	IngestHardFail             bool    `env:"INGEST_HARD_FAIL" envDefault:"false"`
 	IngestOverwrite            bool    `env:"INGEST_OVERWRITE" envDefault:"false"`
 	IngestSampleRowLimit       int     `env:"INGEST_SAMPLE_ROW_LIMIT" envDefault:"25000"`
+	LogUserAction              bool    `env:"LOG_USER_ACTION" envDefault:"true"`
 	MaxTrainingRows            int     `env:"MAX_TRAINING_ROWS" envDefault:"100000"`
 	MaxTestRows                int     `env:"MAX_TEST_ROWS" envDefault:"100000"`
 	MinTrainingRows            int     `env:"MIN_TRAINING_ROWS" envDefault:"100"`

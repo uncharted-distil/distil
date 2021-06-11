@@ -21,9 +21,7 @@ export interface AppState {
   versionNumber: string;
   helpURL: string;
   versionTimestamp: string;
-  problemDataset: string;
-  problemTarget: string;
-  problemMetrics: string[];
+  logUserAction: boolean;
   statusPanelState: StatusPanelState;
   ta2Version: string;
   prototype: boolean;
@@ -41,10 +39,8 @@ export interface StatusPanelState {
 export const state: AppState = {
   versionNumber: "unknown",
   versionTimestamp: "unknown",
-  problemDataset: "unknown",
-  problemTarget: "unknown",
+  logUserAction: true,
   helpURL: "",
-  problemMetrics: [],
   statusPanelState: {
     contentType: undefined,
     isOpen: false,
