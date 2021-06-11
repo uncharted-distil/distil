@@ -31,16 +31,8 @@ export const mutations = {
     state.versionTimestamp = versionTimestamp;
   },
 
-  setProblemDataset(state: AppState, dataset: string) {
-    state.problemDataset = dataset;
-  },
-
-  setProblemTarget(state: AppState, target: string) {
-    state.problemTarget = target;
-  },
-
-  setProblemMetrics(state: AppState, metrics: string[]) {
-    state.problemMetrics = metrics;
+  setLogUserAction(state: AppState, logUserAction: boolean) {
+    state.logUserAction = logUserAction;
   },
 
   setStatusPanelContentType(

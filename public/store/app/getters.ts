@@ -30,16 +30,8 @@ export const getters = {
     return state.versionTimestamp;
   },
 
-  getProblemDataset(state: AppState): string {
-    return state.problemDataset;
-  },
-
-  getProblemTarget(state: AppState): string {
-    return state.problemTarget;
-  },
-
-  getProblemMetrics(state: AppState): string[] {
-    return state.problemMetrics;
+  getLogUserAction(state: AppState): boolean {
+    return state.logUserAction;
   },
 
   getStatusPanelState(state: AppState): StatusPanelState {
