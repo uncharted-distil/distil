@@ -255,11 +255,8 @@ func main() {
 	registerRoute(mux, "/distil/config", routes.ConfigHandler(config, version, timestamp, ta2Version))
 	registerRoute(mux, "/distil/task/:dataset/:target/:variables", routes.TaskHandler(pgDataStorageCtor, esMetadataStorageCtor))
 	registerRoute(mux, "/distil/multiband-image/:dataset/:image-id/:band-combination/:is-thumbnail/*", routes.MultiBandImageHandler(esMetadataStorageCtor, pgDataStorageCtor, config))
-	registerRoute(mux, "/distil/multiband-combinations/:dataset", routes.MultiBandCombinationsHandler(esMetadataStorageCtor))
-	registerRoute(mux, "/distil/load/:solution-id/:fitted", routes.LoadHandler(esExportedModelStorageCtor, pgSolutionStorageCtor, esMetadataStorageCtor))
 	registerRoute(mux, "/distil/solution-variable-rankings/:solution-id", routes.SolutionVariableRankingHandler(esMetadataStorageCtor, pgSolutionStorageCtor))
 	registerRoute(mux, "/distil/export-results/:produce-request-id/:format", routes.ExportResultHandler(pgSolutionStorageCtor, pgDataStorageCtor, esMetadataStorageCtor))
-	registerRoute(mux, "/distil/model-metrics/:task", routes.ModelMetricsHandler(esMetadataStorageCtor))
 	registerRoute(mux, "/ws", ws.SolutionHandler(solutionClient, esMetadataStorageCtor, pgDataStorageCtor, pgSolutionStorageCtor, esExportedModelStorageCtor))
 	registerRoute(mux, "/distil/image-attention/:dataset/:result-id/:index/:opacity/:color-scale", routes.ImageAttentionHandler(pgSolutionStorageCtor, esMetadataStorageCtor))
 	registerRoute(mux, "/distil/outlier-detection/:dataset/:variable", routes.OutlierDetectionHandler(esMetadataStorageCtor))
@@ -274,6 +271,7 @@ func main() {
 	registerRoutePost(mux, "/distil/import/:datasetID/:source/:provenance", routes.ImportHandler(pgDataStorageCtor, datamartCtors, fileMetadataStorageCtor, esMetadataStorageCtor, &config))
 	registerRoutePost(mux, "/distil/delete/:dataset/:variable", routes.DeleteHandler(pgDataStorageCtor, esMetadataStorageCtor))
 	registerRoutePost(mux, "/distil/prediction-results/:produce-request-id", routes.PredictionResultsHandler(pgSolutionStorageCtor, pgDataStorageCtor, esMetadataStorageCtor))
+	registerRoutePost(mux, "/distil/index-data/:type", routes.IndexDataHandler(esMetadataStorageCtor))
 	registerRoutePost(mux, "/distil/variable-summary/:dataset/:variable/:mode", routes.VariableSummaryHandler(esMetadataStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/training-summary/:dataset/:variable/:results-uuid/:mode", routes.TrainingSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/target-summary/:dataset/:target/:results-uuid/:mode", routes.TargetSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
@@ -303,7 +301,6 @@ func main() {
 
 	// static
 	registerRoute(mux, "/distil/image/:dataset/:file/:is-thumbnail", routes.ImageHandler(esMetadataStorageCtor, &config))
-	registerRoute(mux, "/distil/graphs/:dataset/:file", routes.GraphsHandler(config.D3MInputDir))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 
 	// catch kill signals for graceful shutdown

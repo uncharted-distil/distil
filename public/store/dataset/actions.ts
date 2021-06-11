@@ -1700,8 +1700,9 @@ export const actions = {
     }
 
     try {
-      const repsonse = await axios.get<BandCombinations>(
-        `distil/multiband-combinations/${args.dataset}`
+      const repsonse = await axios.post<BandCombinations>(
+        `distil/index-data/bands`,
+        {}
       );
       const bands = repsonse.data.combinations;
       mutations.updateBands(context, bands);
@@ -1731,10 +1732,10 @@ export const actions = {
     }
 
     try {
-      const repsonse = await axios.get<Metrics>(
-        `distil/model-metrics/${args.task}`
-      );
-      const metrics = repsonse.data.metrics;
+      const repsonse = await axios.post<Metrics>(`distil/index-data/metrics`, {
+        task: args.task,
+      });
+      const metrics = repsonse.data.combinations;
       mutations.updateMetrics(context, metrics);
     } catch (error) {
       console.error(error);
