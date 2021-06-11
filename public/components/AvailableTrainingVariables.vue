@@ -35,6 +35,7 @@
       :rows-per-page="numRowsPerPage"
       :summaries="summaries"
       :enable-color-scales="geoVarExists"
+      :include="include"
     >
       <div
         class="d-flex flex-row justify-content-between align-items-center my-2 mx-1"
@@ -90,6 +91,7 @@ export default Vue.extend({
     subtitle: { type: String as () => string, default: "" },
     checkGeoType: { type: Boolean as () => boolean, default: false },
     isAvailableFeatures: { type: Boolean as () => boolean, default: false },
+    include: { type: Boolean as () => boolean, default: true },
   },
   computed: {
     dataset(): string {

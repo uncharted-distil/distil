@@ -79,13 +79,6 @@ export const getters = {
     return state.query.dataset as string;
   },
 
-  getRouteInclude(state: Route): boolean {
-    if (state.query.include === "false") {
-      return false;
-    }
-    return true;
-  },
-
   getPriorPath(state: Route): string {
     return state.query.priorRoute as string;
   },

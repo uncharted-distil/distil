@@ -22,6 +22,7 @@
       enable-color-scales
       enable-highlighting
       enable-type-change
+      :include="include"
       :summaries="targetSummaries"
       :instance-name="instanceName"
       :log-activity="logActivity"
@@ -48,7 +49,9 @@ export default Vue.extend({
     PositiveLabel,
     VariableFacets,
   },
-
+  props: {
+    include: { type: Boolean as () => boolean, default: true },
+  },
   data() {
     return {
       instanceName: TARGET_VAR_INSTANCE,

@@ -49,7 +49,7 @@ import {
   LowShotLabels,
 } from "../../util/data";
 import { actions as viewActions } from "../../store/view/module";
-import { INCLUDE_FILTER, Filter, EXCLUDE_FILTER } from "../../util/filters";
+import { Filter, EXCLUDE_FILTER } from "../../util/filters";
 import { actions as datasetActions } from "../../store/dataset/module";
 import { bulkRowSelectionUpdate } from "../../util/row";
 
@@ -100,10 +100,9 @@ export default Vue.extend({
     },
     summaries(): VariableSummary[] {
       const pageIndex = routeGetters.getRouteTrainingVarsPage(this.$store);
-      const include = routeGetters.getRouteInclude(this.$store);
-      const summaryDictionary = include
-        ? datasetGetters.getIncludedVariableSummariesDictionary(this.$store)
-        : datasetGetters.getExcludedVariableSummariesDictionary(this.$store);
+      const summaryDictionary = datasetGetters.getIncludedVariableSummariesDictionary(
+        this.$store
+      );
 
       const currentSummaries = getVariableSummariesByState(
         pageIndex,

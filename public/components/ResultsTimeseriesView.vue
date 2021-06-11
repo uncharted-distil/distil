@@ -19,7 +19,7 @@
   <sparkline-timeseries-view
     disable-highlighting
     :instance-name="instanceName"
-    :include-active="includedActive"
+    :include-active="include"
     :variable-summaries="variableSummaries"
     :items="items"
     :fields="fields"
@@ -48,6 +48,7 @@ export default Vue.extend({
     dataItems: Array as () => TableRow[],
     dataFields: Object as () => Dictionary<TableColumn>,
     instanceName: String as () => string,
+    include: { type: Boolean as () => boolean, default: true },
   },
 
   computed: {
@@ -63,10 +64,6 @@ export default Vue.extend({
 
     predictedCol(): string {
       return this.solution ? this.solution.predictedKey : "";
-    },
-
-    includedActive(): boolean {
-      return routeGetters.getRouteInclude(this.$store);
     },
   },
 });

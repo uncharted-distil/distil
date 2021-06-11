@@ -154,10 +154,6 @@ export default Vue.extend({
       return getImageFields(this.dataFields);
     },
 
-    includedActive(): boolean {
-      return routeGetters.getRouteInclude(this.$store);
-    },
-
     band(): string {
       return routeGetters.getBandCombinationId(this.$store);
     },

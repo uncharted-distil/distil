@@ -389,18 +389,18 @@ export function generateFacetLinearStyle(
 export function getSubSelectionValues(
   summary: VariableSummary,
   rowSelection: RowSelection,
-  max: number
+  max: number,
+  include: boolean
 ): number[][] {
   if (!summary.baseline?.buckets) {
     return [];
   }
-  const include = routeGetters.getRouteInclude(store);
   const hasFilterBuckets = hasFiltered(summary);
   if (!hasFilterBuckets && !rowSelection) {
     return summary.baseline?.buckets?.map((b) => [null, b.count / max]);
   }
   const isNumeric = summary.type === NUMERICAL_SUMMARY;
-  const rowLabels = getRowSelectionLabels(summary);
+  const rowLabels = getRowSelectionLabels(summary, include);
   let subSelectionValues = null;
 
   if (hasFilterBuckets) {
@@ -462,11 +462,13 @@ export function rowLabelMatches(
   }
 }
 
-export function getRowSelectionLabels(summary: VariableSummary): string[] {
+export function getRowSelectionLabels(
+  summary: VariableSummary,
+  include: boolean
+): string[] {
   if (!summary.baseline?.buckets) {
     return [];
   }
-  const include = routeGetters.getRouteInclude(store);
   const selectedRows = include
     ? datasetGetters.getIncludedSelectedRowData(store)
     : datasetGetters.getExcludedSelectedRowData(store);

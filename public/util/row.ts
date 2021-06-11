@@ -143,9 +143,8 @@ export function updateTableRowSelection(
   return items;
 }
 
-export function getSelectedRows(): Row[] {
+export function getSelectedRows(include: boolean): Row[] {
   const selection = routeGetters.getDecodedRowSelection(store);
-  const include = routeGetters.getRouteInclude(store);
   if (!selection || selection.d3mIndices.length === 0) {
     return [];
   }

@@ -32,7 +32,6 @@ export const getters = {
   getRoutePath: read(moduleGetters.getRoutePath),
   getRouteTerms: read(moduleGetters.getRouteTerms),
   getRouteDataset: read(moduleGetters.getRouteDataset),
-  getRouteInclude: read(moduleGetters.getRouteInclude),
   getPriorPath: read(moduleGetters.getPriorPath),
   getRouteJoinDatasets: read(moduleGetters.getRouteJoinDatasets),
   getJoinDatasetColumnA: read(moduleGetters.getJoinDatasetColumnA),

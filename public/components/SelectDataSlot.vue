@@ -108,8 +108,8 @@
         :included-active="includedActive"
         :instance-name="instanceName"
         :dataset="dataset"
-        :data-items="items"
-        :data-fields="fields"
+        :data-items="dataItems"
+        :data-fields="dataFields"
         :summaries="summaries"
         :item-count="numItems"
         :baseline-items="baselineItems"
@@ -137,12 +137,7 @@ import SelectGraphView from "./SelectGraphView.vue";
 import ViewTypeToggle from "./ViewTypeToggle.vue";
 import LayerSelection from "./LayerSelection.vue";
 import { overlayRouteEntry } from "../util/routes";
-import {
-  datasetActions,
-  datasetGetters,
-  viewActions,
-  appActions,
-} from "../store";
+import { datasetActions, viewActions, appActions } from "../store";
 import {
   TableRow,
   Variable,
@@ -195,7 +190,39 @@ export default Vue.extend({
     SelectTimeseriesView,
     ViewTypeToggle,
   },
-
+  model: {
+    prop: "includedActive",
+    event: "change",
+  },
+  props: {
+    summaryDict: {
+      type: Object as () => Dictionary<Dictionary<VariableSummary>>,
+      default: {} as Dictionary<Dictionary<VariableSummary>>,
+    },
+    variables: {
+      type: Array as () => Variable[],
+      default: () => [] as Variable[],
+    },
+    allVariables: {
+      type: Array as () => Variable[],
+      default: () => [] as Variable[],
+    },
+    dataFields: {
+      type: Object as () => Dictionary<TableColumn>,
+      default: {} as Dictionary<TableColumn>,
+    },
+    dataItems: {
+      type: Array as () => TableRow[],
+      default: () => [] as TableRow[],
+    },
+    hasData: { type: Boolean as () => boolean, default: false },
+    numRows: { type: Number as () => number, default: 0 },
+    numItems: { type: Number as () => number, default: 0 },
+    timeseries: {
+      type: Object as () => Dictionary<TimeSeries>,
+      default: {} as Dictionary<TimeSeries>,
+    },
+  },
   data() {
     return {
       instanceName: "select-data",
@@ -216,13 +243,6 @@ export default Vue.extend({
 
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
-    },
-
-    variables(): Variable[] {
-      return datasetGetters.getVariables(this.$store);
-    },
-    allVariables(): Variable[] {
-      return datasetGetters.getAllVariables(this.$store);
     },
     availableVariables(): Variable[] {
       return routeGetters.getAvailableVariables(this.$store);
@@ -364,9 +384,7 @@ export default Vue.extend({
     isFilteringSelection(): boolean {
       return !!this.rowSelection;
     },
-    timeseries(): Dictionary<TimeSeries> {
-      return datasetGetters.getTimeseries(this.$store);
-    },
+
     isMultiBandImage(): boolean {
       return routeGetters.isMultiBandImage(this.$store);
     },
@@ -386,17 +404,13 @@ export default Vue.extend({
       return routeGetters.getRouteDataSize(this.$store);
     },
     areaCoverage(): number {
-      return totalAreaCoverage(this.items, this.variables);
+      return totalAreaCoverage(this.dataItems, this.variables);
     },
     summaries(): VariableSummary[] {
-      const include = routeGetters.getRouteInclude(this.$store);
-      const summaryDictionary = include
-        ? datasetGetters.getIncludedVariableSummariesDictionary(this.$store)
-        : datasetGetters.getExcludedVariableSummariesDictionary(this.$store);
       const targets = routeGetters.getTargetVariableSummaries(this.$store);
       const currentSummaries = getAllVariablesSummaries(
         this.trainingVariables,
-        summaryDictionary
+        this.summaryDict
       ) as VariableSummary[];
 
       return currentSummaries.concat(targets);
@@ -404,6 +418,10 @@ export default Vue.extend({
   },
 
   methods: {
+    setIncludedActive(val: boolean) {
+      this.includedActive = val;
+      this.$emit("change", val);
+    },
     async onTileClick(data: TileClickData) {
       // filter for area of interests
       const filter: Filter = {
@@ -487,12 +505,6 @@ export default Vue.extend({
         subActivity: SubActivity.DATA_TRANSFORMATION,
         details: { filter: filter },
       });
-    },
-
-    setIncludedActive(val: boolean) {
-      this.includedActive = val;
-      const entry = overlayRouteEntry(this.$route, { include: `${val}` });
-      this.$router.push(entry).catch((err) => console.warn(err));
     },
 
     /* When the user request to fetch a different size of data. */

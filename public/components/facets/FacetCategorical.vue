@@ -128,6 +128,7 @@ export default Vue.extend({
     importance: Number as () => number,
     geoEnabled: { type: Boolean as () => boolean, default: false },
     colorScaleToggle: { type: Boolean as () => boolean, default: false },
+    include: { type: Boolean as () => boolean, default: true },
   },
 
   data() {
@@ -189,7 +190,12 @@ export default Vue.extend({
         : "";
     },
     subSelection(): number[][] {
-      return getSubSelectionValues(this.summary, this.rowSelection, this.max);
+      return getSubSelectionValues(
+        this.summary,
+        this.rowSelection,
+        this.max,
+        this.include
+      );
     },
     selection(): {} {
       if (!this.enableHighlighting || !this.isHighlightedGroup()) {
