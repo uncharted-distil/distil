@@ -134,6 +134,7 @@ export default Vue.extend({
     rowSelection: Object as () => RowSelection,
     importance: Number as () => number,
     geoEnabled: { type: Boolean as () => boolean, default: false },
+    include: { type: Boolean as () => boolean, default: true },
   },
 
   computed: {
@@ -209,7 +210,8 @@ export default Vue.extend({
       return getSubSelectionValues(
         this.summary,
         this.rowSelection,
-        this.maxBucketCount
+        this.maxBucketCount,
+        this.include
       );
     },
     selection(): number[] {

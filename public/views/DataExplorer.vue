@@ -90,7 +90,7 @@
         <component
           :is="viewComponent"
           :instance-name="instanceName"
-          :included-active="includedActive"
+          :included-active="include"
           :dataset="dataset"
         />
       </section>
@@ -244,6 +244,7 @@ export default Vue.extend({
       activeView: 0, // TABLE_VIEW
       instanceName: DATA_EXPLORER_VAR_INSTANCE,
       metaTypes: Object.keys(META_TYPES),
+      include: true,
     };
   },
 
@@ -329,11 +330,6 @@ export default Vue.extend({
         if (typeNotInMetaTypes) return metaType;
       });
     },
-
-    includedActive(): boolean {
-      return routeGetters.getRouteInclude(this.$store);
-    },
-
     /* Disable the Exclude filter button. */
     isExcludeDisabled(): boolean {
       return !this.isFilteringHighlights && !this.isFilteringSelection;
@@ -552,17 +548,11 @@ export default Vue.extend({
     },
 
     setIncludedActive() {
-      const entry = overlayRouteEntry(this.$route, {
-        include: "true",
-      });
-      this.$router.push(entry).catch((err) => console.warn(err));
+      this.include = true;
     },
 
     setExcludedActive() {
-      const entry = overlayRouteEntry(this.$route, {
-        include: "false",
-      });
-      this.$router.push(entry).catch((err) => console.warn(err));
+      this.include = false;
     },
 
     updateRoute(args) {

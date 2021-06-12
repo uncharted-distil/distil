@@ -76,7 +76,7 @@ import DataSize from "../components/buttons/DataSize.vue";
 import PredictionsDataTable from "./PredictionsDataTable.vue";
 import ImageMosaic from "./ImageMosaic.vue";
 import ResultsTimeseriesView from "./ResultsTimeseriesView.vue";
-import GeoPlot, { TileClickData } from "./GeoPlot.vue";
+import GeoPlot from "./GeoPlot.vue";
 import SearchBar from "./layout/SearchBar.vue";
 import { spinnerHTML } from "../util/spinner";
 import {
@@ -110,6 +110,7 @@ import {
 } from "../util/summaries";
 import { getVariableSummariesByState, totalAreaCoverage } from "../util/data";
 import { overlayRouteEntry } from "../util/routes";
+import { EI } from "../util/events";
 const TABLE_VIEW = "table";
 const IMAGE_VIEW = "image";
 const GRAPH_VIEW = "graph";
@@ -179,7 +180,7 @@ export default Vue.extend({
       return routeGetters.getRoutePredictionsDataset(this.$store);
     },
     allVariables(): Variable[] {
-      let predictionVariables = [] as Variable[];
+      const predictionVariables = [] as Variable[];
       const activePred = this.prediction;
       const rankSum = getPredictionRankSummary(activePred?.resultId);
       const confidenceSum = getPredictionConfidenceSummary(
@@ -326,7 +327,7 @@ export default Vue.extend({
   },
 
   methods: {
-    async onTileClick(data: TileClickData) {
+    async onTileClick(data: EI.MAP.TileClickData) {
       // build filter
       const filter: Filter = {
         displayName: data.displayName,

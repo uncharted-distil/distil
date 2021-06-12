@@ -63,6 +63,7 @@
               :ignore-highlights="[ignoreHighlights, ignoreHighlights]"
               :instance-name="instanceName"
               :expanded="expandGeoAndTimeseriesFacets"
+              :include="include"
               @numerical-click="onNumericalClick"
               @categorical-click="onCategoricalClick"
               @facet-click="onFacetClick"
@@ -81,6 +82,7 @@
               :is-features-to-model="isFeaturesToModel"
               :log-activity="logActivity"
               :datasetName="datasetName"
+              :include="include"
               :expanded="expandGeoAndTimeseriesFacets"
               @histogram-numerical-click="onNumericalClick"
               @histogram-range-change="onRangeChange"
@@ -99,6 +101,7 @@
               :ignore-highlights="ignoreHighlights"
               :instance-name="instanceName"
               :datasetName="datasetName"
+              :include="include"
               @facet-click="onFacetCategoryClick"
             />
           </template>
@@ -115,6 +118,7 @@
               :enable-highlighting="enableHighlighting"
               :ignore-highlights="ignoreHighlights"
               :instance-name="instanceName"
+              :include="include"
               :geoEnabled="enableColorScales && geoVariableExists"
               @facet-click="onFacetClick"
               @range-change="onRangeChange"
@@ -132,6 +136,7 @@
               :enable-highlighting="enableHighlighting"
               :ignore-highlights="ignoreHighlights"
               :instance-name="instanceName"
+              :include="include"
               :geoEnabled="enableColorScales && geoVariableExists"
               @facet-click="onFacetCategoryClick"
             />
@@ -148,6 +153,7 @@
               :enable-highlighting="enableHighlighting"
               :ignore-highlights="ignoreHighlights"
               :instance-name="instanceName"
+              :include="include"
               :geoEnabled="enableColorScales && geoVariableExists"
               @numerical-click="onNumericalClick"
               @range-change="onRangeChange"
@@ -265,6 +271,7 @@ export default Vue.extend({
     subtitle: { type: String, default: null },
     rowsPerPage: { type: Number, default: 0 },
     datasetName: { type: String as () => string, default: null },
+    include: { type: Boolean as () => boolean, default: true },
   },
 
   data() {
@@ -320,10 +327,6 @@ export default Vue.extend({
 
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
-    },
-
-    include(): boolean {
-      return routeGetters.getRouteInclude(this.$store);
     },
 
     ranking(): Dictionary<number> {

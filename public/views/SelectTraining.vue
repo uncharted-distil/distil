@@ -45,7 +45,10 @@
 
         <div class="col-12 col-md-6 d-flex flex-column">
           <div class="select-target-variables">
-            <target-variable class="col-12 d-flex flex-column" />
+            <target-variable
+              class="col-12 d-flex flex-column"
+              :include="includedActive"
+            />
           </div>
         </div>
       </header>
@@ -58,6 +61,7 @@
           :variables="availableVariables"
           :summaries="availableSummaries"
           :instance-name="availableInstance"
+          :include="includedActive"
           title="Available Features"
           subtitle="features available"
           group-btn-title="Add All"
@@ -75,12 +79,31 @@
           :variables="trainingVariables"
           :summaries="trainingVariableSummaries"
           :instance-name="trainingInstance"
+          :include="includedActive"
           @var-change="removeVar"
           @group-change="removeAll"
         />
 
         <div class="col-12 col-md-6 d-flex flex-column h-100">
-          <select-data-slot class="flex-1 d-flex flex-column pb-1 pt-2" />
+          <select-data-slot
+            v-model="includedActive"
+            class="flex-1 d-flex flex-column pb-1 pt-2"
+            :all-variables="allVariables"
+            :variables="variables"
+            :summary-dict="variableDict"
+            :has-data="hasData"
+            :num-rows="numRows"
+            :num-items="numItems"
+            :data-items="items"
+            :data-fields="fields"
+            :timeseries="timeseries"
+            :baseline-items="baselineItems"
+            :inner="inner"
+            :outer="outer"
+            @fetch-variable-rankings="fetchVariableRankings"
+            @tile-clicked="onTileClick"
+            @fetch-timeseries="fetchTimeseries"
+          />
           <create-solutions-form class="select-create-solutions" />
         </div>
       </div>
@@ -97,7 +120,15 @@ import StatusSidebar from "../components/StatusSidebar.vue";
 import CreateSolutionsForm from "../components/CreateSolutionsForm.vue";
 import SelectDataSlot from "../components/SelectDataSlot.vue";
 import AvailableTrainingVariables from "../components/AvailableTrainingVariables.vue";
-import { Variable, VariableSummary } from "../store/dataset/index";
+import {
+  Variable,
+  VariableSummary,
+  TimeSeries,
+  TableRow,
+  TableColumn,
+  D3M_INDEX_FIELD,
+  TimeseriesGrouping,
+} from "../store/dataset/index";
 import TargetVariable from "../components/TargetVariable.vue";
 import { DataMode } from "../store/dataset";
 import { overlayRouteEntry } from "../util/routes";
@@ -113,8 +144,10 @@ import {
   TRAINING_VARS_INSTANCE,
   AVAILABLE_TRAINING_VARS_INSTANCE,
 } from "../store/route/index";
+import { Filter, EXCLUDE_FILTER } from "../util/filters";
 import { Dictionary } from "../util/dict";
 import { Route } from "vue-router";
+import { EI } from "../util/events";
 import { Group } from "../util/facets";
 
 export default Vue.extend({
@@ -131,7 +164,7 @@ export default Vue.extend({
 
   data() {
     return {
-      binningIntervalModel: null,
+      includedActive: true,
     };
   },
 
@@ -173,17 +206,48 @@ export default Vue.extend({
     trainingVarsPage(): number {
       return routeGetters.getRouteTrainingVarsPage(this.$store);
     },
+    items(): TableRow[] {
+      const res = this.includedActive
+        ? datasetGetters.getIncludedTableDataItems(this.$store)
+        : datasetGetters.getExcludedTableDataItems(this.$store);
+      return res ?? [];
+    },
+    numItems(): number {
+      const res = this.includedActive
+        ? datasetGetters.getIncludedTableDataLength(this.$store)
+        : datasetGetters.getExcludedTableDataLength(this.$store);
+      return res ?? 0;
+    },
+    numRows(): number {
+      return this.includedActive
+        ? datasetGetters.getIncludedTableDataNumRows(this.$store)
+        : datasetGetters.getExcludedTableDataNumRows(this.$store);
+    },
+    hasData(): boolean {
+      return this.includedActive
+        ? datasetGetters.hasIncludedTableData(this.$store)
+        : datasetGetters.hasExcludedTableData(this.$store);
+    },
     availableInstance(): string {
       return AVAILABLE_TRAINING_VARS_INSTANCE;
     },
     availableTrainingVarsSearch(): string {
       return routeGetters.getRouteAvailableTrainingVarsSearch(this.$store);
     },
+    timeseries(): Dictionary<TimeSeries> {
+      return datasetGetters.getTimeseries(this.$store);
+    },
     trainingInstance(): string {
       return TRAINING_VARS_INSTANCE;
     },
+    allVariables(): Variable[] {
+      return datasetGetters.getAllVariables(this.$store);
+    },
     trainingVarsSearch(): string {
       return routeGetters.getRouteTrainingVarsSearch(this.$store);
+    },
+    variables(): Variable[] {
+      return datasetGetters.getVariables(this.$store);
     },
     availableSummaries(): VariableSummary[] {
       const pageIndex = routeGetters.getRouteAvailableTrainingVarsPage(
@@ -198,17 +262,36 @@ export default Vue.extend({
 
       return currentSummaries;
     },
+    fields(): Dictionary<TableColumn> {
+      return this.includedActive
+        ? datasetGetters.getIncludedTableDataFields(this.$store)
+        : datasetGetters.getExcludedTableDataFields(this.$store);
+    },
     availableVariables(): Variable[] {
       return searchVariables(
         routeGetters.getAvailableVariables(this.$store),
         this.availableTrainingVarsSearch
       );
     },
-    include(): boolean {
-      return routeGetters.getRouteInclude(this.$store);
+    baselineItems(): TableRow[] {
+      const bItems =
+        datasetGetters.getBaselineIncludeTableDataItems(this.$store) ?? [];
+      return bItems.sort((a, b) => {
+        return a[D3M_INDEX_FIELD] - b[D3M_INDEX_FIELD];
+      });
+    },
+    inner(): TableRow[] {
+      return this.includedActive
+        ? datasetGetters.getAreaOfInterestIncludeInnerItems(this.$store)
+        : datasetGetters.getAreaOfInterestExcludeInnerItems(this.$store);
+    },
+    outer(): TableRow[] {
+      return this.includedActive
+        ? datasetGetters.getAreaOfInterestIncludeOuterItems(this.$store)
+        : datasetGetters.getAreaOfInterestExcludeOuterItems(this.$store);
     },
     variableDict(): Dictionary<Dictionary<VariableSummary>> {
-      return this.include
+      return this.includedActive
         ? datasetGetters.getIncludedVariableSummariesDictionary(this.$store)
         : datasetGetters.getExcludedVariableSummariesDictionary(this.$store);
     },
@@ -229,8 +312,14 @@ export default Vue.extend({
 
       return currentSummaries;
     },
+    dataSize(): number {
+      return routeGetters.getRouteDataSize(this.$store);
+    },
   },
   watch: {
+    dataSize() {
+      viewActions.updateSelectTrainingData(this.$store);
+    },
     trainingStr() {
       viewActions.updateSelectTrainingData(this.$store);
     },
@@ -276,6 +365,43 @@ export default Vue.extend({
     viewActions.updateHighlight(this.$store);
   },
   methods: {
+    fetchTimeseries(args: EI.TIMESERIES.FetchTimeseriesEvent) {
+      args.variables.forEach((tsv) => {
+        const grouping = tsv.grouping as TimeseriesGrouping;
+        datasetActions.fetchTimeseries(this.$store, {
+          dataset: this.dataset,
+          variableKey: tsv.key,
+          xColName: grouping.xCol,
+          yColName: grouping.yCol,
+          uniqueTrail: args.uniqueTrail,
+          timeseriesIds: args.timeseriesIds.map((item) => {
+            return item[tsv.key].value as string;
+          }),
+        });
+      });
+    },
+    async onTileClick(data: EI.MAP.TileClickData) {
+      // filter for area of interests
+      const filter: Filter = {
+        displayName: data.displayName,
+        key: data.key,
+        maxX: data.bounds[1][1],
+        maxY: data.bounds[0][0],
+        minX: data.bounds[0][1],
+        minY: data.bounds[1][0],
+        mode: EXCLUDE_FILTER,
+        type: data.type,
+        set: "",
+      };
+      // fetch area of interests
+      await viewActions.updateAreaOfInterest(this.$store, filter);
+    },
+    fetchVariableRankings() {
+      datasetActions.fetchVariableRankings(this.$store, {
+        dataset: this.dataset,
+        target: this.target,
+      });
+    },
     async addVar(group: Group) {
       this.$router;
       addVariableToTraining(group, this.$router);

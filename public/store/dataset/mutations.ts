@@ -482,7 +482,7 @@ export const mutations = {
     // freezing the return to prevent slow, unnecessary deep reactivity.
     state.includedSet.tableData = Object.freeze(tableData);
     // add selected row data to state
-    state.includedSet.rowSelectionData = getSelectedRows();
+    state.includedSet.rowSelectionData = getSelectedRows(true);
   },
 
   // sets the current excluded data into the store
@@ -490,12 +490,12 @@ export const mutations = {
     // freezing the return to prevent slow, unnecessary deep reactivity.
     state.excludedSet.tableData = Object.freeze(tableData);
     // add selected row data to state
-    state.excludedSet.rowSelectionData = getSelectedRows();
+    state.excludedSet.rowSelectionData = getSelectedRows(false);
   },
 
   updateRowSelectionData(state) {
-    state.includedSet.rowSelectionData = getSelectedRows();
-    state.excludedSet.rowSelectionData = getSelectedRows();
+    state.includedSet.rowSelectionData = getSelectedRows(true);
+    state.excludedSet.rowSelectionData = getSelectedRows(false);
   },
 
   updateTask(state: DatasetState, task: Task) {

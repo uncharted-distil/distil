@@ -29,7 +29,6 @@ export interface RouteArgs {
   training?: string;
   target?: string;
   explore?: string;
-  include?: string;
   solutionId?: string;
   highlights?: string;
   hasGeoData?: boolean;

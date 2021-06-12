@@ -169,6 +169,7 @@ export default Vue.extend({
     },
     expanded: { type: Boolean, default: false },
     datasetName: { type: String as () => string, default: null },
+    include: { type: Boolean as () => boolean, default: true },
   },
 
   data() {
@@ -384,11 +385,6 @@ export default Vue.extend({
       return routeGetters.getDecodedFilters(this.$store).length > 0;
     },
 
-    // is the display in included (blue) or excluded (black) mode
-    includedActive(): boolean {
-      return routeGetters.getRouteInclude(this.$store);
-    },
-
     // is data currently being highlighted
     highlights(): Highlight[] {
       return routeGetters.getDecodedHighlights(this.$store);
@@ -412,7 +408,7 @@ export default Vue.extend({
       return routeGetters.getDecodedRowSelection(this.$store);
     },
     data(): TableRow[] {
-      return this.includedActive
+      return this.include
         ? datasetGetters.getIncludedTableDataItems(this.$store)
         : datasetGetters.getExcludedTableDataItems(this.$store);
     },
@@ -812,7 +808,7 @@ export default Vue.extend({
         );
 
         this.currentRect = leaflet.rectangle(bounds, {
-          color: this.includedActive ? "#255DCC" : "black",
+          color: this.include ? "#255DCC" : "black",
           weight: 1,
           bubblingMouseEvents: false,
         });
@@ -978,7 +974,7 @@ export default Vue.extend({
         // tab setting.  In included mode we render all the currently included data in blue, in excluded
         //  mode we show only excluded data and render it in black.
 
-        if (this.includedActive) {
+        if (this.include) {
           if (
             (!this.highlights || this.highlights.length < 1) &&
             !this.hasFilters
@@ -1110,8 +1106,8 @@ export default Vue.extend({
       }
     },
 
-    includedActive() {
-      if (!this.includedActive) {
+    include() {
+      if (!this.include) {
         this.clearSelectionRect();
       }
     },

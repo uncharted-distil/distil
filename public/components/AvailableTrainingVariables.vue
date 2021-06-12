@@ -35,6 +35,7 @@
       :rows-per-page="numRowsPerPage"
       :summaries="summaries"
       :enable-color-scales="geoVarExists"
+      :include="include"
     >
       <div
         class="d-flex flex-row justify-content-between align-items-center my-2 mx-1"
@@ -90,6 +91,7 @@ export default Vue.extend({
     subtitle: { type: String as () => string, default: "" },
     checkGeoType: { type: Boolean as () => boolean, default: false },
     isAvailableFeatures: { type: Boolean as () => boolean, default: false },
+    include: { type: Boolean as () => boolean, default: true },
   },
   computed: {
     dataset(): string {
@@ -172,7 +174,7 @@ export default Vue.extend({
   },
   methods: {
     variableChange(group: Group) {
-      this.$emit(EventList.VAR_SET_CHANGE_EVENT, group);
+      this.$emit(EventList.VARIABLES.VAR_SET_CHANGE_EVENT, group);
     },
     addAll() {
       // log UI event on server
@@ -193,7 +195,7 @@ export default Vue.extend({
       });
       const dataset = routeGetters.getRouteDataset(this.$store);
       const targetName = routeGetters.getRouteTargetVariable(this.$store);
-      this.$emit(EventList.VAR_SET_GROUP_CHANGE_EVENT, {
+      this.$emit(EventList.VARIABLES.VAR_SET_GROUP_CHANGE_EVENT, {
         dataset,
         targetName,
         variableNames: training,

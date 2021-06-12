@@ -193,13 +193,6 @@ interface LumoPoint {
   y: number;
 }
 
-export interface TileClickData {
-  bounds: number[][];
-  key: string;
-  displayName: string;
-  type: string;
-  callback: (inner: TableRow[], outer: TableRow[]) => void;
-}
 enum CoordinateType {
   TileBased,
   PointBased,

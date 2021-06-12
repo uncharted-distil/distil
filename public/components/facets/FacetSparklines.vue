@@ -123,6 +123,7 @@ export default Vue.extend({
     rowSelection: Object as () => RowSelection,
     summary: Object as () => VariableSummary,
     expand: Boolean as () => boolean,
+    include: { type: Boolean as () => boolean, default: true },
   },
 
   data() {
@@ -156,7 +157,12 @@ export default Vue.extend({
         : "facet-header-container-no-scroll";
     },
     subSelection(): number[][] {
-      return getSubSelectionValues(this.summary, this.rowSelection, this.max);
+      return getSubSelectionValues(
+        this.summary,
+        this.rowSelection,
+        this.max,
+        this.include
+      );
     },
     selection(): {} {
       if (!this.enableHighlighting || !this.isHighlightedGroup()) {
