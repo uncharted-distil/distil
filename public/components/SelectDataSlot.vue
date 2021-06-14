@@ -370,7 +370,9 @@ export default Vue.extend({
       return totalAreaCoverage(this.dataItems, this.variables);
     },
     summaries(): VariableSummary[] {
-      const targets = routeGetters.getTargetVariableSummaries(this.$store);
+      const targets = routeGetters.getTargetVariableSummaries(this.$store)(
+        this.includedActive
+      );
       const currentSummaries = getAllVariablesSummaries(
         this.trainingVariables,
         this.summaryDict

@@ -28,11 +28,11 @@
 
 <script lang="ts">
 import Vue from "vue";
-import SparklineTimeseriesView from "./SparklineTimeseriesView";
+import SparklineTimeseriesView from "./SparklineTimeseriesView.vue";
 import { Dictionary } from "../util/dict";
 import { TableRow, TableColumn, VariableSummary } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
-import { getters as datasetGetters } from "../store/dataset/module";
+import { datasetGetters } from "../store";
 
 export default Vue.extend({
   name: "select-timeseries-view",
@@ -48,8 +48,12 @@ export default Vue.extend({
 
   computed: {
     variableSummaries(): VariableSummary[] {
-      const training = routeGetters.getTrainingVariableSummaries(this.$store);
-      const target = routeGetters.getTargetVariableSummaries(this.$store);
+      const training = routeGetters.getTrainingVariableSummaries(this.$store)(
+        this.includedActive
+      );
+      const target = routeGetters.getTargetVariableSummaries(this.$store)(
+        this.includedActive
+      );
       return target ? training.concat(target) : training;
     },
 
