@@ -61,7 +61,7 @@ export default Vue.extend({
 
   computed: {
     targetSummaries(): VariableSummary[] {
-      return routeGetters.getTargetVariableSummaries(this.$store);
+      return routeGetters.getTargetVariableSummaries(this.$store)(this.include);
     },
     labels(): string[] {
       // make sure we are only on a binary classification task

@@ -471,21 +471,25 @@ export const getters = {
     return variables.filter((variable) => lookup[variable.key.toLowerCase()]);
   },
 
-  getTrainingVariableSummaries(state: Route, getters: any): VariableSummary[] {
-    const training = getters.getDecodedTrainingVariableNames;
-    const include = getters.getRouteInclude;
-    const minKey = minimumRouteKey();
-    const summaries = include
-      ? getters.getIncludedVariableSummariesDictionary
-      : getters.getExcludedVariableSummariesDictionary;
-    const trainingVariableSummaries = training.reduce((acc, variableName) => {
-      const variableSummary = summaries?.[variableName]?.[minKey];
-      if (variableSummary) {
-        acc.push(variableSummary);
-      }
-      return acc;
-    }, []);
-    return trainingVariableSummaries;
+  getTrainingVariableSummaries(
+    state: Route,
+    getters: any
+  ): (include: boolean) => VariableSummary[] {
+    return (include: boolean) => {
+      const training = getters.getDecodedTrainingVariableNames;
+      const minKey = minimumRouteKey();
+      const summaries = include
+        ? getters.getIncludedVariableSummariesDictionary
+        : getters.getExcludedVariableSummariesDictionary;
+      const trainingVariableSummaries = training.reduce((acc, variableName) => {
+        const variableSummary = summaries?.[variableName]?.[minKey];
+        if (variableSummary) {
+          acc.push(variableSummary);
+        }
+        return acc;
+      }, []);
+      return trainingVariableSummaries;
+    };
   },
 
   getTargetVariable(state: Route, getters: any): Variable {
@@ -502,27 +506,33 @@ export const getters = {
     return null;
   },
 
-  getTargetVariableSummaries(state: Route, getters: any): VariableSummary[] {
-    const target = getters.getRouteTargetVariable;
-    const include = getters.getRouteInclude;
-    const dataset = getters.getRouteDataset;
-    const minKey = minimumRouteKey();
-    const summaries = include
-      ? getters.getIncludedVariableSummariesDictionary
-      : getters.getExcludedVariableSummariesDictionary;
-    const targetVariableSummary =
-      summaries?.[VariableSummaryKey(target, dataset)]?.[minKey];
-    if (targetVariableSummary) {
-      return [targetVariableSummary];
-    } else {
-      const currentVariable = summaries?.[VariableSummaryKey(target, dataset)];
-      if (currentVariable) {
-        const placeholderKey = Object.keys(currentVariable)[0];
-        return [currentVariable[placeholderKey]];
+  getTargetVariableSummaries(
+    state: Route,
+    getters: any
+  ): (include: boolean) => VariableSummary[] {
+    // return function to allow for parameters in reducer function
+    return (include: boolean) => {
+      const target = getters.getRouteTargetVariable;
+      const dataset = getters.getRouteDataset;
+      const minKey = minimumRouteKey();
+      const summaries = include
+        ? getters.getIncludedVariableSummariesDictionary
+        : getters.getExcludedVariableSummariesDictionary;
+      const targetVariableSummary =
+        summaries?.[VariableSummaryKey(target, dataset)]?.[minKey];
+      if (targetVariableSummary) {
+        return [targetVariableSummary];
       } else {
-        return [];
+        const currentVariable =
+          summaries?.[VariableSummaryKey(target, dataset)];
+        if (currentVariable) {
+          const placeholderKey = Object.keys(currentVariable)[0];
+          return [currentVariable[placeholderKey]];
+        } else {
+          return [];
+        }
       }
-    }
+    };
   },
 
   getAvailableVariables(state: Route, getters: any): Variable[] {

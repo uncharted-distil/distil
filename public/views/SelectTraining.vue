@@ -181,7 +181,9 @@ export default Vue.extend({
     // Always use the label from the target summary facet as the displayed target name to ensure compund
     // variables like a time series display the same name for the target as the value being predicted.
     targetLabel(): string {
-      const summaries = routeGetters.getTargetVariableSummaries(this.$store);
+      const summaries = routeGetters.getTargetVariableSummaries(this.$store)(
+        this.includedActive
+      );
       if (summaries.length > 0) {
         const summary = summaries[0];
         return summary.label;
