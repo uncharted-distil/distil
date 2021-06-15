@@ -636,14 +636,12 @@ export const actions = {
       variables: variableNames,
       size: Number.MAX_SAFE_INTEGER,
     } as FilterParams;
-    return Promise.all([
-      datasetActions.fetchBaselineTableData(store, {
-        dataset: dataset,
-        filterParams: baseline,
-        highlights: [],
-        dataMode: dataMode,
-      }),
-    ]);
+    return datasetActions.fetchBaselineTableData(store, {
+      dataset: dataset,
+      filterParams: baseline,
+      highlights: [],
+      dataMode: dataMode,
+    });
   },
   async updateAreaOfInterest(context: ViewContext, filter: Filter) {
     const dataset = context.getters.getRouteDataset;
