@@ -39,7 +39,7 @@
         :variables="allVariables"
         :filters="filters"
         :highlights="routeHighlight"
-        @lex-query="updateFilterAndHighlightFromLexQuery"
+        handle-updates
       />
 
       <!-- Tabs to switch views -->
@@ -56,7 +56,7 @@
           </b-tabs>
         </div>
         <b-button
-          v-if="includedActive"
+          v-if="include"
           class="select-data-action-exclude align-self-center"
           variant="outline-secondary"
           :disabled="isExcludeDisabled"
@@ -72,7 +72,7 @@
           Exclude
         </b-button>
         <b-button
-          v-if="!includedActive"
+          v-if="!include"
           variant="outline-secondary"
           :disabled="!isFilteringSelection"
           @click="onReincludeClick"
@@ -92,6 +92,10 @@
           :instance-name="instanceName"
           :included-active="include"
           :dataset="dataset"
+          :data-fields="fields"
+          :timeseries-info="timeseries"
+          :data-items="items"
+          :baseline-items="baselineItems"
         />
       </section>
 
@@ -114,14 +118,14 @@
           <b-button-group class="ml-2 mt-1">
             <b-button
               variant="primary"
-              :disabled="includedActive"
+              :disabled="include"
               @click="setIncludedActive"
             >
               Included
             </b-button>
             <b-button
               variant="secondary"
-              :disabled="!includedActive"
+              :disabled="!include"
               @click="setExcludedActive"
             >
               Excluded
@@ -159,7 +163,14 @@ import StatusSidebar from "../components/StatusSidebar.vue";
 
 // Store
 import { actions as appActions } from "../store/app/module";
-import { Highlight, RowSelection, Variable } from "../store/dataset/index";
+import {
+  Highlight,
+  RowSelection,
+  TableColumn,
+  TableRow,
+  TimeSeries,
+  Variable,
+} from "../store/dataset/index";
 import {
   actions as datasetActions,
   getters as datasetGetters,
@@ -174,17 +185,13 @@ import { actions as viewActions } from "../store/view/module";
 // Util
 import {
   addFilterToRoute,
-  deepUpdateFiltersInRoute,
   EXCLUDE_FILTER,
   INCLUDE_FILTER,
 } from "../util/filters";
 import {
   clearHighlight,
   createFiltersFromHighlights,
-  updateHighlight,
-  UPDATE_ALL,
 } from "../util/highlights";
-import { lexQueryToFiltersAndHighlight } from "../util/lex";
 import { overlayRouteEntry } from "../util/routes";
 import {
   clearRowSelection,
@@ -202,6 +209,8 @@ import {
   TIMESERIES_VIEW,
   filterViews,
 } from "../util/view";
+import { Dictionary } from "vue-router/types/router";
+import { BaseState, SelectViewState } from "../util/state/AppStateWrapper";
 
 const ACTIONS = [
   { name: "Create New Variable", icon: "plus", paneId: "add" },
@@ -245,6 +254,7 @@ export default Vue.extend({
       instanceName: DATA_EXPLORER_VAR_INSTANCE,
       metaTypes: Object.keys(META_TYPES),
       include: true,
+      state: new SelectViewState(),
     };
   },
 
@@ -268,7 +278,7 @@ export default Vue.extend({
 
     /* All variables, only used for lex as we need to parse the hidden variables from groupings */
     allVariables(): Variable[] {
-      return datasetGetters.getAllVariables(this.$store);
+      return this.state.getLexBarVariables();
     },
 
     /* Actions available based on the variables meta types */
@@ -314,7 +324,9 @@ export default Vue.extend({
       // check that we have some target and training variables.
       return !isNil(this.target) && !isEmpty(this.training);
     },
-
+    timeseries(): Dictionary<TimeSeries> {
+      return datasetGetters.getTimeseries(this.$store);
+    },
     routeHighlight(): string {
       return routeGetters.getRouteHighlight(this.$store);
     },
@@ -329,6 +341,9 @@ export default Vue.extend({
         );
         if (typeNotInMetaTypes) return metaType;
       });
+    },
+    fields(): Dictionary<TableColumn> {
+      return this.state.getFields(this.include);
     },
     /* Disable the Exclude filter button. */
     isExcludeDisabled(): boolean {
@@ -374,7 +389,7 @@ export default Vue.extend({
     },
 
     variables(): Variable[] {
-      const variables = Array.from(datasetGetters.getVariables(this.$store));
+      const variables = this.state.getVariables();
       variables.sort((a, b) => {
         // If their ranking are identical or do not exist
         // sort by importance
@@ -426,6 +441,12 @@ export default Vue.extend({
       // Default is TABLE_VIEW
       return "SelectDataTable";
     },
+    items(): TableRow[] {
+      return this.state.getData(this.include);
+    },
+    baselineItems(): TableRow[] {
+      return this.state.getMapBaseline();
+    },
   },
 
   // Update either the summaries or explore data on user interaction.
@@ -464,12 +485,6 @@ export default Vue.extend({
 
   methods: {
     capitalize,
-
-    updateFilterAndHighlightFromLexQuery(lexQuery) {
-      const lqfh = lexQueryToFiltersAndHighlight(lexQuery, this.dataset);
-      deepUpdateFiltersInRoute(this.$router, lqfh.filters);
-      updateHighlight(this.$router, lqfh.highlights, UPDATE_ALL);
-    },
 
     /* When the user request to fetch a different size of data. */
     onDataSizeSubmit(dataSize: number) {
@@ -546,7 +561,9 @@ export default Vue.extend({
         [`${DATA_EXPLORER_VAR_INSTANCE}${ROUTE_PAGE_SUFFIX}`]: 1,
       });
     },
-
+    setState(state: BaseState) {
+      this.state = state;
+    },
     setIncludedActive() {
       this.include = true;
     },

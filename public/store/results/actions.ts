@@ -399,14 +399,14 @@ export const actions = {
       size?: number;
       filter: Filter; // the area of interest
     }
-  ) {
+  ): Promise<void> {
     const solution = getSolutionById(
       context.rootState.requestsModule.solutions,
       args.solutionId
     );
     if (!solution || !solution.resultId) {
       // no results ready to pull
-      return null;
+      return;
     }
 
     const filterParamsBlank = emptyFilterParamsObject();
@@ -446,14 +446,14 @@ export const actions = {
       size?: number;
       filter: Filter;
     }
-  ) {
+  ): Promise<void> {
     const solution = getSolutionById(
       context.rootState.requestsModule.solutions,
       args.solutionId
     );
     if (!solution || !solution.resultId) {
       // no results ready to pull
-      return null;
+      return;
     }
 
     const filterParamsBlank = emptyFilterParamsObject();
