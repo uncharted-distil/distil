@@ -100,6 +100,7 @@
           :timeseries-info="timeseries"
           :data-items="items"
           :baseline-items="baselineItems"
+          :summaries="summaries"
         />
       </section>
 
@@ -199,6 +200,7 @@ import {
   TableRow,
   TimeSeries,
   Variable,
+  VariableSummary,
 } from "../store/dataset/index";
 import {
   DATA_EXPLORER_VAR_INSTANCE,
@@ -484,6 +486,9 @@ export default Vue.extend({
     baselineItems(): TableRow[] {
       return this.state.getMapBaseline();
     },
+    summaries(): VariableSummary[] {
+      return this.state.getVariableSummaries(this.include);
+    },
   },
 
   // Update either the summaries or explore data on user interaction.
@@ -506,6 +511,11 @@ export default Vue.extend({
     explore(n, o) {
       if (n === o) return;
       viewActions.updateDataExplorerData(this.$store);
+    },
+    geoVarExists() {
+      const route = routeGetters.getRoute(this.$store);
+      const entry = overlayRouteEntry(route, { hasGeoData: this.geoVarExists });
+      this.$router.push(entry).catch((err) => console.warn(err));
     },
   },
 
