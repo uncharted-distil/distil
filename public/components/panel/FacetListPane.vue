@@ -41,6 +41,7 @@ import VariableFacets from "../../components/facets/VariableFacets.vue";
 
 import {
   SummaryMode,
+  TaskTypes,
   Variable,
   VariableSummary,
 } from "../../store/dataset/index";
@@ -117,7 +118,9 @@ export default Vue.extend({
         return container;
       };
     },
-
+    dataset(): string {
+      return routeGetters.getRouteDataset(this.$store);
+    },
     explore(): string[] {
       return routeGetters.getExploreVariables(this.$store);
     },
@@ -299,12 +302,10 @@ export default Vue.extend({
       const varModesMap = routeGetters.getDecodedVarModes(this.$store);
       args.varModes = varModesToString(varModesMap);
 
-      const dataset = routeGetters.getRouteDataset(this.$store);
-
       // Fetch the task
       try {
         const response = await datasetActions.fetchTask(this.$store, {
-          dataset,
+          dataset: this.dataset,
           targetName: target,
           variableNames: [],
         });
@@ -334,16 +335,46 @@ export default Vue.extend({
 
       this.updateRoute(args);
 
-      datasetActions.fetchVariableRankings(this.$store, { dataset, target });
+      datasetActions.fetchVariableRankings(this.$store, {
+        dataset: this.dataset,
+        target,
+      });
     },
 
-    updateTraining(variable: string): void {
+    async updateTraining(variable: string): Promise<void> {
       const args = {} as RouteArgs;
       if (this.isTraining(variable)) {
         args.training = this.training.filter((v) => v !== variable).join(",");
       } else {
-        args.training = this.training.concat([variable]).join(",");
+        const training = this.training.concat([variable]);
+        args.training = training.join(",");
+        const taskResponse = await datasetActions.fetchTask(this.$store, {
+          dataset: this.dataset,
+          targetName: this.target,
+          variableNames: training,
+        });
+        const task = taskResponse.data.task.join(",");
+        args.task = task;
+        if (task.includes(TaskTypes.REMOTE_SENSING)) {
+          const available = routeGetters.getAvailableVariables(this.$store);
+          const varModesMap = routeGetters.getDecodedVarModes(this.$store);
+          training.forEach((v) => {
+            varModesMap.set(v, SummaryMode.MultiBandImage);
+          });
+
+          available.forEach((v) => {
+            varModesMap.set(v.key, SummaryMode.MultiBandImage);
+          });
+
+          varModesMap.set(
+            routeGetters.getRouteTargetVariable(this.$store),
+            SummaryMode.MultiBandImage
+          );
+          const varModesStr = varModesToString(varModesMap);
+          args.varModes = varModesStr;
+        }
       }
+
       this.updateRoute(args);
     },
 
