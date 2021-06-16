@@ -30,7 +30,11 @@
           <p v-if="activePane === 'selected'">Select a variable to explore.</p>
           <p v-else>All the variables of that type are selected.</p>
         </template>
-        <facet-list-pane v-else :variables="activeVariables" />
+        <facet-list-pane
+          v-else
+          :variables="activeVariables"
+          :enable-color-scales="geoVarExists"
+        />
       </template>
     </left-side-panel>
 
@@ -132,10 +136,30 @@
             </b-button>
           </b-button-group>
         </b-button-toolbar>
-        <create-solutions-form v-if="isCreateModelPossible" class="ml-2" />
+        <create-solutions-form
+          v-if="isCreateModelPossible"
+          class="ml-2"
+          @create-model="onModelCreation"
+        />
       </footer>
     </main>
-
+    <left-side-panel
+      v-if="activePane === 'outcome'"
+      :panel-title="currentAction"
+    >
+      <add-variable-pane v-if="activePane === 'add'" />
+      <template v-else>
+        <template v-if="hasNoVariables">
+          <p v-if="activePane === 'selected'">Select a variable to explore.</p>
+          <p v-else>No Outcome Variables available.</p>
+        </template>
+        <facet-list-pane
+          v-else
+          :variables="activeVariables"
+          :enable-color-scales="geoVarExists"
+        />
+      </template>
+    </left-side-panel>
     <status-sidebar />
     <status-panel />
   </div>
@@ -162,7 +186,12 @@ import StatusPanel from "../components/StatusPanel.vue";
 import StatusSidebar from "../components/StatusSidebar.vue";
 
 // Store
-import { actions as appActions } from "../store/app/module";
+import {
+  appActions,
+  viewActions,
+  datasetActions,
+  datasetGetters,
+} from "../store";
 import {
   Highlight,
   RowSelection,
@@ -172,15 +201,10 @@ import {
   Variable,
 } from "../store/dataset/index";
 import {
-  actions as datasetActions,
-  getters as datasetGetters,
-} from "../store/dataset/module";
-import {
   DATA_EXPLORER_VAR_INSTANCE,
   ROUTE_PAGE_SUFFIX,
 } from "../store/route/index";
 import { getters as routeGetters } from "../store/route/module";
-import { actions as viewActions } from "../store/view/module";
 
 // Util
 import {
@@ -199,7 +223,7 @@ import {
   createFilterFromRowSelection,
 } from "../util/row";
 import { spinnerHTML } from "../util/spinner";
-import { META_TYPES } from "../util/types";
+import { isGeoLocatedType, META_TYPES } from "../util/types";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import {
   GEO_VIEW,
@@ -211,19 +235,25 @@ import {
 } from "../util/view";
 import { Dictionary } from "vue-router/types/router";
 import { BaseState, SelectViewState } from "../util/state/AppStateWrapper";
+import { SolutionRequestMsg } from "../store/requests/actions";
 
 const ACTIONS = [
-  { name: "Create New Variable", icon: "plus", paneId: "add" },
-  { name: "All Variables", icon: "database", paneId: "available" },
-  { name: "Text Variables", icon: "font", paneId: "text" },
-  { name: "Categorical Variables", icon: "align-left", paneId: "categorical" },
-  { name: "Number Variables", icon: "bar-chart", paneId: "number" },
-  { name: "Time Variables", icon: "clock-o", paneId: "time" },
-  { name: "Location Variables", icon: "map-o", paneId: "location" },
-  { name: "Image Variables", icon: "image", paneId: "image" },
-  { name: "Unknown Variables", icon: "question", paneId: "unknown" },
-  { name: "Target Variable", icon: "crosshairs", paneId: "target" },
-  { name: "Training Variable", icon: "asterisk", paneId: "training" },
+  { name: "Create New Variable", icon: "fa fa-plus", paneId: "add" },
+  { name: "All Variables", icon: "fa fa-database", paneId: "available" },
+  { name: "Text Variables", icon: "fa fa-font", paneId: "text" },
+  {
+    name: "Categorical Variables",
+    icon: "fa fa-align-left",
+    paneId: "categorical",
+  },
+  { name: "Number Variables", icon: "fa fa-bar-chart", paneId: "number" },
+  { name: "Time Variables", icon: "fa fa-clock-o", paneId: "time" },
+  { name: "Location Variables", icon: "fa fa-map-o", paneId: "location" },
+  { name: "Image Variables", icon: "fa fa-image", paneId: "image" },
+  { name: "Unknown Variables", icon: "fa fa-question", paneId: "unknown" },
+  { name: "Target Variable", icon: "fa fa-crosshairs", paneId: "target" },
+  { name: "Training Variables", icon: "fa fa-asterisk", paneId: "training" },
+  { name: "Outcome Variables", icon: "fas fa-poll", paneId: "outcome" },
 ] as Action[];
 
 export default Vue.extend({
@@ -416,6 +446,8 @@ export default Vue.extend({
           variables[action.paneId] = this.variables.filter((variable) =>
             this.training.includes(variable.key)
           );
+        } else if (action.paneId === "outcome") {
+          variables[action.paneId] = [];
         } else {
           variables[action.paneId] = this.variables.filter((variable) =>
             META_TYPES[action.paneId].includes(variable.colType)
@@ -429,7 +461,12 @@ export default Vue.extend({
     variablesTypes(): string[] {
       return [...new Set(this.variables.map((v) => v.colType))];
     },
-
+    geoVarExists(): boolean {
+      const varSums = this.state.getVariableSummaries(this.include);
+      return varSums.some((v) => {
+        return isGeoLocatedType(v.type);
+      });
+    },
     viewComponent() {
       const viewType = this.activeViews[this.activeView] as string;
       if (viewType === GEO_VIEW) return "GeoPlot";
@@ -475,7 +512,7 @@ export default Vue.extend({
   async beforeMount() {
     // First get the dataset informations
     await viewActions.fetchDataExplorerData(this.$store, [] as Variable[]);
-
+    this.state.fetchMapBaseline();
     // Pre-select the top 5 variables by importance
     this.preSelectTopVariables();
 
@@ -491,7 +528,10 @@ export default Vue.extend({
       this.updateRoute({ dataSize });
       viewActions.updateDataExplorerData(this.$store);
     },
-
+    onModelCreation(solutionRequestMsg: SolutionRequestMsg) {
+      // handle solutionRequestMsg
+      return;
+    },
     onExcludeClick() {
       let filter = null;
       if (this.isFilteringHighlights) {

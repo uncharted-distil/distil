@@ -38,22 +38,6 @@
         v-on:mouseup="onMouseUp"
         v-on:mousemove="onMouseMove"
       ></div>
-      <div v-if="isAvailableFeatures">
-        <button
-          class="action-btn btn btn-sm btn-outline-secondary ml-2 mr-1 mb-2"
-          @click="selectFeature()"
-        >
-          Add
-        </button>
-      </div>
-      <div v-if="isFeaturesToModel">
-        <button
-          class="action-btn btn btn-sm btn-outline-secondary ml-2 mr-1 mb-2"
-          @click="removeFeature()"
-        >
-          Remove
-        </button>
-      </div>
     </div>
     <div v-if="expand" class="latlon">
       <facet-numerical
@@ -75,6 +59,7 @@
         @range-change="lonRangeChange"
       />
     </div>
+    <div v-if="displayFooter" class="facet-footer-custom-html" ref="footer" />
   </div>
 </template>
 
@@ -86,12 +71,8 @@ import Vue from "vue";
 import IconBase from "../icons/IconBase.vue";
 import IconCropFree from "../icons/IconCropFree.vue";
 import { scaleThreshold } from "d3";
-import {
-  actions as datasetActions,
-  getters as datasetGetters,
-} from "../../store/dataset/module";
+import { datasetGetters, appActions } from "../../store";
 import { getters as routeGetters } from "../../store/route/module";
-import { actions as appActions } from "../../store/app/module";
 import {
   TableRow,
   VariableSummary,
@@ -100,8 +81,6 @@ import {
   Highlight,
   NUMERICAL_SUMMARY,
   RowSelection,
-  SummaryMode,
-  TaskTypes,
 } from "../../store/dataset";
 import TypeChangeMenu from "../TypeChangeMenu.vue";
 import FacetNumerical from "./FacetNumerical.vue";
@@ -109,12 +88,10 @@ import { updateHighlight, clearHighlight } from "../../util/highlights";
 import {
   LATITUDE_TYPE,
   LONGITUDE_TYPE,
-  REAL_VECTOR_TYPE,
   EXPAND_ACTION_TYPE,
   COLLAPSE_ACTION_TYPE,
+  DISTIL_ROLES,
 } from "../../util/types";
-import { overlayRouteEntry, varModesToString } from "../../util/routes";
-import { removeFiltersByName } from "../../util/filters";
 import { Feature, Activity, SubActivity } from "../../util/userEvents";
 
 import "leaflet/dist/leaflet.css";
@@ -170,6 +147,11 @@ export default Vue.extend({
     expanded: { type: Boolean, default: false },
     datasetName: { type: String as () => string, default: null },
     include: { type: Boolean as () => boolean, default: true },
+    html: [
+      String as () => string,
+      Object as () => any,
+      Function as () => Function,
+    ],
   },
 
   data() {
@@ -307,7 +289,9 @@ export default Vue.extend({
       });
       return featureCollection(features);
     },
-
+    displayFooter(): boolean {
+      return !!this.html && this.summary.distilRole != DISTIL_ROLES.Augmented;
+    },
     // Creates a GeoJSON feature collection that can be passed directly to a Leaflet layer
     // for rendering.  The collection represents the subset of buckets to be rendered based
     // on the currently applied filters and highlights.
@@ -669,71 +653,6 @@ export default Vue.extend({
       }
     },
 
-    async selectFeature() {
-      const training = routeGetters
-        .getDecodedTrainingVariableNames(this.$store)
-        .concat([this.summary.key]);
-
-      // update task based on the current training data
-      const taskResponse = await datasetActions.fetchTask(this.$store, {
-        dataset: this.dataset,
-        targetName: routeGetters.getRouteTargetVariable(this.$store),
-        variableNames: training,
-      });
-
-      const task = taskResponse.data.task.join(",");
-      const varModesMap = routeGetters.getDecodedVarModes(this.$store);
-
-      if (task.includes(TaskTypes.REMOTE_SENSING)) {
-        const available = routeGetters.getAvailableVariables(this.$store);
-
-        training.forEach((v) => {
-          varModesMap.set(v, SummaryMode.MultiBandImage);
-        });
-
-        available.forEach((v) => {
-          varModesMap.set(v.key, SummaryMode.MultiBandImage);
-        });
-
-        varModesMap.set(
-          routeGetters.getRouteTargetVariable(this.$store),
-          SummaryMode.MultiBandImage
-        );
-      }
-      const varModesStr = varModesToString(varModesMap);
-
-      const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-        training: training.join(","),
-        task: task,
-        varModes: varModesStr,
-      });
-
-      this.$router.push(entry).catch((err) => console.warn(err));
-    },
-
-    async removeFeature() {
-      const training = routeGetters.getDecodedTrainingVariableNames(
-        this.$store
-      );
-      _.remove(training, (t) => t === this.summary.key);
-
-      // update task based on the current training data
-      const taskResponse = await datasetActions.fetchTask(this.$store, {
-        dataset: this.dataset,
-        targetName: routeGetters.getRouteTargetVariable(this.$store),
-        variableNames: training,
-      });
-
-      const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-        training: training.join(","),
-        task: taskResponse.data.task.join(","),
-      });
-
-      this.$router.push(entry).catch((err) => console.warn(err));
-
-      removeFiltersByName(this.$router, this.summary.key);
-    },
-
     clearSelectionRect() {
       if (this.selectedRect) {
         this.selectedRect.remove();
@@ -861,7 +780,22 @@ export default Vue.extend({
         this.closeButton.remove();
       }
     },
-
+    computeCustomHTML(): HTMLElement | null {
+      // hack to get the custom html buttons showing up
+      // changing this would mean to change how the instantiation of the facets works
+      // right now they are wrapped by other components like
+      // available-target-variables, available-training-variables, etc
+      // those components inject HTML into the facets through their `html` function
+      // we might want to change that in the future though
+      if (this.html) {
+        return _.isFunction(this.html)
+          ? this.html({
+              key: this.summary.key,
+            })
+          : this.html;
+      }
+      return null;
+    },
     createHighlight(value: {
       minX: number;
       maxX: number;
@@ -1115,11 +1049,20 @@ export default Vue.extend({
 
   mounted() {
     this.paint();
+    if (this.displayFooter) {
+      const footerDiv = this.computeCustomHTML();
+      const footerRef = this.$refs["footer"] as HTMLElement;
+      footerRef.append(footerDiv);
+    }
   },
 });
 </script>
 
 <style>
+.facet-card {
+  color: var(--color-text-second);
+  background: var(--white);
+}
 .facet-card .group-header {
   font-family: inherit;
   font-size: 0.867rem;
@@ -1139,6 +1082,14 @@ export default Vue.extend({
   position: relative;
   bottom: 37px;
   background: var(--white);
+}
+.facet-footer-custom-html {
+  color: var(--color-text-second);
+  background: var(--white);
+  padding: 4px 8px 6px;
+  font-family: inherit;
+  font-size: 0.867rem;
+  font-weight: 700;
 }
 
 .facet-card .geofacet-container .action-btn:hover {

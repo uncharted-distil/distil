@@ -30,7 +30,7 @@
           :variant="action.name === currentAction ? 'primary' : 'light'"
           @click.stop.prevent="setActive(action.name)"
         >
-          <i :class="'fa fa-' + action.icon" />
+          <i :class="action.icon" />
         </b-button>
       </li>
     </ul>

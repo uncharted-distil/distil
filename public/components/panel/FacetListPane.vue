@@ -22,6 +22,7 @@
     enable-type-change
     enable-type-filtering
     ignore-highlights
+    :enable-color-scales="enableColorScales"
     :facet-count="searchedActiveVariables.length"
     :html="buttons"
     :instance-name="instanceName"
@@ -78,6 +79,7 @@ export default Vue.extend({
       type: Array as () => Variable[],
       default: () => [] as Variable[],
     },
+    enableColorScales: { type: Boolean as () => boolean, default: false },
   },
 
   data() {
