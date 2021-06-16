@@ -32,6 +32,7 @@ import {
   TableColumn,
   TableData,
   TableRow,
+  TaskTypes,
   TimeseriesGrouping,
   Variable,
   VariableSummary,
@@ -88,7 +89,7 @@ import {
 import { Dictionary } from "./dict";
 import { Group } from "./facets";
 import { FilterParams, FilterSetsParams, removeFiltersByName } from "./filters";
-import { overlayRouteEntry } from "./routes";
+import { overlayRouteEntry, varModesToString } from "./routes";
 
 // Postfixes for special variable names
 export const PREDICTED_SUFFIX = "_predicted";
@@ -898,11 +899,11 @@ export async function addVariableToTraining(group: Group, router: VueRouter) {
     targetName,
     variableNames: training,
   });
-
+  const task = taskResponse.data.task.join(",");
   // update route with training data
-  const entry = overlayRouteEntry(routeGetters.getRoute(store), {
+  let entry = overlayRouteEntry(routeGetters.getRoute(store), {
     training: training.join(","),
-    task: taskResponse.data.task.join(","),
+    task: task,
   });
 
   if (isTimeseries && isCategorical) {
@@ -922,7 +923,28 @@ export async function addVariableToTraining(group: Group, router: VueRouter) {
       grouping,
     });
   }
+  if (task.includes(TaskTypes.REMOTE_SENSING)) {
+    const available = routeGetters.getAvailableVariables(store);
+    const varModesMap = routeGetters.getDecodedVarModes(store);
+    training.forEach((v) => {
+      varModesMap.set(v, SummaryMode.MultiBandImage);
+    });
 
+    available.forEach((v) => {
+      varModesMap.set(v.key, SummaryMode.MultiBandImage);
+    });
+
+    varModesMap.set(
+      routeGetters.getRouteTargetVariable(store),
+      SummaryMode.MultiBandImage
+    );
+    const varModesStr = varModesToString(varModesMap);
+    entry = overlayRouteEntry(routeGetters.getRoute(store), {
+      training: training.join(","),
+      task: task,
+      varModes: varModesStr,
+    });
+  }
   router.push(entry).catch((err) => console.warn(err));
 }
 export function getAllVariablesSummaries(

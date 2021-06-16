@@ -95,6 +95,8 @@ export class EventList {
     QUERY_CHANGE_EVENT: "lex-query",
   };
   static readonly MODEL = {
+    // create model based on solutionRequestMsg
+    CREATE_EVENT: "create-model",
     // save model event typically happens on result screen
     SAVE_EVENT: "save",
     // delete the model

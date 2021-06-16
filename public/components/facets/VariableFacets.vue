@@ -83,6 +83,7 @@
               :log-activity="logActivity"
               :datasetName="datasetName"
               :include="include"
+              :html="html"
               :expanded="expandGeoAndTimeseriesFacets"
               @histogram-numerical-click="onNumericalClick"
               @histogram-range-change="onRangeChange"

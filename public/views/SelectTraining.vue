@@ -104,7 +104,7 @@
             @tile-clicked="onTileClick"
             @fetch-timeseries="fetchTimeseries"
           />
-          <create-solutions-form class="select-create-solutions" />
+          <create-solutions-form class="select-create-solutions" handle-input />
         </div>
       </div>
     </div>
@@ -362,8 +362,8 @@ export default Vue.extend({
     },
   },
 
-  beforeMount() {
-    viewActions.fetchSelectTrainingData(this.$store, false);
+  async beforeMount() {
+    await viewActions.fetchSelectTrainingData(this.$store, false);
     viewActions.updateHighlight(this.$store);
   },
   methods: {

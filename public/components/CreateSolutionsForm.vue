@@ -75,6 +75,7 @@ import {
   groupFiltersBySet,
 } from "../util/filters";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
+import { EventList } from "../util/events";
 import Vue from "vue";
 
 export default Vue.extend({
@@ -84,7 +85,9 @@ export default Vue.extend({
     ErrorModal,
     SettingsModal,
   },
-
+  props: {
+    handleInput: { type: Boolean as () => boolean, default: false },
+  },
   data() {
     return {
       pending: false,
@@ -186,7 +189,10 @@ export default Vue.extend({
       // Add optional values to the request
       const positiveLabel = routeGetters.getPositiveLabel(this.$store);
       if (positiveLabel) solutionRequestMsg.positiveLabel = positiveLabel;
-
+      if (!this.handleInput) {
+        this.$emit(EventList.MODEL.CREATE_EVENT, solutionRequestMsg);
+        return;
+      }
       requestActions
         .createSolutionRequest(this.$store, solutionRequestMsg)
         .then((res: Solution) => {
