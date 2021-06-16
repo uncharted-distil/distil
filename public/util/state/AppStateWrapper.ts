@@ -17,18 +17,25 @@ import { getAllVariablesSummaries, getVariableSummariesByState } from "../data";
 import { Dictionary } from "../dict";
 import { Filter } from "../filters";
 import { getSolutionById } from "../solutions";
-import { resultSummariesToVariables } from "../summaries";
+import {
+  getConfidenceSummary,
+  getCorrectnessSummary,
+  getRankingSummary,
+  getResidualSummary,
+  getSolutionResultSummary,
+  resultSummariesToVariables,
+} from "../summaries";
 
 export interface BaseState {
   // gets basic variables
   getVariables(): Variable[];
   // basic data for tables and maps
   getData(include?: boolean): TableRow[];
-  // variable summaries
-  getVariableSummaries(include?: boolean): VariableSummary[];
-  // special summaries, in select view it is the training variables
-  // in the result screen it is the result summaries, prediction it is the prediction summaries
-  // getSecondaryVariableSummaries(include?: boolean): VariableSummary[];
+  // base variable summaries is the standard variables in a view. For select it is the available variables,
+  //for result it is the training variables
+  getBaseVariableSummaries(include?: boolean): VariableSummary[];
+  // this is the trainingVariables, result summaries, prediction summaries
+  getSecondaryVariableSummaries(include?: boolean): VariableSummary[];
   // map baseline data
   getMapBaseline(): TableRow[];
   // drill down baseline for map
@@ -48,6 +55,19 @@ export interface BaseState {
 }
 
 export class SelectViewState implements BaseState {
+  // helper function for getting variable summary dictionary
+  getSummaryDictionary(
+    include?: boolean
+  ): Dictionary<Dictionary<VariableSummary>> {
+    return include
+      ? datasetGetters.getIncludedVariableSummariesDictionary(store)
+      : datasetGetters.getExcludedVariableSummariesDictionary(store);
+  }
+  getSecondaryVariableSummaries(include?: boolean): VariableSummary[] {
+    const varDict = this.getSummaryDictionary(include);
+    const variables = routeGetters.getTrainingVariables(store);
+    return getAllVariablesSummaries(variables, varDict);
+  }
   fetchMapDrillDown(filter: Filter): Promise<Array<void>> {
     return viewActions.updateAreaOfInterest(store, filter);
   }
@@ -69,11 +89,10 @@ export class SelectViewState implements BaseState {
     return res ?? [];
   }
   // returns all variable summaries based on this.getVariables()
-  getVariableSummaries(include: boolean): VariableSummary[] {
-    const varDict = include
-      ? datasetGetters.getIncludedVariableSummariesDictionary(store)
-      : datasetGetters.getExcludedVariableSummariesDictionary(store);
-    return getAllVariablesSummaries(this.getVariables(), varDict);
+  getBaseVariableSummaries(include: boolean): VariableSummary[] {
+    const varDict = this.getSummaryDictionary(include);
+    const variables = routeGetters.getAvailableVariables(store);
+    return getAllVariablesSummaries(variables, varDict);
   }
   // returns select view map baseline
   getMapBaseline(): TableRow[] {
@@ -112,6 +131,31 @@ export class SelectViewState implements BaseState {
 }
 
 export class ResultViewState implements BaseState {
+  getSecondaryVariableSummaries(): VariableSummary[] {
+    const currentSummaries = [];
+    const solution = requestGetters.getActiveSolution(store);
+    const predictedSummary = getSolutionResultSummary(solution.resultId);
+    if (predictedSummary) {
+      currentSummaries.push(predictedSummary);
+    }
+    const residualSummary = getResidualSummary(solution?.resultId);
+    if (residualSummary) {
+      currentSummaries.push(residualSummary);
+    }
+    const correctnessSummary = getCorrectnessSummary(solution?.resultId);
+    if (correctnessSummary) {
+      currentSummaries.push(correctnessSummary);
+    }
+    const confidenceSummary = getConfidenceSummary(solution?.resultId);
+    if (confidenceSummary) {
+      currentSummaries.push(confidenceSummary);
+    }
+    const rankingSummary = getRankingSummary(solution?.resultId);
+    if (rankingSummary) {
+      currentSummaries.push(rankingSummary);
+    }
+    return currentSummaries;
+  }
   fetchMapDrillDown(filter: Filter): Promise<Array<void>> {
     return viewActions.updateResultAreaOfInterest(store, filter);
   }
@@ -121,7 +165,7 @@ export class ResultViewState implements BaseState {
   getData(): TableRow[] {
     return resultGetters.getIncludedResultTableDataItems(store);
   }
-  getVariableSummaries(): VariableSummary[] {
+  getBaseVariableSummaries(): VariableSummary[] {
     const summaryDictionary = resultGetters.getTrainingSummariesDictionary(
       store
     );

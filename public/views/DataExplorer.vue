@@ -192,8 +192,10 @@ import {
   viewActions,
   datasetActions,
   datasetGetters,
+  requestActions,
 } from "../store";
 import {
+  DataMode,
   Highlight,
   RowSelection,
   TableColumn,
@@ -218,7 +220,7 @@ import {
   clearHighlight,
   createFiltersFromHighlights,
 } from "../util/highlights";
-import { overlayRouteEntry } from "../util/routes";
+import { overlayRouteEntry, varModesToString } from "../util/routes";
 import {
   clearRowSelection,
   getNumIncludedRows,
@@ -236,8 +238,13 @@ import {
   filterViews,
 } from "../util/view";
 import { Dictionary } from "vue-router/types/router";
-import { BaseState, SelectViewState } from "../util/state/AppStateWrapper";
+import {
+  BaseState,
+  ResultViewState,
+  SelectViewState,
+} from "../util/state/AppStateWrapper";
 import { SolutionRequestMsg } from "../store/requests/actions";
+import { Solution } from "../store/requests";
 
 const ACTIONS = [
   { name: "Create New Variable", icon: "fa fa-plus", paneId: "add" },
@@ -540,6 +547,32 @@ export default Vue.extend({
     },
     onModelCreation(solutionRequestMsg: SolutionRequestMsg) {
       // handle solutionRequestMsg
+      requestActions
+        .createSolutionRequest(this.$store, solutionRequestMsg)
+        .then(async (res: Solution) => {
+          const dataMode = routeGetters.getDataMode(this.$store);
+          const dataModeDefault = dataMode ? dataMode : DataMode.Default;
+          // transition to result screen
+          const entry = overlayRouteEntry(this.$route, {
+            dataset: routeGetters.getRouteDataset(this.$store),
+            target: routeGetters.getRouteTargetVariable(this.$store),
+            solutionId: res.solutionId,
+            task: routeGetters.getRouteTask(this.$store),
+            dataMode: dataModeDefault,
+            varModes: varModesToString(
+              routeGetters.getDecodedVarModes(this.$store)
+            ),
+            modelLimit: routeGetters.getModelLimit(this.$store),
+            modelTimeLimit: routeGetters.getModelTimeLimit(this.$store),
+            modelQuality: routeGetters.getModelQuality(this.$store),
+          });
+          this.$router.push(entry).catch((err) => console.warn(err));
+          this.setState(new ResultViewState());
+          await this.state.fetchVariables();
+        })
+        .catch((err) => {
+          console.error(err);
+        });
       return;
     },
     onExcludeClick() {
