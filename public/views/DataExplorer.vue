@@ -143,22 +143,21 @@
         </b-button-toolbar>
         <create-solutions-form
           v-if="isCreateModelPossible"
+          ref="model-creation-form"
           class="ml-2"
           @create-model="onModelCreation"
         />
       </footer>
     </main>
-    <left-side-panel v-if="toggleAction.outcome" :panel-title="currentAction">
+    <left-side-panel
+      v-if="toggleAction.outcome"
+      panel-title="Outcome Variables"
+      class="overflow-auto"
+    >
       <template v-if="hasNoVariables">
         <p>No Outcome Variables available.</p>
       </template>
-      <facet-list-pane
-        v-else
-        :variables="secondaryVariables"
-        :summaries="secondarySummaries"
-        :enable-color-scales="geoVarExists"
-        :include="include"
-      />
+      <result-facets v-else />
     </left-side-panel>
     <status-sidebar />
     <status-panel />
@@ -184,6 +183,7 @@ import SelectGraphView from "../components/SelectGraphView.vue";
 import SelectTimeseriesView from "../components/SelectTimeseriesView.vue";
 import StatusPanel from "../components/StatusPanel.vue";
 import StatusSidebar from "../components/StatusSidebar.vue";
+import ResultFacets from "../components/ResultFacets.vue";
 
 // Store
 import {
@@ -285,6 +285,7 @@ export default Vue.extend({
     SearchBar,
     SelectDataTable,
     GeoPlot,
+    ResultFacets,
     SelectGraphView,
     SelectTimeseriesView,
     StatusPanel,
@@ -584,7 +585,11 @@ export default Vue.extend({
           });
           this.$router.push(entry).catch((err) => console.warn(err));
           this.setState(new ResultViewState());
-          await this.state.fetchVariables();
+          await this.state.init();
+          const modelCreationRef = this.$refs[
+            "model-creation-form"
+          ] as InstanceType<typeof CreateSolutionsForm>;
+          modelCreationRef.pending = false;
         })
         .catch((err) => {
           console.error(err);

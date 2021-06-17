@@ -51,6 +51,7 @@ export interface BaseState {
   // gets table data fields
   getFields(include?: boolean): Dictionary<TableColumn>;
   /******Fetch Functions**********/
+  init(): Promise<void>;
   fetchVariables(): Promise<unknown>;
   fetchData(): Promise<unknown>;
   fetchVariableSummaries(): Promise<unknown>;
@@ -59,6 +60,11 @@ export interface BaseState {
 }
 
 export class SelectViewState implements BaseState {
+  async init(): Promise<void> {
+    await this.fetchVariables();
+    await this.fetchMapBaseline();
+    return;
+  }
   getSecondaryVariables(): Variable[] {
     return routeGetters.getAvailableVariables(store);
   }
@@ -140,6 +146,11 @@ export class SelectViewState implements BaseState {
 }
 
 export class ResultViewState implements BaseState {
+  async init(): Promise<void> {
+    await this.fetchVariables();
+    await this.fetchMapBaseline();
+    return;
+  }
   getSecondaryVariables(): Variable[] {
     const solutionID = routeGetters.getRouteSolutionId(store);
     const solution = getSolutionById(
