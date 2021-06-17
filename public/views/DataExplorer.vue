@@ -21,6 +21,7 @@
       :actions="activeActions"
       :current-action="currentAction"
       @set-active-pane="onSetActive"
+      @toggle-action="onToggleAction"
     />
 
     <left-side-panel :panel-title="currentAction">
@@ -34,6 +35,8 @@
           v-else
           :variables="activeVariables"
           :enable-color-scales="geoVarExists"
+          :include="include"
+          :summaries="summaries"
         />
       </template>
     </left-side-panel>
@@ -100,6 +103,8 @@
           :timeseries-info="timeseries"
           :data-items="items"
           :baseline-items="baselineItems"
+          :summaries="summaries"
+          @tile-clicked="onTileClick"
         />
       </section>
 
@@ -143,22 +148,17 @@
         />
       </footer>
     </main>
-    <left-side-panel
-      v-if="activePane === 'outcome'"
-      :panel-title="currentAction"
-    >
-      <add-variable-pane v-if="activePane === 'add'" />
-      <template v-else>
-        <template v-if="hasNoVariables">
-          <p v-if="activePane === 'selected'">Select a variable to explore.</p>
-          <p v-else>No Outcome Variables available.</p>
-        </template>
-        <facet-list-pane
-          v-else
-          :variables="activeVariables"
-          :enable-color-scales="geoVarExists"
-        />
+    <left-side-panel v-if="toggleAction.outcome" :panel-title="currentAction">
+      <template v-if="hasNoVariables">
+        <p>No Outcome Variables available.</p>
       </template>
+      <facet-list-pane
+        v-else
+        :variables="secondaryVariables"
+        :summaries="secondarySummaries"
+        :enable-color-scales="geoVarExists"
+        :include="include"
+      />
     </left-side-panel>
     <status-sidebar />
     <status-panel />
@@ -191,14 +191,17 @@ import {
   viewActions,
   datasetActions,
   datasetGetters,
+  requestActions,
 } from "../store";
 import {
+  DataMode,
   Highlight,
   RowSelection,
   TableColumn,
   TableRow,
   TimeSeries,
   Variable,
+  VariableSummary,
 } from "../store/dataset/index";
 import {
   DATA_EXPLORER_VAR_INSTANCE,
@@ -210,13 +213,14 @@ import { getters as routeGetters } from "../store/route/module";
 import {
   addFilterToRoute,
   EXCLUDE_FILTER,
+  Filter,
   INCLUDE_FILTER,
 } from "../util/filters";
 import {
   clearHighlight,
   createFiltersFromHighlights,
 } from "../util/highlights";
-import { overlayRouteEntry } from "../util/routes";
+import { overlayRouteEntry, varModesToString } from "../util/routes";
 import {
   clearRowSelection,
   getNumIncludedRows,
@@ -234,8 +238,14 @@ import {
   filterViews,
 } from "../util/view";
 import { Dictionary } from "vue-router/types/router";
-import { BaseState, SelectViewState } from "../util/state/AppStateWrapper";
+import {
+  BaseState,
+  ResultViewState,
+  SelectViewState,
+} from "../util/state/AppStateWrapper";
 import { SolutionRequestMsg } from "../store/requests/actions";
+import { Solution } from "../store/requests";
+import { EI } from "../util/events";
 
 const ACTIONS = [
   { name: "Create New Variable", icon: "fa fa-plus", paneId: "add" },
@@ -253,7 +263,12 @@ const ACTIONS = [
   { name: "Unknown Variables", icon: "fa fa-question", paneId: "unknown" },
   { name: "Target Variable", icon: "fa fa-crosshairs", paneId: "target" },
   { name: "Training Variables", icon: "fa fa-asterisk", paneId: "training" },
-  { name: "Outcome Variables", icon: "fas fa-poll", paneId: "outcome" },
+  {
+    name: "Outcome Variables",
+    icon: "fas fa-poll",
+    paneId: "outcome",
+    toggle: true,
+  },
 ] as Action[];
 
 export default Vue.extend({
@@ -285,6 +300,7 @@ export default Vue.extend({
       metaTypes: Object.keys(META_TYPES),
       include: true,
       state: new SelectViewState(),
+      toggleAction: { outcome: false },
     };
   },
 
@@ -437,6 +453,9 @@ export default Vue.extend({
     variablesPerActions() {
       const variables = {};
       this.availableActions.forEach((action) => {
+        if (!!action.toggle) {
+          return;
+        }
         if (action.paneId === "add") variables[action.paneId] = null;
         else if (action.paneId === "available") {
           variables[action.paneId] = this.variables;
@@ -446,8 +465,6 @@ export default Vue.extend({
           variables[action.paneId] = this.variables.filter((variable) =>
             this.training.includes(variable.key)
           );
-        } else if (action.paneId === "outcome") {
-          variables[action.paneId] = [];
         } else {
           variables[action.paneId] = this.variables.filter((variable) =>
             META_TYPES[action.paneId].includes(variable.colType)
@@ -462,7 +479,7 @@ export default Vue.extend({
       return [...new Set(this.variables.map((v) => v.colType))];
     },
     geoVarExists(): boolean {
-      const varSums = this.state.getVariableSummaries(this.include);
+      const varSums = this.summaries;
       return varSums.some((v) => {
         return isGeoLocatedType(v.type);
       });
@@ -483,6 +500,15 @@ export default Vue.extend({
     },
     baselineItems(): TableRow[] {
       return this.state.getMapBaseline();
+    },
+    summaries(): VariableSummary[] {
+      return this.state.getAllVariableSummaries();
+    },
+    secondarySummaries(): VariableSummary[] {
+      return this.state.getSecondaryVariableSummaries();
+    },
+    secondaryVariables(): Variable[] {
+      return this.state.getSecondaryVariables();
     },
   },
 
@@ -507,6 +533,11 @@ export default Vue.extend({
       if (n === o) return;
       viewActions.updateDataExplorerData(this.$store);
     },
+    geoVarExists() {
+      const route = routeGetters.getRoute(this.$store);
+      const entry = overlayRouteEntry(route, { hasGeoData: this.geoVarExists });
+      this.$router.push(entry).catch((err) => console.warn(err));
+    },
   },
 
   async beforeMount() {
@@ -522,7 +553,9 @@ export default Vue.extend({
 
   methods: {
     capitalize,
-
+    onToggleAction(action: string) {
+      this.toggleAction[action] = !this.toggleAction[action];
+    },
     /* When the user request to fetch a different size of data. */
     onDataSizeSubmit(dataSize: number) {
       this.updateRoute({ dataSize });
@@ -530,6 +563,32 @@ export default Vue.extend({
     },
     onModelCreation(solutionRequestMsg: SolutionRequestMsg) {
       // handle solutionRequestMsg
+      requestActions
+        .createSolutionRequest(this.$store, solutionRequestMsg)
+        .then(async (res: Solution) => {
+          const dataMode = routeGetters.getDataMode(this.$store);
+          const dataModeDefault = dataMode ? dataMode : DataMode.Default;
+          // transition to result screen
+          const entry = overlayRouteEntry(this.$route, {
+            dataset: routeGetters.getRouteDataset(this.$store),
+            target: routeGetters.getRouteTargetVariable(this.$store),
+            solutionId: res.solutionId,
+            task: routeGetters.getRouteTask(this.$store),
+            dataMode: dataModeDefault,
+            varModes: varModesToString(
+              routeGetters.getDecodedVarModes(this.$store)
+            ),
+            modelLimit: routeGetters.getModelLimit(this.$store),
+            modelTimeLimit: routeGetters.getModelTimeLimit(this.$store),
+            modelQuality: routeGetters.getModelQuality(this.$store),
+          });
+          this.$router.push(entry).catch((err) => console.warn(err));
+          this.setState(new ResultViewState());
+          await this.state.fetchVariables();
+        })
+        .catch((err) => {
+          console.error(err);
+        });
       return;
     },
     onExcludeClick() {
@@ -600,6 +659,22 @@ export default Vue.extend({
         pane: activePane,
         [`${DATA_EXPLORER_VAR_INSTANCE}${ROUTE_PAGE_SUFFIX}`]: 1,
       });
+    },
+    async onTileClick(data: EI.MAP.TileClickData) {
+      // filter for area of interests
+      const filter: Filter = {
+        displayName: data.displayName,
+        key: data.key,
+        maxX: data.bounds[1][1],
+        maxY: data.bounds[0][0],
+        minX: data.bounds[0][1],
+        minY: data.bounds[1][0],
+        mode: EXCLUDE_FILTER,
+        type: data.type,
+        set: "",
+      };
+      // fetch area of interests
+      this.state.fetchMapDrillDown(filter);
     },
     setState(state: BaseState) {
       this.state = state;

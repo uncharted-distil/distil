@@ -22,13 +22,14 @@
     enable-type-change
     enable-type-filtering
     ignore-highlights
+    :include="include"
     :enable-color-scales="enableColorScales"
     :facet-count="searchedActiveVariables.length"
     :html="buttons"
     :instance-name="instanceName"
     :log-activity="problemDefinition"
     :rows-per-page="numRowsPerPage"
-    :summaries="summaries"
+    :summaries="activeSummaries"
     @search="onSearch"
   />
 </template>
@@ -41,6 +42,7 @@ import VariableFacets from "../../components/facets/VariableFacets.vue";
 
 import {
   SummaryMode,
+  TaskTypes,
   Variable,
   VariableSummary,
 } from "../../store/dataset/index";
@@ -53,11 +55,7 @@ import { DATA_EXPLORER_VAR_INSTANCE } from "../../store/route/index";
 import { getters as routeGetters } from "../../store/route/module";
 import { actions as viewActions } from "../../store/view/module";
 
-import {
-  getVariableSummariesByState,
-  NUM_PER_PAGE,
-  searchVariables,
-} from "../../util/data";
+import { NUM_PER_PAGE, searchVariables } from "../../util/data";
 import { Group } from "../../util/facets";
 import {
   overlayRouteEntry,
@@ -79,7 +77,12 @@ export default Vue.extend({
       type: Array as () => Variable[],
       default: () => [] as Variable[],
     },
+    summaries: {
+      type: Array as () => VariableSummary[],
+      default: () => [] as VariableSummary[],
+    },
     enableColorScales: { type: Boolean as () => boolean, default: false },
+    include: { type: Boolean as () => boolean, default: true },
   },
 
   data() {
@@ -117,7 +120,9 @@ export default Vue.extend({
         return container;
       };
     },
-
+    dataset(): string {
+      return routeGetters.getRouteDataset(this.$store);
+    },
     explore(): string[] {
       return routeGetters.getExploreVariables(this.$store);
     },
@@ -145,18 +150,16 @@ export default Vue.extend({
       return searchVariables(activeVariables, this.search);
     },
 
-    summaries(): VariableSummary[] {
-      const summaryDictionary = datasetGetters.getVariableSummariesDictionary(
-        this.$store
+    activeSummaries(): VariableSummary[] {
+      const searchedMap = new Map(
+        this.searchedActiveVariables.map((v) => {
+          return [v.key, true];
+        })
       );
 
-      const currentSummaries = getVariableSummariesByState(
-        this.varsPage,
-        this.numRowsPerPage,
-        this.searchedActiveVariables,
-        summaryDictionary
-      );
-
+      const currentSummaries = this.summaries.filter((s) => {
+        return searchedMap.has(s.key);
+      });
       return currentSummaries;
     },
 
@@ -299,12 +302,10 @@ export default Vue.extend({
       const varModesMap = routeGetters.getDecodedVarModes(this.$store);
       args.varModes = varModesToString(varModesMap);
 
-      const dataset = routeGetters.getRouteDataset(this.$store);
-
       // Fetch the task
       try {
         const response = await datasetActions.fetchTask(this.$store, {
-          dataset,
+          dataset: this.dataset,
           targetName: target,
           variableNames: [],
         });
@@ -334,16 +335,46 @@ export default Vue.extend({
 
       this.updateRoute(args);
 
-      datasetActions.fetchVariableRankings(this.$store, { dataset, target });
+      datasetActions.fetchVariableRankings(this.$store, {
+        dataset: this.dataset,
+        target,
+      });
     },
 
-    updateTraining(variable: string): void {
+    async updateTraining(variable: string): Promise<void> {
       const args = {} as RouteArgs;
       if (this.isTraining(variable)) {
         args.training = this.training.filter((v) => v !== variable).join(",");
       } else {
-        args.training = this.training.concat([variable]).join(",");
+        const training = this.training.concat([variable]);
+        args.training = training.join(",");
+        const taskResponse = await datasetActions.fetchTask(this.$store, {
+          dataset: this.dataset,
+          targetName: this.target,
+          variableNames: training,
+        });
+        const task = taskResponse.data.task.join(",");
+        args.task = task;
+        if (task.includes(TaskTypes.REMOTE_SENSING)) {
+          const available = routeGetters.getAvailableVariables(this.$store);
+          const varModesMap = routeGetters.getDecodedVarModes(this.$store);
+          training.forEach((v) => {
+            varModesMap.set(v, SummaryMode.MultiBandImage);
+          });
+
+          available.forEach((v) => {
+            varModesMap.set(v.key, SummaryMode.MultiBandImage);
+          });
+
+          varModesMap.set(
+            routeGetters.getRouteTargetVariable(this.$store),
+            SummaryMode.MultiBandImage
+          );
+          const varModesStr = varModesToString(varModesMap);
+          args.varModes = varModesStr;
+        }
       }
+
       this.updateRoute(args);
     },
 
