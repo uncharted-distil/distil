@@ -22,13 +22,14 @@
     enable-type-change
     enable-type-filtering
     ignore-highlights
+    :include="include"
     :enable-color-scales="enableColorScales"
     :facet-count="searchedActiveVariables.length"
     :html="buttons"
     :instance-name="instanceName"
     :log-activity="problemDefinition"
     :rows-per-page="numRowsPerPage"
-    :summaries="summaries"
+    :summaries="activeSummaries"
     @search="onSearch"
   />
 </template>
@@ -54,11 +55,7 @@ import { DATA_EXPLORER_VAR_INSTANCE } from "../../store/route/index";
 import { getters as routeGetters } from "../../store/route/module";
 import { actions as viewActions } from "../../store/view/module";
 
-import {
-  getVariableSummariesByState,
-  NUM_PER_PAGE,
-  searchVariables,
-} from "../../util/data";
+import { NUM_PER_PAGE, searchVariables } from "../../util/data";
 import { Group } from "../../util/facets";
 import {
   overlayRouteEntry,
@@ -80,7 +77,12 @@ export default Vue.extend({
       type: Array as () => Variable[],
       default: () => [] as Variable[],
     },
+    summaries: {
+      type: Array as () => VariableSummary[],
+      default: () => [] as VariableSummary[],
+    },
     enableColorScales: { type: Boolean as () => boolean, default: false },
+    include: { type: Boolean as () => boolean, default: true },
   },
 
   data() {
@@ -148,18 +150,16 @@ export default Vue.extend({
       return searchVariables(activeVariables, this.search);
     },
 
-    summaries(): VariableSummary[] {
-      const summaryDictionary = datasetGetters.getVariableSummariesDictionary(
-        this.$store
+    activeSummaries(): VariableSummary[] {
+      const searchedMap = new Map(
+        this.searchedActiveVariables.map((v) => {
+          return [v.key, true];
+        })
       );
 
-      const currentSummaries = getVariableSummariesByState(
-        this.varsPage,
-        this.numRowsPerPage,
-        this.searchedActiveVariables,
-        summaryDictionary
-      );
-
+      const currentSummaries = this.summaries.filter((s) => {
+        return searchedMap.has(s.key);
+      });
       return currentSummaries;
     },
 

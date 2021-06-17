@@ -19,7 +19,7 @@
   <nav class="action-column-container">
     <ul class="action-column-nav-bar" role="tablist">
       <li
-        v-for="(action, index) in actions"
+        v-for="(action, index) in baseActions"
         :key="index"
         :title="action.name"
         :data-count="action.count"
@@ -27,8 +27,25 @@
         <b-button
           role="tab"
           data-toggle="tab"
+          class="box-shadow-none"
           :variant="action.name === currentAction ? 'primary' : 'light'"
           @click.stop.prevent="setActive(action.name)"
+        >
+          <i :class="action.icon" />
+        </b-button>
+      </li>
+      <li
+        v-for="action in toggleActions"
+        :key="action.paneId"
+        :title="action.name"
+        :data-count="action.count"
+      >
+        <b-button
+          role="tab"
+          data-toggle="tab"
+          variant="light"
+          class="box-shadow-none"
+          @click.stop.prevent="toggle($event, action.paneId)"
         >
           <i :class="action.icon" />
         </b-button>
@@ -45,17 +62,35 @@ export interface Action {
   icon: string;
   paneId: string;
   count?: number;
+  toggle?: boolean;
 }
 
 export default Vue.extend({
   name: "ActionColumn",
 
   props: {
-    actions: { type: Array as () => Action[], default: () => [] },
+    actions: { type: Array as () => Action[], default: () => [] as Action[] },
     currentAction: { type: String, default: "" },
   },
-
+  computed: {
+    toggleActions(): Action[] {
+      return this.actions.filter((a) => {
+        return !!a.toggle;
+      });
+    },
+    baseActions(): Action[] {
+      return this.actions.filter((a) => {
+        return !a.toggle;
+      });
+    },
+  },
   methods: {
+    toggle(event: MouseEvent, actionName: string): void {
+      const button = event.currentTarget as HTMLElement;
+      button.classList.toggle("btn-light");
+      button.classList.toggle("btn-primary");
+      this.$emit("toggle-action", actionName);
+    },
     setActive(actionName: string): void {
       // If the action is currently selected, pass ''
       // to signify it should be unselected.  Otherwise, pass
@@ -115,5 +150,8 @@ export default Vue.extend({
 .action-column-nav-bar button {
   text-align: left;
   width: var(--width);
+}
+.box-shadow-none {
+  box-shadow: none !important;
 }
 </style>

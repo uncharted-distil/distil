@@ -29,13 +29,17 @@ import {
 export interface BaseState {
   // gets basic variables
   getVariables(): Variable[];
+  // gets secondary variables related to secondary variableSummaries
+  getSecondaryVariables(): Variable[];
   // basic data for tables and maps
   getData(include?: boolean): TableRow[];
   // base variable summaries is the standard variables in a view. For select it is the available variables,
   //for result it is the training variables
   getBaseVariableSummaries(include?: boolean): VariableSummary[];
-  // this is the trainingVariables, result summaries, prediction summaries
+  // this is the availableVariables, result summaries, prediction summaries
   getSecondaryVariableSummaries(include?: boolean): VariableSummary[];
+  // allSummaries
+  getAllVariableSummaries(include?: boolean): VariableSummary[];
   // map baseline data
   getMapBaseline(): TableRow[];
   // drill down baseline for map
@@ -55,17 +59,20 @@ export interface BaseState {
 }
 
 export class SelectViewState implements BaseState {
-  // helper function for getting variable summary dictionary
-  getSummaryDictionary(
-    include?: boolean
-  ): Dictionary<Dictionary<VariableSummary>> {
-    return include
+  getSecondaryVariables(): Variable[] {
+    return routeGetters.getAvailableVariables(store);
+  }
+  getAllVariableSummaries(include?: boolean): VariableSummary[] {
+    const varDict = include
       ? datasetGetters.getIncludedVariableSummariesDictionary(store)
       : datasetGetters.getExcludedVariableSummariesDictionary(store);
+    return getAllVariablesSummaries(this.getLexBarVariables(), varDict);
   }
   getSecondaryVariableSummaries(include?: boolean): VariableSummary[] {
-    const varDict = this.getSummaryDictionary(include);
-    const variables = routeGetters.getTrainingVariables(store);
+    const varDict = include
+      ? datasetGetters.getIncludedVariableSummariesDictionary(store)
+      : datasetGetters.getExcludedVariableSummariesDictionary(store);
+    const variables = routeGetters.getAvailableVariables(store);
     return getAllVariablesSummaries(variables, varDict);
   }
   fetchMapDrillDown(filter: Filter): Promise<Array<void>> {
@@ -88,10 +95,12 @@ export class SelectViewState implements BaseState {
       : datasetGetters.getExcludedTableDataItems(store);
     return res ?? [];
   }
-  // returns all variable summaries based on this.getVariables()
+  // returns training variables
   getBaseVariableSummaries(include: boolean): VariableSummary[] {
-    const varDict = this.getSummaryDictionary(include);
-    const variables = routeGetters.getAvailableVariables(store);
+    const varDict = include
+      ? datasetGetters.getIncludedVariableSummariesDictionary(store)
+      : datasetGetters.getExcludedVariableSummariesDictionary(store);
+    const variables = routeGetters.getTrainingVariables(store);
     return getAllVariablesSummaries(variables, varDict);
   }
   // returns select view map baseline
@@ -131,6 +140,27 @@ export class SelectViewState implements BaseState {
 }
 
 export class ResultViewState implements BaseState {
+  getSecondaryVariables(): Variable[] {
+    const solutionID = routeGetters.getRouteSolutionId(store);
+    const solution = getSolutionById(
+      requestGetters.getRelevantSolutions(store),
+      solutionID
+    );
+    return resultSummariesToVariables(solution?.resultId);
+  }
+  getAllVariableSummaries(): VariableSummary[] {
+    let res = [];
+    const secondVarSums = this.getSecondaryVariableSummaries();
+    const baseVarSums = this.getBaseVariableSummaries();
+    if (secondVarSums.length) {
+      res = res.concat(secondVarSums);
+    }
+    if (baseVarSums.length) {
+      res = res.concat(baseVarSums);
+    }
+    return res;
+  }
+
   getSecondaryVariableSummaries(): VariableSummary[] {
     const currentSummaries = [];
     const solution = requestGetters.getActiveSolution(store);
