@@ -43,9 +43,9 @@
         <b-button
           role="tab"
           data-toggle="tab"
-          variant="light"
+          :variant="toggleColor(action.toggle)"
           class="box-shadow-none"
-          @click.stop.prevent="toggle($event, action.paneId)"
+          @click.stop.prevent="toggle(action.paneId)"
         >
           <i :class="action.icon" />
         </b-button>
@@ -56,14 +56,7 @@
 
 <script lang="ts">
 import Vue from "vue";
-
-export interface Action {
-  name: string;
-  icon: string;
-  paneId: string;
-  count?: number;
-  toggle?: boolean;
-}
+import { Action } from "../../util/dataExplorer";
 
 export default Vue.extend({
   name: "ActionColumn",
@@ -80,16 +73,20 @@ export default Vue.extend({
     },
     baseActions(): Action[] {
       return this.actions.filter((a) => {
-        return !a.toggle;
+        return a.toggle === undefined;
       });
     },
   },
   methods: {
-    toggle(event: MouseEvent, actionName: string): void {
-      const button = event.currentTarget as HTMLElement;
-      button.classList.toggle("btn-light");
-      button.classList.toggle("btn-primary");
-      this.$emit("toggle-action", actionName);
+    toggleColor(toggle: boolean): string {
+      return toggle ? "primary" : "light";
+    },
+    toggle(paneId: string): void {
+      const action = this.toggleActions.find((ta) => {
+        return ta.paneId === paneId;
+      });
+      action.toggle = !action.toggle;
+      this.$emit("toggle-action", action.paneId);
     },
     setActive(actionName: string): void {
       // If the action is currently selected, pass ''

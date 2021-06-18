@@ -83,6 +83,7 @@ export default Vue.extend({
     },
     enableColorScales: { type: Boolean as () => boolean, default: false },
     include: { type: Boolean as () => boolean, default: true },
+    enableFooter: { type: Boolean as () => boolean, default: false },
   },
 
   data() {
@@ -94,31 +95,33 @@ export default Vue.extend({
   },
 
   computed: {
-    buttons(): (group: Group) => HTMLElement {
-      return (group: Group) => {
-        const variable = group.key;
+    buttons(): (group: Group) => HTMLElement | null {
+      return !this.enableFooter
+        ? null
+        : (group: Group) => {
+            const variable = group.key;
 
-        // Display and Hide variables in the Data Explorer.
-        const exploreButton = this.displayButton(variable);
+            // Display and Hide variables in the Data Explorer.
+            const exploreButton = this.displayButton(variable);
 
-        // Add/Remove a variable as training.
-        const trainingButton = this.trainingButton(variable);
+            // Add/Remove a variable as training.
+            const trainingButton = this.trainingButton(variable);
 
-        // Add/Remove a variable as target.
-        const targetButton = this.targetButton(variable);
+            // Add/Remove a variable as target.
+            const targetButton = this.targetButton(variable);
 
-        // List of model creation buttons to be added.
-        const buttons = [targetButton, trainingButton].filter((b) => !!b);
-        const modelButtons = document.createElement("div");
-        modelButtons.className = "btn-group ml-auto";
-        modelButtons.append(...buttons);
+            // List of model creation buttons to be added.
+            const buttons = [targetButton, trainingButton].filter((b) => !!b);
+            const modelButtons = document.createElement("div");
+            modelButtons.className = "btn-group ml-auto";
+            modelButtons.append(...buttons);
 
-        // Container to display the buttons with flex.
-        const container = document.createElement("div");
-        container.className = "d-flex";
-        container.append(exploreButton, modelButtons);
-        return container;
-      };
+            // Container to display the buttons with flex.
+            const container = document.createElement("div");
+            container.className = "d-flex";
+            container.append(exploreButton, modelButtons);
+            return container;
+          };
     },
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);

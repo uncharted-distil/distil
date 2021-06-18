@@ -152,10 +152,13 @@ export class ResultViewState implements BaseState {
     return;
   }
   getSecondaryVariables(): Variable[] {
-    const solutionID = routeGetters.getRouteSolutionId(store);
+    const solutionId = routeGetters.getRouteSolutionId(store);
+    if (!solutionId) {
+      return [];
+    }
     const solution = getSolutionById(
       requestGetters.getRelevantSolutions(store),
-      solutionID
+      solutionId
     );
     return resultSummariesToVariables(solution?.resultId);
   }
@@ -175,6 +178,9 @@ export class ResultViewState implements BaseState {
   getSecondaryVariableSummaries(): VariableSummary[] {
     const currentSummaries = [];
     const solution = requestGetters.getActiveSolution(store);
+    if (!solution?.resultId) {
+      return [];
+    }
     const predictedSummary = getSolutionResultSummary(solution.resultId);
     if (predictedSummary) {
       currentSummaries.push(predictedSummary);
@@ -201,9 +207,7 @@ export class ResultViewState implements BaseState {
     return viewActions.updateResultAreaOfInterest(store, filter);
   }
   getVariables(): Variable[] {
-    return requestGetters
-      .getActiveSolutionTrainingVariables(store)
-      .concat([routeGetters.getTargetVariable(store)]);
+    return requestGetters.getActiveSolutionTrainingVariables(store);
   }
   getData(): TableRow[] {
     return resultGetters.getIncludedResultTableDataItems(store);
@@ -213,14 +217,14 @@ export class ResultViewState implements BaseState {
       store
     );
     const variables = this.getVariables();
-    const trainingSummaries = getVariableSummariesByState(
-      0,
-      variables.length,
+    const trainingSummaries = getAllVariablesSummaries(
       variables,
-      summaryDictionary,
-      true
+      summaryDictionary
     );
-
+    const target = routeGetters.getTargetVariableSummaries(store)(true);
+    if (target) {
+      return trainingSummaries.concat(target);
+    }
     return trainingSummaries;
   }
   getMapBaseline(): TableRow[] {
@@ -233,11 +237,17 @@ export class ResultViewState implements BaseState {
     return resultGetters.getAreaOfInterestOuterDataItems(store);
   }
   getLexBarVariables(): Variable[] {
-    const solutionID = routeGetters.getRouteSolutionId(store);
+    const solutionId = routeGetters.getRouteSolutionId(store);
+    if (!solutionId) {
+      return [];
+    }
     const solution = getSolutionById(
       requestGetters.getRelevantSolutions(store),
-      solutionID
+      solutionId
     );
+    if (solution?.resultId) {
+      return [];
+    }
     const resultVariables = resultSummariesToVariables(solution?.resultId);
     return datasetGetters.getAllVariables(store).concat(resultVariables);
   }
