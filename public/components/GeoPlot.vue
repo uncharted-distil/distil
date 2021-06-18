@@ -1343,7 +1343,9 @@ export default Vue.extend({
   color: #000;
   cursor: pointer;
 }
-
+.selection-mode {
+  cursor: cell;
+}
 .geo-close-button:hover {
   background-color: #f4f4f4;
 }

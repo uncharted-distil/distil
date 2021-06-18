@@ -201,7 +201,9 @@ export class ResultViewState implements BaseState {
     return viewActions.updateResultAreaOfInterest(store, filter);
   }
   getVariables(): Variable[] {
-    return requestGetters.getActiveSolutionTrainingVariables(store);
+    return requestGetters
+      .getActiveSolutionTrainingVariables(store)
+      .concat([routeGetters.getTargetVariable(store)]);
   }
   getData(): TableRow[] {
     return resultGetters.getIncludedResultTableDataItems(store);

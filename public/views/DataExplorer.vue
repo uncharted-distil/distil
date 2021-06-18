@@ -18,6 +18,7 @@
 <template>
   <div class="view-container">
     <action-column
+      ref="action-column"
       :actions="activeActions"
       :current-action="currentAction"
       @set-active-pane="onSetActive"
@@ -103,6 +104,7 @@
           :timeseries-info="timeseries"
           :data-items="items"
           :baseline-items="baselineItems"
+          :baseline-map="baselineMap"
           :summaries="summaries"
           @tile-clicked="onTileClick"
         />
@@ -422,7 +424,10 @@ export default Vue.extend({
     spinnerHTML,
 
     target(): Variable {
-      return routeGetters.getTargetVariable(this.$store);
+      const targetName = routeGetters.getRouteTargetVariable(this.$store);
+      return this.variables.find((v) => {
+        return v.colName === targetName;
+      });
     },
 
     totalNumRows(): number {
@@ -499,6 +504,14 @@ export default Vue.extend({
     items(): TableRow[] {
       return this.state.getData(this.include);
     },
+    baselineMap(): Dictionary<number> {
+      const result = {};
+      const base = this.baselineItems ?? [];
+      base.forEach((item, i) => {
+        result[item.d3mIndex] = i;
+      });
+      return result;
+    },
     baselineItems(): TableRow[] {
       return this.state.getMapBaseline();
     },
@@ -525,9 +538,9 @@ export default Vue.extend({
       viewActions.updateDataExplorerData(this.$store);
     },
 
-    highlight(n, o) {
+    highlights(n, o) {
       if (n === o) return;
-      viewActions.updateDataExplorerData(this.$store);
+      this.state.fetchData();
     },
 
     explore(n, o) {
@@ -590,6 +603,7 @@ export default Vue.extend({
             "model-creation-form"
           ] as InstanceType<typeof CreateSolutionsForm>;
           modelCreationRef.pending = false;
+          this.onToggleAction("outcome");
         })
         .catch((err) => {
           console.error(err);
