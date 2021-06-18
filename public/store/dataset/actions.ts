@@ -1131,6 +1131,9 @@ export const actions = {
     });
     const values = await Promise.all(promises);
     values.map((v) => {
+      if (!v) {
+        return;
+      }
       if (v.context) mutator(v.context, v.summary);
     });
   },

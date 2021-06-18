@@ -51,6 +51,7 @@ export interface BaseState {
   // gets table data fields
   getFields(include?: boolean): Dictionary<TableColumn>;
   /******Fetch Functions**********/
+  init(): Promise<void>;
   fetchVariables(): Promise<unknown>;
   fetchData(): Promise<unknown>;
   fetchVariableSummaries(): Promise<unknown>;
@@ -59,6 +60,11 @@ export interface BaseState {
 }
 
 export class SelectViewState implements BaseState {
+  async init(): Promise<void> {
+    await this.fetchVariables();
+    await this.fetchMapBaseline();
+    return;
+  }
   getSecondaryVariables(): Variable[] {
     return routeGetters.getAvailableVariables(store);
   }
@@ -140,11 +146,19 @@ export class SelectViewState implements BaseState {
 }
 
 export class ResultViewState implements BaseState {
+  async init(): Promise<void> {
+    await this.fetchVariables();
+    await this.fetchMapBaseline();
+    return;
+  }
   getSecondaryVariables(): Variable[] {
-    const solutionID = routeGetters.getRouteSolutionId(store);
+    const solutionId = routeGetters.getRouteSolutionId(store);
+    if (!solutionId) {
+      return [];
+    }
     const solution = getSolutionById(
       requestGetters.getRelevantSolutions(store),
-      solutionID
+      solutionId
     );
     return resultSummariesToVariables(solution?.resultId);
   }
@@ -164,6 +178,9 @@ export class ResultViewState implements BaseState {
   getSecondaryVariableSummaries(): VariableSummary[] {
     const currentSummaries = [];
     const solution = requestGetters.getActiveSolution(store);
+    if (!solution?.resultId) {
+      return [];
+    }
     const predictedSummary = getSolutionResultSummary(solution.resultId);
     if (predictedSummary) {
       currentSummaries.push(predictedSummary);
@@ -200,14 +217,14 @@ export class ResultViewState implements BaseState {
       store
     );
     const variables = this.getVariables();
-    const trainingSummaries = getVariableSummariesByState(
-      0,
-      variables.length,
+    const trainingSummaries = getAllVariablesSummaries(
       variables,
-      summaryDictionary,
-      true
+      summaryDictionary
     );
-
+    const target = routeGetters.getTargetVariableSummaries(store)(true);
+    if (target) {
+      return trainingSummaries.concat(target);
+    }
     return trainingSummaries;
   }
   getMapBaseline(): TableRow[] {
@@ -220,11 +237,17 @@ export class ResultViewState implements BaseState {
     return resultGetters.getAreaOfInterestOuterDataItems(store);
   }
   getLexBarVariables(): Variable[] {
-    const solutionID = routeGetters.getRouteSolutionId(store);
+    const solutionId = routeGetters.getRouteSolutionId(store);
+    if (!solutionId) {
+      return [];
+    }
     const solution = getSolutionById(
       requestGetters.getRelevantSolutions(store),
-      solutionID
+      solutionId
     );
+    if (solution?.resultId) {
+      return [];
+    }
     const resultVariables = resultSummariesToVariables(solution?.resultId);
     return datasetGetters.getAllVariables(store).concat(resultVariables);
   }

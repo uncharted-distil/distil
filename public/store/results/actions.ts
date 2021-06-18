@@ -26,7 +26,6 @@ import {
   fetchSolutionResultSummary,
   fetchSummaryExemplars,
   minimumRouteKey,
-  updateSummaries,
   validateArgs,
   VARIABLE_SUMMARY_BASE,
   VARIABLE_SUMMARY_CONFIDENCE,
@@ -849,6 +848,9 @@ export const actions = {
       })
     );
     values.map((v) => {
+      if (!v) {
+        return;
+      }
       const val = v as VariableSummaryResp<ResultsContext>;
       mutations.updateCorrectnessSummaries(val.context, val.summary);
     });

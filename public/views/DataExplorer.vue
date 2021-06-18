@@ -18,6 +18,7 @@
 <template>
   <div class="view-container">
     <action-column
+      ref="action-column"
       :actions="activeActions"
       :current-action="currentAction"
       @set-active-pane="onSetActive"
@@ -37,6 +38,7 @@
           :enable-color-scales="geoVarExists"
           :include="include"
           :summaries="summaries"
+          :enable-footer="config.facetFooterEnabled"
         />
       </template>
     </left-side-panel>
@@ -63,7 +65,7 @@
           </b-tabs>
         </div>
         <b-button
-          v-if="include"
+          v-if="include && config.includeExcludeEnabled"
           class="select-data-action-exclude align-self-center"
           variant="outline-secondary"
           :disabled="isExcludeDisabled"
@@ -79,7 +81,7 @@
           Exclude
         </b-button>
         <b-button
-          v-if="!include"
+          v-if="!include && config.includeExcludeEnabled"
           variant="outline-secondary"
           :disabled="!isFilteringSelection"
           @click="onReincludeClick"
@@ -103,6 +105,7 @@
           :timeseries-info="timeseries"
           :data-items="items"
           :baseline-items="baselineItems"
+          :baseline-map="baselineMap"
           :summaries="summaries"
           @tile-clicked="onTileClick"
         />
@@ -123,7 +126,7 @@
             <strong class="selected-color">selected</strong>
           </template>
         </div>
-        <b-button-toolbar>
+        <b-button-toolbar v-if="config.includeExcludeEnabled">
           <b-button-group class="ml-2 mt-1">
             <b-button
               variant="primary"
@@ -142,23 +145,22 @@
           </b-button-group>
         </b-button-toolbar>
         <create-solutions-form
-          v-if="isCreateModelPossible"
+          v-if="isCreateModelPossible && config.includeExcludeEnabled"
+          ref="model-creation-form"
           class="ml-2"
           @create-model="onModelCreation"
         />
       </footer>
     </main>
-    <left-side-panel v-if="toggleAction.outcome" :panel-title="currentAction">
+    <left-side-panel
+      v-if="toggleAction.outcome"
+      panel-title="Outcome Variables"
+      class="overflow-auto"
+    >
       <template v-if="hasNoVariables">
         <p>No Outcome Variables available.</p>
       </template>
-      <facet-list-pane
-        v-else
-        :variables="secondaryVariables"
-        :summaries="secondarySummaries"
-        :enable-color-scales="geoVarExists"
-        :include="include"
-      />
+      <result-facets v-else />
     </left-side-panel>
     <status-sidebar />
     <status-panel />
@@ -170,7 +172,7 @@ import Vue from "vue";
 import { capitalize, isEmpty, isNil } from "lodash";
 
 // Components
-import ActionColumn, { Action } from "../components/layout/ActionColumn.vue";
+import ActionColumn from "../components/layout/ActionColumn.vue";
 import AddVariablePane from "../components/panel/AddVariablePane.vue";
 import CreateSolutionsForm from "../components/CreateSolutionsForm.vue";
 import DataSize from "../components/buttons/DataSize.vue";
@@ -184,6 +186,7 @@ import SelectGraphView from "../components/SelectGraphView.vue";
 import SelectTimeseriesView from "../components/SelectTimeseriesView.vue";
 import StatusPanel from "../components/StatusPanel.vue";
 import StatusSidebar from "../components/StatusSidebar.vue";
+import ResultFacets from "../components/ResultFacets.vue";
 
 // Store
 import {
@@ -246,30 +249,11 @@ import {
 import { SolutionRequestMsg } from "../store/requests/actions";
 import { Solution } from "../store/requests";
 import { EI } from "../util/events";
-
-const ACTIONS = [
-  { name: "Create New Variable", icon: "fa fa-plus", paneId: "add" },
-  { name: "All Variables", icon: "fa fa-database", paneId: "available" },
-  { name: "Text Variables", icon: "fa fa-font", paneId: "text" },
-  {
-    name: "Categorical Variables",
-    icon: "fa fa-align-left",
-    paneId: "categorical",
-  },
-  { name: "Number Variables", icon: "fa fa-bar-chart", paneId: "number" },
-  { name: "Time Variables", icon: "fa fa-clock-o", paneId: "time" },
-  { name: "Location Variables", icon: "fa fa-map-o", paneId: "location" },
-  { name: "Image Variables", icon: "fa fa-image", paneId: "image" },
-  { name: "Unknown Variables", icon: "fa fa-question", paneId: "unknown" },
-  { name: "Target Variable", icon: "fa fa-crosshairs", paneId: "target" },
-  { name: "Training Variables", icon: "fa fa-asterisk", paneId: "training" },
-  {
-    name: "Outcome Variables",
-    icon: "fas fa-poll",
-    paneId: "outcome",
-    toggle: true,
-  },
-] as Action[];
+import ExplorerConfig, {
+  Action,
+  ResultViewConfig,
+  SelectViewConfig,
+} from "../util/dataExplorer";
 
 export default Vue.extend({
   name: "DataExplorer",
@@ -285,6 +269,7 @@ export default Vue.extend({
     SearchBar,
     SelectDataTable,
     GeoPlot,
+    ResultFacets,
     SelectGraphView,
     SelectTimeseriesView,
     StatusPanel,
@@ -293,7 +278,6 @@ export default Vue.extend({
 
   data() {
     return {
-      actions: ACTIONS,
       activePane: "available",
       activeView: 0, // TABLE_VIEW
       instanceName: DATA_EXPLORER_VAR_INSTANCE,
@@ -301,6 +285,7 @@ export default Vue.extend({
       include: true,
       state: new SelectViewState(),
       toggleAction: { outcome: false },
+      config: new SelectViewConfig(),
     };
   },
 
@@ -330,7 +315,7 @@ export default Vue.extend({
     /* Actions available based on the variables meta types */
     availableActions(): Action[] {
       // Remove the inactive MetaTypes
-      return this.actions.filter(
+      return this.config.actionList.filter(
         (action) => !this.inactiveMetaTypes.includes(action.paneId)
       );
     },
@@ -338,7 +323,7 @@ export default Vue.extend({
     currentAction(): string {
       return (
         this.activePane &&
-        this.actions.find((a) => a.paneId === this.activePane).name
+        this.config.actionList.find((a) => a.paneId === this.activePane).name
       );
     },
 
@@ -498,6 +483,14 @@ export default Vue.extend({
     items(): TableRow[] {
       return this.state.getData(this.include);
     },
+    baselineMap(): Dictionary<number> {
+      const result = {};
+      const base = this.baselineItems ?? [];
+      base.forEach((item, i) => {
+        result[item.d3mIndex] = i;
+      });
+      return result;
+    },
     baselineItems(): TableRow[] {
       return this.state.getMapBaseline();
     },
@@ -524,9 +517,9 @@ export default Vue.extend({
       viewActions.updateDataExplorerData(this.$store);
     },
 
-    highlight(n, o) {
+    highlights(n, o) {
       if (n === o) return;
-      viewActions.updateDataExplorerData(this.$store);
+      this.state.fetchData();
     },
 
     explore(n, o) {
@@ -583,8 +576,14 @@ export default Vue.extend({
             modelQuality: routeGetters.getModelQuality(this.$store),
           });
           this.$router.push(entry).catch((err) => console.warn(err));
+          const modelCreationRef = this.$refs[
+            "model-creation-form"
+          ] as InstanceType<typeof CreateSolutionsForm>;
+          modelCreationRef.pending = false;
+          this.setConfig(new ResultViewConfig());
           this.setState(new ResultViewState());
-          await this.state.fetchVariables();
+          await this.state.init();
+          this.onToggleAction("outcome");
         })
         .catch((err) => {
           console.error(err);
@@ -650,7 +649,8 @@ export default Vue.extend({
 
       let activePane = "available"; // default
       if (actionName !== "") {
-        activePane = this.actions.find((a) => a.name === actionName).paneId;
+        activePane = this.config.actionList.find((a) => a.name === actionName)
+          .paneId;
       }
       this.activePane = activePane;
 
@@ -678,6 +678,9 @@ export default Vue.extend({
     },
     setState(state: BaseState) {
       this.state = state;
+    },
+    setConfig(config: ExplorerConfig) {
+      this.config = config;
     },
     setIncludedActive() {
       this.include = true;
