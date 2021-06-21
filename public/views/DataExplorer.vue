@@ -22,7 +22,6 @@
       :actions="activeActions"
       :current-action="currentAction"
       @set-active-pane="onSetActive"
-      @toggle-action="onToggleAction"
     />
 
     <left-side-panel :panel-title="currentAction">
@@ -153,7 +152,7 @@
       </footer>
     </main>
     <left-side-panel
-      v-if="toggleAction.outcome"
+      v-if="isOutcomeToggled"
       panel-title="Outcome Variables"
       class="overflow-auto"
     >
@@ -223,7 +222,7 @@ import {
   clearHighlight,
   createFiltersFromHighlights,
 } from "../util/highlights";
-import { overlayRouteEntry, varModesToString } from "../util/routes";
+import { overlayRouteEntry, RouteArgs, varModesToString } from "../util/routes";
 import {
   clearRowSelection,
   getNumIncludedRows,
@@ -251,6 +250,11 @@ import { Solution } from "../store/requests";
 import { EI } from "../util/events";
 import ExplorerConfig, {
   Action,
+  ActionNames,
+  ACTION_MAP,
+  ExplorerStateNames,
+  getConfigFromName,
+  getStateFromName,
   ResultViewConfig,
   SelectViewConfig,
 } from "../util/dataExplorer";
@@ -284,7 +288,6 @@ export default Vue.extend({
       metaTypes: Object.keys(META_TYPES),
       include: true,
       state: new SelectViewState(),
-      toggleAction: { outcome: false },
       config: new SelectViewConfig(),
     };
   },
@@ -450,10 +453,17 @@ export default Vue.extend({
           variables[action.paneId] = this.variables.filter((variable) =>
             this.training.includes(variable.key)
           );
+        } else if (action.paneId === "outcome") {
+          variables[action.paneId] = this.state.getSecondaryVariables();
         } else {
-          variables[action.paneId] = this.variables.filter((variable) =>
-            META_TYPES[action.paneId].includes(variable.colType)
-          );
+          variables[action.paneId] = this.variables.filter((variable) => {
+            if (!META_TYPES[action.paneId]) {
+              console.log(action);
+              return false;
+            }
+
+            return META_TYPES[action.paneId].includes(variable.colType);
+          });
         }
       });
 
@@ -503,6 +513,15 @@ export default Vue.extend({
     secondaryVariables(): Variable[] {
       return this.state.getSecondaryVariables();
     },
+    explorerRouteState(): ExplorerStateNames {
+      return routeGetters.getDataExplorerState(this.$store);
+    },
+    isOutcomeToggled(): boolean {
+      const outcome = ACTION_MAP.get(ActionNames.OUTCOME_VARIABLES).paneId;
+      return routeGetters
+        .getToggledActions(this.$store)
+        .some((a) => a === outcome);
+    },
   },
 
   // Update either the summaries or explore data on user interaction.
@@ -536,19 +555,17 @@ export default Vue.extend({
   async beforeMount() {
     // First get the dataset informations
     await viewActions.fetchDataExplorerData(this.$store, [] as Variable[]);
-    this.state.fetchMapBaseline();
     // Pre-select the top 5 variables by importance
     this.preSelectTopVariables();
-
     // Update the explore data
     viewActions.updateDataExplorerData(this.$store);
+    this.setState(getStateFromName(this.explorerRouteState));
+    this.setConfig(getConfigFromName(this.explorerRouteState));
+    this.state.init();
   },
 
   methods: {
     capitalize,
-    onToggleAction(action: string) {
-      this.toggleAction[action] = !this.toggleAction[action];
-    },
     /* When the user request to fetch a different size of data. */
     onDataSizeSubmit(dataSize: number) {
       this.updateRoute({ dataSize });
@@ -583,7 +600,12 @@ export default Vue.extend({
           this.setConfig(new ResultViewConfig());
           this.setState(new ResultViewState());
           await this.state.init();
-          this.onToggleAction("outcome");
+          const actionColumn = this.$refs["action-column"] as InstanceType<
+            typeof ActionColumn
+          >;
+          actionColumn.toggle(
+            ACTION_MAP.get(ActionNames.OUTCOME_VARIABLES).paneId
+          );
         })
         .catch((err) => {
           console.error(err);
@@ -678,6 +700,7 @@ export default Vue.extend({
     },
     setState(state: BaseState) {
       this.state = state;
+      this.updateRoute({ dataExplorerState: state.name } as RouteArgs);
     },
     setConfig(config: ExplorerConfig) {
       this.config = config;

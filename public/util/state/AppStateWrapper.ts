@@ -13,7 +13,8 @@ import {
 } from "../../store/dataset";
 import { getters as routeGetters } from "../../store/route/module";
 import store from "../../store/store";
-import { getAllVariablesSummaries, getVariableSummariesByState } from "../data";
+import { getAllVariablesSummaries } from "../data";
+import { ExplorerStateNames } from "../dataExplorer";
 import { Dictionary } from "../dict";
 import { Filter } from "../filters";
 import { getSolutionById } from "../solutions";
@@ -27,6 +28,7 @@ import {
 } from "../summaries";
 
 export interface BaseState {
+  name: ExplorerStateNames;
   // gets basic variables
   getVariables(): Variable[];
   // gets secondary variables related to secondary variableSummaries
@@ -60,6 +62,8 @@ export interface BaseState {
 }
 
 export class SelectViewState implements BaseState {
+  name = ExplorerStateNames.SELECT_VIEW;
+
   async init(): Promise<void> {
     await this.fetchVariables();
     await this.fetchMapBaseline();
@@ -146,6 +150,7 @@ export class SelectViewState implements BaseState {
 }
 
 export class ResultViewState implements BaseState {
+  name = ExplorerStateNames.RESULT_VIEW;
   async init(): Promise<void> {
     await this.fetchVariables();
     await this.fetchMapBaseline();
@@ -221,7 +226,7 @@ export class ResultViewState implements BaseState {
       variables,
       summaryDictionary
     );
-    const target = routeGetters.getTargetVariableSummaries(store)(true);
+    const target = resultGetters.getTargetSummary(store);
     if (target) {
       return trainingSummaries.concat(target);
     }
@@ -237,6 +242,7 @@ export class ResultViewState implements BaseState {
     return resultGetters.getAreaOfInterestOuterDataItems(store);
   }
   getLexBarVariables(): Variable[] {
+    const result = [];
     const solutionId = routeGetters.getRouteSolutionId(store);
     if (!solutionId) {
       return [];
@@ -245,11 +251,15 @@ export class ResultViewState implements BaseState {
       requestGetters.getRelevantSolutions(store),
       solutionId
     );
-    if (solution?.resultId) {
+    if (!solution?.resultId) {
       return [];
     }
+    const target = requestGetters.getActiveSolutionTargetVariable(store);
+    if (target) {
+      result.push(target);
+    }
     const resultVariables = resultSummariesToVariables(solution?.resultId);
-    return datasetGetters.getAllVariables(store).concat(resultVariables);
+    return result.concat(this.getVariables()).concat(resultVariables);
   }
   getFields(): Dictionary<TableColumn> {
     return resultGetters.getIncludedResultTableDataFields(store);

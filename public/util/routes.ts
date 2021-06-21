@@ -41,6 +41,8 @@ export interface RouteArgs {
   joinAccuracy?: string;
   joinPairs?: string[];
   joinInfo?: string;
+  dataExplorerState?: string;
+  toggledActions?: string;
   baseColumnSuggestions?: string[]; // suggested base join columns
   joinColumnSuggestions?: string[]; // suggested target join columns
   groupingType?: string;

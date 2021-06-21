@@ -93,6 +93,8 @@ export const getters = {
   getRouteDataExplorerVarsSearch: read(
     moduleGetters.getRouteDataExplorerVarsSearch
   ),
+  getToggledActions: read(moduleGetters.getToggledActions),
+  getDataExplorerState: read(moduleGetters.getDataExplorerState),
   getAllSearchesByRoute: read(moduleGetters.getAllSearchesByRoute),
   getAllSearchesByQueryString: read(moduleGetters.getAllSearchesByQueryString),
   getRouteDataSize: read(moduleGetters.getRouteDataSize),

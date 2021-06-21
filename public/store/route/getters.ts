@@ -61,6 +61,7 @@ import {
   TRAINING_VARS_INSTANCE_PAGE,
   TRAINING_VARS_INSTANCE_SEARCH,
 } from "../route/index";
+import { ExplorerStateNames } from "../../util/dataExplorer";
 
 export const getters = {
   getRoute(state: Route): Route {
@@ -416,7 +417,15 @@ export const getters = {
   getRouteResidualThresholdMax(state: Route): string {
     return state.query.residualThresholdMax as string;
   },
-
+  getDataExplorerState(state: Route): ExplorerStateNames {
+    return (
+      (state.query.dataExplorerState as ExplorerStateNames) ??
+      ExplorerStateNames.SELECT_VIEW
+    );
+  },
+  getToggledActions(state: Route): string[] {
+    return JSON.parse((state.query.toggledActions as string) ?? "[]");
+  },
   getDecodedTrainingVariableNames(state: Route, getters: any): string[] {
     const training = getters.getRouteTrainingVariables;
     return training ? training.split(",") : [];
