@@ -96,7 +96,6 @@ export default Vue.extend({
       const idx = this.actions.findIndex((a) => {
         return a.paneId === paneId;
       });
-
       this.$set(this.actions[idx], "toggle", !this.toggledActions[paneId]);
       const filtered = this.toggleActions.filter((a) => {
         return a.toggle;
@@ -104,7 +103,6 @@ export default Vue.extend({
       const entry = overlayRouteEntry(this.$route, {
         toggledActions: JSON.stringify(filtered.map((a) => a.paneId)),
       });
-      this.$emit("toggle-action", paneId);
       this.$router.push(entry).catch((err) => console.warn(err));
     },
     setActive(actionName: string): void {
