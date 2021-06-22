@@ -91,6 +91,7 @@
           />
           Reinclude
         </b-button>
+        <legend-weight v-if="hasWeight" class="ml-5 mr-auto" />
       </div>
       <!-- <layer-selection v-if="isMultiBandImage" class="layer-select-dropdown" /> -->
       <section class="data-container">
@@ -188,7 +189,7 @@ import SelectTimeseriesView from "../components/SelectTimeseriesView.vue";
 import StatusPanel from "../components/StatusPanel.vue";
 import StatusSidebar from "../components/StatusSidebar.vue";
 import ResultFacets from "../components/ResultFacets.vue";
-
+import LegendWeight from "../components/LegendWeight.vue";
 // Store
 import {
   appActions,
@@ -269,6 +270,7 @@ export default Vue.extend({
     DataSize,
     FacetListPane,
     LeftSidePanel,
+    LegendWeight,
     ImageMosaic,
     SearchBar,
     SelectDataTable,
@@ -442,7 +444,9 @@ export default Vue.extend({
       });
       return variables;
     },
-
+    hasWeight(): boolean {
+      return resultGetters.hasResultTableDataItemsWeight(this.$store);
+    },
     variablesPerActions() {
       const variables = {};
       this.availableActions.forEach((action) => {
