@@ -106,6 +106,8 @@
           :baseline-items="baselineItems"
           :baseline-map="baselineMap"
           :summaries="summaries"
+          :solution="solution"
+          :residual-extrema="residualExtrema"
           @tile-clicked="onTileClick"
         />
       </section>
@@ -194,9 +196,12 @@ import {
   datasetActions,
   datasetGetters,
   requestActions,
+  requestGetters,
+  resultGetters,
 } from "../store";
 import {
   DataMode,
+  Extrema,
   Highlight,
   RowSelection,
   TableColumn,
@@ -348,7 +353,12 @@ export default Vue.extend({
     highlights(): Highlight[] {
       return routeGetters.getDecodedHighlights(this.$store);
     },
-
+    solution(): Solution {
+      return requestGetters.getActiveSolution(this.$store);
+    },
+    residualExtrema(): Extrema {
+      return resultGetters.getResidualsExtrema(this.$store);
+    },
     isCreateModelPossible(): boolean {
       // check that we have some target and training variables.
       return !isNil(this.target) && !isEmpty(this.training);
