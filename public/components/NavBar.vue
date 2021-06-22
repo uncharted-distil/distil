@@ -81,6 +81,21 @@
             <i class="fa fa-check-circle nav-icon" /> Check Models
           </b-nav-item>
         </template>
+        <template v-else-if="isActive(DATA_EXPLORER_ROUTE)">
+          <b-nav-item
+            :active="explorerSelectState"
+            @click="explorerNav('select')"
+          >
+            <i class="fa fa-dot-circle-o nav-icon" /> New Model: Select Target
+          </b-nav-item>
+          <b-nav-item
+            :active="explorerResultState"
+            :disabled="hasNoDatasetAndTarget"
+            @click="explorerNav('result')"
+          >
+            <i class="fa fa-check-circle nav-icon" /> Check Models
+          </b-nav-item>
+        </template>
       </b-navbar-nav>
     </b-collapse>
 
@@ -129,6 +144,8 @@ import {
 } from "../store/route/index";
 import { restoreView } from "../util/view";
 import Vue from "vue";
+import { ExplorerStateNames } from "../util/dataExplorer";
+import { EventList } from "../util/events";
 
 export default Vue.extend({
   name: "NavBar",
@@ -171,7 +188,9 @@ export default Vue.extend({
     isJoinDatasets(): boolean {
       return this.joinDatasets.length === 2 || this.hasJoinDatasetView();
     },
-
+    dataExplorerState(): ExplorerStateNames {
+      return routeGetters.getDataExplorerState(this.$store);
+    },
     isApplyModel(): boolean {
       /*
         Check if we requested in the route for an Apply Model navigation,
@@ -182,7 +201,12 @@ export default Vue.extend({
         !!routeGetters.getRouteFittedSolutionId(this.$store)
       );
     },
-
+    explorerSelectState(): boolean {
+      return this.dataExplorerState === ExplorerStateNames.SELECT_VIEW;
+    },
+    explorerResultState(): boolean {
+      return this.dataExplorerState === ExplorerStateNames.RESULT_VIEW;
+    },
     hasDataset(): boolean {
       return !!this.dataset;
     },
@@ -205,10 +229,15 @@ export default Vue.extend({
   },
 
   methods: {
+    explorerNav(state: string) {
+      this.$emit(EventList.EXPLORER.NAV_EVENT, state);
+    },
     isActive(view) {
       return view === this.path;
     },
-
+    isState(state: ExplorerStateNames): boolean {
+      return state === this.dataExplorerState;
+    },
     // onHome() {
     //   gotoHome(this.$router);
     // },

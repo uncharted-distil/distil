@@ -1197,7 +1197,7 @@ export function getTableDataFields(data: TableData): Dictionary<TableColumn> {
         let description: string = null;
         let label: string = null;
         if (isPredictedCol(col.key)) {
-          variable = requestGetters.getActiveSolutionTargetVariable(store)[0]; // always a single value
+          variable = requestGetters.getActiveSolutionTargetVariable(store); // always a single value
           label = variable.colDisplayName;
           description = `Model predicted value for ${variable.key}`;
 
@@ -1213,7 +1213,7 @@ export function getTableDataFields(data: TableData): Dictionary<TableColumn> {
             };
           }
         } else if (isErrorCol(col.key)) {
-          variable = requestGetters.getActiveSolutionTargetVariable(store)[0];
+          variable = requestGetters.getActiveSolutionTargetVariable(store);
           label = "Error";
           description = `Difference between actual and predicted value for ${variable.key}`;
         } else {

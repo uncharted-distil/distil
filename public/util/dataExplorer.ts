@@ -1,3 +1,9 @@
+import {
+  BaseState,
+  ResultViewState,
+  SelectViewState,
+} from "./state/AppStateWrapper";
+
 export interface Action {
   name: string;
   icon: string;
@@ -12,8 +18,42 @@ export default interface ExplorerConfig {
   // whether include/exclude in needed on this state
   readonly includeExcludeEnabled: boolean;
   // required actions in current state
-  readonly actionList: Action[];
+  actionList: Action[];
 }
+
+// DataExplorer possible state, used in route
+export enum ExplorerStateNames {
+  SELECT_VIEW = "select",
+  RESULT_VIEW = "result",
+  PREDICTION_VIEW = "prediction",
+}
+// getConfigFromName returns a config instance based on supplied enum, throws errors
+export function getConfigFromName(state: ExplorerStateNames): ExplorerConfig {
+  switch (state) {
+    case ExplorerStateNames.SELECT_VIEW:
+      return new SelectViewConfig();
+    case ExplorerStateNames.RESULT_VIEW:
+      return new ResultViewConfig();
+    case ExplorerStateNames.PREDICTION_VIEW:
+      throw Error("Prediction config not implemented");
+    default:
+      throw Error("Config State not supported");
+  }
+}
+// getStateFromName returns a State instance based on supplied enum, throws errors
+export function getStateFromName(state: ExplorerStateNames): BaseState {
+  switch (state) {
+    case ExplorerStateNames.SELECT_VIEW:
+      return new SelectViewState();
+    case ExplorerStateNames.RESULT_VIEW:
+      return new ResultViewState();
+    case ExplorerStateNames.PREDICTION_VIEW:
+      throw Error("Prediction config not implemented");
+    default:
+      throw Error("Config State not supported");
+  }
+}
+
 export class SelectViewConfig implements ExplorerConfig {
   facetFooterEnabled = true;
   includeExcludeEnabled = true;
@@ -115,7 +155,7 @@ export const ACTIONS = [
     name: ActionNames.OUTCOME_VARIABLES,
     icon: "fas fa-poll",
     paneId: "outcome",
-    toggle: true,
+    toggle: false,
   },
 ] as Action[];
 

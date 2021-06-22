@@ -133,13 +133,10 @@ export const getters = {
   },
 
   // Returns target variable associated with the currently selected search result.
-  getActiveSolutionTargetVariable(
-    state: RequestState,
-    getters: any
-  ): Variable[] {
+  getActiveSolutionTargetVariable(state: RequestState, getters: any): Variable {
     const target = <string>getters.getRouteTargetVariable;
     const variables = <Variable[]>getters.getVariables;
-    return variables.filter((variable) => variable.key === target);
+    return variables.find((variable) => variable.key === target);
   },
 
   // Returns in-progress predictions.

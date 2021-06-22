@@ -43,7 +43,7 @@
         <b-button
           role="tab"
           data-toggle="tab"
-          :variant="toggleColor(action.toggle)"
+          :variant="toggleColor(!!toggledActions[action.paneId])"
           class="box-shadow-none"
           @click.stop.prevent="toggle(action.paneId)"
         >
@@ -56,7 +56,10 @@
 
 <script lang="ts">
 import Vue from "vue";
+import { Dictionary } from "vue-router/types/router";
 import { Action } from "../../util/dataExplorer";
+import { getters as routeGetters } from "../../store/route/module";
+import { overlayRouteEntry } from "../../util/routes";
 
 export default Vue.extend({
   name: "ActionColumn",
@@ -66,9 +69,17 @@ export default Vue.extend({
     currentAction: { type: String, default: "" },
   },
   computed: {
+    toggledActions(): Dictionary<boolean> {
+      const routeActions = routeGetters.getToggledActions(this.$store);
+      const result = {} as Dictionary<boolean>;
+      routeActions.forEach((a) => {
+        result[a] = true;
+      });
+      return result;
+    },
     toggleActions(): Action[] {
       return this.actions.filter((a) => {
-        return !!a.toggle;
+        return a.toggle !== undefined;
       });
     },
     baseActions(): Action[] {
@@ -82,11 +93,17 @@ export default Vue.extend({
       return toggle ? "primary" : "light";
     },
     toggle(paneId: string): void {
-      const action = this.toggleActions.find((ta) => {
-        return ta.paneId === paneId;
+      const idx = this.actions.findIndex((a) => {
+        return a.paneId === paneId;
       });
-      action.toggle = !action.toggle;
-      this.$emit("toggle-action", action.paneId);
+      this.$set(this.actions[idx], "toggle", !this.toggledActions[paneId]);
+      const filtered = this.toggleActions.filter((a) => {
+        return a.toggle;
+      });
+      const entry = overlayRouteEntry(this.$route, {
+        toggledActions: JSON.stringify(filtered.map((a) => a.paneId)),
+      });
+      this.$router.push(entry).catch((err) => console.warn(err));
     },
     setActive(actionName: string): void {
       // If the action is currently selected, pass ''
