@@ -1,6 +1,9 @@
+import router from "../../router/router";
 import {
   datasetGetters,
+  requestActions,
   requestGetters,
+  resultActions,
   resultGetters,
   viewActions,
 } from "../../store";
@@ -17,6 +20,7 @@ import { getAllVariablesSummaries } from "../data";
 import { ExplorerStateNames } from "../dataExplorer";
 import { Dictionary } from "../dict";
 import { Filter } from "../filters";
+import { overlayRouteEntry } from "../routes";
 import { getSolutionById } from "../solutions";
 import {
   getConfidenceSummary,
@@ -152,6 +156,28 @@ export class SelectViewState implements BaseState {
 export class ResultViewState implements BaseState {
   name = ExplorerStateNames.RESULT_VIEW;
   async init(): Promise<void> {
+    // check if solutionId is not null if not find recent solution and make it the target solutionId
+    if (!routeGetters.getRouteSolutionId(store)) {
+      await requestActions.fetchSolutions(store, {
+        dataset: routeGetters.getRouteDataset(store),
+        target: routeGetters.getRouteTargetVariable(store),
+      });
+      const solutions = requestGetters.getSolutions(store);
+      if (solutions && solutions.length) {
+        // dont mutate store array
+        const sorted = [...solutions].sort((a, b) => {
+          return (
+            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+          );
+        });
+        const entry = overlayRouteEntry(routeGetters.getRoute(store), {
+          solutionId: sorted[sorted.length - 1].solutionId,
+        });
+        router.push(entry).catch((err) => console.warn(err));
+      } else {
+        console.error("No available solutions");
+      }
+    }
     await this.fetchVariables();
     await this.fetchMapBaseline();
     return;

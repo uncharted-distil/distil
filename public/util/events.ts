@@ -102,6 +102,9 @@ export class EventList {
     // delete the model
     DELETE_EVENT: "model-delete",
   };
+  static readonly EXPLORER = {
+    NAV_EVENT: "nav-event",
+  };
 }
 
 // contains dataset name, target name and a list of variables
@@ -135,4 +138,5 @@ export declare namespace EI {
       timeseriesIds: TableRow[];
     }
   }
+  namespace Explorer {}
 }

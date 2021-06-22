@@ -17,8 +17,8 @@
 
 <template>
   <div id="distil-app">
-    <nav-bar />
-    <router-view class="view" />
+    <nav-bar @nav-event="onExplorerNav" />
+    <router-view ref="view" class="view" />
   </div>
 </template>
 
@@ -41,6 +41,8 @@ import "vue-select/dist/vue-select.css";
 
 // DEBUG: this is a mocked graph until we support actual graph data
 import "./assets/graphs/G1.gml";
+import { ExplorerStateNames } from "./util/dataExplorer";
+import DataExplorer from "./views/DataExplorer.vue";
 Vue.component("v-select", vSelect);
 Vue.use(BootstrapVue);
 Vue.use(VueObserveVisibility);
@@ -54,6 +56,12 @@ export default Vue.extend({
   router: router,
   components: {
     NavBar,
+  },
+  methods: {
+    onExplorerNav(state: ExplorerStateNames) {
+      const dataExplorer = this.$refs.view as InstanceType<typeof DataExplorer>;
+      dataExplorer.changeStatesByName(state);
+    },
   },
   beforeMount() {
     appActions.fetchConfig(this.$store);

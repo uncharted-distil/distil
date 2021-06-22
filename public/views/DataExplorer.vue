@@ -240,11 +240,7 @@ import {
   filterViews,
 } from "../util/view";
 import { Dictionary } from "vue-router/types/router";
-import {
-  BaseState,
-  ResultViewState,
-  SelectViewState,
-} from "../util/state/AppStateWrapper";
+import { BaseState, SelectViewState } from "../util/state/AppStateWrapper";
 import { SolutionRequestMsg } from "../store/requests/actions";
 import { Solution } from "../store/requests";
 import { EI } from "../util/events";
@@ -255,7 +251,6 @@ import ExplorerConfig, {
   ExplorerStateNames,
   getConfigFromName,
   getStateFromName,
-  ResultViewConfig,
   SelectViewConfig,
 } from "../util/dataExplorer";
 
@@ -559,13 +554,16 @@ export default Vue.extend({
     this.preSelectTopVariables();
     // Update the explore data
     viewActions.updateDataExplorerData(this.$store);
-    this.setState(getStateFromName(this.explorerRouteState));
-    this.setConfig(getConfigFromName(this.explorerRouteState));
-    this.state.init();
+    this.changeStatesByName(this.explorerRouteState);
   },
 
   methods: {
     capitalize,
+    async changeStatesByName(state: ExplorerStateNames) {
+      this.setState(getStateFromName(state));
+      this.setConfig(getConfigFromName(state));
+      await this.state.init();
+    },
     /* When the user request to fetch a different size of data. */
     onDataSizeSubmit(dataSize: number) {
       this.updateRoute({ dataSize });
@@ -597,9 +595,7 @@ export default Vue.extend({
             "model-creation-form"
           ] as InstanceType<typeof CreateSolutionsForm>;
           modelCreationRef.pending = false;
-          this.setConfig(new ResultViewConfig());
-          this.setState(new ResultViewState());
-          await this.state.init();
+          await this.changeStatesByName(ExplorerStateNames.RESULT_VIEW);
           const actionColumn = this.$refs["action-column"] as InstanceType<
             typeof ActionColumn
           >;
@@ -700,7 +696,12 @@ export default Vue.extend({
     },
     setState(state: BaseState) {
       this.state = state;
-      this.updateRoute({ dataExplorerState: state.name } as RouteArgs);
+      if (this.explorerRouteState !== state.name) {
+        this.updateRoute({
+          dataExplorerState: state.name,
+          toggledActions: "[]",
+        } as RouteArgs);
+      }
     },
     setConfig(config: ExplorerConfig) {
       this.config = config;
