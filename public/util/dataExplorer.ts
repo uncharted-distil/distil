@@ -1,5 +1,6 @@
 import {
   BaseState,
+  PredictViewState,
   ResultViewState,
   SelectViewState,
 } from "./state/AppStateWrapper";
@@ -35,7 +36,7 @@ export function getConfigFromName(state: ExplorerStateNames): ExplorerConfig {
     case ExplorerStateNames.RESULT_VIEW:
       return new ResultViewConfig();
     case ExplorerStateNames.PREDICTION_VIEW:
-      throw Error("Prediction config not implemented");
+      return new PredictViewConfig();
     default:
       throw Error("Config State not supported");
   }
@@ -48,7 +49,7 @@ export function getStateFromName(state: ExplorerStateNames): BaseState {
     case ExplorerStateNames.RESULT_VIEW:
       return new ResultViewState();
     case ExplorerStateNames.PREDICTION_VIEW:
-      throw Error("Prediction config not implemented");
+      return new PredictViewState();
     default:
       throw Error("Config State not supported");
   }
@@ -76,6 +77,27 @@ export class SelectViewConfig implements ExplorerConfig {
   }
 }
 export class ResultViewConfig implements ExplorerConfig {
+  facetFooterEnabled = false;
+  includeExcludeEnabled = false;
+  get actionList(): Action[] {
+    const actions = [
+      ActionNames.ALL_VARIABLES,
+      ActionNames.TEXT_VARIABLES,
+      ActionNames.CATEGORICAL_VARIABLES,
+      ActionNames.NUMBER_VARIABLES,
+      ActionNames.LOCATION_VARIABLES,
+      ActionNames.IMAGE_VARIABLES,
+      ActionNames.UNKNOWN_VARIABLES,
+      ActionNames.TARGET_VARIABLE,
+      ActionNames.TRAINING_VARIABLE,
+      ActionNames.OUTCOME_VARIABLES,
+    ];
+    return actions.map((a) => {
+      return ACTION_MAP.get(a);
+    });
+  }
+}
+export class PredictViewConfig implements ExplorerConfig {
   facetFooterEnabled = false;
   includeExcludeEnabled = false;
   get actionList(): Action[] {

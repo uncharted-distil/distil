@@ -159,6 +159,7 @@
           :fitted-solution-id="fittedSolutionId"
           :target="targetName"
           :target-type="targetType"
+          @apply-model="onApplyModel"
         />
         <save-modal
           ref="saveModel"
@@ -208,7 +209,8 @@
       <template v-if="hasNoVariables">
         <p>No Outcome Variables available.</p>
       </template>
-      <result-facets v-else />
+      <result-facets v-else-if="state.name === 'result'" />
+      <prediction-summaries v-else />
     </left-side-panel>
     <status-sidebar />
     <status-panel />
@@ -238,6 +240,7 @@ import ResultFacets from "../components/ResultFacets.vue";
 import LegendWeight from "../components/LegendWeight.vue";
 import SaveModal, { SaveInfo } from "../components/SaveModal.vue";
 import PredictionsDataUploader from "../components/PredictionsDataUploader.vue";
+import PredictionSummaries from "../components/PredictionSummaries.vue";
 import { isFittedSolutionIdSavedAsModel } from "../util/models";
 
 // Store
@@ -323,6 +326,7 @@ export default Vue.extend({
     LegendWeight,
     ImageMosaic,
     PredictionsDataUploader,
+    PredictionSummaries,
     SearchBar,
     SelectDataTable,
     GeoPlot,
@@ -667,7 +671,7 @@ export default Vue.extend({
           const dataMode = routeGetters.getDataMode(this.$store);
           const dataModeDefault = dataMode ? dataMode : DataMode.Default;
           // transition to result screen
-          const entry = overlayRouteEntry(this.$route, {
+          this.updateRoute({
             dataset: routeGetters.getRouteDataset(this.$store),
             target: routeGetters.getRouteTargetVariable(this.$store),
             solutionId: res.solutionId,
@@ -680,7 +684,6 @@ export default Vue.extend({
             modelTimeLimit: routeGetters.getModelTimeLimit(this.$store),
             modelQuality: routeGetters.getModelQuality(this.$store),
           });
-          this.$router.push(entry).catch((err) => console.warn(err));
           const modelCreationRef = this.$refs[
             "model-creation-form"
           ] as InstanceType<typeof CreateSolutionsForm>;
@@ -697,6 +700,10 @@ export default Vue.extend({
           console.error(err);
         });
       return;
+    },
+    async onApplyModel(args: RouteArgs) {
+      this.updateRoute(args);
+      await this.changeStatesByName(ExplorerStateNames.PREDICTION_VIEW);
     },
     onExcludeClick() {
       let filter = null;

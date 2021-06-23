@@ -94,6 +94,7 @@ import { getPredictionsById } from "../util/predictions";
 import { varModesToString, createRouteEntry } from "../util/routes";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { PREDICTION_ROUTE } from "../store/route";
+import { EventList } from "../util/events";
 
 export default Vue.extend({
   name: "PredictionsUploader",
@@ -102,6 +103,7 @@ export default Vue.extend({
     fittedSolutionId: String as () => string,
     target: String as () => string,
     targetType: String as () => string,
+    handleModelCreation: { type: Boolean as () => boolean, default: false },
   },
 
   data() {
@@ -164,7 +166,7 @@ export default Vue.extend({
     },
 
     async makeRequest() {
-      var deconflictedName = generateUniqueDatasetName(
+      const deconflictedName = generateUniqueDatasetName(
         removeExtension(this.file.name)
       );
 
@@ -262,8 +264,12 @@ export default Vue.extend({
           applyModel: true.toString(),
           solutionId: routeGetters.getRouteSolutionId(this.$store),
         };
-        const entry = createRouteEntry(PREDICTION_ROUTE, routeArgs);
-        this.$router.push(entry).catch((err) => console.warn(err));
+        if (this.handleModelCreation) {
+          const entry = createRouteEntry(PREDICTION_ROUTE, routeArgs);
+          this.$router.push(entry).catch((err) => console.warn(err));
+          return;
+        }
+        this.$emit(EventList.MODEL.APPLY_EVENT, routeArgs);
       }
     },
   },
