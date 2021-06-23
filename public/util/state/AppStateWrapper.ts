@@ -1,6 +1,8 @@
 import router from "../../router/router";
 import {
+  datasetActions,
   datasetGetters,
+  predictionGetters,
   requestActions,
   requestGetters,
   resultActions,
@@ -25,10 +27,14 @@ import { getSolutionById } from "../solutions";
 import {
   getConfidenceSummary,
   getCorrectnessSummary,
+  getPredictionConfidenceSummary,
+  getPredictionRankSummary,
+  getPredictionResultSummary,
   getRankingSummary,
   getResidualSummary,
   getSolutionResultSummary,
   resultSummariesToVariables,
+  summaryToVariable,
 } from "../summaries";
 
 export interface BaseState {
@@ -301,5 +307,103 @@ export class ResultViewState implements BaseState {
   }
   fetchMapBaseline(): Promise<void> {
     return viewActions.updateResultBaseline(store);
+  }
+}
+
+export class PredictViewState implements BaseState {
+  name: ExplorerStateNames;
+  getVariables(): Variable[] {
+    return requestGetters.getActivePredictionTrainingVariables(store);
+  }
+  getSecondaryVariables(): Variable[] {
+    const predictionVariables = [] as Variable[];
+    const activePred = requestGetters.getActivePredictions(store);
+    const rankSum = getPredictionRankSummary(activePred?.resultId);
+    const confidenceSum = getPredictionConfidenceSummary(activePred?.resultId);
+    const predSum = getPredictionResultSummary(activePred?.requestId);
+    if (rankSum) {
+      predictionVariables.push(summaryToVariable(rankSum));
+    }
+    if (confidenceSum) {
+      predictionVariables.push(summaryToVariable(confidenceSum));
+    }
+    if (predSum) {
+      predictionVariables.push(summaryToVariable(predSum));
+    }
+    return predictionVariables;
+  }
+  getData(): TableRow[] {
+    return predictionGetters.getIncludedPredictionTableDataItems(store);
+  }
+  getBaseVariableSummaries(): VariableSummary[] {
+    const summaryDictionary = predictionGetters.getTrainingSummariesDictionary(
+      store
+    );
+    return getAllVariablesSummaries(this.getVariables(), summaryDictionary);
+  }
+  getSecondaryVariableSummaries(): VariableSummary[] {
+    const currentSummaries = [];
+    const activePred = requestGetters.getActivePredictions(store);
+    const rank = getPredictionRankSummary(activePred?.resultId);
+    const confidence = getPredictionConfidenceSummary(activePred?.resultId);
+    const summary = getPredictionResultSummary(activePred?.requestId);
+    if (rank) {
+      currentSummaries.push(rank);
+    }
+    if (confidence) {
+      currentSummaries.push(confidence);
+    }
+    if (summary) {
+      currentSummaries.push(summary);
+    }
+    return currentSummaries;
+  }
+  getAllVariableSummaries(): VariableSummary[] {
+    return this.getBaseVariableSummaries().concat(
+      this.getSecondaryVariableSummaries()
+    );
+  }
+  getMapBaseline(): TableRow[] {
+    const result = predictionGetters.getBaselinePredictionTableDataItems(store);
+    return result?.sort((a, b) => {
+      return a.d3mIndex - b.d3mIndex;
+    });
+  }
+  getMapDrillDownBaseline(): TableRow[] {
+    return predictionGetters.getAreaOfInterestInnerDataItems(store);
+  }
+  getMapDrillDownFiltered(): TableRow[] {
+    return predictionGetters.getAreaOfInterestOuterDataItems(store);
+  }
+  getLexBarVariables(): Variable[] {
+    return datasetGetters
+      .getAllVariables(store)
+      .concat(this.getSecondaryVariables());
+  }
+  getFields(): Dictionary<TableColumn> {
+    return predictionGetters.getIncludedPredictionTableDataFields(store);
+  }
+  async init(): Promise<void> {
+    const dataset = routeGetters.getRouteDataset(store);
+    await viewActions.fetchPredictionsData(store);
+    datasetActions.fetchClusters(store, { dataset });
+    datasetActions.fetchOutliers(store, dataset);
+    viewActions.updateBaselinePredictions(store);
+  }
+  fetchVariables(): Promise<unknown> {
+    const dataset = routeGetters.getRouteDataset(store);
+    return datasetActions.fetchVariables(store, { dataset });
+  }
+  fetchData(): Promise<unknown> {
+    return viewActions.updatePrediction(store);
+  }
+  fetchVariableSummaries(): Promise<unknown> {
+    return viewActions.updatePredictionTrainingSummaries(store);
+  }
+  fetchMapBaseline(): Promise<void> {
+    return viewActions.updateBaselinePredictions(store) as Promise<void>;
+  }
+  fetchMapDrillDown(filter: Filter): Promise<void[]> {
+    return viewActions.updatePredictionAreaOfInterest(store, filter);
   }
 }

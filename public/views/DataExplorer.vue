@@ -174,7 +174,7 @@
         >
           <b-button
             v-if="isTimeseries"
-            variant="primary"
+            variant="success"
             class="apply-button"
             @click="$bvModal.show('forecast-horizon-modal')"
           >
@@ -182,7 +182,7 @@
           </b-button>
           <b-button
             v-else
-            variant="primary"
+            variant="success"
             class="apply-button"
             @click="$bvModal.show('predictions-data-upload-modal')"
           >
@@ -415,7 +415,9 @@ export default Vue.extend({
     hasNoVariables(): boolean {
       return isEmpty(this.activeVariables);
     },
-
+    isTimeseries(): boolean {
+      return routeGetters.isTimeseries(this.$store);
+    },
     highlights(): Highlight[] {
       return routeGetters.getDecodedHighlights(this.$store);
     },
