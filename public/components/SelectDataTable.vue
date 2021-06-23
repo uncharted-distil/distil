@@ -255,7 +255,9 @@ export default Vue.extend({
     itemCount: { type: Number as () => number, default: 0 },
     timeseriesInfo: {
       type: Object as () => Dictionary<TimeSeries>,
-      default: {} as Dictionary<TimeSeries>,
+      default: () => {
+        return {} as Dictionary<TimeSeries>;
+      },
     },
     residualExtrema: {
       type: Object as () => Extrema,
