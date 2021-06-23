@@ -91,6 +91,10 @@
           />
           Reinclude
         </b-button>
+        <legend-weight
+          v-if="hasWeight && !config.includeExcludeEnabled"
+          class="ml-5 mr-auto"
+        />
       </div>
       <!-- <layer-selection v-if="isMultiBandImage" class="layer-select-dropdown" /> -->
       <section class="data-container">
@@ -106,6 +110,8 @@
           :baseline-items="baselineItems"
           :baseline-map="baselineMap"
           :summaries="summaries"
+          :solution="solution"
+          :residual-extrema="residualExtrema"
           @tile-clicked="onTileClick"
         />
       </section>
@@ -149,6 +155,49 @@
           class="ml-2"
           @create-model="onModelCreation"
         />
+        <predictions-data-uploader
+          :fitted-solution-id="fittedSolutionId"
+          :target="targetName"
+          :target-type="targetType"
+        />
+        <save-modal
+          ref="saveModel"
+          :solution-id="solutionId"
+          :fitted-solution-id="fittedSolutionId"
+          @save="onSaveModel"
+        />
+        <template
+          v-if="
+            !config.includeExcludeEnabled &&
+            (isSingleSolution || isActiveSolutionSaved)
+          "
+        >
+          <b-button
+            v-if="isTimeseries"
+            variant="primary"
+            class="apply-button"
+            @click="$bvModal.show('forecast-horizon-modal')"
+          >
+            Forecast
+          </b-button>
+          <b-button
+            v-else
+            variant="primary"
+            class="apply-button"
+            @click="$bvModal.show('predictions-data-upload-modal')"
+          >
+            Apply Model
+          </b-button>
+        </template>
+        <b-button
+          v-else-if="!config.includeExcludeEnabled"
+          variant="success"
+          class="save-button"
+          @click="$bvModal.show('save-model-modal')"
+        >
+          <i class="fa fa-floppy-o" />
+          Save Model
+        </b-button>
       </footer>
     </main>
     <left-side-panel
@@ -186,6 +235,10 @@ import SelectTimeseriesView from "../components/SelectTimeseriesView.vue";
 import StatusPanel from "../components/StatusPanel.vue";
 import StatusSidebar from "../components/StatusSidebar.vue";
 import ResultFacets from "../components/ResultFacets.vue";
+import LegendWeight from "../components/LegendWeight.vue";
+import SaveModal, { SaveInfo } from "../components/SaveModal.vue";
+import PredictionsDataUploader from "../components/PredictionsDataUploader.vue";
+import { isFittedSolutionIdSavedAsModel } from "../util/models";
 
 // Store
 import {
@@ -194,9 +247,12 @@ import {
   datasetActions,
   datasetGetters,
   requestActions,
+  requestGetters,
+  resultGetters,
 } from "../store";
 import {
   DataMode,
+  Extrema,
   Highlight,
   RowSelection,
   TableColumn,
@@ -264,11 +320,14 @@ export default Vue.extend({
     DataSize,
     FacetListPane,
     LeftSidePanel,
+    LegendWeight,
     ImageMosaic,
+    PredictionsDataUploader,
     SearchBar,
     SelectDataTable,
     GeoPlot,
     ResultFacets,
+    SaveModal,
     SelectGraphView,
     SelectTimeseriesView,
     StatusPanel,
@@ -317,14 +376,26 @@ export default Vue.extend({
         (action) => !this.inactiveMetaTypes.includes(action.paneId)
       );
     },
-
+    targetName(): string {
+      return this.target?.key;
+    },
+    targetType(): string {
+      const target = this.target;
+      if (!target) {
+        return null;
+      }
+      const variables = this.variables;
+      return variables.find((v) => v.key === target.key)?.colType;
+    },
     currentAction(): string {
       return (
         this.activePane &&
         this.config.actionList.find((a) => a.paneId === this.activePane).name
       );
     },
-
+    isActiveSolutionSaved(): boolean {
+      return this.isFittedSolutionIdSavedAsModel(this.fittedSolutionId);
+    },
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
@@ -348,7 +419,21 @@ export default Vue.extend({
     highlights(): Highlight[] {
       return routeGetters.getDecodedHighlights(this.$store);
     },
-
+    solution(): Solution {
+      return requestGetters.getActiveSolution(this.$store);
+    },
+    solutionId(): string {
+      return this.solution?.solutionId;
+    },
+    fittedSolutionId(): string {
+      return this.solution?.fittedSolutionId;
+    },
+    residualExtrema(): Extrema {
+      return resultGetters.getResidualsExtrema(this.$store);
+    },
+    isSingleSolution(): boolean {
+      return routeGetters.isSingleSolution(this.$store);
+    },
     isCreateModelPossible(): boolean {
       // check that we have some target and training variables.
       return !isNil(this.target) && !isEmpty(this.training);
@@ -432,7 +517,9 @@ export default Vue.extend({
       });
       return variables;
     },
-
+    hasWeight(): boolean {
+      return resultGetters.hasResultTableDataItemsWeight(this.$store);
+    },
     variablesPerActions() {
       const variables = {};
       this.availableActions.forEach((action) => {
@@ -559,6 +646,7 @@ export default Vue.extend({
 
   methods: {
     capitalize,
+    isFittedSolutionIdSavedAsModel,
     async changeStatesByName(state: ExplorerStateNames) {
       this.setState(getStateFromName(state));
       this.setConfig(getConfigFromName(state));
@@ -739,6 +827,33 @@ export default Vue.extend({
 
       // Update the route with the top 5 variable as training
       this.updateRoute({ explore: top5Variables });
+    },
+    async onSaveModel(args: SaveInfo) {
+      appActions.logUserEvent(this.$store, {
+        feature: Feature.EXPORT_MODEL,
+        activity: Activity.MODEL_SELECTION,
+        subActivity: SubActivity.MODEL_SAVE,
+        details: {
+          solution: args.solutionId,
+          fittedSolution: args.fittedSolution,
+        },
+      });
+
+      try {
+        const err = await appActions.saveModel(this.$store, {
+          fittedSolutionId: this.fittedSolutionId,
+          modelName: args.name,
+          modelDescription: args.description,
+        });
+        // should probably change UI based on error
+        if (!err) {
+          const modal = this.$refs.saveModel as InstanceType<typeof SaveModal>;
+
+          modal.showSuccessModel();
+        }
+      } catch (err) {
+        console.warn(err);
+      }
     },
   },
 });

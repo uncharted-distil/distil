@@ -33,7 +33,10 @@
     <div>
       <b-button size="lg" @click="onEvent(exportEvent)">Export</b-button>
       <b-button size="lg" variant="primary" @click="onEvent(saveEvent)">
-        Save
+        <template v-if="isSaving">
+          <div v-html="spinnerHTML" />
+        </template>
+        <template v-else> Save</template>
       </b-button>
     </div>
   </div>
@@ -58,6 +61,7 @@ export default Vue.extend({
     isLoading: { type: Boolean as () => boolean, default: false },
     lowShotSummary: Object as () => VariableSummary,
     labelFeatureName: { type: String, default: "" },
+    isSaving: { type: Boolean as () => boolean, default: false },
   },
   computed: {
     spinnerHTML(): string {

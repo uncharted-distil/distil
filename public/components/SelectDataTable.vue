@@ -25,25 +25,28 @@
       :current-page="currentPage"
       :items="items"
       :fields="tableFields"
+      :sort-by="errorCol"
       :per-page="perPage"
       :total-rows="itemCount"
       sticky-header="100%"
-      class="distil-table mb-1 noselect"
+      class="distil-table mb-1"
       @row-clicked="onRowClick"
     >
       <template
         v-for="computedField in computedFields"
         v-slot:[cellSlot(computedField)]="data"
       >
-        <span
-          :key="computedField"
-          :title="data.value.value"
-          class="min-height-20"
-        >
+        <div :key="computedField" :title="data.value.value">
           {{ data.value.value }}
           <icon-base icon-name="fork" class="icon-fork" width="14" height="14">
             <icon-fork />
           </icon-base>
+        </div>
+      </template>
+
+      <template v-slot:[headSlot(predictedCol)]="data">
+        <span>
+          {{ data.label }}<sup v-if="solution != null">{{ solutionIndex }}</sup>
         </span>
       </template>
 
@@ -77,16 +80,16 @@
         v-slot:[cellSlot(variable.key)]="data"
       >
         <div :key="data.item[variable.key].value" class="container">
-          <div class="row">
-            <sparkline-preview
-              :truth-dataset="dataset"
-              :x-col="variable.grouping.xCol"
-              :y-col="variable.grouping.yCol"
-              :variable-key="variable.key"
-              :timeseries-id="data.item[variable.key].value"
-              :unique-trail="uniqueTrail"
-            />
-          </div>
+          <sparkline-preview
+            :variable-key="variable.key"
+            :truth-dataset="dataset"
+            :x-col="variable.grouping.xCol"
+            :y-col="variable.grouping.yCol"
+            :timeseries-id="data.item[variable.key].value"
+            :solution-id="solutionId"
+            :include-forecast="isTargetTimeseries"
+            :unique-trail="uniqueTrail"
+          />
         </div>
       </template>
 
@@ -99,13 +102,55 @@
         </span>
       </template>
 
+      <template v-slot:[cellSlot(errorCol)]="data">
+        <!-- residual error -->
+        <div>
+          <div
+            v-if="isTargetNumerical"
+            class="error-bar-container min-height-20"
+            :title="data.value.value"
+          >
+            <div
+              class="error-bar"
+              :style="{
+                'background-color': errorBarColor(data.value.value),
+                width: errorBarWidth(data.value.value),
+                left: errorBarLeft(data.value.value),
+              }"
+            />
+            <div class="error-bar-center" />
+          </div>
+
+          <!-- correctness error -->
+          <div v-if="isTargetCategorical">
+            <div
+              v-if="data.item[predictedCol].value == data.value.value"
+              class="min-height-20"
+            >
+              Correct
+            </div>
+            <div
+              v-if="data.item[predictedCol].value != data.value.value"
+              class="min-height-20"
+            >
+              Incorrect
+            </div>
+          </div>
+        </div>
+      </template>
+
       <template v-slot:cell()="data">
         <template v-if="['min', 'max', 'mean'].includes(data.field.key)">
-          {{ data.value | cleanNumber }}
+          <span class="min-height-20">{{ data.value | cleanNumber }}</span>
         </template>
-        <span v-else :title="data.value.value" class="min-height-20">{{
-          data.value.value
-        }}</span>
+        <div
+          v-else
+          :title="data.value.value"
+          :style="cellColor(data.value.weight, data)"
+          class="min-height-20"
+        >
+          {{ data.value.value }}
+        </div>
       </template>
     </b-table>
     <b-pagination
@@ -117,7 +162,7 @@
       size="sm"
       :per-page="perPage"
       :total-rows="itemCount"
-      @input="onPagination"
+      @change="onPagination"
     />
   </div>
 </template>
@@ -141,6 +186,7 @@ import {
   TimeseriesGrouping,
   TableValue,
   TimeSeries,
+  Extrema,
 } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
 import { hasComputedVarPrefix, Field } from "../util/types";
@@ -162,10 +208,13 @@ import {
   sameData,
   bulkRemoveImages,
   debounceFetchImagePack,
+  explainCellColor,
 } from "../util/data";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import ImageLabel from "./ImageLabel.vue";
 import { EventList } from "../util/events";
+import { Solution } from "../store/requests";
+import { getSolutionIndex } from "../util/solutions";
 
 export default Vue.extend({
   name: "SelectedDataTable",
@@ -206,8 +255,17 @@ export default Vue.extend({
     itemCount: { type: Number as () => number, default: 0 },
     timeseriesInfo: {
       type: Object as () => Dictionary<TimeSeries>,
-      default: {} as Dictionary<TimeSeries>,
+      default: () => {
+        return {} as Dictionary<TimeSeries>;
+      },
     },
+    residualExtrema: {
+      type: Object as () => Extrema,
+      default: () => {
+        return { min: 0, max: 0, mean: 0 };
+      },
+    },
+    solution: { type: Object as () => Solution, default: null },
   },
 
   data() {
@@ -282,7 +340,12 @@ export default Vue.extend({
         },
       ] as TableColumn[]);
     },
-
+    predictedCol(): string {
+      return this.solution ? `${this.solution.predictedKey}` : "";
+    },
+    errorCol(): string {
+      return this.solution ? this.solution.errorKey : "";
+    },
     imageFields(): Field[] {
       return getImageFields(this.dataFields);
     },
@@ -305,7 +368,9 @@ export default Vue.extend({
     listFields(): Field[] {
       return getListFields(this.dataFields);
     },
-
+    solutionIndex(): number {
+      return getSolutionIndex(this.solution?.solutionId);
+    },
     filters(): Filter[] {
       return routeGetters.getDecodedFilters(this.$store);
     },
@@ -323,6 +388,13 @@ export default Vue.extend({
 
     band(): string {
       return routeGetters.getBandCombinationId(this.$store);
+    },
+    residualThresholdMin(): number {
+      return _.toNumber(routeGetters.getRouteResidualThresholdMin(this.$store));
+    },
+
+    residualThresholdMax(): number {
+      return _.toNumber(routeGetters.getRouteResidualThresholdMax(this.$store));
     },
   },
 
@@ -389,7 +461,10 @@ export default Vue.extend({
         uniqueTrail: this.uniqueTrail,
       });
     },
-
+    headSlot(key: string): string {
+      const hs = formatSlot(key, "head");
+      return hs;
+    },
     onPagination(page: number) {
       // remove old data from store
       removeTimeseries(
@@ -496,6 +571,34 @@ export default Vue.extend({
     formatList(value: TableValue) {
       return value.value.value;
     },
+    normalizeError(error: number): number {
+      const range = this.residualExtrema.max - this.residualExtrema.min;
+      return ((error - this.residualExtrema.min) / range) * 2 - 1;
+    },
+    errorBarWidth(error: number): string {
+      return `${Math.abs(this.normalizeError(error) * 50)}%`;
+    },
+
+    errorBarLeft(error: number): string {
+      const nerr = this.normalizeError(error);
+      if (nerr > 0) {
+        return "50%";
+      }
+      return `${50 + nerr * 50}%`;
+    },
+
+    errorBarColor(error: number): string {
+      if (
+        error < this.residualThresholdMin ||
+        error > this.residualThresholdMax
+      ) {
+        return "#e05353";
+      }
+      return "#9e9e9e";
+    },
+    cellColor(weight: number, data: any): string {
+      return explainCellColor(weight, data, this.tableFields, this.dataItems);
+    },
   },
 });
 </script>
@@ -533,5 +636,19 @@ table tr {
 */
 .distil-table-container.distil-table-container > .pagination {
   flex-shrink: 0;
+}
+/* Highlight the predicted column */
+.table td.predicted-value {
+  border-right: 2px solid var(--gray-900);
+}
+.table td {
+  padding: 0px !important;
+}
+.table td > div {
+  text-align: left;
+  padding: 0.3rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 30px;
 }
 </style>

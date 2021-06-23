@@ -57,6 +57,7 @@
         <create-labeling-form
           :is-loading="isLoadingData"
           :low-shot-summary="labelSummary"
+          :is-saving="isSaving"
           @export="onExport"
           @apply="onApply"
           @save="onSaveClick"
@@ -201,6 +202,7 @@ export default Vue.extend({
       loading: true,
       loadingState: "",
       hasConfidence: false,
+      isSaving: false,
     };
   },
   computed: {
@@ -474,6 +476,7 @@ export default Vue.extend({
       this.$bvModal.show("save-model-modal");
     },
     async onSaveValid(saveName: string, retainUnlabeled: boolean) {
+      this.isSaving = true;
       const highlightsClear = [
         {
           context: this.instance,
@@ -517,6 +520,7 @@ export default Vue.extend({
         mode: INCLUDE_FILTER,
         dataMode,
       });
+      this.isSaving = false;
       this.$bvModal.show("save-success-dataset");
     },
     onFacetClick(context: string, key: string, value: string, dataset: string) {

@@ -96,7 +96,7 @@ export default Vue.extend({
 
   computed: {
     successTitle(): string {
-      return `<i class="fa fa-check-circle header-icon"/> Dataset ${this.saveName.toUpperCase()} was successfully saved`;
+      return `<p class="success-modal-header">Dataset ${this.saveName.toUpperCase()} was successfully saved</p>`;
     },
   },
 
@@ -121,6 +121,7 @@ export default Vue.extend({
       if (!this.validForm()) {
         return;
       }
+
       // Trigger submit handler
       this.saveDataset();
     },
@@ -171,6 +172,8 @@ export default Vue.extend({
 <style scoped>
 .success-modal-header {
   background: #d5ecdb;
+  font: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue,
+    Arial, Noto Sans, sans-serif;
 }
 
 .header-icon {
