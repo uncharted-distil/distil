@@ -52,6 +52,8 @@ export interface BaseState {
   getSecondaryVariableSummaries(include?: boolean): VariableSummary[];
   // allSummaries
   getAllVariableSummaries(include?: boolean): VariableSummary[];
+  // target variable, ground truth, prediction variable
+  getTargetVariable(): Variable;
   // map baseline data
   getMapBaseline(): TableRow[];
   // drill down baseline for map
@@ -72,6 +74,9 @@ export interface BaseState {
 }
 
 export class SelectViewState implements BaseState {
+  getTargetVariable(): Variable {
+    return routeGetters.getTargetVariable(store);
+  }
   name = ExplorerStateNames.SELECT_VIEW;
 
   async init(): Promise<void> {
@@ -161,6 +166,9 @@ export class SelectViewState implements BaseState {
 
 export class ResultViewState implements BaseState {
   name = ExplorerStateNames.RESULT_VIEW;
+  getTargetVariable(): Variable {
+    return routeGetters.getTargetVariable(store);
+  }
   async init(): Promise<void> {
     // check if solutionId is not null if not find recent solution and make it the target solutionId
     if (!routeGetters.getRouteSolutionId(store)) {
@@ -311,7 +319,15 @@ export class ResultViewState implements BaseState {
 }
 
 export class PredictViewState implements BaseState {
-  name: ExplorerStateNames;
+  name = ExplorerStateNames.PREDICTION_VIEW;
+  getTargetVariable(): Variable {
+    const activePred = requestGetters.getActivePredictions(store);
+    const predSum = getPredictionResultSummary(activePred?.requestId);
+    if (!predSum) {
+      return null;
+    }
+    return summaryToVariable(predSum);
+  }
   getVariables(): Variable[] {
     return requestGetters.getActivePredictionTrainingVariables(store);
   }
@@ -339,7 +355,11 @@ export class PredictViewState implements BaseState {
     const summaryDictionary = predictionGetters.getTrainingSummariesDictionary(
       store
     );
-    return getAllVariablesSummaries(this.getVariables(), summaryDictionary);
+    return getAllVariablesSummaries(
+      this.getVariables(),
+      summaryDictionary,
+      routeGetters.getRoutePredictionsDataset(store)
+    );
   }
   getSecondaryVariableSummaries(): VariableSummary[] {
     const currentSummaries = [];
@@ -385,6 +405,47 @@ export class PredictViewState implements BaseState {
   }
   async init(): Promise<void> {
     const dataset = routeGetters.getRouteDataset(store);
+    const target = routeGetters.getRouteTargetVariable(store);
+    const produceRequest = routeGetters.getRouteProduceRequestId(store);
+    if (!produceRequest) {
+      await requestActions.fetchSolutions(store, { dataset, target });
+      const solutions = requestGetters.getSolutions(store);
+      let minTime = 0;
+      let index = 0;
+      if (solutions && solutions.length) {
+        solutions.forEach((s, i) => {
+          if (s.hasPredictions) {
+            const time = new Date(s.timestamp).getTime();
+            if (time > minTime) {
+              index = i;
+              minTime = time;
+            }
+          }
+        });
+        if (!minTime) {
+          console.error("No Prediction Available");
+          return;
+        }
+        await requestActions.fetchPredictions(store, {
+          fittedSolutionId: solutions[index].fittedSolutionId,
+        });
+        const predictions = requestGetters.getPredictions(store);
+        const sorted = [...predictions].sort((a, b) => {
+          return (
+            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+          );
+        });
+        const route = routeGetters.getRoute(store);
+        const end = sorted.length - 1;
+        const entry = overlayRouteEntry(route, {
+          produceRequestId: sorted[end].requestId,
+          fittedSolutionId: solutions[index].fittedSolutionId,
+          predictionsDataset: sorted[end].dataset,
+          solutionId: solutions[index].solutionId,
+        });
+        router.push(entry).catch((err) => console.warn(err));
+      }
+    }
     await viewActions.fetchPredictionsData(store);
     datasetActions.fetchClusters(store, { dataset });
     datasetActions.fetchOutliers(store, dataset);

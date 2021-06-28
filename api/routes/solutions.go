@@ -43,6 +43,7 @@ type SolutionResponse struct {
 	PredictedKey     string               `json:"predictedKey"`
 	ErrorKey         string               `json:"errorKey"`
 	ConfidenceKey    string               `json:"confidenceKey"`
+	HasPredictions	 bool					`json:"hasPredictions"`
 }
 
 // SolutionsHandler fetches solutions associated with a given dataset and target.
@@ -52,7 +53,7 @@ func SolutionsHandler(solutionCtor api.SolutionStorageCtor, metadataCtor api.Met
 		dataset := handleNullParameter(pat.Param(r, "dataset"))
 		target := handleNullParameter(pat.Param(r, "target"))
 
-		solution, err := solutionCtor()
+		solutionStore, err := solutionCtor()
 		if err != nil {
 			handleError(w, err)
 			return
@@ -75,16 +76,15 @@ func SolutionsHandler(solutionCtor api.SolutionStorageCtor, metadataCtor api.Met
 			varMap[v.Key] = v
 		}
 
-		requests, err := solution.FetchRequestByDatasetTarget(dataset, target)
+		requests, err := solutionStore.FetchRequestByDatasetTarget(dataset, target)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-
 		solutions := make([]*SolutionResponse, 0)
 		for _, req := range requests {
 			// gather solutions
-			reqSolutions, err := solution.FetchSolutionsByRequestID(req.RequestID)
+			reqSolutions, err := solutionStore.FetchSolutionsByRequestID(req.RequestID)
 			if err != nil {
 				handleError(w, err)
 				return
@@ -107,6 +107,8 @@ func SolutionsHandler(solutionCtor api.SolutionStorageCtor, metadataCtor api.Met
 					PredictedKey:  api.GetPredictedKey(sol.SolutionID),
 					ErrorKey:      api.GetErrorKey(sol.SolutionID),
 					ConfidenceKey: api.GetConfidenceKey(sol.SolutionID),
+					// flags
+					HasPredictions: false,
 				}
 				if len(sol.Results) > 0 {
 					// result
@@ -115,6 +117,10 @@ func SolutionsHandler(solutionCtor api.SolutionStorageCtor, metadataCtor api.Met
 					solution.PredictedKey = api.GetPredictedKey(sol.Results[0].ResultUUID)
 					solution.ErrorKey = api.GetErrorKey(sol.Results[0].ResultUUID)
 					solution.ConfidenceKey = api.GetConfidenceKey(sol.Results[0].ResultUUID)
+					requests, err := solutionStore.FetchPredictionsByFittedSolutionID(sol.Results[0].FittedSolutionID)
+					if err == nil && len(requests) > 0 {
+						solution.HasPredictions = true
+					}
 				}
 				solutions = append(solutions, solution)
 			}

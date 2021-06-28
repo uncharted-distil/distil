@@ -37,7 +37,7 @@
           :enable-color-scales="geoVarExists"
           :include="include"
           :summaries="summaries"
-          :enable-footer="config.facetFooterEnabled"
+          :enable-footer="isSelectState"
         />
       </template>
     </left-side-panel>
@@ -64,7 +64,7 @@
           </b-tabs>
         </div>
         <b-button
-          v-if="include && config.includeExcludeEnabled"
+          v-if="include && isSelectState"
           class="select-data-action-exclude align-self-center"
           variant="outline-secondary"
           :disabled="isExcludeDisabled"
@@ -80,7 +80,7 @@
           Exclude
         </b-button>
         <b-button
-          v-if="!include && config.includeExcludeEnabled"
+          v-if="!include && isSelectState"
           variant="outline-secondary"
           :disabled="!isFilteringSelection"
           @click="onReincludeClick"
@@ -91,10 +91,7 @@
           />
           Reinclude
         </b-button>
-        <legend-weight
-          v-if="hasWeight && !config.includeExcludeEnabled"
-          class="ml-5 mr-auto"
-        />
+        <legend-weight v-if="hasWeight && isResultState" class="ml-5 mr-auto" />
       </div>
       <!-- <layer-selection v-if="isMultiBandImage" class="layer-select-dropdown" /> -->
       <section class="data-container">
@@ -112,6 +109,10 @@
           :summaries="summaries"
           :solution="solution"
           :residual-extrema="residualExtrema"
+          :area-of-interest-items="{
+            inner: drillDownBaseline,
+            outer: drillDownFiltered,
+          }"
           @tile-clicked="onTileClick"
         />
       </section>
@@ -131,7 +132,7 @@
             <strong class="selected-color">selected</strong>
           </template>
         </div>
-        <b-button-toolbar v-if="config.includeExcludeEnabled">
+        <b-button-toolbar v-if="isSelectState">
           <b-button-group class="ml-2 mt-1">
             <b-button
               variant="primary"
@@ -149,8 +150,9 @@
             </b-button>
           </b-button-group>
         </b-button-toolbar>
+        <!-- RESULT AND PREDICTION VIEW COMPONENTS-->
         <create-solutions-form
-          v-if="isCreateModelPossible && config.includeExcludeEnabled"
+          v-if="isCreateModelPossible && isSelectState"
           ref="model-creation-form"
           class="ml-2"
           @create-model="onModelCreation"
@@ -159,7 +161,7 @@
           :fitted-solution-id="fittedSolutionId"
           :target="targetName"
           :target-type="targetType"
-          @apply-model="onApplyModel"
+          @model-apply="onApplyModel"
         />
         <save-modal
           ref="saveModel"
@@ -168,10 +170,7 @@
           @save="onSaveModel"
         />
         <template
-          v-if="
-            !config.includeExcludeEnabled &&
-            (isSingleSolution || isActiveSolutionSaved)
-          "
+          v-if="isResultState && (isSingleSolution || isActiveSolutionSaved)"
         >
           <b-button
             v-if="isTimeseries"
@@ -191,13 +190,19 @@
           </b-button>
         </template>
         <b-button
-          v-else-if="!config.includeExcludeEnabled"
+          v-else-if="isResultState"
           variant="success"
           class="save-button"
           @click="$bvModal.show('save-model-modal')"
         >
           <i class="fa fa-floppy-o" />
           Save Model
+        </b-button>
+        <b-button v-if="isPredictState" v-b-modal.save>
+          Create Dataset
+        </b-button>
+        <b-button v-if="isPredictState" v-b-modal.export variant="primary">
+          Export Predictions
         </b-button>
       </footer>
     </main>
@@ -214,6 +219,44 @@
     </left-side-panel>
     <status-sidebar />
     <status-panel />
+    <!--LABELING VIEW COMPONENTS-->
+    <b-modal
+      :id="modalId"
+      @ok="onLabelSubmit"
+      no-close-on-backdrop
+      no-close-on-esc
+    >
+      <template #modal-header>
+        {{ labelModalTitle }}
+      </template>
+      <b-form-group
+        v-if="!isClone"
+        id="input-group-1"
+        label="Label name:"
+        label-for="label-input-field"
+        description="Enter the name of label."
+      >
+        <b-form-input
+          id="label-input-field"
+          v-model="labelName"
+          type="text"
+          required
+          :placeholder="labelName"
+        />
+      </b-form-group>
+      <b-form-group
+        v-else
+        label="Label name:"
+        label-for="label-select-field"
+        description="Select the label field."
+      >
+        <b-form-select
+          id="label-select-field"
+          v-model="labelName"
+          :options="options"
+        />
+      </b-form-group>
+    </b-modal>
   </div>
 </template>
 
@@ -313,7 +356,7 @@ import ExplorerConfig, {
   SelectViewConfig,
 } from "../util/dataExplorer";
 
-export default Vue.extend({
+const DataExplorer = Vue.extend({
   name: "DataExplorer",
 
   components: {
@@ -431,6 +474,12 @@ export default Vue.extend({
     solutionId(): string {
       return this.solution?.solutionId;
     },
+    drillDownBaseline(): TableRow[] {
+      return this.state.getMapDrillDownBaseline(this.include);
+    },
+    drillDownFiltered(): TableRow[] {
+      return this.state.getMapDrillDownFiltered(this.include);
+    },
     fittedSolutionId(): string {
       return this.solution?.fittedSolutionId;
     },
@@ -495,7 +544,7 @@ export default Vue.extend({
     spinnerHTML,
 
     target(): Variable {
-      return routeGetters.getTargetVariable(this.$store);
+      return this.state.getTargetVariable();
     },
 
     totalNumRows(): number {
@@ -561,6 +610,7 @@ export default Vue.extend({
     variablesTypes(): string[] {
       return [...new Set(this.variables.map((v) => v.colType))];
     },
+    // enables or disables coloring by facets
     geoVarExists(): boolean {
       const varSums = this.summaries;
       return varSums.some((v) => {
@@ -578,9 +628,23 @@ export default Vue.extend({
       // Default is TABLE_VIEW
       return "SelectDataTable";
     },
+    // used to enable certain UI components
+    isResultState(): boolean {
+      return ExplorerStateNames.RESULT_VIEW === this.explorerRouteState;
+    },
+    // used to enable certain UI components
+    isSelectState(): boolean {
+      return ExplorerStateNames.SELECT_VIEW === this.explorerRouteState;
+    },
+    // used to enable certain UI components
+    isPredictState(): boolean {
+      return ExplorerStateNames.PREDICTION_VIEW === this.explorerRouteState;
+    },
+    // basic table data used by all view components
     items(): TableRow[] {
       return this.state.getData(this.include);
     },
+    // baselineMap is used to maintain index order for faster buffer changes
     baselineMap(): Dictionary<number> {
       const result = {};
       const base = this.baselineItems ?? [];
@@ -589,21 +653,26 @@ export default Vue.extend({
       });
       return result;
     },
+    // used for map is the baseline
     baselineItems(): TableRow[] {
       return this.state.getMapBaseline();
     },
+    // returns all summaries
     summaries(): VariableSummary[] {
       return this.state.getAllVariableSummaries();
     },
+    // available summaries, result summaries, prediction summaries
     secondarySummaries(): VariableSummary[] {
       return this.state.getSecondaryVariableSummaries();
     },
+    // available variables, result variables, prediction variables
     secondaryVariables(): Variable[] {
       return this.state.getSecondaryVariables();
     },
     explorerRouteState(): ExplorerStateNames {
       return routeGetters.getDataExplorerState(this.$store);
     },
+    // toggles right side variable pane
     isOutcomeToggled(): boolean {
       const outcome = ACTION_MAP.get(ActionNames.OUTCOME_VARIABLES).paneId;
       return routeGetters
@@ -857,7 +926,6 @@ export default Vue.extend({
         // should probably change UI based on error
         if (!err) {
           const modal = this.$refs.saveModel as InstanceType<typeof SaveModal>;
-
           modal.showSuccessModel();
         }
       } catch (err) {
@@ -866,6 +934,7 @@ export default Vue.extend({
     },
   },
 });
+export default DataExplorer;
 </script>
 
 <style scoped>

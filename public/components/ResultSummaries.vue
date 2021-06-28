@@ -50,6 +50,7 @@
         :fitted-solution-id="fittedSolutionId"
         :target="target"
         :target-type="targetType"
+        handle-model-creation
       />
       <template v-if="isSingleSolution || isActiveSolutionSaved">
         <b-button

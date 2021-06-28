@@ -1,9 +1,12 @@
+import { datasetGetters } from "../store";
 import {
   BaseState,
   PredictViewState,
   ResultViewState,
   SelectViewState,
 } from "./state/AppStateWrapper";
+import DataExplorer from "../views/DataExplorer.vue";
+import store from "../store/store";
 
 export interface Action {
   name: string;
@@ -14,10 +17,6 @@ export interface Action {
 }
 
 export default interface ExplorerConfig {
-  // whether the footer is enabled
-  readonly facetFooterEnabled: boolean;
-  // whether include/exclude in needed on this state
-  readonly includeExcludeEnabled: boolean;
   // required actions in current state
   actionList: Action[];
 }
@@ -56,8 +55,6 @@ export function getStateFromName(state: ExplorerStateNames): BaseState {
 }
 
 export class SelectViewConfig implements ExplorerConfig {
-  facetFooterEnabled = true;
-  includeExcludeEnabled = true;
   get actionList(): Action[] {
     const actions = [
       ActionNames.CREATE_NEW_VARIABLE,
@@ -77,8 +74,6 @@ export class SelectViewConfig implements ExplorerConfig {
   }
 }
 export class ResultViewConfig implements ExplorerConfig {
-  facetFooterEnabled = false;
-  includeExcludeEnabled = false;
   get actionList(): Action[] {
     const actions = [
       ActionNames.ALL_VARIABLES,
@@ -98,8 +93,6 @@ export class ResultViewConfig implements ExplorerConfig {
   }
 }
 export class PredictViewConfig implements ExplorerConfig {
-  facetFooterEnabled = false;
-  includeExcludeEnabled = false;
   get actionList(): Action[] {
     const actions = [
       ActionNames.ALL_VARIABLES,
@@ -186,3 +179,16 @@ export const ACTION_MAP = new Map(
     return [a.name, a];
   })
 );
+/**************MIXINS********************/
+export const SELECT_VIEW_COMPUTED = {};
+export const SELECT_VIEW_METHODS = {};
+export const LABEL_VIEW_COMPUTED = {
+  isClone(datasetName: string): boolean | null {
+    const datasets = datasetGetters.getDatasets(store);
+    const dataset = datasets.find((d) => d.id === datasetName);
+    if (!dataset) {
+      return null;
+    }
+    return dataset.clone === undefined ? false : dataset.clone;
+  },
+};
