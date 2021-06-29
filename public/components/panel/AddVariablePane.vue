@@ -17,12 +17,53 @@
 
 <template>
   <div>
-    <b-button @click="onTimeseriesClick" variant="dark">
+    <b-button variant="dark" @click="onTimeseriesClick">
       <i class="fa fa-area-chart" /> Timeseries
     </b-button>
-    <b-button @click="onMapClick" variant="dark">
+    <b-button variant="dark" @click="onMapClick">
       <i class="fa fa-globe" /> Map
     </b-button>
+    <b-button variant="dark" @click="onLabelClick">
+      <i class="fa fa-tag" /> Label
+    </b-button>
+    <b-modal
+      :id="modalId"
+      @hide="onLabelSubmit"
+      no-close-on-backdrop
+      ok-only
+      no-close-on-esc
+    >
+      <template #modal-header>
+        {{ labelModalTitle }}
+      </template>
+      <b-form-group
+        v-if="!isClone"
+        id="input-group-1"
+        label="Label name:"
+        label-for="label-input-field"
+        description="Enter the name of label."
+      >
+        <b-form-input
+          id="label-input-field"
+          v-model="labelName"
+          type="text"
+          required
+          :placeholder="labelName"
+        />
+      </b-form-group>
+      <b-form-group
+        v-else
+        label="Label name:"
+        label-for="label-select-field"
+        description="Select the label field."
+      >
+        <b-form-select
+          id="label-select-field"
+          v-model="labelName"
+          :options="options"
+        />
+      </b-form-group>
+    </b-modal>
   </div>
 </template>
 
@@ -52,6 +93,9 @@ export default Vue.extend({
 
     onTimeseriesClick() {
       this.groupingClick(TIMESERIES_TYPE);
+    },
+    onLabelClick() {
+      return;
     },
   },
 });

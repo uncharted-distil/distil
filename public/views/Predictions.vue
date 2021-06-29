@@ -52,6 +52,8 @@
 
         <prediction-summaries
           class="col-12 col-md-3 border-gray-left predictions-predictions-summaries"
+          include-footer
+          include-title
         ></prediction-summaries>
       </div>
     </div>

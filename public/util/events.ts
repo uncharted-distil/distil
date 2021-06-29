@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-namespace */
-import { Variable, TableRow } from "../store/dataset/index";
+import { TableRow, Variable } from "../store/dataset/index";
 /**
  * ALL EVENT RELATED CODE SHOULD BE HERE
  */
@@ -101,6 +101,8 @@ export class EventList {
     SAVE_EVENT: "save",
     // delete the model
     DELETE_EVENT: "model-delete",
+    // apply model
+    APPLY_EVENT: "model-apply",
   };
   static readonly EXPLORER = {
     NAV_EVENT: "nav-event",
@@ -138,5 +140,12 @@ export declare namespace EI {
       timeseriesIds: TableRow[];
     }
   }
-  namespace Explorer {}
+  namespace RESULT {
+    interface SaveInfo {
+      solutionId: string;
+      fittedSolution: string;
+      name: string;
+      description: string;
+    }
+  }
 }

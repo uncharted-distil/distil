@@ -17,7 +17,9 @@
 
 <template>
   <div class="prediction-summaries mh-100">
-    <p class="nav-link font-weight-bold">Predictions for Dataset</p>
+    <p v-if="includeTitle" class="nav-link font-weight-bold">
+      Predictions for Dataset
+    </p>
     <div class="prediction-group-container overflow-auto">
       <div v-for="meta in metaSummaries" :key="meta.summary.key">
         <div
@@ -55,7 +57,9 @@
         </div>
       </div>
     </div>
-    <b-button v-b-modal.save class="mt-3"> Create Dataset </b-button>
+    <b-button v-if="includeFooter" v-b-modal.save class="mt-3">
+      Create Dataset
+    </b-button>
 
     <b-modal id="save" title="Create Dataset" @ok="createDataset">
       <div class="check-message-container d-flex justify-content-around">
@@ -72,7 +76,12 @@
       </div>
     </b-modal>
 
-    <b-button variant="primary" class="float-right mt-3" v-b-modal.export>
+    <b-button
+      v-if="includeFooter"
+      variant="primary"
+      class="float-right mt-3"
+      v-b-modal.export
+    >
       Export Predictions
     </b-button>
 
@@ -147,7 +156,10 @@ export default Vue.extend({
     FileUploader,
     PredictionGroup,
   },
-
+  props: {
+    includeFooter: { type: Boolean as () => boolean, default: false },
+    includeTitle: { type: Boolean as () => boolean, default: false },
+  },
   data() {
     return {
       saveFileName: "",

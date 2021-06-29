@@ -37,7 +37,7 @@
           :enable-color-scales="geoVarExists"
           :include="include"
           :summaries="summaries"
-          :enable-footer="config.facetFooterEnabled"
+          :enable-footer="isSelectState"
         />
       </template>
     </left-side-panel>
@@ -64,7 +64,7 @@
           </b-tabs>
         </div>
         <b-button
-          v-if="include && config.includeExcludeEnabled"
+          v-if="include && isSelectState"
           class="select-data-action-exclude align-self-center"
           variant="outline-secondary"
           :disabled="isExcludeDisabled"
@@ -80,7 +80,7 @@
           Exclude
         </b-button>
         <b-button
-          v-if="!include && config.includeExcludeEnabled"
+          v-if="!include && isSelectState"
           variant="outline-secondary"
           :disabled="!isFilteringSelection"
           @click="onReincludeClick"
@@ -91,10 +91,7 @@
           />
           Reinclude
         </b-button>
-        <legend-weight
-          v-if="hasWeight && !config.includeExcludeEnabled"
-          class="ml-5 mr-auto"
-        />
+        <legend-weight v-if="hasWeight && isResultState" class="ml-5 mr-auto" />
       </div>
       <!-- <layer-selection v-if="isMultiBandImage" class="layer-select-dropdown" /> -->
       <section class="data-container">
@@ -112,6 +109,10 @@
           :summaries="summaries"
           :solution="solution"
           :residual-extrema="residualExtrema"
+          :area-of-interest-items="{
+            inner: drillDownBaseline,
+            outer: drillDownFiltered,
+          }"
           @tile-clicked="onTileClick"
         />
       </section>
@@ -131,7 +132,7 @@
             <strong class="selected-color">selected</strong>
           </template>
         </div>
-        <b-button-toolbar v-if="config.includeExcludeEnabled">
+        <b-button-toolbar v-if="isSelectState">
           <b-button-group class="ml-2 mt-1">
             <b-button
               variant="primary"
@@ -149,8 +150,9 @@
             </b-button>
           </b-button-group>
         </b-button-toolbar>
+        <!-- RESULT AND PREDICTION VIEW COMPONENTS-->
         <create-solutions-form
-          v-if="isCreateModelPossible && config.includeExcludeEnabled"
+          v-if="isCreateModelPossible && isSelectState"
           ref="model-creation-form"
           class="ml-2"
           @create-model="onModelCreation"
@@ -159,6 +161,7 @@
           :fitted-solution-id="fittedSolutionId"
           :target="targetName"
           :target-type="targetType"
+          @model-apply="onApplyModel"
         />
         <save-modal
           ref="saveModel"
@@ -167,14 +170,11 @@
           @save="onSaveModel"
         />
         <template
-          v-if="
-            !config.includeExcludeEnabled &&
-            (isSingleSolution || isActiveSolutionSaved)
-          "
+          v-if="isResultState && (isSingleSolution || isActiveSolutionSaved)"
         >
           <b-button
             v-if="isTimeseries"
-            variant="primary"
+            variant="success"
             class="apply-button"
             @click="$bvModal.show('forecast-horizon-modal')"
           >
@@ -182,7 +182,7 @@
           </b-button>
           <b-button
             v-else
-            variant="primary"
+            variant="success"
             class="apply-button"
             @click="$bvModal.show('predictions-data-upload-modal')"
           >
@@ -190,13 +190,19 @@
           </b-button>
         </template>
         <b-button
-          v-else-if="!config.includeExcludeEnabled"
+          v-else-if="isResultState"
           variant="success"
           class="save-button"
           @click="$bvModal.show('save-model-modal')"
         >
           <i class="fa fa-floppy-o" />
           Save Model
+        </b-button>
+        <b-button v-if="isPredictState" v-b-modal.save>
+          Create Dataset
+        </b-button>
+        <b-button v-if="isPredictState" v-b-modal.export variant="primary">
+          Export Predictions
         </b-button>
       </footer>
     </main>
@@ -208,16 +214,49 @@
       <template v-if="hasNoVariables">
         <p>No Outcome Variables available.</p>
       </template>
-      <result-facets v-else />
+      <result-facets v-else-if="state.name === 'result'" />
+      <prediction-summaries v-else />
     </left-side-panel>
     <status-sidebar />
     <status-panel />
+    <b-modal :id="labelModalId" @ok="onLabelSubmit">
+      <template #modal-header>
+        {{ labelModalTitle }}
+      </template>
+      <b-form-group
+        v-if="!isClone"
+        id="input-group-1"
+        label="Label name:"
+        label-for="label-input-field"
+        description="Enter the name of label."
+      >
+        <b-form-input
+          id="label-input-field"
+          v-model="labelName"
+          type="text"
+          required
+          :placeholder="labelName"
+        />
+      </b-form-group>
+      <b-form-group
+        v-else
+        label="Label name:"
+        label-for="label-select-field"
+        description="Select the label field."
+      >
+        <b-form-select
+          id="label-select-field"
+          v-model="labelName"
+          :options="labelOptions"
+        />
+      </b-form-group>
+    </b-modal>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from "vue";
-import { capitalize, isEmpty, isNil } from "lodash";
+import { capitalize, isEmpty } from "lodash";
 
 // Components
 import ActionColumn from "../components/layout/ActionColumn.vue";
@@ -236,22 +275,18 @@ import StatusPanel from "../components/StatusPanel.vue";
 import StatusSidebar from "../components/StatusSidebar.vue";
 import ResultFacets from "../components/ResultFacets.vue";
 import LegendWeight from "../components/LegendWeight.vue";
-import SaveModal, { SaveInfo } from "../components/SaveModal.vue";
+import SaveModal from "../components/SaveModal.vue";
 import PredictionsDataUploader from "../components/PredictionsDataUploader.vue";
-import { isFittedSolutionIdSavedAsModel } from "../util/models";
+import PredictionSummaries from "../components/PredictionSummaries.vue";
 
 // Store
 import {
-  appActions,
   viewActions,
-  datasetActions,
   datasetGetters,
-  requestActions,
   requestGetters,
   resultGetters,
 } from "../store";
 import {
-  DataMode,
   Extrema,
   Highlight,
   RowSelection,
@@ -268,25 +303,12 @@ import {
 import { getters as routeGetters } from "../store/route/module";
 
 // Util
-import {
-  addFilterToRoute,
-  EXCLUDE_FILTER,
-  Filter,
-  INCLUDE_FILTER,
-} from "../util/filters";
-import {
-  clearHighlight,
-  createFiltersFromHighlights,
-} from "../util/highlights";
-import { overlayRouteEntry, RouteArgs, varModesToString } from "../util/routes";
-import {
-  clearRowSelection,
-  getNumIncludedRows,
-  createFilterFromRowSelection,
-} from "../util/row";
+import { EXCLUDE_FILTER, Filter } from "../util/filters";
+import { clearHighlight } from "../util/highlights";
+import { overlayRouteEntry, RouteArgs } from "../util/routes";
+import { clearRowSelection, getNumIncludedRows } from "../util/row";
 import { spinnerHTML } from "../util/spinner";
 import { isGeoLocatedType, META_TYPES } from "../util/types";
-import { Feature, Activity, SubActivity } from "../util/userEvents";
 import {
   GEO_VIEW,
   GRAPH_VIEW,
@@ -308,9 +330,14 @@ import ExplorerConfig, {
   getConfigFromName,
   getStateFromName,
   SelectViewConfig,
+  LABEL_COMPUTES,
+  SELECT_COMPUTES,
+  RESULT_METHODS,
+  RESULT_COMPUTES,
+  SELECT_METHODS,
 } from "../util/dataExplorer";
 
-export default Vue.extend({
+const DataExplorer = Vue.extend({
   name: "DataExplorer",
 
   components: {
@@ -323,6 +350,7 @@ export default Vue.extend({
     LegendWeight,
     ImageMosaic,
     PredictionsDataUploader,
+    PredictionSummaries,
     SearchBar,
     SelectDataTable,
     GeoPlot,
@@ -343,9 +371,10 @@ export default Vue.extend({
       include: true,
       state: new SelectViewState(),
       config: new SelectViewConfig(),
+      labelName: "",
+      labelModalId: "label-input-form",
     };
   },
-
   computed: {
     /* Actions displayed on the Action column */
     activeActions(): Action[] {
@@ -393,13 +422,9 @@ export default Vue.extend({
         this.config.actionList.find((a) => a.paneId === this.activePane).name
       );
     },
-    isActiveSolutionSaved(): boolean {
-      return this.isFittedSolutionIdSavedAsModel(this.fittedSolutionId);
-    },
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
-
     explore(): string[] {
       return routeGetters.getExploreVariables(this.$store);
     },
@@ -415,7 +440,9 @@ export default Vue.extend({
     hasNoVariables(): boolean {
       return isEmpty(this.activeVariables);
     },
-
+    isTimeseries(): boolean {
+      return routeGetters.isTimeseries(this.$store);
+    },
     highlights(): Highlight[] {
       return routeGetters.getDecodedHighlights(this.$store);
     },
@@ -425,6 +452,12 @@ export default Vue.extend({
     solutionId(): string {
       return this.solution?.solutionId;
     },
+    drillDownBaseline(): TableRow[] {
+      return this.state.getMapDrillDownBaseline(this.include);
+    },
+    drillDownFiltered(): TableRow[] {
+      return this.state.getMapDrillDownFiltered(this.include);
+    },
     fittedSolutionId(): string {
       return this.solution?.fittedSolutionId;
     },
@@ -433,10 +466,6 @@ export default Vue.extend({
     },
     isSingleSolution(): boolean {
       return routeGetters.isSingleSolution(this.$store);
-    },
-    isCreateModelPossible(): boolean {
-      // check that we have some target and training variables.
-      return !isNil(this.target) && !isEmpty(this.training);
     },
     timeseries(): Dictionary<TimeSeries> {
       return datasetGetters.getTimeseries(this.$store);
@@ -458,10 +487,6 @@ export default Vue.extend({
     },
     fields(): Dictionary<TableColumn> {
       return this.state.getFields(this.include);
-    },
-    /* Disable the Exclude filter button. */
-    isExcludeDisabled(): boolean {
-      return !this.isFilteringHighlights && !this.isFilteringSelection;
     },
 
     isFilteringHighlights(): boolean {
@@ -489,17 +514,13 @@ export default Vue.extend({
     spinnerHTML,
 
     target(): Variable {
-      return routeGetters.getTargetVariable(this.$store);
+      return this.state.getTargetVariable();
     },
 
     totalNumRows(): number {
       return this.hasData
         ? datasetGetters.getIncludedTableDataNumRows(this.$store)
         : 0;
-    },
-
-    training(): string[] {
-      return routeGetters.getDecodedTrainingVariableNames(this.$store);
     },
 
     variables(): Variable[] {
@@ -517,9 +538,7 @@ export default Vue.extend({
       });
       return variables;
     },
-    hasWeight(): boolean {
-      return resultGetters.hasResultTableDataItemsWeight(this.$store);
-    },
+
     variablesPerActions() {
       const variables = {};
       this.availableActions.forEach((action) => {
@@ -555,6 +574,7 @@ export default Vue.extend({
     variablesTypes(): string[] {
       return [...new Set(this.variables.map((v) => v.colType))];
     },
+    // enables or disables coloring by facets
     geoVarExists(): boolean {
       const varSums = this.summaries;
       return varSums.some((v) => {
@@ -572,9 +592,23 @@ export default Vue.extend({
       // Default is TABLE_VIEW
       return "SelectDataTable";
     },
+    // used to enable certain UI components
+    isResultState(): boolean {
+      return ExplorerStateNames.RESULT_VIEW === this.explorerRouteState;
+    },
+    // used to enable certain UI components
+    isSelectState(): boolean {
+      return ExplorerStateNames.SELECT_VIEW === this.explorerRouteState;
+    },
+    // used to enable certain UI components
+    isPredictState(): boolean {
+      return ExplorerStateNames.PREDICTION_VIEW === this.explorerRouteState;
+    },
+    // basic table data used by all view components
     items(): TableRow[] {
       return this.state.getData(this.include);
     },
+    // baselineMap is used to maintain index order for faster buffer changes
     baselineMap(): Dictionary<number> {
       const result = {};
       const base = this.baselineItems ?? [];
@@ -583,26 +617,56 @@ export default Vue.extend({
       });
       return result;
     },
+    // used for map is the baseline
     baselineItems(): TableRow[] {
       return this.state.getMapBaseline();
     },
+    // returns all summaries
     summaries(): VariableSummary[] {
       return this.state.getAllVariableSummaries();
     },
+    // available summaries, result summaries, prediction summaries
     secondarySummaries(): VariableSummary[] {
       return this.state.getSecondaryVariableSummaries();
     },
+    // available variables, result variables, prediction variables
     secondaryVariables(): Variable[] {
       return this.state.getSecondaryVariables();
     },
     explorerRouteState(): ExplorerStateNames {
       return routeGetters.getDataExplorerState(this.$store);
     },
+    // toggles right side variable pane
     isOutcomeToggled(): boolean {
       const outcome = ACTION_MAP.get(ActionNames.OUTCOME_VARIABLES).paneId;
       return routeGetters
         .getToggledActions(this.$store)
         .some((a) => a === outcome);
+    },
+    training(): string[] {
+      return SELECT_COMPUTES.training(this);
+    },
+    isCreateModelPossible(): boolean {
+      return SELECT_COMPUTES.isCreateModelPossible(this);
+    },
+    /* Disable the Exclude filter button. */
+    isExcludeDisabled(): boolean {
+      return SELECT_COMPUTES.isExcludedDisabled(this);
+    },
+    isClone(): boolean {
+      return LABEL_COMPUTES.isClone(this);
+    },
+    labelOptions(): { value: string; text: string }[] {
+      return LABEL_COMPUTES.options(this);
+    },
+    labelModalTitle(): string {
+      return LABEL_COMPUTES.labelModalTitle(this);
+    },
+    isActiveSolutionSaved(): boolean {
+      return RESULT_COMPUTES.isActiveSolutionSaved(this);
+    },
+    hasWeight(): boolean {
+      return RESULT_COMPUTES.hasWeight(this);
     },
   },
 
@@ -646,7 +710,6 @@ export default Vue.extend({
 
   methods: {
     capitalize,
-    isFittedSolutionIdSavedAsModel,
     async changeStatesByName(state: ExplorerStateNames) {
       this.setState(getStateFromName(state));
       this.setConfig(getConfigFromName(state));
@@ -657,99 +720,6 @@ export default Vue.extend({
       this.updateRoute({ dataSize });
       viewActions.updateDataExplorerData(this.$store);
     },
-    onModelCreation(solutionRequestMsg: SolutionRequestMsg) {
-      // handle solutionRequestMsg
-      requestActions
-        .createSolutionRequest(this.$store, solutionRequestMsg)
-        .then(async (res: Solution) => {
-          const dataMode = routeGetters.getDataMode(this.$store);
-          const dataModeDefault = dataMode ? dataMode : DataMode.Default;
-          // transition to result screen
-          const entry = overlayRouteEntry(this.$route, {
-            dataset: routeGetters.getRouteDataset(this.$store),
-            target: routeGetters.getRouteTargetVariable(this.$store),
-            solutionId: res.solutionId,
-            task: routeGetters.getRouteTask(this.$store),
-            dataMode: dataModeDefault,
-            varModes: varModesToString(
-              routeGetters.getDecodedVarModes(this.$store)
-            ),
-            modelLimit: routeGetters.getModelLimit(this.$store),
-            modelTimeLimit: routeGetters.getModelTimeLimit(this.$store),
-            modelQuality: routeGetters.getModelQuality(this.$store),
-          });
-          this.$router.push(entry).catch((err) => console.warn(err));
-          const modelCreationRef = this.$refs[
-            "model-creation-form"
-          ] as InstanceType<typeof CreateSolutionsForm>;
-          modelCreationRef.pending = false;
-          await this.changeStatesByName(ExplorerStateNames.RESULT_VIEW);
-          const actionColumn = this.$refs["action-column"] as InstanceType<
-            typeof ActionColumn
-          >;
-          actionColumn.toggle(
-            ACTION_MAP.get(ActionNames.OUTCOME_VARIABLES).paneId
-          );
-        })
-        .catch((err) => {
-          console.error(err);
-        });
-      return;
-    },
-    onExcludeClick() {
-      let filter = null;
-      if (this.isFilteringHighlights) {
-        filter = createFiltersFromHighlights(this.highlights, EXCLUDE_FILTER);
-      } else {
-        filter = createFilterFromRowSelection(
-          this.rowSelection,
-          EXCLUDE_FILTER
-        );
-      }
-
-      addFilterToRoute(this.$router, filter);
-      this.resetHighlightsOrRow();
-
-      datasetActions.fetchVariableRankings(this.$store, {
-        dataset: this.dataset,
-        target: this.target.key,
-      });
-
-      appActions.logUserEvent(this.$store, {
-        feature: Feature.FILTER_DATA,
-        activity: Activity.DATA_PREPARATION,
-        subActivity: SubActivity.DATA_TRANSFORMATION,
-        details: { filter: filter },
-      });
-    },
-
-    onReincludeClick() {
-      let filter = null;
-      if (this.isFilteringHighlights) {
-        filter = createFiltersFromHighlights(this.highlights, INCLUDE_FILTER);
-      } else {
-        filter = createFilterFromRowSelection(
-          this.rowSelection,
-          INCLUDE_FILTER
-        );
-      }
-
-      addFilterToRoute(this.$router, filter);
-      this.resetHighlightsOrRow();
-
-      datasetActions.fetchVariableRankings(this.$store, {
-        dataset: this.dataset,
-        target: this.target.key,
-      });
-
-      appActions.logUserEvent(this.$store, {
-        feature: Feature.UNFILTER_DATA,
-        activity: Activity.DATA_PREPARATION,
-        subActivity: SubActivity.DATA_TRANSFORMATION,
-        details: { filter: filter },
-      });
-    },
-
     onSetActive(actionName: string): void {
       if (actionName === this.activePane) return;
 
@@ -828,35 +798,29 @@ export default Vue.extend({
       // Update the route with the top 5 variable as training
       this.updateRoute({ explore: top5Variables });
     },
-    async onSaveModel(args: SaveInfo) {
-      appActions.logUserEvent(this.$store, {
-        feature: Feature.EXPORT_MODEL,
-        activity: Activity.MODEL_SELECTION,
-        subActivity: SubActivity.MODEL_SAVE,
-        details: {
-          solution: args.solutionId,
-          fittedSolution: args.fittedSolution,
-        },
-      });
+    onModelCreation(solutionRequestMsg: SolutionRequestMsg) {
+      SELECT_METHODS.onModelCreation(this)(solutionRequestMsg);
+    },
 
-      try {
-        const err = await appActions.saveModel(this.$store, {
-          fittedSolutionId: this.fittedSolutionId,
-          modelName: args.name,
-          modelDescription: args.description,
-        });
-        // should probably change UI based on error
-        if (!err) {
-          const modal = this.$refs.saveModel as InstanceType<typeof SaveModal>;
+    onExcludeClick() {
+      SELECT_METHODS.onExcludeClick(this)();
+    },
 
-          modal.showSuccessModel();
-        }
-      } catch (err) {
-        console.warn(err);
-      }
+    onReincludeClick() {
+      SELECT_METHODS.onReincludeClick(this)();
+    },
+    async onSaveModel(args: EI.RESULT.SaveInfo) {
+      RESULT_METHODS.onSaveModel(this)(args);
+    },
+    isFittedSolutionIdSavedAsModel(id: string): boolean {
+      return RESULT_METHODS.isFittedSolutionIdSavedAsModel(this)(id);
+    },
+    async onApplyModel(args: RouteArgs) {
+      RESULT_METHODS.onApplyModel(this)(args);
     },
   },
 });
+export default DataExplorer;
 </script>
 
 <style scoped>

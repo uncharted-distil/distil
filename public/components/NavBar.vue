@@ -95,6 +95,13 @@
           >
             <i class="fa fa-check-circle nav-icon" /> Check Models
           </b-nav-item>
+          <b-nav-item
+            :active="explorerPredictionState"
+            :disabled="hasNoDatasetAndTarget"
+            @click="explorerNav('prediction')"
+          >
+            <i class="fa fa-line-chart nav-icon" /> View Predictions
+          </b-nav-item>
         </template>
       </b-navbar-nav>
     </b-collapse>
@@ -206,6 +213,9 @@ export default Vue.extend({
     },
     explorerResultState(): boolean {
       return this.dataExplorerState === ExplorerStateNames.RESULT_VIEW;
+    },
+    explorerPredictionState(): boolean {
+      return this.dataExplorerState === ExplorerStateNames.PREDICTION_VIEW;
     },
     hasDataset(): boolean {
       return !!this.dataset;

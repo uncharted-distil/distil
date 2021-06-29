@@ -1,6 +1,8 @@
 import router from "../../router/router";
 import {
+  datasetActions,
   datasetGetters,
+  predictionGetters,
   requestActions,
   requestGetters,
   resultActions,
@@ -25,11 +27,16 @@ import { getSolutionById } from "../solutions";
 import {
   getConfidenceSummary,
   getCorrectnessSummary,
+  getPredictionConfidenceSummary,
+  getPredictionRankSummary,
+  getPredictionResultSummary,
   getRankingSummary,
   getResidualSummary,
   getSolutionResultSummary,
   resultSummariesToVariables,
+  summaryToVariable,
 } from "../summaries";
+import { DISTIL_ROLES } from "../types";
 
 export interface BaseState {
   name: ExplorerStateNames;
@@ -46,6 +53,8 @@ export interface BaseState {
   getSecondaryVariableSummaries(include?: boolean): VariableSummary[];
   // allSummaries
   getAllVariableSummaries(include?: boolean): VariableSummary[];
+  // target variable, ground truth, prediction variable
+  getTargetVariable(): Variable;
   // map baseline data
   getMapBaseline(): TableRow[];
   // drill down baseline for map
@@ -66,6 +75,9 @@ export interface BaseState {
 }
 
 export class SelectViewState implements BaseState {
+  getTargetVariable(): Variable {
+    return routeGetters.getTargetVariable(store);
+  }
   name = ExplorerStateNames.SELECT_VIEW;
 
   async init(): Promise<void> {
@@ -155,6 +167,9 @@ export class SelectViewState implements BaseState {
 
 export class ResultViewState implements BaseState {
   name = ExplorerStateNames.RESULT_VIEW;
+  getTargetVariable(): Variable {
+    return routeGetters.getTargetVariable(store);
+  }
   async init(): Promise<void> {
     // check if solutionId is not null if not find recent solution and make it the target solutionId
     if (!routeGetters.getRouteSolutionId(store)) {
@@ -301,5 +316,216 @@ export class ResultViewState implements BaseState {
   }
   fetchMapBaseline(): Promise<void> {
     return viewActions.updateResultBaseline(store);
+  }
+}
+
+export class PredictViewState implements BaseState {
+  name = ExplorerStateNames.PREDICTION_VIEW;
+  getTargetVariable(): Variable {
+    const activePred = requestGetters.getActivePredictions(store);
+    const predSum = getPredictionResultSummary(activePred?.requestId);
+    if (!predSum) {
+      return null;
+    }
+    return summaryToVariable(predSum);
+  }
+  getVariables(): Variable[] {
+    return requestGetters.getActivePredictionTrainingVariables(store);
+  }
+  getSecondaryVariables(): Variable[] {
+    const predictionVariables = [] as Variable[];
+    const activePred = requestGetters.getActivePredictions(store);
+    const rankSum = getPredictionRankSummary(activePred?.resultId);
+    const confidenceSum = getPredictionConfidenceSummary(activePred?.resultId);
+    const predSum = getPredictionResultSummary(activePred?.requestId);
+    if (rankSum) {
+      predictionVariables.push(summaryToVariable(rankSum));
+    }
+    if (confidenceSum) {
+      predictionVariables.push(summaryToVariable(confidenceSum));
+    }
+    if (predSum) {
+      predictionVariables.push(summaryToVariable(predSum));
+    }
+    return predictionVariables;
+  }
+  getData(): TableRow[] {
+    return predictionGetters.getIncludedPredictionTableDataItems(store);
+  }
+  getBaseVariableSummaries(): VariableSummary[] {
+    const summaryDictionary = predictionGetters.getTrainingSummariesDictionary(
+      store
+    );
+    return getAllVariablesSummaries(
+      this.getVariables(),
+      summaryDictionary,
+      routeGetters.getRoutePredictionsDataset(store)
+    );
+  }
+  getSecondaryVariableSummaries(): VariableSummary[] {
+    const currentSummaries = [];
+    const activePred = requestGetters.getActivePredictions(store);
+    const rank = getPredictionRankSummary(activePred?.resultId);
+    const confidence = getPredictionConfidenceSummary(activePred?.resultId);
+    const summary = getPredictionResultSummary(activePred?.requestId);
+    if (rank) {
+      currentSummaries.push(rank);
+    }
+    if (confidence) {
+      currentSummaries.push(confidence);
+    }
+    if (summary) {
+      currentSummaries.push(summary);
+    }
+    return currentSummaries;
+  }
+  getAllVariableSummaries(): VariableSummary[] {
+    return this.getBaseVariableSummaries().concat(
+      this.getSecondaryVariableSummaries()
+    );
+  }
+  getMapBaseline(): TableRow[] {
+    const result = predictionGetters.getBaselinePredictionTableDataItems(store);
+    return result?.sort((a, b) => {
+      return a.d3mIndex - b.d3mIndex;
+    });
+  }
+  getMapDrillDownBaseline(): TableRow[] {
+    return predictionGetters.getAreaOfInterestInnerDataItems(store);
+  }
+  getMapDrillDownFiltered(): TableRow[] {
+    return predictionGetters.getAreaOfInterestOuterDataItems(store);
+  }
+  getLexBarVariables(): Variable[] {
+    return datasetGetters
+      .getAllVariables(store)
+      .concat(this.getSecondaryVariables());
+  }
+  getFields(): Dictionary<TableColumn> {
+    return predictionGetters.getIncludedPredictionTableDataFields(store);
+  }
+  async init(): Promise<void> {
+    const dataset = routeGetters.getRouteDataset(store);
+    const target = routeGetters.getRouteTargetVariable(store);
+    const produceRequest = routeGetters.getRouteProduceRequestId(store);
+    if (!produceRequest) {
+      await requestActions.fetchSolutions(store, { dataset, target });
+      const solutions = requestGetters.getSolutions(store);
+      let minTime = 0;
+      let index = 0;
+      if (solutions && solutions.length) {
+        solutions.forEach((s, i) => {
+          if (s.hasPredictions) {
+            const time = new Date(s.timestamp).getTime();
+            if (time > minTime) {
+              index = i;
+              minTime = time;
+            }
+          }
+        });
+        if (!minTime) {
+          console.error("No Prediction Available");
+          return;
+        }
+        await requestActions.fetchPredictions(store, {
+          fittedSolutionId: solutions[index].fittedSolutionId,
+        });
+        const predictions = requestGetters.getPredictions(store);
+        const sorted = [...predictions].sort((a, b) => {
+          return (
+            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+          );
+        });
+        const route = routeGetters.getRoute(store);
+        const end = sorted.length - 1;
+        const entry = overlayRouteEntry(route, {
+          produceRequestId: sorted[end].requestId,
+          fittedSolutionId: solutions[index].fittedSolutionId,
+          predictionsDataset: sorted[end].dataset,
+          solutionId: solutions[index].solutionId,
+        });
+        router.push(entry).catch((err) => console.warn(err));
+      }
+    }
+    await viewActions.fetchPredictionsData(store);
+    datasetActions.fetchClusters(store, { dataset });
+    datasetActions.fetchOutliers(store, dataset);
+    viewActions.updateBaselinePredictions(store);
+  }
+  fetchVariables(): Promise<unknown> {
+    const dataset = routeGetters.getRouteDataset(store);
+    return datasetActions.fetchVariables(store, { dataset });
+  }
+  fetchData(): Promise<unknown> {
+    return viewActions.updatePrediction(store);
+  }
+  fetchVariableSummaries(): Promise<unknown> {
+    return viewActions.updatePredictionTrainingSummaries(store);
+  }
+  fetchMapBaseline(): Promise<void> {
+    return viewActions.updateBaselinePredictions(store) as Promise<void>;
+  }
+  fetchMapDrillDown(filter: Filter): Promise<void[]> {
+    return viewActions.updatePredictionAreaOfInterest(store, filter);
+  }
+}
+
+export class LabelViewState implements BaseState {
+  name: ExplorerStateNames.LABEL_VIEW;
+  getVariables(): Variable[] {
+    return datasetGetters.getVariables(store).filter((v) => {
+      return v.distilRole !== DISTIL_ROLES.SystemData;
+    });
+  }
+  getSecondaryVariables(): Variable[] {
+    throw new Error("Method not implemented.");
+  }
+  getData(include?: boolean): TableRow[] {
+    throw new Error("Method not implemented.");
+  }
+  getBaseVariableSummaries(include?: boolean): VariableSummary[] {
+    throw new Error("Method not implemented.");
+  }
+  getSecondaryVariableSummaries(include?: boolean): VariableSummary[] {
+    throw new Error("Method not implemented.");
+  }
+  getAllVariableSummaries(include?: boolean): VariableSummary[] {
+    throw new Error("Method not implemented.");
+  }
+  getTargetVariable(): Variable {
+    throw new Error("Method not implemented.");
+  }
+  getMapBaseline(): TableRow[] {
+    throw new Error("Method not implemented.");
+  }
+  getMapDrillDownBaseline(include?: boolean): TableRow[] {
+    throw new Error("Method not implemented.");
+  }
+  getMapDrillDownFiltered(include?: boolean): TableRow[] {
+    throw new Error("Method not implemented.");
+  }
+  getLexBarVariables(): Variable[] {
+    throw new Error("Method not implemented.");
+  }
+  getFields(include?: boolean): Dictionary<TableColumn> {
+    throw new Error("Method not implemented.");
+  }
+  init(): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  fetchVariables(): Promise<unknown> {
+    throw new Error("Method not implemented.");
+  }
+  fetchData(): Promise<unknown> {
+    throw new Error("Method not implemented.");
+  }
+  fetchVariableSummaries(): Promise<unknown> {
+    throw new Error("Method not implemented.");
+  }
+  fetchMapBaseline(): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  fetchMapDrillDown(filter: Filter): Promise<void[]> {
+    throw new Error("Method not implemented.");
   }
 }
