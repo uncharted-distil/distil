@@ -1,12 +1,54 @@
-import { datasetGetters } from "../store";
+/**
+ *
+ *    Copyright © 2021 Uncharted Software Inc.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+import {
+  appActions,
+  datasetActions,
+  datasetGetters,
+  requestActions,
+  requestGetters,
+  resultGetters,
+} from "../store";
 import {
   BaseState,
   PredictViewState,
   ResultViewState,
   SelectViewState,
 } from "./state/AppStateWrapper";
-import DataExplorer from "../views/DataExplorer.vue";
 import store from "../store/store";
+import { DataMode } from "../store/dataset";
+import { getters as routeGetters } from "../store/route/module";
+import { isEmpty, isNil } from "lodash";
+import { Solution } from "../store/requests";
+import { isFittedSolutionIdSavedAsModel } from "./models";
+import { SolutionRequestMsg } from "../store/requests/actions";
+import { overlayRouteEntry, RouteArgs, varModesToString } from "./routes";
+import {
+  ActionColumnRef,
+  CreateSolutionsFormRef,
+  SaveModalRef,
+  DataExplorerRef,
+} from "./componentTypes";
+import { addFilterToRoute, EXCLUDE_FILTER, INCLUDE_FILTER } from "./filters";
+import { createFiltersFromHighlights } from "./highlights";
+import { createFilterFromRowSelection } from "./row";
+import { Activity, Feature, SubActivity } from "./userEvents";
+import { EI } from "./events";
+import { CATEGORICAL_TYPE } from "./types";
+import { LowShotLabels } from "./data";
 
 export interface Action {
   name: string;
@@ -26,6 +68,7 @@ export enum ExplorerStateNames {
   SELECT_VIEW = "select",
   RESULT_VIEW = "result",
   PREDICTION_VIEW = "prediction",
+  LABEL_VIEW = "label",
 }
 // getConfigFromName returns a config instance based on supplied enum, throws errors
 export function getConfigFromName(state: ExplorerStateNames): ExplorerConfig {
@@ -180,15 +223,221 @@ export const ACTION_MAP = new Map(
   })
 );
 /**************MIXINS********************/
-export const SELECT_VIEW_COMPUTED = {};
-export const SELECT_VIEW_METHODS = {};
-export const LABEL_VIEW_COMPUTED = {
-  isClone(datasetName: string): boolean | null {
+export const SELECT_COMPUTES = {
+  isExcludedDisabled: (self: DataExplorerRef): boolean => {
+    return !self.isFilteringHighlights && !self.isFilteringSelection;
+  },
+  training: (self: DataExplorerRef): string[] => {
+    return routeGetters.getDecodedTrainingVariableNames(store);
+  },
+  isCreateModelPossible: (self: DataExplorerRef): boolean => {
+    // check that we have some target and training variables.
+    return !isNil(self.target) && !isEmpty(self.training);
+  },
+};
+export const SELECT_METHODS = {
+  onModelCreation: (
+    self: DataExplorerRef
+  ): ((msg: SolutionRequestMsg) => void) => {
+    return (solutionRequestMsg: SolutionRequestMsg) => {
+      requestActions
+        .createSolutionRequest(store, solutionRequestMsg)
+        .then(async (res: Solution) => {
+          const dataMode = routeGetters.getDataMode(store);
+          const dataModeDefault = dataMode ? dataMode : DataMode.Default;
+          // transition to result screen
+          self.updateRoute({
+            dataset: routeGetters.getRouteDataset(store),
+            target: routeGetters.getRouteTargetVariable(store),
+            solutionId: res.solutionId,
+            task: routeGetters.getRouteTask(store),
+            dataMode: dataModeDefault,
+            varModes: varModesToString(routeGetters.getDecodedVarModes(store)),
+            modelLimit: routeGetters.getModelLimit(store),
+            modelTimeLimit: routeGetters.getModelTimeLimit(store),
+            modelQuality: routeGetters.getModelQuality(store),
+          });
+          const modelCreationRef = (self.$refs[
+            "model-creation-form"
+          ] as unknown) as CreateSolutionsFormRef;
+          modelCreationRef.pending = false;
+          await self.changeStatesByName(ExplorerStateNames.RESULT_VIEW);
+          const actionColumn = (self.$refs[
+            "action-column"
+          ] as unknown) as ActionColumnRef;
+          actionColumn.toggle(
+            ACTION_MAP.get(ActionNames.OUTCOME_VARIABLES).paneId
+          );
+        })
+        .catch((err) => {
+          console.error(err);
+        });
+      return;
+    };
+  },
+  onExcludeClick: (self: DataExplorerRef): (() => void) => {
+    let filter = null;
+    if (self.isFilteringHighlights) {
+      filter = createFiltersFromHighlights(self.highlights, EXCLUDE_FILTER);
+    } else {
+      filter = createFilterFromRowSelection(self.rowSelection, EXCLUDE_FILTER);
+    }
+
+    addFilterToRoute(self.$router, filter);
+    self.resetHighlightsOrRow();
+
+    datasetActions.fetchVariableRankings(store, {
+      dataset: self.dataset,
+      target: self.target.key,
+    });
+
+    appActions.logUserEvent(store, {
+      feature: Feature.FILTER_DATA,
+      activity: Activity.DATA_PREPARATION,
+      subActivity: SubActivity.DATA_TRANSFORMATION,
+      details: { filter: filter },
+    });
+    return;
+  },
+  onReincludeClick: (self: DataExplorerRef): (() => void) => {
+    let filter = null;
+    if (self.isFilteringHighlights) {
+      filter = createFiltersFromHighlights(self.highlights, INCLUDE_FILTER);
+    } else {
+      filter = createFilterFromRowSelection(self.rowSelection, INCLUDE_FILTER);
+    }
+
+    addFilterToRoute(self.$router, filter);
+    self.resetHighlightsOrRow();
+
+    datasetActions.fetchVariableRankings(store, {
+      dataset: self.dataset,
+      target: self.target.key,
+    });
+
+    appActions.logUserEvent(store, {
+      feature: Feature.UNFILTER_DATA,
+      activity: Activity.DATA_PREPARATION,
+      subActivity: SubActivity.DATA_TRANSFORMATION,
+      details: { filter: filter },
+    });
+    return;
+  },
+};
+export const RESULT_COMPUTES = {
+  solution: (self: DataExplorerRef): Solution => {
+    return requestGetters.getActiveSolution(store);
+  },
+  solutionId: (self: DataExplorerRef): string => {
+    return self.solution?.solutionId;
+  },
+  fittedSolutionId: (self: DataExplorerRef): string => {
+    return self.solution?.fittedSolutionId;
+  },
+  isActiveSolutionSaved: (self: DataExplorerRef): boolean => {
+    return self.isFittedSolutionIdSavedAsModel(self.fittedSolutionId);
+  },
+  hasWeight: (self: DataExplorerRef): boolean => {
+    return resultGetters.hasResultTableDataItemsWeight(store);
+  },
+};
+export const RESULT_METHODS = {
+  onApplyModel: (
+    self: DataExplorerRef
+  ): ((args: RouteArgs) => Promise<void>) => {
+    return async (args: RouteArgs) => {
+      self.updateRoute(args);
+      await self.changeStatesByName(ExplorerStateNames.PREDICTION_VIEW);
+    };
+  },
+  isFittedSolutionIdSavedAsModel: (
+    self: DataExplorerRef
+  ): ((id: string) => boolean) => {
+    return isFittedSolutionIdSavedAsModel;
+  },
+  onSaveModel: (
+    self: DataExplorerRef
+  ): ((args: EI.RESULT.SaveInfo) => Promise<void>) => {
+    return async (args: EI.RESULT.SaveInfo) => {
+      appActions.logUserEvent(store, {
+        feature: Feature.EXPORT_MODEL,
+        activity: Activity.MODEL_SELECTION,
+        subActivity: SubActivity.MODEL_SAVE,
+        details: {
+          solution: args.solutionId,
+          fittedSolution: args.fittedSolution,
+        },
+      });
+
+      try {
+        const err = await appActions.saveModel(store, {
+          fittedSolutionId: self.fittedSolutionId,
+          modelName: args.name,
+          modelDescription: args.description,
+        });
+        // should probably change UI based on error
+        if (!err) {
+          const modal = (self.$refs.saveModel as unknown) as SaveModalRef;
+          modal.showSuccessModel();
+        }
+      } catch (err) {
+        console.warn(err);
+      }
+      return;
+    };
+  },
+};
+// label view computes
+export const LABEL_COMPUTES = {
+  isClone: (self: DataExplorerRef): boolean | null => {
     const datasets = datasetGetters.getDatasets(store);
-    const dataset = datasets.find((d) => d.id === datasetName);
+    const dataset = datasets.find((d) => d.id === self.dataset);
     if (!dataset) {
       return null;
     }
     return dataset.clone === undefined ? false : dataset.clone;
+  },
+  options: (self: DataExplorerRef): { value: string; text: string }[] => {
+    return self.variables
+      .filter((v) => {
+        return v.colType === CATEGORICAL_TYPE;
+      })
+      .map((v) => {
+        return { value: v.colName, text: v.colName };
+      });
+  },
+  labelModalTitle: (self: DataExplorerRef): string => {
+    return self.isClone ? "Select Label Feature" : "Label Creation";
+  },
+};
+
+export const LABEL_METHODS = {
+  onLabelSubmit: (self: DataExplorerRef): (() => Promise<void>) => {
+    return async () => {
+      if (
+        self.variables.some((v) => {
+          return v.colName === self.labelName;
+        })
+      ) {
+        const entry = overlayRouteEntry(routeGetters.getRoute(store), {
+          label: self.labelName,
+        });
+
+        self.$router.push(entry).catch((err) => console.warn(err));
+        return;
+      }
+      // add new field
+      await datasetActions.addField<string>(store, {
+        dataset: self.dataset,
+        name: self.labelName,
+        fieldType: CATEGORICAL_TYPE,
+        defaultValue: LowShotLabels.unlabeled,
+        displayName: self.labelName,
+      });
+      // fetch new dataset with the newly added field
+      await self.state.fetchData();
+      // update task based on the current training data
+      //this.updateRoute();
+    };
   },
 };

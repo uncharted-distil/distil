@@ -72,8 +72,6 @@
 import _ from "lodash";
 import Vue from "vue";
 import JoinDataPreviewSlot from "../components/JoinDataPreviewSlot.vue";
-import { SaveInfo } from "./SaveModal.vue";
-import { createRouteEntry } from "../util/routes";
 import { Dictionary } from "../util/dict";
 import { getters as routeGetters } from "../store/route/module";
 import {
@@ -84,7 +82,7 @@ import {
 } from "../store/dataset/index";
 import { actions as datasetActions } from "../store/dataset/module";
 import { getTableDataItems, getTableDataFields } from "../util/data";
-import { EventList } from "../util/events";
+import { EventList, EI } from "../util/events";
 
 export default Vue.extend({
   name: "JoinDatasetsPreview",
@@ -156,7 +154,7 @@ export default Vue.extend({
   },
 
   methods: {
-    onSave(args: SaveInfo) {
+    onSave(args: EI.RESULT.SaveInfo) {
       this.pending = true;
 
       const leftCols = routeGetters

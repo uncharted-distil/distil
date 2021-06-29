@@ -95,7 +95,7 @@ import ResultFacets from "../components/ResultFacets.vue";
 import PredictionsDataUploader from "../components/PredictionsDataUploader.vue";
 import ForecastHorizon from "../components/ForecastHorizon.vue";
 import ErrorThresholdSlider from "../components/ErrorThresholdSlider.vue";
-import SaveModal, { SaveInfo } from "./SaveModal.vue";
+import SaveModal from "./SaveModal.vue";
 import ResultTargetVariable from "../components/ResultTargetVariable.vue";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
@@ -106,6 +106,7 @@ import { Solution, SolutionStatus } from "../store/requests/index";
 import { isFittedSolutionIdSavedAsModel } from "../util/models";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { actions as appActions } from "../store/app/module";
+import { EI } from "../util/events";
 
 export default Vue.extend({
   name: "ResultSummaries",
@@ -214,7 +215,7 @@ export default Vue.extend({
 
   methods: {
     isFittedSolutionIdSavedAsModel,
-    async onSaveModel(args: SaveInfo) {
+    async onSaveModel(args: EI.RESULT.SaveInfo) {
       appActions.logUserEvent(this.$store, {
         feature: Feature.EXPORT_MODEL,
         activity: Activity.MODEL_SELECTION,

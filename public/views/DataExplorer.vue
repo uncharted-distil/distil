@@ -219,13 +219,7 @@
     </left-side-panel>
     <status-sidebar />
     <status-panel />
-    <!--LABELING VIEW COMPONENTS-->
-    <b-modal
-      :id="modalId"
-      @ok="onLabelSubmit"
-      no-close-on-backdrop
-      no-close-on-esc
-    >
+    <b-modal :id="labelModalId" @ok="onLabelSubmit">
       <template #modal-header>
         {{ labelModalTitle }}
       </template>
@@ -253,7 +247,7 @@
         <b-form-select
           id="label-select-field"
           v-model="labelName"
-          :options="options"
+          :options="labelOptions"
         />
       </b-form-group>
     </b-modal>
@@ -262,7 +256,7 @@
 
 <script lang="ts">
 import Vue from "vue";
-import { capitalize, isEmpty, isNil } from "lodash";
+import { capitalize, isEmpty } from "lodash";
 
 // Components
 import ActionColumn from "../components/layout/ActionColumn.vue";
@@ -281,23 +275,18 @@ import StatusPanel from "../components/StatusPanel.vue";
 import StatusSidebar from "../components/StatusSidebar.vue";
 import ResultFacets from "../components/ResultFacets.vue";
 import LegendWeight from "../components/LegendWeight.vue";
-import SaveModal, { SaveInfo } from "../components/SaveModal.vue";
+import SaveModal from "../components/SaveModal.vue";
 import PredictionsDataUploader from "../components/PredictionsDataUploader.vue";
 import PredictionSummaries from "../components/PredictionSummaries.vue";
-import { isFittedSolutionIdSavedAsModel } from "../util/models";
 
 // Store
 import {
-  appActions,
   viewActions,
-  datasetActions,
   datasetGetters,
-  requestActions,
   requestGetters,
   resultGetters,
 } from "../store";
 import {
-  DataMode,
   Extrema,
   Highlight,
   RowSelection,
@@ -314,25 +303,12 @@ import {
 import { getters as routeGetters } from "../store/route/module";
 
 // Util
-import {
-  addFilterToRoute,
-  EXCLUDE_FILTER,
-  Filter,
-  INCLUDE_FILTER,
-} from "../util/filters";
-import {
-  clearHighlight,
-  createFiltersFromHighlights,
-} from "../util/highlights";
-import { overlayRouteEntry, RouteArgs, varModesToString } from "../util/routes";
-import {
-  clearRowSelection,
-  getNumIncludedRows,
-  createFilterFromRowSelection,
-} from "../util/row";
+import { EXCLUDE_FILTER, Filter } from "../util/filters";
+import { clearHighlight } from "../util/highlights";
+import { overlayRouteEntry, RouteArgs } from "../util/routes";
+import { clearRowSelection, getNumIncludedRows } from "../util/row";
 import { spinnerHTML } from "../util/spinner";
 import { isGeoLocatedType, META_TYPES } from "../util/types";
-import { Feature, Activity, SubActivity } from "../util/userEvents";
 import {
   GEO_VIEW,
   GRAPH_VIEW,
@@ -354,6 +330,11 @@ import ExplorerConfig, {
   getConfigFromName,
   getStateFromName,
   SelectViewConfig,
+  LABEL_COMPUTES,
+  SELECT_COMPUTES,
+  RESULT_METHODS,
+  RESULT_COMPUTES,
+  SELECT_METHODS,
 } from "../util/dataExplorer";
 
 const DataExplorer = Vue.extend({
@@ -390,9 +371,10 @@ const DataExplorer = Vue.extend({
       include: true,
       state: new SelectViewState(),
       config: new SelectViewConfig(),
+      labelName: "",
+      labelModalId: "label-input-form",
     };
   },
-
   computed: {
     /* Actions displayed on the Action column */
     activeActions(): Action[] {
@@ -440,13 +422,9 @@ const DataExplorer = Vue.extend({
         this.config.actionList.find((a) => a.paneId === this.activePane).name
       );
     },
-    isActiveSolutionSaved(): boolean {
-      return this.isFittedSolutionIdSavedAsModel(this.fittedSolutionId);
-    },
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
-
     explore(): string[] {
       return routeGetters.getExploreVariables(this.$store);
     },
@@ -489,10 +467,6 @@ const DataExplorer = Vue.extend({
     isSingleSolution(): boolean {
       return routeGetters.isSingleSolution(this.$store);
     },
-    isCreateModelPossible(): boolean {
-      // check that we have some target and training variables.
-      return !isNil(this.target) && !isEmpty(this.training);
-    },
     timeseries(): Dictionary<TimeSeries> {
       return datasetGetters.getTimeseries(this.$store);
     },
@@ -513,10 +487,6 @@ const DataExplorer = Vue.extend({
     },
     fields(): Dictionary<TableColumn> {
       return this.state.getFields(this.include);
-    },
-    /* Disable the Exclude filter button. */
-    isExcludeDisabled(): boolean {
-      return !this.isFilteringHighlights && !this.isFilteringSelection;
     },
 
     isFilteringHighlights(): boolean {
@@ -553,10 +523,6 @@ const DataExplorer = Vue.extend({
         : 0;
     },
 
-    training(): string[] {
-      return routeGetters.getDecodedTrainingVariableNames(this.$store);
-    },
-
     variables(): Variable[] {
       const variables = this.state.getVariables();
       variables.sort((a, b) => {
@@ -572,9 +538,7 @@ const DataExplorer = Vue.extend({
       });
       return variables;
     },
-    hasWeight(): boolean {
-      return resultGetters.hasResultTableDataItemsWeight(this.$store);
-    },
+
     variablesPerActions() {
       const variables = {};
       this.availableActions.forEach((action) => {
@@ -679,6 +643,31 @@ const DataExplorer = Vue.extend({
         .getToggledActions(this.$store)
         .some((a) => a === outcome);
     },
+    training(): string[] {
+      return SELECT_COMPUTES.training(this);
+    },
+    isCreateModelPossible(): boolean {
+      return SELECT_COMPUTES.isCreateModelPossible(this);
+    },
+    /* Disable the Exclude filter button. */
+    isExcludeDisabled(): boolean {
+      return SELECT_COMPUTES.isExcludedDisabled(this);
+    },
+    isClone(): boolean {
+      return LABEL_COMPUTES.isClone(this);
+    },
+    labelOptions(): { value: string; text: string }[] {
+      return LABEL_COMPUTES.options(this);
+    },
+    labelModalTitle(): string {
+      return LABEL_COMPUTES.labelModalTitle(this);
+    },
+    isActiveSolutionSaved(): boolean {
+      return RESULT_COMPUTES.isActiveSolutionSaved(this);
+    },
+    hasWeight(): boolean {
+      return RESULT_COMPUTES.hasWeight(this);
+    },
   },
 
   // Update either the summaries or explore data on user interaction.
@@ -721,7 +710,6 @@ const DataExplorer = Vue.extend({
 
   methods: {
     capitalize,
-    isFittedSolutionIdSavedAsModel,
     async changeStatesByName(state: ExplorerStateNames) {
       this.setState(getStateFromName(state));
       this.setConfig(getConfigFromName(state));
@@ -732,102 +720,6 @@ const DataExplorer = Vue.extend({
       this.updateRoute({ dataSize });
       viewActions.updateDataExplorerData(this.$store);
     },
-    onModelCreation(solutionRequestMsg: SolutionRequestMsg) {
-      // handle solutionRequestMsg
-      requestActions
-        .createSolutionRequest(this.$store, solutionRequestMsg)
-        .then(async (res: Solution) => {
-          const dataMode = routeGetters.getDataMode(this.$store);
-          const dataModeDefault = dataMode ? dataMode : DataMode.Default;
-          // transition to result screen
-          this.updateRoute({
-            dataset: routeGetters.getRouteDataset(this.$store),
-            target: routeGetters.getRouteTargetVariable(this.$store),
-            solutionId: res.solutionId,
-            task: routeGetters.getRouteTask(this.$store),
-            dataMode: dataModeDefault,
-            varModes: varModesToString(
-              routeGetters.getDecodedVarModes(this.$store)
-            ),
-            modelLimit: routeGetters.getModelLimit(this.$store),
-            modelTimeLimit: routeGetters.getModelTimeLimit(this.$store),
-            modelQuality: routeGetters.getModelQuality(this.$store),
-          });
-          const modelCreationRef = this.$refs[
-            "model-creation-form"
-          ] as InstanceType<typeof CreateSolutionsForm>;
-          modelCreationRef.pending = false;
-          await this.changeStatesByName(ExplorerStateNames.RESULT_VIEW);
-          const actionColumn = this.$refs["action-column"] as InstanceType<
-            typeof ActionColumn
-          >;
-          actionColumn.toggle(
-            ACTION_MAP.get(ActionNames.OUTCOME_VARIABLES).paneId
-          );
-        })
-        .catch((err) => {
-          console.error(err);
-        });
-      return;
-    },
-    async onApplyModel(args: RouteArgs) {
-      this.updateRoute(args);
-      await this.changeStatesByName(ExplorerStateNames.PREDICTION_VIEW);
-    },
-    onExcludeClick() {
-      let filter = null;
-      if (this.isFilteringHighlights) {
-        filter = createFiltersFromHighlights(this.highlights, EXCLUDE_FILTER);
-      } else {
-        filter = createFilterFromRowSelection(
-          this.rowSelection,
-          EXCLUDE_FILTER
-        );
-      }
-
-      addFilterToRoute(this.$router, filter);
-      this.resetHighlightsOrRow();
-
-      datasetActions.fetchVariableRankings(this.$store, {
-        dataset: this.dataset,
-        target: this.target.key,
-      });
-
-      appActions.logUserEvent(this.$store, {
-        feature: Feature.FILTER_DATA,
-        activity: Activity.DATA_PREPARATION,
-        subActivity: SubActivity.DATA_TRANSFORMATION,
-        details: { filter: filter },
-      });
-    },
-
-    onReincludeClick() {
-      let filter = null;
-      if (this.isFilteringHighlights) {
-        filter = createFiltersFromHighlights(this.highlights, INCLUDE_FILTER);
-      } else {
-        filter = createFilterFromRowSelection(
-          this.rowSelection,
-          INCLUDE_FILTER
-        );
-      }
-
-      addFilterToRoute(this.$router, filter);
-      this.resetHighlightsOrRow();
-
-      datasetActions.fetchVariableRankings(this.$store, {
-        dataset: this.dataset,
-        target: this.target.key,
-      });
-
-      appActions.logUserEvent(this.$store, {
-        feature: Feature.UNFILTER_DATA,
-        activity: Activity.DATA_PREPARATION,
-        subActivity: SubActivity.DATA_TRANSFORMATION,
-        details: { filter: filter },
-      });
-    },
-
     onSetActive(actionName: string): void {
       if (actionName === this.activePane) return;
 
@@ -906,31 +798,25 @@ const DataExplorer = Vue.extend({
       // Update the route with the top 5 variable as training
       this.updateRoute({ explore: top5Variables });
     },
-    async onSaveModel(args: SaveInfo) {
-      appActions.logUserEvent(this.$store, {
-        feature: Feature.EXPORT_MODEL,
-        activity: Activity.MODEL_SELECTION,
-        subActivity: SubActivity.MODEL_SAVE,
-        details: {
-          solution: args.solutionId,
-          fittedSolution: args.fittedSolution,
-        },
-      });
+    onModelCreation(solutionRequestMsg: SolutionRequestMsg) {
+      SELECT_METHODS.onModelCreation(this)(solutionRequestMsg);
+    },
 
-      try {
-        const err = await appActions.saveModel(this.$store, {
-          fittedSolutionId: this.fittedSolutionId,
-          modelName: args.name,
-          modelDescription: args.description,
-        });
-        // should probably change UI based on error
-        if (!err) {
-          const modal = this.$refs.saveModel as InstanceType<typeof SaveModal>;
-          modal.showSuccessModel();
-        }
-      } catch (err) {
-        console.warn(err);
-      }
+    onExcludeClick() {
+      SELECT_METHODS.onExcludeClick(this)();
+    },
+
+    onReincludeClick() {
+      SELECT_METHODS.onReincludeClick(this)();
+    },
+    async onSaveModel(args: EI.RESULT.SaveInfo) {
+      RESULT_METHODS.onSaveModel(this)(args);
+    },
+    isFittedSolutionIdSavedAsModel(id: string): boolean {
+      return RESULT_METHODS.isFittedSolutionIdSavedAsModel(this)(id);
+    },
+    async onApplyModel(args: RouteArgs) {
+      RESULT_METHODS.onApplyModel(this)(args);
     },
   },
 });

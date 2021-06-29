@@ -140,5 +140,12 @@ export declare namespace EI {
       timeseriesIds: TableRow[];
     }
   }
-  namespace Explorer {}
+  namespace RESULT {
+    interface SaveInfo {
+      solutionId: string;
+      fittedSolution: string;
+      name: string;
+      description: string;
+    }
+  }
 }

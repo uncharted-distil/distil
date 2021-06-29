@@ -84,14 +84,7 @@ import { SEARCH_ROUTE } from "../store/route";
 import { getters as routeGetters } from "../store/route/module";
 import { createRouteEntry } from "../util/routes";
 import router from "../router/router";
-import { EventList } from "../util/events";
-
-export interface SaveInfo {
-  solutionId: string;
-  fittedSolution: string;
-  name: string;
-  description: string;
-}
+import { EventList, EI } from "../util/events";
 
 export default Vue.extend({
   name: "SaveModal",
@@ -202,7 +195,7 @@ export default Vue.extend({
         fittedSolution: this.fittedSolutionId,
         name: this.saveName,
         description: this.saveDescription,
-      } as SaveInfo);
+      } as EI.RESULT.SaveInfo);
     },
     showSuccessModel() {
       this.isSaving = false;

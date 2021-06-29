@@ -36,6 +36,7 @@ import {
   resultSummariesToVariables,
   summaryToVariable,
 } from "../summaries";
+import { DISTIL_ROLES } from "../types";
 
 export interface BaseState {
   name: ExplorerStateNames;
@@ -466,5 +467,65 @@ export class PredictViewState implements BaseState {
   }
   fetchMapDrillDown(filter: Filter): Promise<void[]> {
     return viewActions.updatePredictionAreaOfInterest(store, filter);
+  }
+}
+
+export class LabelViewState implements BaseState {
+  name: ExplorerStateNames.LABEL_VIEW;
+  getVariables(): Variable[] {
+    return datasetGetters.getVariables(store).filter((v) => {
+      return v.distilRole !== DISTIL_ROLES.SystemData;
+    });
+  }
+  getSecondaryVariables(): Variable[] {
+    throw new Error("Method not implemented.");
+  }
+  getData(include?: boolean): TableRow[] {
+    throw new Error("Method not implemented.");
+  }
+  getBaseVariableSummaries(include?: boolean): VariableSummary[] {
+    throw new Error("Method not implemented.");
+  }
+  getSecondaryVariableSummaries(include?: boolean): VariableSummary[] {
+    throw new Error("Method not implemented.");
+  }
+  getAllVariableSummaries(include?: boolean): VariableSummary[] {
+    throw new Error("Method not implemented.");
+  }
+  getTargetVariable(): Variable {
+    throw new Error("Method not implemented.");
+  }
+  getMapBaseline(): TableRow[] {
+    throw new Error("Method not implemented.");
+  }
+  getMapDrillDownBaseline(include?: boolean): TableRow[] {
+    throw new Error("Method not implemented.");
+  }
+  getMapDrillDownFiltered(include?: boolean): TableRow[] {
+    throw new Error("Method not implemented.");
+  }
+  getLexBarVariables(): Variable[] {
+    throw new Error("Method not implemented.");
+  }
+  getFields(include?: boolean): Dictionary<TableColumn> {
+    throw new Error("Method not implemented.");
+  }
+  init(): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  fetchVariables(): Promise<unknown> {
+    throw new Error("Method not implemented.");
+  }
+  fetchData(): Promise<unknown> {
+    throw new Error("Method not implemented.");
+  }
+  fetchVariableSummaries(): Promise<unknown> {
+    throw new Error("Method not implemented.");
+  }
+  fetchMapBaseline(): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  fetchMapDrillDown(filter: Filter): Promise<void[]> {
+    throw new Error("Method not implemented.");
   }
 }
