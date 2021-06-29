@@ -43,7 +43,7 @@ type SolutionResponse struct {
 	PredictedKey     string               `json:"predictedKey"`
 	ErrorKey         string               `json:"errorKey"`
 	ConfidenceKey    string               `json:"confidenceKey"`
-	HasPredictions	 bool					`json:"hasPredictions"`
+	HasPredictions   bool                 `json:"hasPredictions"`
 }
 
 // SolutionsHandler fetches solutions associated with a given dataset and target.
