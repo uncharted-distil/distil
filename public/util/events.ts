@@ -106,6 +106,7 @@ export class EventList {
   };
   static readonly EXPLORER = {
     NAV_EVENT: "nav-event",
+    SWITCH_TO_LABELING_EVENT: "label",
   };
 }
 

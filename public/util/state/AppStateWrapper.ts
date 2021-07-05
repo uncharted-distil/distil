@@ -18,7 +18,10 @@ import {
 } from "../../store/dataset";
 import { getters as routeGetters } from "../../store/route/module";
 import store from "../../store/store";
-import { getAllVariablesSummaries } from "../data";
+import {
+  getAllVariablesSummaries,
+  LOW_SHOT_SCORE_COLUMN_PREFIX,
+} from "../data";
 import { ExplorerStateNames } from "../dataExplorer";
 import { Dictionary } from "../dict";
 import { Filter } from "../filters";
@@ -83,6 +86,7 @@ export class SelectViewState implements BaseState {
   async init(): Promise<void> {
     await this.fetchVariables();
     await this.fetchMapBaseline();
+    await this.fetchVariableSummaries();
     return;
   }
   getSecondaryVariables(): Variable[] {
@@ -256,7 +260,7 @@ export class ResultViewState implements BaseState {
     return requestGetters.getActiveSolutionTrainingVariables(store);
   }
   getData(): TableRow[] {
-    return resultGetters.getIncludedResultTableDataItems(store);
+    return resultGetters.getIncludedResultTableDataItems(store) ?? [];
   }
   getBaseVariableSummaries(): VariableSummary[] {
     const summaryDictionary = resultGetters.getTrainingSummariesDictionary(
@@ -350,7 +354,7 @@ export class PredictViewState implements BaseState {
     return predictionVariables;
   }
   getData(): TableRow[] {
-    return predictionGetters.getIncludedPredictionTableDataItems(store);
+    return predictionGetters.getIncludedPredictionTableDataItems(store) ?? [];
   }
   getBaseVariableSummaries(): VariableSummary[] {
     const summaryDictionary = predictionGetters.getTrainingSummariesDictionary(
@@ -471,61 +475,116 @@ export class PredictViewState implements BaseState {
 }
 
 export class LabelViewState implements BaseState {
-  name: ExplorerStateNames.LABEL_VIEW;
+  name = ExplorerStateNames.LABEL_VIEW;
   getVariables(): Variable[] {
+    const labelScoreName =
+      LOW_SHOT_SCORE_COLUMN_PREFIX + routeGetters.getRouteLabel(store);
     return datasetGetters.getVariables(store).filter((v) => {
-      return v.distilRole !== DISTIL_ROLES.SystemData;
+      return (
+        v.distilRole !== DISTIL_ROLES.SystemData || v.key !== labelScoreName
+      );
     });
   }
   getSecondaryVariables(): Variable[] {
-    throw new Error("Method not implemented.");
+    const labelScoreName =
+      LOW_SHOT_SCORE_COLUMN_PREFIX + routeGetters.getRouteLabel(store);
+    return datasetGetters.getVariables(store).filter((v) => {
+      return v.key === labelScoreName;
+    });
   }
-  getData(include?: boolean): TableRow[] {
-    throw new Error("Method not implemented.");
+  getData(): TableRow[] {
+    return datasetGetters.getIncludedTableDataItems(store) ?? [];
   }
-  getBaseVariableSummaries(include?: boolean): VariableSummary[] {
-    throw new Error("Method not implemented.");
+  getBaseVariableSummaries(): VariableSummary[] {
+    const summaryDictionary = datasetGetters.getVariableSummariesDictionary(
+      store
+    );
+    const dataset = routeGetters.getRouteDataset(store);
+    return getAllVariablesSummaries(
+      this.getVariables(),
+      summaryDictionary,
+      dataset
+    );
   }
-  getSecondaryVariableSummaries(include?: boolean): VariableSummary[] {
-    throw new Error("Method not implemented.");
+  getSecondaryVariableSummaries(): VariableSummary[] {
+    const summaryDictionary = datasetGetters.getVariableSummariesDictionary(
+      store
+    );
+    const dataset = routeGetters.getRouteDataset(store);
+    return getAllVariablesSummaries(
+      this.getSecondaryVariables(),
+      summaryDictionary,
+      dataset
+    );
   }
-  getAllVariableSummaries(include?: boolean): VariableSummary[] {
-    throw new Error("Method not implemented.");
+  getAllVariableSummaries(): VariableSummary[] {
+    return this.getSecondaryVariableSummaries().concat(
+      this.getBaseVariableSummaries()
+    );
   }
   getTargetVariable(): Variable {
-    throw new Error("Method not implemented.");
+    const labelName = routeGetters.getRouteLabel(store);
+    return datasetGetters.getVariables(store).find((v) => {
+      return v.key === labelName;
+    });
   }
   getMapBaseline(): TableRow[] {
-    throw new Error("Method not implemented.");
+    const bItems = datasetGetters.getBaselineIncludeTableDataItems(store) ?? [];
+    return bItems.sort((a, b) => {
+      return a.d3mIndex - b.d3mIndex;
+    });
   }
-  getMapDrillDownBaseline(include?: boolean): TableRow[] {
-    throw new Error("Method not implemented.");
+  getMapDrillDownBaseline(): TableRow[] {
+    return datasetGetters.getAreaOfInterestIncludeInnerItems(store);
   }
-  getMapDrillDownFiltered(include?: boolean): TableRow[] {
-    throw new Error("Method not implemented.");
+  getMapDrillDownFiltered(): TableRow[] {
+    return datasetGetters.getAreaOfInterestIncludeOuterItems(store);
   }
   getLexBarVariables(): Variable[] {
-    throw new Error("Method not implemented.");
+    return datasetGetters.getAllVariables(store);
   }
-  getFields(include?: boolean): Dictionary<TableColumn> {
-    throw new Error("Method not implemented.");
+  getFields(): Dictionary<TableColumn> {
+    return datasetGetters.getIncludedTableDataFields(store);
   }
   init(): Promise<void> {
-    throw new Error("Method not implemented.");
+    return this.fetchData() as Promise<void>;
   }
   fetchVariables(): Promise<unknown> {
-    throw new Error("Method not implemented.");
+    const dataset = routeGetters.getRouteDataset(store);
+    return datasetActions.fetchVariables(store, {
+      dataset,
+    });
   }
-  fetchData(): Promise<unknown> {
-    throw new Error("Method not implemented.");
+  async fetchData(): Promise<unknown> {
+    await this.fetchVariables();
+    await viewActions.updateLabelData(store);
+    return;
   }
   fetchVariableSummaries(): Promise<unknown> {
-    throw new Error("Method not implemented.");
+    const dataset = routeGetters.getRouteDataset(store);
+    const highlights = routeGetters.getDecodedHighlights(store);
+    const filterParams = routeGetters.getDecodedSolutionRequestFilterParams(
+      store
+    );
+    const numRows = datasetGetters.getNumberOfRecords(store);
+    filterParams.size = numRows;
+    const dataMode = routeGetters.getDataMode(store);
+    const variables = datasetGetters.getVariables(store);
+    const varModes = routeGetters.getDecodedVarModes(store);
+    filterParams.variables = variables.map((v) => v.key);
+    return datasetActions.fetchIncludedVariableSummaries(store, {
+      dataset,
+      variables,
+      filterParams,
+      highlights,
+      dataMode,
+      varModes,
+    });
   }
   fetchMapBaseline(): Promise<void> {
-    throw new Error("Method not implemented.");
+    return viewActions.updateHighlight(store);
   }
   fetchMapDrillDown(filter: Filter): Promise<void[]> {
-    throw new Error("Method not implemented.");
+    return viewActions.updateAreaOfInterest(store, filter);
   }
 }

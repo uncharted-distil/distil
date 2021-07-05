@@ -19,7 +19,7 @@
   <div>
     <!-- Modal to save the model. -->
     <b-modal
-      id="save-model-modal"
+      :id="modalId"
       title="Save Dataset"
       no-stacking
       @ok="handleSaveOk"
@@ -84,6 +84,7 @@ export default Vue.extend({
 
   props: {
     datasetName: String as () => string,
+    modalId: { type: String as () => string, default: "save-model-modal" },
   },
 
   data() {
