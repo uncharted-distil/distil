@@ -25,7 +25,10 @@
     />
 
     <left-side-panel :panel-title="currentAction">
-      <add-variable-pane v-if="activePane === 'add'" />
+      <add-variable-pane
+        v-if="activePane === 'add'"
+        @label="switchToLabelState"
+      />
       <template v-else>
         <template v-if="hasNoVariables">
           <p v-if="activePane === 'selected'">Select a variable to explore.</p>
@@ -91,6 +94,12 @@
           />
           Reinclude
         </b-button>
+        <label-header-buttons
+          v-if="isLabelState"
+          class="height-36"
+          @button-event="onLabelAnnotationClicked"
+          @select-all="onLabelSelectAll"
+        />
         <legend-weight v-if="hasWeight && isResultState" class="ml-5 mr-auto" />
       </div>
       <!-- <layer-selection v-if="isMultiBandImage" class="layer-select-dropdown" /> -->
@@ -98,6 +107,7 @@
         <div v-if="!hasData" v-html="spinnerHTML" />
         <component
           :is="viewComponent"
+          ref="dataView"
           :instance-name="instanceName"
           :included-active="include"
           :dataset="dataset"
@@ -108,6 +118,7 @@
           :baseline-map="baselineMap"
           :summaries="summaries"
           :solution="solution"
+          :confidence-access-func="confidenceGetter"
           :residual-extrema="residualExtrema"
           :area-of-interest-items="{
             inner: drillDownBaseline,
@@ -204,6 +215,16 @@
         <b-button v-if="isPredictState" v-b-modal.export variant="primary">
           Export Predictions
         </b-button>
+        <create-labeling-form
+          v-if="isLabelState"
+          class="d-flex justify-content-between h-100 align-items-center"
+          :is-loading="isBusy"
+          :low-shot-summary="labelSummary"
+          :is-saving="isBusy"
+          @export="onLabelExport"
+          @apply="onLabelApply"
+          @save="onLabelSaveClick"
+        />
       </footer>
     </main>
     <left-side-panel
@@ -215,6 +236,14 @@
         <p>No Outcome Variables available.</p>
       </template>
       <result-facets v-else-if="state.name === 'result'" />
+      <facet-list-pane
+        v-else-if="state.name === 'label'"
+        :variables="secondaryVariables"
+        :enable-color-scales="geoVarExists"
+        :include="include"
+        :summaries="secondarySummaries"
+        :enable-footer="isSelectState"
+      />
       <prediction-summaries v-else />
     </left-side-panel>
     <status-sidebar />
@@ -251,6 +280,11 @@
         />
       </b-form-group>
     </b-modal>
+    <save-dataset
+      modal-id="save-dataset-modal"
+      :dataset-name="dataset"
+      @save="onSaveValid"
+    />
   </div>
 </template>
 
@@ -270,6 +304,7 @@ import SearchBar from "../components/layout/SearchBar.vue";
 import SelectDataTable from "../components/SelectDataTable.vue";
 import GeoPlot from "../components/GeoPlot.vue";
 import SelectGraphView from "../components/SelectGraphView.vue";
+import SaveDataset from "../components/labelingComponents/SaveDataset.vue";
 import SelectTimeseriesView from "../components/SelectTimeseriesView.vue";
 import StatusPanel from "../components/StatusPanel.vue";
 import StatusSidebar from "../components/StatusSidebar.vue";
@@ -278,7 +313,8 @@ import LegendWeight from "../components/LegendWeight.vue";
 import SaveModal from "../components/SaveModal.vue";
 import PredictionsDataUploader from "../components/PredictionsDataUploader.vue";
 import PredictionSummaries from "../components/PredictionSummaries.vue";
-
+import CreateLabelingForm from "../components/labelingComponents/CreateLabelingForm.vue";
+import LabelHeaderButtons from "../components/labelingComponents/LabelHeaderButtons.vue";
 // Store
 import {
   viewActions,
@@ -335,7 +371,10 @@ import ExplorerConfig, {
   RESULT_METHODS,
   RESULT_COMPUTES,
   SELECT_METHODS,
+  LABEL_METHODS,
 } from "../util/dataExplorer";
+import { LowShotLabels } from "../util/data";
+import _ from "lodash";
 
 const DataExplorer = Vue.extend({
   name: "DataExplorer",
@@ -343,9 +382,11 @@ const DataExplorer = Vue.extend({
   components: {
     ActionColumn,
     AddVariablePane,
+    CreateLabelingForm,
     CreateSolutionsForm,
     DataSize,
     FacetListPane,
+    LabelHeaderButtons,
     LeftSidePanel,
     LegendWeight,
     ImageMosaic,
@@ -356,6 +397,7 @@ const DataExplorer = Vue.extend({
     GeoPlot,
     ResultFacets,
     SaveModal,
+    SaveDataset,
     SelectGraphView,
     SelectTimeseriesView,
     StatusPanel,
@@ -373,6 +415,7 @@ const DataExplorer = Vue.extend({
       config: new SelectViewConfig(),
       labelName: "",
       labelModalId: "label-input-form",
+      isBusy: false,
     };
   },
   computed: {
@@ -604,6 +647,9 @@ const DataExplorer = Vue.extend({
     isPredictState(): boolean {
       return ExplorerStateNames.PREDICTION_VIEW === this.explorerRouteState;
     },
+    isLabelState(): boolean {
+      return ExplorerStateNames.LABEL_VIEW === this.explorerRouteState;
+    },
     // basic table data used by all view components
     items(): TableRow[] {
       return this.state.getData(this.include);
@@ -643,6 +689,9 @@ const DataExplorer = Vue.extend({
         .getToggledActions(this.$store)
         .some((a) => a === outcome);
     },
+    isRemoteSensing(): boolean {
+      return routeGetters.isMultiBandImage(this.$store);
+    },
     training(): string[] {
       return SELECT_COMPUTES.training(this);
     },
@@ -659,8 +708,19 @@ const DataExplorer = Vue.extend({
     labelOptions(): { value: string; text: string }[] {
       return LABEL_COMPUTES.options(this);
     },
+    labelSummary(): VariableSummary {
+      return LABEL_COMPUTES.labelSummary(this);
+    },
     labelModalTitle(): string {
       return LABEL_COMPUTES.labelModalTitle(this);
+    },
+    confidenceGetter(): Function {
+      if (!this.items?.length || this.labelName in this.items[0]) {
+        return () => {
+          return undefined;
+        };
+      }
+      return LABEL_METHODS.confidenceGetter(this);
     },
     isActiveSolutionSaved(): boolean {
       return RESULT_COMPUTES.isActiveSolutionSaved(this);
@@ -673,22 +733,22 @@ const DataExplorer = Vue.extend({
   // Update either the summaries or explore data on user interaction.
   watch: {
     activeVariables(n, o) {
-      if (n === o) return;
+      if (_.isEqual(n, o)) return;
       viewActions.fetchDataExplorerData(this.$store, this.activeVariables);
     },
 
     filters(n, o) {
-      if (n === o) return;
+      if (_.isEqual(n, o)) return;
       viewActions.updateDataExplorerData(this.$store);
     },
 
     highlights(n, o) {
-      if (n === o) return;
+      if (_.isEqual(n, o)) return;
       this.state.fetchData();
     },
 
     explore(n, o) {
-      if (n === o) return;
+      if (_.isEqual(n, o)) return;
       viewActions.updateDataExplorerData(this.$store);
     },
     geoVarExists() {
@@ -706,6 +766,7 @@ const DataExplorer = Vue.extend({
     // Update the explore data
     viewActions.updateDataExplorerData(this.$store);
     this.changeStatesByName(this.explorerRouteState);
+    this.labelName = routeGetters.getRouteLabel(this.$store);
   },
 
   methods: {
@@ -759,6 +820,7 @@ const DataExplorer = Vue.extend({
           dataExplorerState: state.name,
           toggledActions: "[]",
         } as RouteArgs);
+        this.activePane = "available";
       }
     },
     setConfig(config: ExplorerConfig) {
@@ -808,6 +870,33 @@ const DataExplorer = Vue.extend({
 
     onReincludeClick() {
       SELECT_METHODS.onReincludeClick(this)();
+    },
+    async updateTask() {
+      LABEL_METHODS.updateTask(this)();
+    },
+    switchToLabelState() {
+      this.$bvModal.show(this.labelModalId);
+    },
+    onLabelSubmit() {
+      LABEL_METHODS.onLabelSubmit(this)();
+    },
+    onLabelAnnotationClicked(label: LowShotLabels) {
+      LABEL_METHODS.onAnnotationChanged(this)(label);
+    },
+    onLabelSelectAll() {
+      LABEL_METHODS.onSelectAll(this)();
+    },
+    onLabelExport() {
+      LABEL_METHODS.onExport(this)();
+    },
+    onLabelApply() {
+      LABEL_METHODS.onSearchSimilar(this)();
+    },
+    onLabelSaveClick() {
+      this.$bvModal.show("save-dataset-modal");
+    },
+    onSaveValid(saveName: string, retainUnlabeled: boolean) {
+      LABEL_METHODS.onSaveDataset(this)(saveName, retainUnlabeled);
     },
     async onSaveModel(args: EI.RESULT.SaveInfo) {
       RESULT_METHODS.onSaveModel(this)(args);

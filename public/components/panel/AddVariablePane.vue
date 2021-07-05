@@ -23,47 +23,9 @@
     <b-button variant="dark" @click="onMapClick">
       <i class="fa fa-globe" /> Map
     </b-button>
-    <b-button variant="dark" @click="onLabelClick">
+    <b-button v-if="isRemoteSensing" variant="dark" @click="onLabelClick">
       <i class="fa fa-tag" /> Label
     </b-button>
-    <b-modal
-      :id="modalId"
-      @hide="onLabelSubmit"
-      no-close-on-backdrop
-      ok-only
-      no-close-on-esc
-    >
-      <template #modal-header>
-        {{ labelModalTitle }}
-      </template>
-      <b-form-group
-        v-if="!isClone"
-        id="input-group-1"
-        label="Label name:"
-        label-for="label-input-field"
-        description="Enter the name of label."
-      >
-        <b-form-input
-          id="label-input-field"
-          v-model="labelName"
-          type="text"
-          required
-          :placeholder="labelName"
-        />
-      </b-form-group>
-      <b-form-group
-        v-else
-        label="Label name:"
-        label-for="label-select-field"
-        description="Select the label field."
-      >
-        <b-form-select
-          id="label-select-field"
-          v-model="labelName"
-          :options="options"
-        />
-      </b-form-group>
-    </b-modal>
   </div>
 </template>
 
@@ -72,12 +34,17 @@ import Vue from "vue";
 
 import { GROUPING_ROUTE } from "../../store/route/index";
 import { getters as routeGetters } from "../../store/route/module";
+import { EventList } from "../../util/events";
 import { createRouteEntry } from "../../util/routes";
 import { GEOCOORDINATE_TYPE, TIMESERIES_TYPE } from "../../util/types";
 
 export default Vue.extend({
   name: "AddVariablePane",
-
+  computed: {
+    isRemoteSensing(): boolean {
+      return routeGetters.isMultiBandImage(this.$store);
+    },
+  },
   methods: {
     groupingClick(type) {
       const entry = createRouteEntry(GROUPING_ROUTE, {
@@ -95,7 +62,7 @@ export default Vue.extend({
       this.groupingClick(TIMESERIES_TYPE);
     },
     onLabelClick() {
-      return;
+      this.$emit(EventList.EXPLORER.SWITCH_TO_LABELING_EVENT);
     },
   },
 });

@@ -15,9 +15,17 @@
  *    limitations under the License.
  */
 
+import { BvModal } from "bootstrap-vue/src/components/modal";
+import { BvToast } from "bootstrap-vue/src/components/toast";
 import Vue from "vue";
 import VueRouter from "vue-router";
-import { Highlight, RowSelection, Variable } from "../store/dataset";
+import {
+  Highlight,
+  RowSelection,
+  TableRow,
+  Variable,
+  VariableSummary,
+} from "../store/dataset";
 import { Solution } from "../store/requests";
 import { ExplorerStateNames } from "./dataExplorer";
 import { RouteArgs } from "./routes";
@@ -36,25 +44,32 @@ export interface DataExplorerRef {
   highlights: Highlight[];
   isFilteringHighlights: boolean;
   isFilteringSelection: boolean;
+  items: TableRow[];
   target: Variable;
   training: string[];
   solution: Solution;
   fittedSolutionId: string;
   rowSelection: RowSelection;
   variables: Variable[];
+  summaries: VariableSummary[];
+  isRemoteSensing: boolean;
   // data
   labelName: string;
   state: BaseState;
+  isBusy: boolean;
   // methods
   isFittedSolutionIdSavedAsModel: (id: string) => boolean;
   updateRoute: (args: RouteArgs) => void;
   changeStatesByName: (name: ExplorerStateNames) => Promise<void>;
   resetHighlightsOrRow: () => void;
+  updateTask: () => Promise<void>;
   // globals
   $refs: {
     [key: string]: Vue | Element | Vue[] | Element[];
   };
   $router: VueRouter;
+  $bvToast: BvToast;
+  $bvModal: BvModal;
 }
 
 // public/components/layout/ActionColumn.vue
@@ -68,4 +83,8 @@ export interface CreateSolutionsFormRef extends Vue {
 // public/components/SaveModal.vue
 export interface SaveModalRef extends Vue {
   showSuccessModel: () => void;
+}
+// public/components/SelectDataTable.vue && public/components/ImageMosaic.vue
+export interface DataView extends Vue {
+  selectAll: () => void;
 }

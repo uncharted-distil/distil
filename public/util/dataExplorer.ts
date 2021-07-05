@@ -18,18 +18,20 @@ import {
   appActions,
   datasetActions,
   datasetGetters,
+  datasetMutations,
   requestActions,
   requestGetters,
   resultGetters,
 } from "../store";
 import {
   BaseState,
+  LabelViewState,
   PredictViewState,
   ResultViewState,
   SelectViewState,
 } from "./state/AppStateWrapper";
 import store from "../store/store";
-import { DataMode } from "../store/dataset";
+import { DataMode, TableRow, VariableSummary } from "../store/dataset";
 import { getters as routeGetters } from "../store/route/module";
 import { isEmpty, isNil } from "lodash";
 import { Solution } from "../store/requests";
@@ -41,14 +43,27 @@ import {
   CreateSolutionsFormRef,
   SaveModalRef,
   DataExplorerRef,
+  DataView,
 } from "./componentTypes";
-import { addFilterToRoute, EXCLUDE_FILTER, INCLUDE_FILTER } from "./filters";
-import { createFiltersFromHighlights } from "./highlights";
-import { createFilterFromRowSelection } from "./row";
+import {
+  addFilterToRoute,
+  emptyFilterParamsObject,
+  EXCLUDE_FILTER,
+  INCLUDE_FILTER,
+} from "./filters";
+import { cloneFilters, createFiltersFromHighlights } from "./highlights";
+import { clearRowSelection, createFilterFromRowSelection } from "./row";
 import { Activity, Feature, SubActivity } from "./userEvents";
 import { EI } from "./events";
 import { CATEGORICAL_TYPE } from "./types";
-import { LowShotLabels } from "./data";
+import {
+  addOrderBy,
+  cloneDatasetUpdateRoute,
+  downloadFile,
+  LowShotLabels,
+  LOW_SHOT_SCORE_COLUMN_PREFIX,
+} from "./data";
+import { LABEL_FEATURE_INSTANCE } from "../store/route";
 
 export interface Action {
   name: string;
@@ -79,6 +94,8 @@ export function getConfigFromName(state: ExplorerStateNames): ExplorerConfig {
       return new ResultViewConfig();
     case ExplorerStateNames.PREDICTION_VIEW:
       return new PredictViewConfig();
+    case ExplorerStateNames.LABEL_VIEW:
+      return new LabelViewConfig();
     default:
       throw Error("Config State not supported");
   }
@@ -92,6 +109,8 @@ export function getStateFromName(state: ExplorerStateNames): BaseState {
       return new ResultViewState();
     case ExplorerStateNames.PREDICTION_VIEW:
       return new PredictViewState();
+    case ExplorerStateNames.LABEL_VIEW:
+      return new LabelViewState();
     default:
       throw Error("Config State not supported");
   }
@@ -136,6 +155,25 @@ export class ResultViewConfig implements ExplorerConfig {
   }
 }
 export class PredictViewConfig implements ExplorerConfig {
+  get actionList(): Action[] {
+    const actions = [
+      ActionNames.ALL_VARIABLES,
+      ActionNames.TEXT_VARIABLES,
+      ActionNames.CATEGORICAL_VARIABLES,
+      ActionNames.NUMBER_VARIABLES,
+      ActionNames.LOCATION_VARIABLES,
+      ActionNames.IMAGE_VARIABLES,
+      ActionNames.UNKNOWN_VARIABLES,
+      ActionNames.TARGET_VARIABLE,
+      ActionNames.TRAINING_VARIABLE,
+      ActionNames.OUTCOME_VARIABLES,
+    ];
+    return actions.map((a) => {
+      return ACTION_MAP.get(a);
+    });
+  }
+}
+export class LabelViewConfig implements ExplorerConfig {
   get actionList(): Action[] {
     const actions = [
       ActionNames.ALL_VARIABLES,
@@ -409,9 +447,45 @@ export const LABEL_COMPUTES = {
   labelModalTitle: (self: DataExplorerRef): string => {
     return self.isClone ? "Select Label Feature" : "Label Creation";
   },
+  labelSummary: (self: DataExplorerRef): VariableSummary => {
+    const label = routeGetters.getRouteLabel(store);
+    return self.summaries.find((s) => {
+      return s.key === label;
+    });
+  },
 };
 
 export const LABEL_METHODS = {
+  updateTask: (self: DataExplorerRef): (() => Promise<void>) => {
+    return async () => {
+      const taskResponse = await datasetActions.fetchTask(store, {
+        dataset: self.dataset,
+        targetName: self.labelName,
+        variableNames: self.variables.map((v) => v.key),
+      });
+      const training = routeGetters.getDecodedTrainingVariableNames(store);
+      const check = training.length;
+      const trainingMap = new Map(
+        training.map((t) => {
+          return [t, true];
+        })
+      );
+      self.variables.forEach((variable) => {
+        if (!trainingMap.has(variable.key)) {
+          training.push(variable.key);
+        }
+      });
+      if (check === training.length) {
+        return;
+      }
+      self.updateRoute({
+        task: taskResponse.data.task.join(","),
+        training: training.join(","),
+        label: self.labelName,
+      });
+      return;
+    };
+  },
   onLabelSubmit: (self: DataExplorerRef): (() => Promise<void>) => {
     return async () => {
       if (
@@ -419,13 +493,18 @@ export const LABEL_METHODS = {
           return v.colName === self.labelName;
         })
       ) {
-        const entry = overlayRouteEntry(routeGetters.getRoute(store), {
+        self.updateRoute({
           label: self.labelName,
         });
-
-        self.$router.push(entry).catch((err) => console.warn(err));
+        await self.changeStatesByName(ExplorerStateNames.LABEL_VIEW);
         return;
       }
+      const entry = await cloneDatasetUpdateRoute();
+      // failed to clone
+      if (entry === null) {
+        return;
+      }
+      self.$router.push(entry).catch((err) => console.warn(err));
       // add new field
       await datasetActions.addField<string>(store, {
         dataset: self.dataset,
@@ -435,9 +514,175 @@ export const LABEL_METHODS = {
         displayName: self.labelName,
       });
       // fetch new dataset with the newly added field
-      await self.state.fetchData();
+      await self.changeStatesByName(ExplorerStateNames.LABEL_VIEW);
       // update task based on the current training data
-      //this.updateRoute();
+      self.updateTask();
+    };
+  },
+  onAnnotationChanged: (
+    self: DataExplorerRef
+  ): ((label: LowShotLabels) => Promise<void>) => {
+    return async (label: LowShotLabels) => {
+      const rowSelection = routeGetters.getDecodedRowSelection(store);
+      const innerData = new Map<number, unknown>();
+      const updateData = rowSelection.d3mIndices.map((i) => {
+        innerData.set(i, { LowShotLabel: label });
+        return {
+          index: i.toString(),
+          name: self.labelName,
+          value: label,
+        };
+      });
+      if (!updateData.length) {
+        return;
+      }
+      const dataset = routeGetters.getRouteDataset(store);
+      datasetMutations.updateAreaOfInterestIncludeInner(store, innerData);
+      datasetActions.updateDataset(store, {
+        dataset: dataset,
+        updateData,
+      });
+      clearRowSelection(self.$router);
+      self.updateRoute({
+        annotationHasChanged: true,
+      });
+      await self.state.fetchData();
+      if (self.isRemoteSensing) {
+        self.state.fetchMapBaseline();
+      }
+      return;
+    };
+  },
+  onExport: (self: DataExplorerRef): (() => Promise<void>) => {
+    return async () => {
+      const highlights = [
+        {
+          context: LABEL_FEATURE_INSTANCE,
+          dataset: self.dataset,
+          key: self.labelName,
+          value: LowShotLabels.unlabeled,
+        },
+      ]; // exclude unlabeled from data export
+      const filterParams = routeGetters.getDecodedSolutionRequestFilterParams(
+        store
+      );
+      const dataMode = routeGetters.getDataMode(store);
+      const file = await datasetActions.extractDataset(store, {
+        dataset: self.dataset,
+        filterParams,
+        highlights,
+        include: true,
+        mode: EXCLUDE_FILTER,
+        dataMode,
+      });
+      downloadFile(file, self.dataset, ".csv");
+      return;
+    };
+  },
+  onSearchSimilar: (self: DataExplorerRef): (() => Promise<void>) => {
+    return async () => {
+      self.isBusy = true;
+      const res = (await requestActions.createQueryRequest(store, {
+        datasetId: self.dataset,
+        target: self.labelName,
+        filters: emptyFilterParamsObject(),
+      })) as { success: boolean; error: string };
+      if (!res.success) {
+        self.$bvToast.toast(res.error, {
+          title: "Error",
+          autoHideDelay: 5000,
+          appendToast: true,
+          variant: "danger",
+          toaster: "b-toaster-bottom-right",
+        });
+      }
+      const labelScoreName = LOW_SHOT_SCORE_COLUMN_PREFIX + self.labelName;
+      addOrderBy(labelScoreName);
+      self.isBusy = false;
+      await self.state.fetchData();
+      self.state.fetchMapBaseline();
+      self.updateRoute({
+        annotationHasChanged: false,
+      });
+      return;
+    };
+  },
+  onSaveDataset: (
+    self: DataExplorerRef
+  ): ((saveName: string, retainUnlabeled: boolean) => Promise<void>) => {
+    return async (saveName: string, retainUnlabeled: boolean) => {
+      self.isBusy = true;
+      const labelScoreName = LOW_SHOT_SCORE_COLUMN_PREFIX + self.labelName;
+      const highlightsClear = [
+        {
+          context: LABEL_FEATURE_INSTANCE,
+          dataset: self.dataset,
+          key: self.labelName,
+          value: LowShotLabels.unlabeled,
+        },
+      ]; // exclude unlabeled from data export
+      const highlights = retainUnlabeled ? null : highlightsClear;
+      let filterParams = routeGetters.getDecodedSolutionRequestFilterParams(
+        store
+      );
+      filterParams = cloneFilters(filterParams);
+      if (
+        self.variables.some((v) => {
+          return v.key === labelScoreName;
+        })
+      ) {
+        // delete confidence variable when saving
+        await datasetActions.deleteVariable(store, {
+          dataset: self.dataset,
+          key: labelScoreName,
+        });
+      }
+      // clear the unlabeled values when saving
+      if (retainUnlabeled) {
+        await datasetActions.clearVariable(store, {
+          dataset: self.dataset,
+          key: self.labelName,
+          highlights: highlightsClear,
+          filterParams: filterParams,
+        });
+      }
+      const dataMode = routeGetters.getDataMode(store);
+      await datasetActions.saveDataset(store, {
+        dataset: self.dataset,
+        datasetNewName: saveName,
+        filterParams,
+        highlights,
+        include: false,
+        mode: INCLUDE_FILTER,
+        dataMode,
+      });
+      self.isBusy = false;
+      self.$bvModal.show("save-success-dataset");
+      return;
+    };
+  },
+  confidenceGetter: (
+    self: DataExplorerRef
+  ): ((item: TableRow, idx: number) => number) => {
+    return (item: TableRow, idx: number) => {
+      if (item[self.labelName].value === LowShotLabels.positive) {
+        return 1.0;
+      }
+      if (item[self.labelName].value === LowShotLabels.negative) {
+        return 0;
+      }
+      const labelScoreName = LOW_SHOT_SCORE_COLUMN_PREFIX + self.labelName;
+      // comes back order by confidence so the rank is already engrained in the array
+      if (item[labelScoreName]) {
+        return 1.0 - idx / self.items.length;
+      }
+      return undefined;
+    };
+  },
+  onSelectAll: (self: DataExplorerRef): (() => void) => {
+    return () => {
+      const dataView = (self.$refs.dataView as unknown) as DataView;
+      dataView.selectAll();
     };
   },
 };
