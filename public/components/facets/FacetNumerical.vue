@@ -17,7 +17,7 @@
 
 <template>
   <div>
-    <component v-bind:is="comp" v-html="cssStyle"></component>
+    <component :is="comp" v-html="cssStyle" />
     <facet-bars
       :id="id"
       :data.prop="facetData"
@@ -32,8 +32,8 @@
         <div class="facet-header-dropdown d-flex align-items-center">
           <color-scale-drop-down
             v-if="geoEnabled"
-            :variableSummary="summary"
-            isFacetScale
+            :variable-summary="summary"
+            is-facet-scale
             class="mr-1"
           />
           <type-change-menu
@@ -65,8 +65,8 @@
         />
         <div
           v-if="displayFooter"
-          class="facet-footer-custom-html d-flex justify-content-between"
           v-child="computeCustomHTML()"
+          class="facet-footer-custom-html d-flex justify-content-between"
         />
       </div>
       <div v-else slot="footer" class="facet-footer-container">
@@ -139,7 +139,7 @@ export default Vue.extend({
 
   computed: {
     id(): string {
-      return this.summary.key;
+      return "_" + this.summary.key.replace(/([\/,:!?_])/g, "");
     },
     comp(): string {
       return "style";

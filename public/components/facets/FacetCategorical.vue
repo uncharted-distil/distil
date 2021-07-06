@@ -16,7 +16,7 @@
 -->
 <template>
   <div>
-    <component v-bind:is="comp" v-html="cssStyle"></component>
+    <component :is="comp" v-html="cssStyle" />
     <facet-terms
       :id="id"
       :data.prop="facetData"
@@ -34,8 +34,8 @@
           <color-scale-drop-down
             v-if="geoEnabled"
             :is-toggle="colorScaleToggle"
-            :variableSummary="summary"
-            isFacetScale
+            :variable-summary="summary"
+            is-facet-scale
             class="mr-1"
           />
           <type-change-menu
@@ -177,7 +177,7 @@ export default Vue.extend({
       return routeGetters.getColorScale(this.$store);
     },
     id(): string {
-      return this.summary.key;
+      return "_" + this.summary.key.replace(/([\/,:!?_])/g, "");
     },
     cssStyle(): string {
       return this.hasColorScale
