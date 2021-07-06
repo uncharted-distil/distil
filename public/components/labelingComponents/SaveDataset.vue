@@ -116,9 +116,7 @@ export default Vue.extend({
 
   methods: {
     // process or reject dataset save based on form state
-    handleSaveOk(bvModalEvt) {
-      // Prevent modal from closing
-      bvModalEvt.preventDefault();
+    handleSaveOk() {
       if (!this.validForm()) {
         return;
       }

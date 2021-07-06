@@ -167,17 +167,6 @@ interface Bucket {
   meta: { selected: boolean; count: number }; // count num of tiles in bucket
 }
 
-export interface SelectionHighlight {
-  context: string;
-  dataset: string;
-  key: string;
-  value: {
-    minX: number;
-    maxX: number;
-    minY: number;
-    maxY: number;
-  };
-}
 // contains the state of the map for things such as event callbacks and the quads to render
 // currently there is two states tiled and clustered
 interface MapState {
