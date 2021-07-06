@@ -31,7 +31,12 @@ import {
   SelectViewState,
 } from "./state/AppStateWrapper";
 import store from "../store/store";
-import { DataMode, TableRow, VariableSummary } from "../store/dataset";
+import {
+  D3M_INDEX_FIELD,
+  DataMode,
+  TableRow,
+  VariableSummary,
+} from "../store/dataset";
 import { getters as routeGetters } from "../store/route/module";
 import { isEmpty, isNil } from "lodash";
 import { Solution } from "../store/requests";
@@ -52,7 +57,11 @@ import {
   INCLUDE_FILTER,
 } from "./filters";
 import { cloneFilters, createFiltersFromHighlights } from "./highlights";
-import { clearRowSelection, createFilterFromRowSelection } from "./row";
+import {
+  bulkRowSelectionUpdate,
+  clearRowSelection,
+  createFilterFromRowSelection,
+} from "./row";
 import { Activity, Feature, SubActivity } from "./userEvents";
 import { EI } from "./events";
 import { CATEGORICAL_TYPE } from "./types";
@@ -64,6 +73,7 @@ import {
   LOW_SHOT_SCORE_COLUMN_PREFIX,
 } from "./data";
 import { LABEL_FEATURE_INSTANCE } from "../store/route";
+import router from "../router/router";
 
 export interface Action {
   name: string;
@@ -657,7 +667,8 @@ export const LABEL_METHODS = {
         dataMode,
       });
       self.isBusy = false;
-      self.$bvModal.show("save-success-dataset");
+      // CHANGE TO SELECT VIEW AFTER DS IS SAVED IN LABEL VIEW
+      self.changeStatesByName(ExplorerStateNames.SELECT_VIEW);
       return;
     };
   },
@@ -683,6 +694,39 @@ export const LABEL_METHODS = {
     return () => {
       const dataView = (self.$refs.dataView as unknown) as DataView;
       dataView.selectAll();
+    };
+  },
+  onToolSelection: (
+    self: DataExplorerRef
+  ): ((selection: EI.MAP.SelectionHighlight) => Promise<void>) => {
+    return async (selection: EI.MAP.SelectionHighlight) => {
+      const filterParams = routeGetters.getDecodedSolutionRequestFilterParams(
+        store
+      );
+      filterParams.size = datasetGetters.getIncludedTableDataNumRows(store);
+      // fetch data selected by map tool
+      const resp = await datasetActions.fetchTableData(store, {
+        dataset: selection.dataset,
+        highlights: [selection],
+        filterParams: filterParams,
+        dataMode: null,
+        include: true,
+      });
+      // find d3mIndex
+      const labelIndex = resp.columns.findIndex((c) => {
+        return c.key === D3M_INDEX_FIELD;
+      });
+      // if -1 then something failed
+      if (labelIndex === -1) {
+        return;
+      }
+      // map the values
+      const indices = resp.values.map((v) => {
+        return v[labelIndex].value.toString();
+      });
+      // update row selection
+      const rowSelection = routeGetters.getDecodedRowSelection(store);
+      bulkRowSelectionUpdate(router, selection.context, rowSelection, indices);
     };
   },
 };

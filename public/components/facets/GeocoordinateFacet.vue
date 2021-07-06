@@ -59,7 +59,7 @@
         @range-change="lonRangeChange"
       />
     </div>
-    <div v-if="displayFooter" class="facet-footer-custom-html" ref="footer" />
+    <div v-show="displayFooter" class="facet-footer-custom-html" ref="footer" />
   </div>
 </template>
 

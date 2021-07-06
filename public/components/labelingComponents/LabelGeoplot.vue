@@ -32,7 +32,7 @@
 
 <script lang="ts">
 import Vue from "vue";
-import GeoPlot, { SelectionHighlight } from "../GeoPlot.vue";
+import GeoPlot from "../GeoPlot.vue";
 import { getters as datasetGetters } from "../../store/dataset/module";
 import { Dictionary } from "../../util/dict";
 import {
@@ -159,7 +159,7 @@ export default Vue.extend({
       // fetch area of interests
       await viewActions.updateAreaOfInterest(this.$store, filter);
     },
-    async onToolSelection(selection: SelectionHighlight) {
+    async onToolSelection(selection: EI.MAP.SelectionHighlight) {
       const filterParams = routeGetters.getDecodedSolutionRequestFilterParams(
         this.$store
       );

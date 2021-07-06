@@ -120,11 +120,13 @@
           :solution="solution"
           :confidence-access-func="confidenceGetter"
           :residual-extrema="residualExtrema"
+          :enable-selection-tool-event="isLabelState"
           :area-of-interest-items="{
             inner: drillDownBaseline,
             outer: drillDownFiltered,
           }"
           @tile-clicked="onTileClick"
+          @selection-tool-event="onToolSelection"
         />
       </section>
 
@@ -897,6 +899,9 @@ const DataExplorer = Vue.extend({
     },
     onSaveValid(saveName: string, retainUnlabeled: boolean) {
       LABEL_METHODS.onSaveDataset(this)(saveName, retainUnlabeled);
+    },
+    onToolSelection(selection: EI.MAP.SelectionHighlight) {
+      LABEL_METHODS.onToolSelection(this)(selection);
     },
     async onSaveModel(args: EI.RESULT.SaveInfo) {
       RESULT_METHODS.onSaveModel(this)(args);

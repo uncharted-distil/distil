@@ -546,8 +546,10 @@ export class LabelViewState implements BaseState {
   getFields(): Dictionary<TableColumn> {
     return datasetGetters.getIncludedTableDataFields(store);
   }
-  init(): Promise<void> {
-    return this.fetchData() as Promise<void>;
+  async init(): Promise<void> {
+    await this.fetchData();
+    await this.fetchMapBaseline();
+    return;
   }
   fetchVariables(): Promise<unknown> {
     const dataset = routeGetters.getRouteDataset(store);

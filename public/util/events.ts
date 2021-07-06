@@ -129,6 +129,17 @@ export declare namespace EI {
       type: string;
       callback: (inner: TableRow[], outer: TableRow[]) => void;
     }
+    interface SelectionHighlight {
+      context: string;
+      dataset: string;
+      key: string;
+      value: {
+        minX: number;
+        maxX: number;
+        minY: number;
+        maxY: number;
+      };
+    }
   }
   /**
    * TIMESERIES INTERFACES
