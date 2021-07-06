@@ -86,7 +86,7 @@ export class SelectViewState implements BaseState {
   async init(): Promise<void> {
     await this.fetchVariables();
     await this.fetchMapBaseline();
-    await this.fetchVariableSummaries();
+    this.fetchVariableSummaries();
     return;
   }
   getSecondaryVariables(): Variable[] {
@@ -162,7 +162,19 @@ export class SelectViewState implements BaseState {
     return viewActions.updateSelectTrainingData(store);
   }
   fetchVariableSummaries(): Promise<unknown> {
-    return viewActions.updateSelectVariables(store);
+    const fetchArgs = {
+      dataset: routeGetters.getRouteDataset(store),
+      variables: this.getVariables().concat(this.getSecondaryVariables()),
+      filterParams: routeGetters.getDecodedSolutionRequestFilterParams(store),
+      highlights: routeGetters.getDecodedHighlights(store),
+      dataMode: routeGetters.getDataMode(store),
+      varModes: routeGetters.getDecodedVarModes(store),
+    };
+
+    return Promise.all([
+      datasetActions.fetchIncludedVariableSummaries(store, fetchArgs),
+      datasetActions.fetchExcludedVariableSummaries(store, fetchArgs),
+    ]);
   }
   fetchMapBaseline(): Promise<void> {
     return viewActions.updateHighlight(store);
