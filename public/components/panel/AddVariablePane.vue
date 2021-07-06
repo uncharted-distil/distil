@@ -23,7 +23,7 @@
     <b-button variant="dark" @click="onMapClick">
       <i class="fa fa-globe" /> Map
     </b-button>
-    <b-button v-if="isRemoteSensing" variant="dark" @click="onLabelClick">
+    <b-button v-if="enableLabel" variant="dark" @click="onLabelClick">
       <i class="fa fa-tag" /> Label
     </b-button>
   </div>
@@ -40,10 +40,8 @@ import { GEOCOORDINATE_TYPE, TIMESERIES_TYPE } from "../../util/types";
 
 export default Vue.extend({
   name: "AddVariablePane",
-  computed: {
-    isRemoteSensing(): boolean {
-      return routeGetters.isMultiBandImage(this.$store);
-    },
+  props: {
+    enableLabel: { type: Boolean as () => boolean, default: false },
   },
   methods: {
     groupingClick(type) {

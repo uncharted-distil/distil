@@ -27,6 +27,7 @@
     <left-side-panel :panel-title="currentAction">
       <add-variable-pane
         v-if="activePane === 'add'"
+        :enable-label="imageVarExists"
         @label="switchToLabelState"
       />
       <template v-else>
@@ -346,7 +347,7 @@ import { clearHighlight } from "../util/highlights";
 import { overlayRouteEntry, RouteArgs } from "../util/routes";
 import { clearRowSelection, getNumIncludedRows } from "../util/row";
 import { spinnerHTML } from "../util/spinner";
-import { isGeoLocatedType, META_TYPES } from "../util/types";
+import { isGeoLocatedType, isImageType, META_TYPES } from "../util/types";
 import {
   GEO_VIEW,
   GRAPH_VIEW,
@@ -624,6 +625,12 @@ const DataExplorer = Vue.extend({
       const varSums = this.summaries;
       return varSums.some((v) => {
         return isGeoLocatedType(v.type);
+      });
+    },
+    imageVarExists(): boolean {
+      const varSums = this.allVariables;
+      return varSums.some((v) => {
+        return isImageType(v.colType);
       });
     },
     viewComponent() {

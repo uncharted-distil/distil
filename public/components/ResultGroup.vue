@@ -139,7 +139,6 @@
           :enabled-type-changes="[]"
           :row-selection="rowSelection"
           :instance-name="correctnessInstanceName"
-          :style="errorColor"
           @facet-click="onCorrectnessCategoricalClick"
         />
 

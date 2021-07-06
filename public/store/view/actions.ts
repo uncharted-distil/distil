@@ -518,8 +518,9 @@ export const actions = {
         dataset: dataset,
       }),
     ]);
-
-    fetchVariableRankings(context, { dataset, target });
+    if (target) {
+      fetchVariableRankings(context, { dataset, target });
+    }
     fetchClusters(context, { dataset });
     fetchOutliers(context, { dataset });
 
