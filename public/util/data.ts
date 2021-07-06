@@ -1423,15 +1423,19 @@ export function hasImageFeatures(variables: Variable[]): boolean {
 export function downloadFile(
   fileContent: string,
   fileName: string,
-  extension: string
+  extension: string,
+  type = "text/csv"
 ) {
-  const encodedUri = encodeURI(fileContent + extension);
+  const data = new Blob([fileContent], { type });
+  const url = URL.createObjectURL(data);
   const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", fileName);
+  link.setAttribute("href", url);
+  link.setAttribute("download", fileName + extension);
+  link.style.display = "none";
   document.body.appendChild(link); // Required for FF
 
   link.click(); // This will download the data file named "my_data.csv".
+  document.body.removeChild(link);
   return;
 }
 export function debounceFetchImagePack(args: {

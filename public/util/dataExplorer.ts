@@ -37,7 +37,7 @@ import { isEmpty, isNil } from "lodash";
 import { Solution } from "../store/requests";
 import { isFittedSolutionIdSavedAsModel } from "./models";
 import { SolutionRequestMsg } from "../store/requests/actions";
-import { overlayRouteEntry, RouteArgs, varModesToString } from "./routes";
+import { RouteArgs, varModesToString } from "./routes";
 import {
   ActionColumnRef,
   CreateSolutionsFormRef,
