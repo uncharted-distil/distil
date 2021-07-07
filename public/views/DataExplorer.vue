@@ -115,6 +115,7 @@
           :data-fields="fields"
           :timeseries-info="timeseries"
           :data-items="items"
+          :item-count="items.length"
           :baseline-items="baselineItems"
           :baseline-map="baselineMap"
           :summaries="summaries"
@@ -678,11 +679,11 @@ const DataExplorer = Vue.extend({
     },
     // returns all summaries
     summaries(): VariableSummary[] {
-      return this.state.getAllVariableSummaries();
+      return this.state.getAllVariableSummaries(this.include);
     },
     // available summaries, result summaries, prediction summaries
     secondarySummaries(): VariableSummary[] {
-      return this.state.getSecondaryVariableSummaries();
+      return this.state.getSecondaryVariableSummaries(this.include);
     },
     // available variables, result variables, prediction variables
     secondaryVariables(): Variable[] {

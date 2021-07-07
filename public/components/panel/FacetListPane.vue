@@ -29,6 +29,9 @@
     :instance-name="instanceName"
     :log-activity="problemDefinition"
     :rows-per-page="numRowsPerPage"
+    :pagination="
+      searchedActiveVariables && searchedActiveVariables.length > numRowsPerPage
+    "
     :summaries="activeSummaries"
     @search="onSearch"
   />
@@ -51,13 +54,17 @@ import {
   getters as datasetGetters,
   actions as datasetActions,
 } from "../../store/dataset/module";
-import { DATA_EXPLORER_VAR_INSTANCE } from "../../store/route/index";
+import {
+  DATA_EXPLORER_VAR_INSTANCE,
+  ROUTE_PAGE_SUFFIX,
+} from "../../store/route/index";
 import { getters as routeGetters } from "../../store/route/module";
 import { actions as viewActions } from "../../store/view/module";
 
 import { NUM_PER_PAGE, searchVariables } from "../../util/data";
 import { Group } from "../../util/facets";
 import {
+  getRouteFacetPage,
   overlayRouteEntry,
   RouteArgs,
   varModesToString,
@@ -149,7 +156,6 @@ export default Vue.extend({
       const activeVariables = this.variables.filter(
         (v) => !this.groupedFeatures.includes(v.key)
       );
-
       return searchVariables(activeVariables, this.search);
     },
 
@@ -159,11 +165,14 @@ export default Vue.extend({
           return [v.key, true];
         })
       );
-
+      const pageId = DATA_EXPLORER_VAR_INSTANCE + ROUTE_PAGE_SUFFIX;
+      const page = getRouteFacetPage(pageId, this.$route);
+      const begin = (page - 1) * this.numRowsPerPage;
       const currentSummaries = this.summaries.filter((s) => {
         return searchedMap.has(s.key);
       });
-      return currentSummaries;
+      const end = Math.min(page * this.numRowsPerPage, currentSummaries.length);
+      return currentSummaries.slice(begin, end);
     },
 
     target(): string {

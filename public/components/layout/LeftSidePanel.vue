@@ -21,7 +21,7 @@
       <h5>{{ panelTitle }}</h5>
       <!-- <close-button @close="onClose" /> -->
     </header>
-    <div class="panel-body">
+    <div class="panel-body pb-3">
       <slot />
     </div>
   </aside>
