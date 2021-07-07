@@ -115,6 +115,7 @@
           :data-fields="fields"
           :timeseries-info="timeseries"
           :data-items="items"
+          :item-count="items.length"
           :baseline-items="baselineItems"
           :baseline-map="baselineMap"
           :summaries="summaries"
