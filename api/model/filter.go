@@ -535,7 +535,7 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 			modeHighlights = FilterModeInverse[modeHighlights]
 		}
 		highlightSet.Mode = modeHighlights
-		filterParams.Highlights = append(filterParams.Filters, &highlightSet)
+		filterParams.Highlights = append(filterParams.Highlights, &highlightSet)
 	}
 	// this invert will apply to all filterObjects
 	invertFilters, ok := json.Bool(params, "filters", "invert")
