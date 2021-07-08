@@ -755,12 +755,12 @@ const DataExplorer = Vue.extend({
     },
 
     filters(n, o) {
-      if (_.isEqual(n, o)) return;
+      if (n === o) return;
       viewActions.updateDataExplorerData(this.$store);
     },
 
     highlights(n, o) {
-      if (_.isEqual(n, o)) return;
+      if (n === o) return;
       this.state.fetchData();
     },
 
