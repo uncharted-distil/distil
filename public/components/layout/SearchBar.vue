@@ -228,6 +228,17 @@ header {
   right: 0px;
   color: var(--white) !important;
 }
+div.lex-box.focused {
+  border-color: #80bdff;
+}
+div.lex-box {
+  min-height: 53px;
+}
+div.lex-box.active,
+div.lex-box.focused {
+  -webkit-box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
 .lex-container div.lex-box button.btn:hover {
   color: #999999 !important;
 }

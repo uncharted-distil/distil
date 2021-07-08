@@ -167,8 +167,9 @@
         </b-button-toolbar>
         <!-- RESULT AND PREDICTION VIEW COMPONENTS-->
         <create-solutions-form
-          v-if="isCreateModelPossible && isSelectState"
+          v-if="isSelectState"
           ref="model-creation-form"
+          :aria-disabled="isCreateModelPossible"
           class="ml-2"
           @create-model="onModelCreation"
         />
