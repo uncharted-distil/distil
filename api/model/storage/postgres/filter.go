@@ -280,6 +280,8 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, wheres []string, param
 	// ie: the exclusion set can be defined as NOT(inclusion set)
 	filtersInclusive := []string{}
 	filtersExclusive := []string{}
+	highlightsInclusive := []string{}
+	highlightsExclusive := []string{}
 	for _, set := range filterParams.Filters {
 		where := ""
 		where, params = s.buildSelectionFilter(dataset, params, alias, set.FeatureFilters)
@@ -289,7 +291,15 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, wheres []string, param
 			filtersInclusive = append(filtersInclusive, where)
 		}
 	}
-
+	for _, set := range filterParams.Highlights {
+		where := ""
+		where, params = s.buildSelectionFilter(dataset, params, alias, set.FeatureFilters)
+		if set.Mode == model.ExcludeFilter {
+			highlightsExclusive = append(highlightsExclusive, where)
+		} else {
+			highlightsInclusive = append(highlightsInclusive, where)
+		}
+	}
 	// OR all the inclusive filter sets because the data can be in any of them
 	if len(filtersInclusive) > 0 {
 		where := fmt.Sprintf("(%s)", strings.Join(filtersInclusive, " OR "))
@@ -302,6 +312,22 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, wheres []string, param
 	// AND all the exclusive filter sets because the data should not be in any of them
 	if len(filtersExclusive) > 0 {
 		where := fmt.Sprintf("(NOT(%s))", strings.Join(filtersExclusive, " OR "))
+		if filterParams.Invert {
+			where = fmt.Sprintf("NOT%s", where)
+		}
+		wheres = append(wheres, where)
+	}
+	// OR all the inclusive filter sets because the data can be in any of them
+	if len(highlightsInclusive) > 0 {
+		where := fmt.Sprintf("(%s)", strings.Join(highlightsInclusive, " OR "))
+		if filterParams.Invert {
+			where = fmt.Sprintf("NOT%s", where)
+		}
+		wheres = append(wheres, where)
+	}
+	// AND all the exclusive filter sets because the data should not be in any of them
+	if len(highlightsExclusive) > 0 {
+		where := fmt.Sprintf("(NOT(%s))", strings.Join(highlightsExclusive, " OR "))
 		if filterParams.Invert {
 			where = fmt.Sprintf("NOT%s", where)
 		}
@@ -743,7 +769,6 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
 	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, "", filterParams)
-
 	if len(wheres) > 0 {
 		query = fmt.Sprintf("%s WHERE %s", query, strings.Join(wheres, " AND "))
 	}

@@ -348,7 +348,12 @@ import { clearHighlight } from "../util/highlights";
 import { overlayRouteEntry, RouteArgs } from "../util/routes";
 import { clearRowSelection, getNumIncludedRows } from "../util/row";
 import { spinnerHTML } from "../util/spinner";
-import { isGeoLocatedType, isImageType, META_TYPES } from "../util/types";
+import {
+  DISTIL_ROLES,
+  isGeoLocatedType,
+  isImageType,
+  META_TYPES,
+} from "../util/types";
 import {
   GEO_VIEW,
   GRAPH_VIEW,
@@ -571,7 +576,9 @@ const DataExplorer = Vue.extend({
     },
 
     variables(): Variable[] {
-      const variables = this.state.getVariables();
+      const variables = this.state
+        .getVariables()
+        .filter((v) => v.distilRole !== DISTIL_ROLES.Meta);
       variables.sort((a, b) => {
         // If their ranking are identical or do not exist
         // sort by importance
@@ -748,12 +755,12 @@ const DataExplorer = Vue.extend({
     },
 
     filters(n, o) {
-      if (_.isEqual(n, o)) return;
+      if (n === o) return;
       viewActions.updateDataExplorerData(this.$store);
     },
 
     highlights(n, o) {
-      if (_.isEqual(n, o)) return;
+      if (n === o) return;
       this.state.fetchData();
     },
 

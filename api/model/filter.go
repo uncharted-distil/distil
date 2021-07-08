@@ -59,6 +59,7 @@ func DataModeFromString(s string) (DataMode, error) {
 type FilterParams struct {
 	Size      int                `json:"size"`
 	Filters   []*model.FilterSet `json:"filters"`
+	Highlights []*model.FilterSet `json:"highlights"`
 	Variables []string           `json:"variables"`
 	DataMode  DataMode           `json:"dataMode"`
 	Invert    bool               `json:"invert"`
@@ -119,22 +120,10 @@ func (f *FilterParams) Clone() *FilterParams {
 		Filters: []*model.FilterSet{},
 	}
 	for _, filters := range f.Filters {
-		featureSet := &model.FilterSet{
-			Mode:           filters.Mode,
-			FeatureFilters: []model.FilterObject{},
-		}
-		for _, fo := range filters.FeatureFilters {
-			cloneFilterObject := model.FilterObject{
-				Invert: fo.Invert,
-				List:   []*model.Filter{},
-			}
-			for _, f := range fo.List {
-				c := *f
-				cloneFilterObject.List = append(cloneFilterObject.List, &c)
-			}
-			featureSet.FeatureFilters = append(featureSet.FeatureFilters, cloneFilterObject)
-		}
-		clone.Filters = append(clone.Filters, featureSet)
+		clone.Filters = append(clone.Filters, filters.Clone())
+	}
+	for _, highlights := range f.Highlights {
+		clone.Highlights = append(clone.Highlights, highlights.Clone())
 	}
 	clone.Invert = f.Invert
 	clone.Variables = append(clone.Variables, f.Variables...)
@@ -546,7 +535,7 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 			modeHighlights = FilterModeInverse[modeHighlights]
 		}
 		highlightSet.Mode = modeHighlights
-		filterParams.Filters = append(filterParams.Filters, &highlightSet)
+		filterParams.Highlights = append(filterParams.Highlights, &highlightSet)
 	}
 	// this invert will apply to all filterObjects
 	invertFilters, ok := json.Bool(params, "filters", "invert")
