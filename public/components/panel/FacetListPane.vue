@@ -125,7 +125,7 @@ export default Vue.extend({
 
             // Container to display the buttons with flex.
             const container = document.createElement("div");
-            container.className = "d-flex";
+            container.className = "d-flex justify-content-between w-100";
             container.append(exploreButton, modelButtons);
             return container;
           };
