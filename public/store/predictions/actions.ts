@@ -192,7 +192,7 @@ export const actions = {
     filterParamsBlank.filters.list.push(args.filter);
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
-      args.highlights,
+      [],
       EXCLUDE_FILTER
     );
     // Add the size limit to results if provided.

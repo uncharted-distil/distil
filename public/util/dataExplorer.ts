@@ -324,28 +324,33 @@ export const SELECT_METHODS = {
     };
   },
   onExcludeClick: (self: DataExplorerRef): (() => void) => {
-    let filter = null;
-    if (self.isFilteringHighlights) {
-      filter = createFiltersFromHighlights(self.highlights, EXCLUDE_FILTER);
-    } else {
-      filter = createFilterFromRowSelection(self.rowSelection, EXCLUDE_FILTER);
-    }
+    return () => {
+      let filter = null;
+      if (self.isFilteringHighlights) {
+        filter = createFiltersFromHighlights(self.highlights, EXCLUDE_FILTER);
+      } else {
+        filter = createFilterFromRowSelection(
+          self.rowSelection,
+          EXCLUDE_FILTER
+        );
+      }
 
-    addFilterToRoute(self.$router, filter);
-    self.resetHighlightsOrRow();
+      addFilterToRoute(self.$router, filter);
+      self.resetHighlightsOrRow();
 
-    datasetActions.fetchVariableRankings(store, {
-      dataset: self.dataset,
-      target: self.target.key,
-    });
+      datasetActions.fetchVariableRankings(store, {
+        dataset: self.dataset,
+        target: self.target.key,
+      });
 
-    appActions.logUserEvent(store, {
-      feature: Feature.FILTER_DATA,
-      activity: Activity.DATA_PREPARATION,
-      subActivity: SubActivity.DATA_TRANSFORMATION,
-      details: { filter: filter },
-    });
-    return;
+      appActions.logUserEvent(store, {
+        feature: Feature.FILTER_DATA,
+        activity: Activity.DATA_PREPARATION,
+        subActivity: SubActivity.DATA_TRANSFORMATION,
+        details: { filter: filter },
+      });
+      return;
+    };
   },
   onReincludeClick: (self: DataExplorerRef): (() => void) => {
     let filter = null;

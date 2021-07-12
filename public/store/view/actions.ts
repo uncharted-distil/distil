@@ -655,31 +655,32 @@ export const actions = {
     // this is a hack to avoid adding an extra field just for the area of interest
     const clonedFilterParams = _.cloneDeep(filterParams);
     clonedFilterParams.filters.list.push(filter);
-    clonedFilterParams.filters.invert = true;
     clonedFilterParams.variables = variables.map((v) => {
       return v.key;
     });
-    const clonedExcludeFilter = _.cloneDeep(filter);
+
     // the exclude has to invert all the filters -- the route does a collective NOT() and
     // for areaOfInterest we need compounded ands so therefore we invert client side pass in
     // as an include and that removes the collective NOT
     const clonedFilterParamsExclude = _.cloneDeep(filterParams);
+    const setMap = new Map(
+      clonedFilterParamsExclude.filters.list.map((f) => {
+        return [f.set, true];
+      })
+    );
     clonedFilterParamsExclude.filters.list.forEach((f) => {
       f.mode = invertFilter(f.mode);
     });
-    clonedFilterParamsExclude.filters.list.push(clonedExcludeFilter);
-    const invertedHighlights = highlights.map((highlight) => {
-      return { ...highlight, include: EXCLUDE_FILTER };
+    setMap.forEach((v, k) => {
+      const tmpFilter = _.cloneDeep(filter);
+      tmpFilter.set = k;
+      clonedFilterParamsExclude.filters.list.push(tmpFilter);
     });
+
     const baseline = {
       highlights: { list: [] },
       filters: {
-        list: [
-          filter,
-          ...clonedFilterParams.filters.list.filter((f) => {
-            return f.mode === EXCLUDE_FILTER;
-          }),
-        ],
+        list: [filter],
       },
       size: Number.MAX_SAFE_INTEGER,
       variables: clonedFilterParams.variables,
@@ -696,7 +697,7 @@ export const actions = {
       }), // include inner tiles
       datasetActions.fetchAreaOfInterestData(store, {
         dataset: dataset,
-        filterParams: clonedFilterParams,
+        filterParams: baseline,
         highlights: [],
         dataMode: dataMode,
         include: true,
@@ -705,7 +706,7 @@ export const actions = {
       }), // include outer tiles
       datasetActions.fetchAreaOfInterestData(store, {
         dataset: dataset,
-        filterParams: clonedFilterParams,
+        filterParams: clonedFilterParamsExclude,
         highlights: highlights,
         dataMode: dataMode,
         include: true,
@@ -715,7 +716,7 @@ export const actions = {
       datasetActions.fetchAreaOfInterestData(store, {
         dataset: dataset,
         filterParams: baseline,
-        highlights: invertedHighlights,
+        highlights: [],
         dataMode: dataMode,
         include: true,
         mutatorIsInclude: false,
