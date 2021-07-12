@@ -192,7 +192,7 @@ export default Vue.extend({
     },
 
     task(): string {
-      return routeGetters.getRouteTask(this.$store);
+      return routeGetters.getRouteTask(this.$store) ?? "";
     },
 
     totalDataCount(): number {
