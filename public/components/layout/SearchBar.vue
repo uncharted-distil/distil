@@ -118,11 +118,13 @@ export default Vue.extend({
         : this.$refs.lexcontainerExclude;
     },
     variableInfo(): [string, string, Variable[]] {
-      return !this.isSelectView
-        ? [this.filters, this.highlights, this.variables]
-        : this.isHighlightActive
-        ? [null, this.highlights, this.variables]
-        : [this.filters, null, this.variables];
+      return _.cloneDeep(
+        !this.isSelectView
+          ? [this.filters, this.highlights, this.variables]
+          : this.isHighlightActive
+          ? [null, this.highlights, this.variables]
+          : [this.filters, null, this.variables]
+      );
     },
   },
 
@@ -131,8 +133,8 @@ export default Vue.extend({
       this.renderLex();
     },
 
-    language(n, o) {
-      if (n !== o) {
+    variableInfo(n, o) {
+      if (!_.isEqual(n, o)) {
         this.renderLex();
       }
     },
