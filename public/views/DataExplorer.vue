@@ -344,7 +344,7 @@ import {
 import { getters as routeGetters } from "../store/route/module";
 
 // Util
-import { EXCLUDE_FILTER, Filter } from "../util/filters";
+import { EXCLUDE_FILTER, Filter, INCLUDE_FILTER } from "../util/filters";
 import { clearHighlight } from "../util/highlights";
 import { overlayRouteEntry, RouteArgs } from "../util/routes";
 import { clearRowSelection, getNumIncludedRows } from "../util/row";
@@ -824,7 +824,7 @@ const DataExplorer = Vue.extend({
         maxY: data.bounds[0][0],
         minX: data.bounds[0][1],
         minY: data.bounds[1][0],
-        mode: EXCLUDE_FILTER,
+        mode: INCLUDE_FILTER,
         type: data.type,
         set: "",
       };

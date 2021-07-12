@@ -683,7 +683,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	params := make([]interface{}, 0)
 
 	// need to create all filters by mode
-	for _, filterSet := range filterParams.Filters {
+	for _, filterSet := range append(filterParams.Filters, filterParams.Highlights...) {
 		// break filters out groups for specific handling
 		filters, err := splitFilters(filterSet)
 		if err != nil {
