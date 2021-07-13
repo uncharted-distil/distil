@@ -344,7 +344,7 @@ import {
 import { getters as routeGetters } from "../store/route/module";
 
 // Util
-import { EXCLUDE_FILTER, Filter, INCLUDE_FILTER } from "../util/filters";
+import { Filter, INCLUDE_FILTER } from "../util/filters";
 import { clearHighlight } from "../util/highlights";
 import { overlayRouteEntry, RouteArgs } from "../util/routes";
 import { clearRowSelection, getNumIncludedRows } from "../util/row";

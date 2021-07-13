@@ -22,6 +22,8 @@
     enable-type-change
     enable-type-filtering
     ignore-highlights
+    :is-available-features="isSelectedView"
+    :is-result-features="isResultView"
     :include="include"
     :enable-color-scales="enableColorScales"
     :facet-count="searchedActiveVariables.length"
@@ -71,6 +73,7 @@ import {
 } from "../../util/routes";
 import { Feature, Activity, SubActivity } from "../../util/userEvents";
 import { isUnsupportedTargetVar } from "../../util/types";
+import { ExplorerStateNames } from "../../util/dataExplorer";
 
 export default Vue.extend({
   name: "FacetListPane",
@@ -102,6 +105,18 @@ export default Vue.extend({
   },
 
   computed: {
+    isSelectedView(): boolean {
+      return (
+        routeGetters.getDataExplorerState(this.$store) ===
+        ExplorerStateNames.SELECT_VIEW
+      );
+    },
+    isResultView(): boolean {
+      return (
+        routeGetters.getDataExplorerState(this.$store) ===
+        ExplorerStateNames.RESULT_VIEW
+      );
+    },
     buttons(): (group: Group) => HTMLElement | null {
       return !this.enableFooter
         ? null
