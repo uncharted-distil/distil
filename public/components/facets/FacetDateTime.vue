@@ -28,7 +28,7 @@
     >
       <div slot="header-label" :class="headerClass" class="d-flex">
         <span>{{ summary.label.toUpperCase() }}</span>
-        <importance-bars :importance="importance" />
+        <importance-bars v-if="enableImportance" :importance="importance" />
         <div></div>
         <div class="facet-header-dropdown d-flex align-items-center">
           <color-scale-drop-down
@@ -118,6 +118,7 @@ export default Vue.extend({
     instanceName: String as () => string,
     rowSelection: Object as () => RowSelection,
     importance: Number as () => number,
+    enableImportance: { type: Boolean as () => boolean, default: true },
     geoEnabled: { type: Boolean as () => boolean, default: false },
     include: { type: Boolean as () => boolean, default: true },
   },

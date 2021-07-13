@@ -94,6 +94,7 @@
             enable-highlighting
             :geo-enabled="hasGeoData && isActiveSolution"
             :summary="summary"
+            :enable-importance="false"
             :highlights="highlights"
             :enabled-type-changes="[]"
             :row-selection="rowSelection"
@@ -114,6 +115,7 @@
             show-origin
             enable-highlighting
             :summary="summary"
+            :enable-importance="false"
             :highlights="highlights"
             :enabled-type-changes="[]"
             :row-selection="rowSelection"
@@ -131,8 +133,9 @@
           v-if="!isRoc"
           v-for="summary in correctnessSummaries"
           :key="summary.key"
+          :enable-importance="false"
           enable-highlighting
-          colorScaleToggle
+          color-scale-toggle
           :geo-enabled="hasGeoData && isActiveSolution"
           :summary="summary"
           :highlights="highlights"
@@ -147,6 +150,7 @@
           v-for="summary in confidenceSummaries"
           :key="summary.key"
           enable-highlighting
+          :enable-importance="false"
           :geo-enabled="hasGeoData && isActiveSolution"
           :summary="summary"
           :highlights="highlights"
@@ -162,6 +166,7 @@
           v-for="summary in rankingSummaries"
           :key="summary.key"
           enable-highlighting
+          :enable-importance="false"
           :geo-enabled="hasGeoData && isActiveSolution"
           :summary="summary"
           :highlight="highlights"
