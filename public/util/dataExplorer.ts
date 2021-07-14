@@ -337,11 +337,12 @@ export const SELECT_METHODS = {
 
       addFilterToRoute(self.$router, filter);
       self.resetHighlightsOrRow();
-
-      datasetActions.fetchVariableRankings(store, {
-        dataset: self.dataset,
-        target: self.target.key,
-      });
+      if (self.target) {
+        datasetActions.fetchVariableRankings(store, {
+          dataset: self.dataset,
+          target: self.target.key,
+        });
+      }
 
       appActions.logUserEvent(store, {
         feature: Feature.FILTER_DATA,

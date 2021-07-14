@@ -91,6 +91,16 @@ export interface VariableInfo {
   count: number;
   // mode used for background color
   mode: string;
+  // set used to denote which set the variable belongs to
+  set: string;
+  // isEndOfSet denotes if this variable is the last in its filterSet
+  isEndOfSet: boolean;
+}
+export interface LexVariable {
+  // holds the set the variable came from can be empty
+  set: string;
+  // basic distil variable
+  variable: Variable;
 }
 export interface TemplateInfo {
   // All of the variables that are present in the filters and highlights
@@ -99,6 +109,24 @@ export interface TemplateInfo {
   highlightMap: Map<string, Filter[]>;
   // filterMap based on filter.key (its a collection of all the duplicate filters)
   filterMap: Map<string, Filter[]>;
+}
+export interface LexMeta {
+  // type of variable
+  type: string;
+  // the actual variable
+  variable: Variable;
+  // name or key of variable
+  name: string;
+  // number of occurances of that particular variable in our filter or highlight set (note that each set can have their own count)
+  count: number;
+  // if include or exclude (highlight or filter)
+  mode: string;
+  // key of variable
+  key: string;
+  // what set this variable came from (only for filters)
+  set: string;
+  // if this is the end of the conditions for its filter set
+  endOfSet: boolean;
 }
 /*
   This is the core function that actually generates a Lex Bar language. It takes
@@ -124,7 +152,13 @@ export function variablesToLexLanguage(
   // this generates the base templates used for the user typing into the lexbar
   const baseSuggestion = variablesToLexSuggestions(
     filteredAllVariables.map((v) => {
-      return { variable: v, count: 1, mode: INCLUDE_FILTER };
+      return {
+        variable: v,
+        count: 1,
+        mode: INCLUDE_FILTER,
+        set: "",
+        isEndOfSet: false,
+      };
     }),
     variableMap
   );
@@ -154,17 +188,19 @@ export function distilTextEntryBuilder(
   });
   const uniqueMetaCount = {} as Dictionary<boolean>;
   const uniqueSuggestion = textSuggestions.filter((v) => {
-    if (!uniqueMetaCount[v.meta.count + v.meta.mode]) {
-      uniqueMetaCount[v.meta.count + v.meta.mode] = true;
+    const meta = v.meta as LexMeta;
+    if (!uniqueMetaCount[meta.count + meta.mode]) {
+      uniqueMetaCount[meta.count + meta.mode] = true;
       return true;
     }
     return false;
   });
   uniqueSuggestion.forEach((suggestion) => {
+    const meta = suggestion.meta as LexMeta;
     let branch = Lex.from("value_0", TextEntryState, {
-      cssClasses: modeToColor(suggestion.meta.mode),
+      cssClasses: lexCssClasses(meta),
     });
-    for (let i = 1; i < suggestion.meta.count; ++i) {
+    for (let i = 1; i < meta.count; ++i) {
       branch = branch
         .to(LabelState, { label: "OR", vkey: "operator" })
         .to(`value_${i}`, TextEntryState);
@@ -173,8 +209,8 @@ export function distilTextEntryBuilder(
       Lex.from("relation", DistilRelationState, {
         ...TransitionFactory.valueMetaCompare({
           type: TEXT_FILTER,
-          count: suggestion.meta.count,
-          mode: suggestion.meta.mode,
+          count: meta.count,
+          mode: meta.mode,
         }),
       }).branch(branch)
     );
@@ -191,17 +227,18 @@ export function distilCategoryEntryBuilder(
   });
   const uniqueMetaCount = {} as Dictionary<boolean>;
   const uniqueSuggestion = categorySuggestions.filter((v) => {
-    if (!uniqueMetaCount[v.meta.count + v.meta.mode + v.meta.variable.key]) {
-      uniqueMetaCount[v.meta.count + v.meta.mode + v.meta.variable.key] = true;
+    const meta = v.meta as LexMeta;
+    if (!uniqueMetaCount[meta.count + meta.mode + meta.variable.key]) {
+      uniqueMetaCount[meta.count + meta.mode + meta.variable.key] = true;
       return true;
     }
     return false;
   });
   uniqueSuggestion.forEach((suggestion) => {
+    const meta = suggestion.meta as LexMeta;
     const labelSuggestions =
       catVarLexSuggestions[
-        suggestion.meta.variable?.grouping?.clusterCol ??
-          suggestion.meta.variable.key
+        meta.variable?.grouping?.clusterCol ?? meta.variable.key
       ] ?? [];
     let branch = Lex.from("value_0", ValueState, {
       allowUnknown: false,
@@ -212,9 +249,9 @@ export function distilCategoryEntryBuilder(
           return cat["key"].toLowerCase().indexOf(hint.toLowerCase()) > -1;
         });
       },
-      cssClasses: modeToColor(suggestion.meta.mode),
+      cssClasses: lexCssClasses(meta),
     });
-    for (let i = 1; i < suggestion.meta.count; ++i) {
+    for (let i = 1; i < meta.count; ++i) {
       branch = branch
         .to(LabelState, { label: "OR", vkey: "operator" })
         .to(`value_${i}`, ValueState, {
@@ -232,9 +269,9 @@ export function distilCategoryEntryBuilder(
       Lex.from("relation", DistilRelationState, {
         ...TransitionFactory.valueMetaCompare({
           type: CATEGORICAL_TYPE,
-          count: suggestion.meta.count,
-          mode: suggestion.meta.mode,
-          key: suggestion.meta.variable.key,
+          count: meta.count,
+          mode: meta.mode,
+          key: meta.variable.key,
         }),
       }).branch(branch)
     );
@@ -252,25 +289,27 @@ export function distilNumericalEntryBuilder(
   });
   const uniqueMetaCount = {} as Dictionary<boolean>;
   const uniqueSuggestion = numericalSuggestions.filter((v) => {
-    if (!uniqueMetaCount[v.meta.count + v.meta.mode]) {
-      uniqueMetaCount[v.meta.count + v.meta.mode] = true;
+    const meta = v.meta as LexMeta;
+    if (!uniqueMetaCount[meta.count + meta.mode]) {
+      uniqueMetaCount[meta.count + meta.mode] = true;
       return true;
     }
     return false;
   });
   // loop through each suggestion
   uniqueSuggestion.forEach((suggestion) => {
+    const meta = suggestion.meta as LexMeta;
     // build the base branch this is what the user will see if typing into the lexbar
     let branch = Lex.from(LabelState, {
       label: "From",
       vkey: "operator",
-      cssClasses: modeToColor(suggestion.meta.mode),
+      cssClasses: lexCssClasses(meta),
     })
       .to("min_0", NumericEntryState, { name: "Enter lower bound" })
       .to(LabelState, { label: "To", vkey: "operator" })
       .to("max_0", NumericEntryState, { name: "Enter upper bound" });
     // adds the OR and the additional filter params if the count is > 0
-    for (let i = 1; i < suggestion.meta.count; ++i) {
+    for (let i = 1; i < meta.count; ++i) {
       branch = branch
         .to(LabelState, { label: "OR", vkey: "operator" })
         .to(LabelState, { label: "From", vkey: "operator" })
@@ -283,8 +322,8 @@ export function distilNumericalEntryBuilder(
       Lex.from("relation", DistilRelationState, {
         ...TransitionFactory.valueMetaCompare({
           type: NUMERICAL_FILTER,
-          count: suggestion.meta.count,
-          mode: suggestion.meta.mode,
+          count: meta.count,
+          mode: meta.mode,
         }),
       }).branch(branch)
     );
@@ -300,17 +339,19 @@ export function distilGeoBoundsEntryBuilder(
   });
   const uniqueMetaCount = {} as Dictionary<boolean>;
   const uniqueSuggestion = geoboundsSuggestions.filter((v) => {
-    if (!uniqueMetaCount[v.meta.count + v.meta.mode]) {
-      uniqueMetaCount[v.meta.count + v.meta.mode] = true;
+    const meta = v.meta as LexMeta;
+    if (!uniqueMetaCount[meta.count + meta.mode]) {
+      uniqueMetaCount[meta.count + meta.mode] = true;
       return true;
     }
     return false;
   });
   uniqueSuggestion.forEach((suggestion) => {
+    const meta = suggestion.meta as LexMeta;
     let branch = Lex.from(LabelState, {
       label: "From Latitude",
       vkey: "operator",
-      cssClasses: modeToColor(suggestion.meta.mode),
+      cssClasses: lexCssClasses(meta),
     })
       .to("minX_0", NumericEntryState, { name: "Enter lower bound" })
       .to(LabelState, { label: "To", vkey: "operator" })
@@ -319,7 +360,7 @@ export function distilGeoBoundsEntryBuilder(
       .to("minY_0", NumericEntryState, { name: "Enter lower bound" })
       .to(LabelState, { label: "To", vkey: "operator" })
       .to("maxY_0", NumericEntryState, { name: "Enter upper bound" });
-    for (let i = 1; i < suggestion.meta.count; ++i) {
+    for (let i = 1; i < meta.count; ++i) {
       branch = branch
         .to(LabelState, { label: "OR", vkey: "operator" })
         .to(LabelState, { label: "From Latitude", vkey: "operator" })
@@ -335,8 +376,8 @@ export function distilGeoBoundsEntryBuilder(
       Lex.from("relation", DistilRelationState, {
         ...TransitionFactory.valueMetaCompare({
           type: GEOBOUNDS_FILTER,
-          count: suggestion.meta.count,
-          mode: suggestion.meta.mode,
+          count: meta.count,
+          mode: meta.mode,
         }),
       }).branch(branch)
     );
@@ -353,25 +394,26 @@ export function distilDateTimeEntryBuilder(
     return suggestion.meta.type === DATETIME_FILTER;
   });
   dateSuggestions.forEach((suggestion) => {
+    const meta = suggestion.meta as LexMeta;
     let branch = Lex.from(LabelState, {
       label: "From",
       vkey: "operator",
-      cssClasses: modeToColor(suggestion.meta.mode),
+      cssClasses: lexCssClasses(meta),
     })
       .to("min_0", DateTimeEntryState, {
         enableTime: true,
         enableCalendar: true,
         timezone: "Greenwich",
-        hilightedDate: new Date(suggestion.meta.variable.min * 1000),
+        hilightedDate: new Date(meta.variable.min * 1000),
       })
       .to(LabelState, { label: "To", vkey: "operator" })
       .to("max_0", DateTimeEntryState, {
         enableTime: true,
         enableCalendar: true,
         timezone: "Greenwich",
-        hilightedDate: new Date(suggestion.meta.variable.max * 1000),
+        hilightedDate: new Date(meta.variable.max * 1000),
       });
-    for (let i = 1; i < suggestion.meta.count; ++i) {
+    for (let i = 1; i < meta.count; ++i) {
       branch = branch
         .to(LabelState, { label: "OR", vkey: "operator" })
         .to(LabelState, { label: "From", vkey: "operator" })
@@ -379,14 +421,14 @@ export function distilDateTimeEntryBuilder(
           enableTime: true,
           enableCalendar: true,
           timezone: "Greenwich",
-          hilightedDate: new Date(suggestion.meta.variable.min * 1000),
+          hilightedDate: new Date(meta.variable.min * 1000),
         })
         .to(LabelState, { label: "To", vkey: "operator" })
         .to(`max_${i}`, DateTimeEntryState, {
           enableTime: true,
           enableCalendar: true,
           timezone: "Greenwich",
-          hilightedDate: new Date(suggestion.meta.variable.max * 1000),
+          hilightedDate: new Date(meta.variable.max * 1000),
         });
     }
     // default with
@@ -394,21 +436,22 @@ export function distilDateTimeEntryBuilder(
       Lex.from("relation", DistilRelationState, {
         ...TransitionFactory.valueMetaCompare({
           type: DATETIME_FILTER,
-          name: suggestion.meta.variable.colName,
-          count: suggestion.meta.count,
-          mode: suggestion.meta.mode,
+          name: meta.variable.colName,
+          count: meta.count,
+          mode: meta.mode,
         }),
       }).branch(branch)
     );
   });
   return dateTimeEntries;
 }
-// aggregates all the variables for highlight and filter into VariableInfo in over to generate templates
+// aggregates all the variables for highlight and filter into VariableInfo in order to generate templates
 export function variableAggregation(
   filter: string,
   highlight: string,
   allVariables: Variable[]
 ): TemplateInfo {
+  // decode filters and highlights
   const decodedFilters = decodeFilters(filter).list.filter(
     (f) => f.type !== "row"
   );
@@ -418,40 +461,67 @@ export function variableAggregation(
   );
 
   const variableDict = buildVariableDictionary(allVariables);
-  const filterVariables = new Map<string, Variable[]>();
+  const filterVariables = new Map<string, LexVariable[]>();
   // check that the filter variables exist
   decodedFilters.forEach((f) => {
     if (variableDict[f.key]) {
-      if (filterVariables.has(f.key)) {
-        filterVariables.get(f.key).push(variableDict[f.key]);
+      const multiKey = f.key + f.set;
+      if (filterVariables.has(multiKey)) {
+        filterVariables
+          .get(f.key)
+          .push({ variable: variableDict[f.key], set: f.set });
         return;
       }
-      filterVariables.set(f.key, [variableDict[f.key]]);
+      filterVariables.set(multiKey, [
+        { variable: variableDict[f.key], set: f.set },
+      ]);
       if (isCategoricalType(f.type)) {
-        filterVariables.get(f.key).length = f.categories.length;
+        filterVariables.get(multiKey).length = f.categories.length;
       }
     }
   });
-  const highlightVariables = new Map<string, Variable[]>();
+  const highlightVariables = new Map<string, LexVariable[]>();
   decodedHighlights.forEach((h) => {
     if (variableDict[h.key]) {
       if (highlightVariables.has(h.key)) {
-        highlightVariables.get(h.key).push(variableDict[h.key]);
+        highlightVariables
+          .get(h.key)
+          .push({ variable: variableDict[h.key], set: "" });
         return;
       }
-      highlightVariables.set(h.key, [variableDict[h.key]]);
+      highlightVariables.set(h.key, [
+        { variable: variableDict[h.key], set: "" },
+      ]);
       if (isCategoricalType(h.type)) {
         highlightVariables.get(h.key).length = h.categories.length;
       }
     }
   });
-
+  const filterVarArr = Array.from(filterVariables.values());
+  // highlights are always part of the blank set
   let activeVariables = [
     ...Array.from(highlightVariables.values()).map((hv) => {
-      return { variable: hv[0], count: hv.length, mode: INCLUDE_FILTER };
+      return {
+        variable: hv[0].variable,
+        count: hv.length,
+        mode: INCLUDE_FILTER,
+        set: "",
+        isEndOfSet: false,
+      };
     }),
-    ...Array.from(filterVariables.values()).map((fv) => {
-      return { variable: fv[0], count: fv.length, mode: EXCLUDE_FILTER };
+    ...Array.from(filterVarArr).map((fv, idx) => {
+      const next = idx + 1;
+      const isEndOfSet =
+        next < filterVarArr.length
+          ? filterVarArr[next][0]?.set !== fv[0].set
+          : false;
+      return {
+        variable: fv[0].variable,
+        count: fv.length,
+        mode: EXCLUDE_FILTER,
+        set: fv[0].set,
+        isEndOfSet,
+      };
     }),
   ] as VariableInfo[];
   // remove timeseries
@@ -460,7 +530,7 @@ export function variableAggregation(
   });
   const activeVariablesMap = new Map(
     activeVariables.map((v) => {
-      return [v.variable.key, true];
+      return [v.variable.key + v.set, true];
     })
   );
   const highlightMap = new Map<string, Filter[]>();
@@ -475,12 +545,12 @@ export function variableAggregation(
     }
   });
   decodedFilters.forEach((el) => {
-    if (activeVariablesMap.has(el.key)) {
-      if (filterMap.has(el.key)) {
-        filterMap.get(el.key).push(el);
+    if (activeVariablesMap.has(el.key + el.set)) {
+      if (filterMap.has(el.key + el.set)) {
+        filterMap.get(el.key + el.set).push(el);
         return;
       }
-      filterMap.set(el.key, [el]);
+      filterMap.set(el.key + el.set, [el]);
     }
   });
   return { activeVariables, highlightMap, filterMap };
@@ -565,16 +635,17 @@ export function lexQueryToFiltersAndHighlight(
 
   lexQuery[0].forEach((lq) => {
     if (lq.relation.key !== HIGHLIGHT) {
-      const key = lq.field.meta.variable.key;
+      const meta = lq.field.meta as LexMeta;
+      const key = meta.variable.key;
       const displayKey = lq.field.displayKey;
-      const type = lq.field.meta.type;
-      for (let i = 0; i < lq.field.meta.count; ++i) {
+      const type = meta.type;
+      for (let i = 0; i < meta.count; ++i) {
         const filter: Filter = {
           mode: lq.relation.key,
           displayName: displayKey,
           type,
           key,
-          set: "",
+          set: meta.set,
         };
 
         if (type === GEOBOUNDS_FILTER || type === GEOCOORDINATE_FILTER) {
@@ -656,6 +727,12 @@ function modeToRelation(mode: string): ValueStateValue {
       return distilRelationOptions[0];
   }
 }
+function lexCssClasses(meta: LexMeta): string[] {
+  return modeToColor(meta.mode).concat(endOfSetClass(meta.endOfSet));
+}
+function endOfSetClass(endOfSet: boolean): string[] {
+  return endOfSet ? ["end-of-set"] : [];
+}
 function modeToColor(mode: string): string[] {
   switch (mode) {
     case HIGHLIGHT:
@@ -691,7 +768,9 @@ function variablesToLexSuggestions(
       count: v.count,
       mode: v.mode,
       key: v.variable.key,
-    };
+      set: v.set,
+      endOfSet: v.isEndOfSet,
+    } as LexMeta;
     const config = {
       displayKey: v.variable.colDisplayName,
     };
@@ -740,7 +819,7 @@ function colTypeToOptionType(colType: string): string {
   Convert Distil Variable Array To a Dictionary For O(1) look up. Used when
   converting a filter/highlight from the distil format to a lex query.
 */
-function buildVariableDictionary(variables: Variable[]) {
+function buildVariableDictionary(variables: Variable[]): Dictionary<Variable> {
   return variables.reduce((a, v) => {
     a[v.key] = v;
     return a;

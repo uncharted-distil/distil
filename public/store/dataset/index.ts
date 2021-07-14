@@ -71,6 +71,7 @@ export interface Grouping {
   subIds: string[];
   type: string;
   hidden: string[];
+  clusterCol?: string;
 }
 
 export interface ClusteredGrouping extends Grouping {
