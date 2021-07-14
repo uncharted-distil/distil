@@ -17,6 +17,7 @@
 
 <template>
   <div class="search-bar-container">
+    <component :is="styleSheet" v-html="cssStyle" />
     <header>Search</header>
     <b-tabs
       v-if="isSelectView"
@@ -90,6 +91,24 @@ export default Vue.extend({
   }),
 
   computed: {
+    styleSheet(): string {
+      return "style";
+    },
+    cssStyle(): string {
+      let result = "";
+      const end = this.templateInfo.activeVariables.length - 1;
+      for (let i = 0; i < end; ++i) {
+        result += `.lex-box > *:nth-child(${i + 1})::after {
+          content: "${
+            this.templateInfo.activeVariables[i].isEndOfSet ? "OR" : "&"
+          }";
+          font-weight: bolder;
+          font-size: 0.938rem;
+          margin-right: 9px;
+          }`;
+      }
+      return result;
+    },
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
@@ -252,12 +271,6 @@ div.lex-box.focused {
 }
 .token {
   white-space: normal !important;
-}
-.lex-box > *:not(:nth-last-child(-n + 2))::after {
-  content: "&";
-  font-weight: bolder;
-  font-size: 0.938rem;
-  margin-right: 9px;
 }
 .include-filter {
   color: var(--white) !important;
