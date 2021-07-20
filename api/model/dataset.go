@@ -147,6 +147,21 @@ func UpdateDiskDataset(ds *Dataset, data [][]string) error {
 func (d *DiskDataset) UpdateOnDisk(ds *Dataset, data [][]string, updateImmutable bool) error {
 	// use the header row to determine the variables to update
 	varMap := MapVariables(ds.Variables, func(variable *model.Variable) string { return variable.HeaderName })
+	err := d.UpdateRawData(varMap, data, updateImmutable)
+	if err != nil {
+		return err
+	}
+
+	err = d.SaveDataset()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateRawData updates the data in a disk dataset but does not save it.
+func (d *DiskDataset) UpdateRawData(varMap map[string]*model.Variable, data [][]string, updateImmutable bool) error {
 	d3mIndexIndex := -1
 	updates := map[string]map[string]string{}
 	headerMap := map[string]int{}
@@ -182,11 +197,6 @@ func (d *DiskDataset) UpdateOnDisk(ds *Dataset, data [][]string, updateImmutable
 	}
 
 	err := d.Update(updates, true)
-	if err != nil {
-		return err
-	}
-
-	err = d.SaveDataset()
 	if err != nil {
 		return err
 	}

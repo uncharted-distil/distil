@@ -58,10 +58,6 @@ type JoinPair struct {
 
 // JoinDatamart will make all your dreams come true.
 func JoinDatamart(joinLeft *JoinSpec, joinRight *JoinSpec, rightOrigin *model.DatasetOrigin) (string, *apiModel.FilteredData, error) {
-	cfg, err := env.LoadConfig()
-	if err != nil {
-		return "", nil, err
-	}
 	pipelineDesc, err := description.CreateDatamartAugmentPipeline("Join Preview",
 		"Join to be reviewed by user", rightOrigin.SearchResult, rightOrigin.Provenance)
 	if err != nil {
@@ -69,16 +65,11 @@ func JoinDatamart(joinLeft *JoinSpec, joinRight *JoinSpec, rightOrigin *model.Da
 	}
 	datasetLeftURI := env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetFolder)
 
-	return join(joinLeft, joinRight, pipelineDesc, []string{datasetLeftURI}, defaultSubmitter{}, &cfg)
+	return join(joinLeft, joinRight, pipelineDesc, []string{datasetLeftURI}, defaultSubmitter{}, false)
 }
 
 // JoinDistil will bring misery.
 func JoinDistil(dataStorage apiModel.DataStorage, joinLeft *JoinSpec, joinRight *JoinSpec, joinPairs []*JoinPair) (string, *apiModel.FilteredData, error) {
-	cfg, err := env.LoadConfig()
-	if err != nil {
-		return "", nil, err
-	}
-
 	isKey := false
 	varsLeftMapUpdated := mapDistilJoinVars(joinLeft.UpdatedVariables)
 	varsRightMapUpdated := mapDistilJoinVars(joinRight.UpdatedVariables)
@@ -98,6 +89,7 @@ func JoinDistil(dataStorage apiModel.DataStorage, joinLeft *JoinSpec, joinRight 
 			isKey = true
 		}
 	}
+	var err error
 	if !isKey {
 		isKey, err = dataStorage.IsKey(joinRight.DatasetID, joinRight.ExistingMetadata.StorageName, rightVars)
 		if err != nil {
@@ -121,14 +113,72 @@ func JoinDistil(dataStorage apiModel.DataStorage, joinLeft *JoinSpec, joinRight 
 	if err != nil {
 		return "", nil, err
 	}
-	datasetLeftURI := env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetFolder)
+
+	// want to join learning dataset for performance reasons
+	if joinLeft.ExistingMetadata.LearningDataset == "" {
+		datasetLeftURI := env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetFolder)
+		datasetRightURI := env.ResolvePath(joinRight.DatasetSource, joinRight.DatasetFolder)
+
+		return join(joinLeft, joinRight, pipelineDesc, []string{datasetLeftURI, datasetRightURI}, defaultSubmitter{}, false)
+
+	}
+
+	return joinPrefeaturizedDataset(joinLeft, joinRight, varsLeftMapUpdated, pipelineDesc)
+}
+
+func joinPrefeaturizedDataset(joinLeft *JoinSpec, joinRight *JoinSpec, sourceVarMap map[string]*model.Variable,
+	pipelineDesc *description.FullySpecifiedPipeline) (string, *apiModel.FilteredData, error) {
+	datasetLeftURI := env.ResolvePath(joinLeft.DatasetSource, joinLeft.ExistingMetadata.LearningDataset)
 	datasetRightURI := env.ResolvePath(joinRight.DatasetSource, joinRight.DatasetFolder)
 
-	return join(joinLeft, joinRight, pipelineDesc, []string{datasetLeftURI, datasetRightURI}, defaultSubmitter{}, &cfg)
+	joinedPath, joinedData, err := join(joinLeft, joinRight, pipelineDesc, []string{datasetLeftURI, datasetRightURI}, defaultSubmitter{}, true)
+	if err != nil {
+		return "", nil, err
+	}
+
+	// build header for data to add & extract columns to keep
+	prefeaturizedUpdates := [][]string{{}}
+	newCols := []int{}
+	for vName, v := range joinedData.Columns {
+		if v.Key == model.D3MIndexFieldName || sourceVarMap[v.Key] == nil {
+			newCols = append(newCols, v.Index)
+			prefeaturizedUpdates[0] = append(prefeaturizedUpdates[0], vName)
+		}
+	}
+
+	// cycle through the data and copy over the new fields
+	for _, r := range joinedData.Values {
+		newRow := []string{}
+		for _, c := range newCols {
+			newRow = append(newRow, r[c].Value.(string))
+		}
+		prefeaturizedUpdates = append(prefeaturizedUpdates, newRow)
+	}
+
+	// read the source dataset
+	diskDataset, err := apiModel.LoadDiskDatasetFromFolder(env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetFolder))
+	if err != nil {
+		return "", nil, err
+	}
+
+	// update the base dataset with the changes and write the updated data to disk
+	err = diskDataset.UpdateRawData(sourceVarMap, prefeaturizedUpdates, false)
+	if err != nil {
+		return "", nil, err
+	}
+
+	// store the raw data to disk
+	err = serialization.WriteData(joinedPath, diskDataset.Dataset.Data)
+	if err != nil {
+		return "", nil, err
+	}
+
+	return joinedPath, joinedData, err
 }
 
 func join(joinLeft *JoinSpec, joinRight *JoinSpec, pipelineDesc *description.FullySpecifiedPipeline,
-	datasetURIs []string, submitter primitiveSubmitter, config *env.Config) (string, *apiModel.FilteredData, error) {
+	datasetURIs []string, submitter primitiveSubmitter, returnRaw bool) (string, *apiModel.FilteredData, error) {
+
 	// returns a URI pointing to the merged CSV file
 	resultURI, err := submitter.submit(datasetURIs, pipelineDesc)
 	if err != nil {
@@ -141,13 +191,13 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, pipelineDesc *description.Ful
 	rightName := joinRight.DatasetID
 	datasetName := strings.Join([]string{leftName, rightName}, "-")
 	storageName := model.NormalizeDatasetID(datasetName)
-	mergedVariables, err := createDatasetFromCSV(config, csvFilename, datasetName, storageName, joinLeft, joinRight)
+	mergedVariables, err := createDatasetFromCSV(csvFilename, datasetName, storageName, joinLeft, joinRight)
 	if err != nil {
 		return "", nil, errors.Wrap(err, "unable to create dataset from result CSV")
 	}
 
 	// return some of the data for the client to preview
-	data, err := createFilteredData(csvFilename, mergedVariables, lineCount)
+	data, err := createFilteredData(csvFilename, mergedVariables, returnRaw, lineCount)
 	if err != nil {
 		return "", nil, err
 	}
@@ -161,7 +211,7 @@ func (defaultSubmitter) submit(datasetURIs []string, pipelineDesc *description.F
 	return submitPipeline(datasetURIs, pipelineDesc, true)
 }
 
-func createDatasetFromCSV(config *env.Config, csvFile string, datasetName string, storageName string, joinLeft *JoinSpec, joinRight *JoinSpec) ([]*model.Variable, error) {
+func createDatasetFromCSV(csvFile string, datasetName string, storageName string, joinLeft *JoinSpec, joinRight *JoinSpec) ([]*model.Variable, error) {
 	inputData, err := serialization.ResultToInputCSV(csvFile)
 	if err != nil {
 		return nil, err
@@ -193,7 +243,7 @@ func createDatasetFromCSV(config *env.Config, csvFile string, datasetName string
 	return mergedVariables, nil
 }
 
-func createFilteredData(csvFile string, variables []*model.Variable, lineCount int) (*apiModel.FilteredData, error) {
+func createFilteredData(csvFile string, variables []*model.Variable, returnRaw bool, lineCount int) (*apiModel.FilteredData, error) {
 	datasetStorage := serialization.GetStorage(csvFile)
 	inputData, err := datasetStorage.ReadData(csvFile)
 	if err != nil {
@@ -229,7 +279,7 @@ func createFilteredData(csvFile string, variables []*model.Variable, lineCount i
 		for j := 0; j < len(row); j++ {
 			varType := variables[j].Type
 			typedRow[j] = &apiModel.FilteredDataValue{}
-			if model.IsNumerical(varType) && row[j] != "" {
+			if !returnRaw && model.IsNumerical(varType) && row[j] != "" {
 				if model.IsFloatingPoint(varType) {
 					typedRow[j].Value, err = strconv.ParseFloat(row[j], 64)
 					if err != nil {
