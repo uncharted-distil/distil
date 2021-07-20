@@ -123,12 +123,14 @@
           :confidence-access-func="confidenceGetter"
           :residual-extrema="residualExtrema"
           :enable-selection-tool-event="isLabelState"
+          :variables="allVariables"
           :area-of-interest-items="{
             inner: drillDownBaseline,
             outer: drillDownFiltered,
           }"
           @tile-clicked="onTileClick"
           @selection-tool-event="onToolSelection"
+          @fetch-timeseries="fetchTimeseries"
         />
       </section>
 
@@ -877,6 +879,9 @@ const DataExplorer = Vue.extend({
 
       // Update the route with the top 5 variable as training
       this.updateRoute({ explore: top5Variables });
+    },
+    fetchTimeseries(args: EI.TIMESERIES.FetchTimeseriesEvent) {
+      this.state.fetchTimeseries(args);
     },
     onModelCreation(solutionRequestMsg: SolutionRequestMsg) {
       SELECT_METHODS.onModelCreation(this)(solutionRequestMsg);

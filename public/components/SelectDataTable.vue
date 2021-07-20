@@ -193,7 +193,6 @@ import {
   hasComputedVarPrefix,
   Field,
   getVarType,
-  TIMESTAMP_TYPE,
   TIMESERIES_TYPE,
 } from "../util/types";
 import {

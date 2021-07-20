@@ -613,11 +613,16 @@ func IngestPredictionDataset(params *PredictParams) error {
 		if err != nil {
 			return err
 		}
-
-		err = params.MetaStorage.AddGroupedVariable(params.Dataset, params.Target.Key, params.Target.DisplayName,
-			params.Target.Type, params.Target.DistilRole, tsg)
+		varExists, err := params.MetaStorage.DoesVariableExist(params.Dataset, params.Target.Key)
 		if err != nil {
 			return err
+		}
+		if !varExists {
+			err = params.MetaStorage.AddGroupedVariable(params.Dataset, params.Target.Key, params.Target.DisplayName,
+				params.Target.Type, params.Target.DistilRole, tsg)
+			if err != nil {
+				return err
+			}
 		}
 		log.Infof("done creating compose variables")
 	}
@@ -849,20 +854,23 @@ func CreateComposedVariable(metaStorage api.MetadataStorage, dataStorage api.Dat
 	if err != nil {
 		return err
 	}
-
 	if !varExists {
 		// create the variable metadata entry
 		err := metaStorage.AddVariable(dataset, composedVarName, composedVarDisplayName, model.StringType, model.VarDistilRoleGrouping)
 		if err != nil {
 			return err
 		}
-
+	}
+	varExists, err = dataStorage.DoesVariableExist(dataset, storageName, composedVarName)
+	if err != nil {
+		return err
+	}
+	if !varExists {
 		err = dataStorage.AddVariable(dataset, storageName, composedVarName, model.StringType, "")
 		if err != nil {
 			return err
 		}
 	}
-
 	composedData := map[string]string{}
 	// No grouping column - just use the d3mIndex as we'll just stick some placeholder
 	// data in.
