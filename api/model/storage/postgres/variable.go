@@ -318,7 +318,7 @@ func (s *Storage) createField(dataset string, storageName string, variable *mode
 
 func addDefaultBuckets(summary *api.VariableSummary, field Field) error {
 	var err error
-	if summary.Baseline != nil {
+	if summary.Baseline != nil && summary.TimelineBaseline == nil {
 		summary.Baseline.DefaultBucket, err = fetchDefaultBucket(field)
 		if err != nil {
 			return err

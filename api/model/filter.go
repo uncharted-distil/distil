@@ -57,12 +57,12 @@ func DataModeFromString(s string) (DataMode, error) {
 // by the server only, and not the client. Filters are gathered by mode (include/exclude),
 // with each mode being a list of features that are used as filters.
 type FilterParams struct {
-	Size      int                `json:"size"`
-	Filters   []*model.FilterSet `json:"filters"`
+	Size       int                `json:"size"`
+	Filters    []*model.FilterSet `json:"filters"`
 	Highlights []*model.FilterSet `json:"highlights"`
-	Variables []string           `json:"variables"`
-	DataMode  DataMode           `json:"dataMode"`
-	Invert    bool               `json:"invert"`
+	Variables  []string           `json:"variables"`
+	DataMode   DataMode           `json:"dataMode"`
+	Invert     bool               `json:"invert"`
 }
 
 // NewFilterParamsFromFilters creates a wrapping container for all filters.

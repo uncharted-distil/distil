@@ -509,7 +509,7 @@ export function removeTimeseries(
     mutator(store, {
       ...args,
       ids: items.map((item) => {
-        return (item[tsg.idCol].value as string) + (uniqueTrail ?? "");
+        return (item[tsg.idCol]?.value as string) + (uniqueTrail ?? "");
       }),
     });
   });

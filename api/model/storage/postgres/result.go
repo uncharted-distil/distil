@@ -857,12 +857,14 @@ func (s *Storage) FetchResultsExtremaByURI(dataset string, storageName string, r
 	if err != nil {
 		return nil, err
 	}
+
 	resultVariable := &model.Variable{
 		Key:  "value",
 		Type: model.StringType,
 	}
 
 	field := NewNumericalField(s, dataset, storageName, targetVariable.Key, targetVariable.DisplayName, targetVariable.Type, "")
+
 	return field.fetchResultsExtrema(resultURI, storageNameResult, resultVariable)
 }
 
@@ -894,6 +896,8 @@ func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resu
 		field = NewCategoricalField(s, dataset, storageName, variable.Key, variable.DisplayName, variable.Type, countCol)
 	} else if model.IsVector(variable.Type) {
 		field = NewVectorField(s, dataset, storageName, variable.Key, variable.DisplayName, variable.Type)
+	} else if model.IsTimeSeries(variable.Type) {
+		field = NewNumericalField(s, dataset, storageName, variable.Key, variable.DisplayName, variable.Type, "")
 	} else {
 		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Key, variable.Type)
 	}
@@ -964,10 +968,11 @@ func mapFields(fields []*model.Variable) map[string]*model.Variable {
 }
 
 func isTimeSeriesValue(variables []*model.Variable, targetVariable *model.Variable) bool {
+	targetTsg := targetVariable.Grouping.(*model.TimeseriesGrouping)
 	for _, v := range variables {
 		if v.IsGrouping() && model.IsTimeSeries(v.Grouping.GetType()) {
 			tsg := v.Grouping.(*model.TimeseriesGrouping)
-			if tsg.YCol == targetVariable.Key {
+			if tsg.YCol == targetTsg.YCol {
 				return true
 			}
 		}
