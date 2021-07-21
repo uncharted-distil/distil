@@ -189,7 +189,12 @@ import {
   Extrema,
 } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
-import { hasComputedVarPrefix, Field } from "../util/types";
+import {
+  hasComputedVarPrefix,
+  Field,
+  getVarType,
+  TIMESERIES_TYPE,
+} from "../util/types";
 import {
   addRowSelection,
   removeRowSelection,
@@ -371,6 +376,15 @@ export default Vue.extend({
     solutionIndex(): number {
       return getSolutionIndex(this.solution?.solutionId);
     },
+    solutionId(): string {
+      return this.solution?.solutionId;
+    },
+    isTargetTimeseries(): boolean {
+      return (
+        getVarType(routeGetters.getRouteTargetVariable(this.$store)) ===
+        TIMESERIES_TYPE
+      );
+    },
     filters(): Filter[] {
       return routeGetters.getDecodedFilters(this.$store);
     },
@@ -404,6 +418,7 @@ export default Vue.extend({
         return;
       }
       this.debounceImageFetch();
+      this.fetchTimeSeries();
     },
 
     includedActive() {
@@ -429,6 +444,7 @@ export default Vue.extend({
 
   mounted() {
     this.debounceImageFetch();
+    this.fetchTimeSeries();
     window.addEventListener("keyup", this.shiftRelease);
   },
 

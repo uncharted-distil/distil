@@ -1363,7 +1363,7 @@ export const actions = {
           args.dataset
         )}/${encodeURIComponent(args.variableKey)}/${encodeURIComponent(
           args.xColName
-        )}/${encodeURIComponent(args.yColName)}/false`,
+        )}/${encodeURIComponent(args.yColName)}`,
         { timeseries: timeseriesIDs }
       );
       mutations.bulkUpdateTimeseries(context, {

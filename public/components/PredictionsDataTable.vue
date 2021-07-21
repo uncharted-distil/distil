@@ -138,6 +138,7 @@ import {
   TimeseriesGrouping,
   TableValue,
   Highlight,
+  Variable,
 } from "../store/dataset/index";
 import {
   getters as predictionsGetters,
@@ -171,6 +172,7 @@ import {
   removeTimeseries,
   bulkRemoveImages,
   debounceFetchImagePack,
+  getTimeseriesVariablesFromFields,
 } from "../util/data";
 
 export default Vue.extend({
@@ -215,7 +217,12 @@ export default Vue.extend({
     predictedCol(): string {
       return this.predictions ? `${this.predictions.predictedKey}` : "";
     },
-
+    variables(): Variable[] {
+      return requestGetters.getActivePredictionTrainingVariables(this.$store);
+    },
+    timeseriesVariables(): Variable[] {
+      return getTimeseriesVariablesFromFields(this.variables, this.fields);
+    },
     fittedSolutionId(): string {
       return predictionsGetters.getFittedSolutionIdFromPrediction(this.$store);
     },
@@ -248,7 +255,7 @@ export default Vue.extend({
       // In the case of timeseries, we add their Min/Max/Mean.
       if (this.isTimeseries) {
         items = items?.map((item) => {
-          const timeserieId = item[this.timeseriesGroupings[0].idCol].value;
+          const timeserieId = item[this.timeseriesVariables[0].key].value;
           const minMaxMean = this.timeserieInfo(timeserieId + this.uniqueTrail);
           return { ...item, ...minMaxMean };
         });

@@ -214,7 +214,53 @@ func createGrouping(dataset string, storageName string, groupingType string, raw
 		if err != nil {
 			return err
 		}
+		// Create a new grouped variable for the time series.
+		groupingVarName := strings.Join([]string{tsg.XCol, tsg.YCol}, task.DefaultSeparator)
+		variables, err := meta.FetchVariables(dataset, false, true, true)
+		if err != nil {
+			return err
+		}
+		for _, v := range variables {
+			if v.Key == groupingVarName {
+				cg, ok := v.Grouping.(model.ClusteredGrouping)
+				if ok && cg.GetClusterCol() != "" {
+					clusterVarExist, err := meta.DoesVariableExist(dataset, cg.GetClusterCol())
+					if err != nil {
+						return err
+					}
+					if clusterVarExist {
+						err = meta.DeleteVariable(dataset, cg.GetClusterCol())
+						if err != nil {
+							return err
+						}
+					}
+				}
 
+				// If there was a new variable created that specifically has the grouping role, then delete it.
+				groupingVarExists, err := meta.DoesVariableExist(dataset, v.Grouping.GetIDCol())
+				if err != nil {
+					return err
+				}
+				if groupingVarExists {
+					idColVariable, err := meta.FetchVariable(dataset, v.Grouping.GetIDCol())
+					if err != nil {
+						return err
+					}
+					if idColVariable.DistilRole == model.VarDistilRoleGrouping {
+						err = meta.DeleteVariable(dataset, v.Grouping.GetIDCol())
+						if err != nil {
+							return err
+						}
+					}
+				}
+
+				// Delete the grouping variable itself
+				err = meta.DeleteVariable(dataset, v.Key)
+				if err != nil {
+					return err
+				}
+			}
+		}
 		// Create a new variable and column for the time series key.
 		if err := task.CreateComposedVariable(meta, data, dataset, storageName, tsg.IDCol, tsg.IDCol, tsg.SubIDs); err != nil {
 			return errors.Wrapf(err, "unable to create new variable %s", tsg.IDCol)
@@ -223,9 +269,7 @@ func createGrouping(dataset string, storageName string, groupingType string, raw
 		// Set the name of the expected cluster column - it doesn't necessarily exist.
 		tsg.ClusterCol = model.ClusterVarPrefix + tsg.IDCol
 
-		// Create a new grouped variable for the time series.
-		groupingVarName := strings.Join([]string{tsg.XCol, tsg.YCol}, task.DefaultSeparator)
-		err = meta.AddGroupedVariable(dataset, groupingVarName, tsg.YCol, model.TimeSeriesType, model.VarDistilRoleData, tsg)
+		err = meta.AddGroupedVariable(dataset, groupingVarName, tsg.YCol, model.TimeSeriesType, model.VarDistilRoleGrouping, tsg)
 		if err != nil {
 			return err
 		}

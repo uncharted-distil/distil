@@ -2,6 +2,7 @@ import router from "../../router/router";
 import {
   datasetActions,
   datasetGetters,
+  predictionActions,
   predictionGetters,
   requestActions,
   requestGetters,
@@ -13,6 +14,7 @@ import {
   D3M_INDEX_FIELD,
   TableColumn,
   TableRow,
+  TimeseriesGrouping,
   Variable,
   VariableSummary,
 } from "../../store/dataset";
@@ -24,6 +26,7 @@ import {
 } from "../data";
 import { ExplorerStateNames } from "../dataExplorer";
 import { Dictionary } from "../dict";
+import { EI } from "../events";
 import { Filter } from "../filters";
 import { overlayRouteEntry } from "../routes";
 import { getSolutionById } from "../solutions";
@@ -75,9 +78,25 @@ export interface BaseState {
   fetchVariableSummaries(): Promise<unknown>;
   fetchMapBaseline(): Promise<void>;
   fetchMapDrillDown(filter: Filter): Promise<Array<void>>;
+  fetchTimeseries(args: EI.TIMESERIES.FetchTimeseriesEvent);
 }
 
 export class SelectViewState implements BaseState {
+  fetchTimeseries(args: EI.TIMESERIES.FetchTimeseriesEvent) {
+    args.variables.forEach((tsv) => {
+      const grouping = tsv.grouping as TimeseriesGrouping;
+      datasetActions.fetchTimeseries(store, {
+        dataset: routeGetters.getRouteDataset(store),
+        variableKey: tsv.key,
+        xColName: grouping.xCol,
+        yColName: grouping.yCol,
+        uniqueTrail: args.uniqueTrail,
+        timeseriesIds: args.timeseriesIds.map((item) => {
+          return item[tsv.key].value as string;
+        }),
+      });
+    });
+  }
   getTargetVariable(): Variable {
     return routeGetters.getTargetVariable(store);
   }
@@ -182,6 +201,22 @@ export class SelectViewState implements BaseState {
 }
 
 export class ResultViewState implements BaseState {
+  fetchTimeseries(args: EI.TIMESERIES.FetchTimeseriesEvent) {
+    args.variables.forEach((tsv) => {
+      const tsg = tsv.grouping as TimeseriesGrouping;
+      resultActions.fetchForecastedTimeseries(store, {
+        dataset: routeGetters.getRouteDataset(store),
+        variableKey: tsv.key,
+        xColName: tsg.xCol,
+        yColName: tsg.yCol,
+        solutionId: routeGetters.getRouteSolutionId(store),
+        uniqueTrail: args.uniqueTrail,
+        timeseriesIds: args.timeseriesIds.map((item) => {
+          return item[tsv.key].value as string;
+        }),
+      });
+    });
+  }
   name = ExplorerStateNames.RESULT_VIEW;
   getTargetVariable(): Variable {
     return routeGetters.getTargetVariable(store);
@@ -336,6 +371,24 @@ export class ResultViewState implements BaseState {
 }
 
 export class PredictViewState implements BaseState {
+  fetchTimeseries(args: EI.TIMESERIES.FetchTimeseriesEvent) {
+    const activePredictions = requestGetters.getActivePredictions(store);
+    args.variables.forEach(async (tsv) => {
+      const tsg = tsv.grouping as TimeseriesGrouping;
+      await predictionActions.fetchForecastedTimeseries(store, {
+        truthDataset: routeGetters.getRouteDataset(store),
+        forecastDataset: activePredictions.dataset,
+        xColName: tsg.xCol,
+        yColName: tsg.yCol,
+        timeseriesColName: tsg.idCol,
+        predictionsId: activePredictions.requestId,
+        uniqueTrail: args.uniqueTrail,
+        timeseriesIds: args.timeseriesIds.map((item) => {
+          return item[tsg.idCol].value as string;
+        }),
+      });
+    });
+  }
   name = ExplorerStateNames.PREDICTION_VIEW;
   getTargetVariable(): Variable {
     const activePred = requestGetters.getActivePredictions(store);
@@ -487,6 +540,9 @@ export class PredictViewState implements BaseState {
 }
 
 export class LabelViewState implements BaseState {
+  fetchTimeseries(args: EI.TIMESERIES.FetchTimeseriesEvent) {
+    console.error("timeseries is not supported in label view");
+  }
   name = ExplorerStateNames.LABEL_VIEW;
   getVariables(): Variable[] {
     const labelScoreName =
