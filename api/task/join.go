@@ -267,9 +267,14 @@ func createFilteredData(csvFile string, variables []*model.Variable, returnRaw b
 	// discard header
 	inputData = inputData[1:]
 
+	maxCount := lineCount
+	if returnRaw {
+		maxCount = len(inputData)
+	}
+
 	errorCount := 0
 	discardCount := 0
-	for i := 0; i < lineCount && i < len(inputData); i++ {
+	for i := 0; i < maxCount; i++ {
 		row := inputData[i]
 
 		// convert row values to schema type
