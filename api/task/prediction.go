@@ -133,15 +133,16 @@ func (p *PredictionTimeseriesDataset) GetDefinitiveTypes() []*model.Variable {
 // CleanupTempFiles does nothing.
 func (p *PredictionTimeseriesDataset) CleanupTempFiles() {
 }
+
 // returns the index of the supplied variables that needs to be added to the data
-func findMissingColumns(variables []*model.Variable, headerNames []string)(map[int]bool){
+func findMissingColumns(variables []*model.Variable, headerNames []string) map[int]bool {
 	result := map[int]bool{}
 	headerMap := map[string]int{}
 	for i := range headerNames {
 		headerMap[headerNames[i]] = i
 	}
 	for i := range variables {
-		if _,ok := headerMap[variables[i].Key]; !ok{
+		if _, ok := headerMap[variables[i].Key]; !ok {
 			result[variables[i].Index] = true
 		}
 	}
@@ -838,16 +839,16 @@ func augmentPredictionDataset(csvData [][]string, target *model.Variable,
 	missingColumns := findMissingColumns(predictionVariables, headerInfo)
 	outputData := [][]string{headerSource}
 	for _, line := range csvData[1:] {
-		offset:=0
+		offset := 0
 		// write the columns in the same order as the source dataset
 		output := make([]string, len(predictVariablesMap))
-		i:=0
+		i := 0
 		for range predictVariablesMap {
 			sourceIndex := predictVariablesMap[i]
 			if sourceIndex >= 0 {
-				if _,ok := missingColumns[predictVariablesMap[i]]; !ok{
-				output[sourceIndex] = line[i-offset]
-				}else{
+				if _, ok := missingColumns[predictVariablesMap[i]]; !ok {
+					output[sourceIndex] = line[i-offset]
+				} else {
 					output[sourceIndex] = ""
 					offset++
 				}
