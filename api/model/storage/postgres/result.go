@@ -968,11 +968,14 @@ func mapFields(fields []*model.Variable) map[string]*model.Variable {
 }
 
 func isTimeSeriesValue(variables []*model.Variable, targetVariable *model.Variable) bool {
-	targetTsg := targetVariable.Grouping.(*model.TimeseriesGrouping)
+	key := targetVariable.Key
+	if targetVariable.IsGrouping() {
+		key = targetVariable.Grouping.(*model.TimeseriesGrouping).YCol
+	}
 	for _, v := range variables {
 		if v.IsGrouping() && model.IsTimeSeries(v.Grouping.GetType()) {
 			tsg := v.Grouping.(*model.TimeseriesGrouping)
-			if tsg.YCol == targetTsg.YCol {
+			if tsg.YCol == key {
 				return true
 			}
 		}

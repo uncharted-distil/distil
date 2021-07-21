@@ -133,18 +133,31 @@ func (p *PredictionTimeseriesDataset) GetDefinitiveTypes() []*model.Variable {
 // CleanupTempFiles does nothing.
 func (p *PredictionTimeseriesDataset) CleanupTempFiles() {
 }
-
+// returns the index of the supplied variables that needs to be added to the data
+func findMissingColumns(variables []*model.Variable, headerNames []string)(map[int]bool){
+	result := map[int]bool{}
+	headerMap := map[string]int{}
+	for i := range headerNames {
+		headerMap[headerNames[i]] = i
+	}
+	for i := range variables {
+		if _,ok := headerMap[variables[i].Key]; !ok{
+			result[variables[i].Index] = true
+		}
+	}
+	return result
+}
 func (p *predictionDataset) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*serialization.RawDataset, error) {
 	// need to do a bit of processing on the usual setup
 	ds, err := p.params.DatasetConstructor.CreateDataset(rootDataPath, datasetName, config)
 	if err != nil {
 		return nil, err
 	}
-
+	predictionVariables := ds.Metadata.GetMainDataResource().Variables
 	// updated the new dataset to match the var types and ordering of the source dataset - required
 	// so that the model lines up
 	variables := p.params.Meta.GetMainDataResource().Variables
-	csvDataAugmented, err := augmentPredictionDataset(ds.Data, p.params.Target, variables, ds.Metadata.GetMainDataResource().Variables)
+	csvDataAugmented, err := augmentPredictionDataset(ds.Data, p.params.Target, variables, predictionVariables)
 	if err != nil {
 		return nil, err
 	}
@@ -759,7 +772,7 @@ func augmentPredictionDataset(csvData [][]string, target *model.Variable,
 	addIndex := true
 	addTarget := true
 	predictVariablesMap := make(map[int]int)
-
+	isTimeseries := model.IsTimeSeries(target.Type)
 	// If the variable list for prediction set is empty (as is the case for tabular data) then we just use the
 	// header values as the list of variable names to build the map.
 	if len(predictionVariables) == 0 {
@@ -803,7 +816,7 @@ func augmentPredictionDataset(csvData [][]string, target *model.Variable,
 	}
 
 	// add target if it isnt part of prediction dataset
-	if addTarget {
+	if addTarget && !isTimeseries {
 		predictVariablesMap[len(csvData[0])] = target.Index
 	}
 
@@ -821,16 +834,25 @@ func augmentPredictionDataset(csvData [][]string, target *model.Variable,
 	if variable, ok := sourceVariableMap[strings.ToLower(model.D3MIndexFieldName)]; ok {
 		d3mFieldIndex = variable.Index
 	}
-
+	headerInfo := csvData[0]
+	missingColumns := findMissingColumns(predictionVariables, headerInfo)
 	outputData := [][]string{headerSource}
 	for _, line := range csvData[1:] {
+		offset:=0
 		// write the columns in the same order as the source dataset
 		output := make([]string, len(predictVariablesMap))
-		for i, f := range line {
+		i:=0
+		for range predictVariablesMap {
 			sourceIndex := predictVariablesMap[i]
 			if sourceIndex >= 0 {
-				output[sourceIndex] = f
+				if _,ok := missingColumns[predictVariablesMap[i]]; !ok{
+				output[sourceIndex] = line[i-offset]
+				}else{
+					output[sourceIndex] = ""
+					offset++
+				}
 			}
+			i++
 		}
 
 		if addIndex && d3mFieldIndex >= 0 {
