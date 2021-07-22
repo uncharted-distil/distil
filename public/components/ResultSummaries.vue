@@ -43,6 +43,7 @@
         :dataset="dataset"
         :fitted-solution-id="fittedSolutionId"
         :target="target"
+        handle-state-change
         :target-type="targetType"
       />
       <predictions-data-uploader

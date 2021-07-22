@@ -90,16 +90,21 @@
 
       <template
         v-for="timeseriesGrouping in timeseriesGroupings"
-        v-slot:[cellSlot(timeseriesGrouping.idCol)]="data"
+        v-slot:[cellSlot(getTimeseriesId(timeseriesGrouping))]="data"
       >
         <sparkline-preview
-          :key="data.item[timeseriesGrouping.idCol].value"
+          :key="
+            data.item[timeseriesGrouping.xCol + '_' + timeseriesGrouping.yCol]
+              .value
+          "
           :truth-dataset="truthDataset"
           :forecast-dataset="predictions.dataset"
           :x-col="timeseriesGrouping.xCol"
           :y-col="timeseriesGrouping.yCol"
-          :timeseries-col="timeseriesGrouping.idCol"
-          :timeseries-id="data.item[timeseriesGrouping.idCol].value"
+          :timeseries-id="
+            data.item[timeseriesGrouping.xCol + '_' + timeseriesGrouping.yCol]
+              .value
+          "
           :predictions-id="predictions.requestId"
           :include-forecast="true"
           :unique-trail="uniqueTrail"
@@ -138,17 +143,13 @@ import {
   TimeseriesGrouping,
   TableValue,
   Highlight,
-  Variable,
+  getTimeseriesId,
 } from "../store/dataset/index";
 import {
   getters as predictionsGetters,
   actions as predictionsActions,
 } from "../store/predictions/module";
-import {
-  getters as datasetGetters,
-  actions as datasetActions,
-  mutations as datasetMutations,
-} from "../store/dataset/module";
+import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
 import { actions as appActions } from "../store/app/module";
@@ -172,7 +173,6 @@ import {
   removeTimeseries,
   bulkRemoveImages,
   debounceFetchImagePack,
-  getTimeseriesVariablesFromFields,
 } from "../util/data";
 
 export default Vue.extend({
@@ -217,12 +217,6 @@ export default Vue.extend({
     predictedCol(): string {
       return this.predictions ? `${this.predictions.predictedKey}` : "";
     },
-    variables(): Variable[] {
-      return requestGetters.getActivePredictionTrainingVariables(this.$store);
-    },
-    timeseriesVariables(): Variable[] {
-      return getTimeseriesVariablesFromFields(this.variables, this.fields);
-    },
     fittedSolutionId(): string {
       return predictionsGetters.getFittedSolutionIdFromPrediction(this.$store);
     },
@@ -253,10 +247,16 @@ export default Vue.extend({
       );
 
       // In the case of timeseries, we add their Min/Max/Mean.
-      if (this.isTimeseries) {
+      if (this.isTimeseries && this.timeseriesGroupings.length) {
+        const key =
+          this.timeseriesGroupings[0].xCol +
+          "_" +
+          this.timeseriesGroupings[0].yCol;
         items = items?.map((item) => {
-          const timeserieId = item[this.timeseriesVariables[0].key].value;
-          const minMaxMean = this.timeserieInfo(timeserieId + this.uniqueTrail);
+          const timeserieId = item[key]?.value;
+          const minMaxMean = this.timeserieInfo(
+            key + timeserieId + this.uniqueTrail
+          );
           return { ...item, ...minMaxMean };
         });
       }
@@ -351,6 +351,7 @@ export default Vue.extend({
     },
     visibleRows() {
       this.debounceImageFetch();
+      this.fetchTimeseries();
     },
     highlights() {
       this.initialized = false;
@@ -370,6 +371,7 @@ export default Vue.extend({
   },
 
   methods: {
+    getTimeseriesId,
     debounceImageFetch() {
       debounceFetchImagePack({
         items: this.visibleRows,
@@ -449,7 +451,6 @@ export default Vue.extend({
         this.uniqueTrail
       );
       this.currentPage = page;
-      this.fetchTimeseries();
       this.removeImages();
     },
     async fetchTimeseries() {
@@ -463,11 +464,11 @@ export default Vue.extend({
           forecastDataset: this.predictions.dataset,
           xColName: tsg.xCol,
           yColName: tsg.yCol,
-          timeseriesColName: tsg.idCol,
+          timeseriesColName: tsg.xCol + "_" + tsg.yCol,
           predictionsId: this.predictions.requestId,
           uniqueTrail: this.uniqueTrail,
           timeseriesIds: this.pageItems.map((item) => {
-            return item[tsg.idCol].value as string;
+            return item[tsg.subIds[0]].value as string;
           }),
         });
       });

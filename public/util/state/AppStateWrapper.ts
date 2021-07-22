@@ -12,8 +12,10 @@ import {
 } from "../../store";
 import {
   D3M_INDEX_FIELD,
+  getTimeseriesId,
   TableColumn,
   TableRow,
+  TimeSeries,
   TimeseriesGrouping,
   Variable,
   VariableSummary,
@@ -71,6 +73,8 @@ export interface BaseState {
   getLexBarVariables(): Variable[];
   // gets table data fields
   getFields(include?: boolean): Dictionary<TableColumn>;
+  // getTimeseries dictionary
+  getTimeseries(include?: boolean): Dictionary<TimeSeries>;
   /******Fetch Functions**********/
   init(): Promise<void>;
   fetchVariables(): Promise<unknown>;
@@ -82,6 +86,10 @@ export interface BaseState {
 }
 
 export class SelectViewState implements BaseState {
+  name = ExplorerStateNames.SELECT_VIEW;
+  getTimeseries(): Dictionary<TimeSeries> {
+    return datasetGetters.getTimeseries(store);
+  }
   fetchTimeseries(args: EI.TIMESERIES.FetchTimeseriesEvent) {
     args.variables.forEach((tsv) => {
       const grouping = tsv.grouping as TimeseriesGrouping;
@@ -100,8 +108,6 @@ export class SelectViewState implements BaseState {
   getTargetVariable(): Variable {
     return routeGetters.getTargetVariable(store);
   }
-  name = ExplorerStateNames.SELECT_VIEW;
-
   async init(): Promise<void> {
     await this.fetchVariables();
     await this.fetchMapBaseline();
@@ -201,6 +207,10 @@ export class SelectViewState implements BaseState {
 }
 
 export class ResultViewState implements BaseState {
+  name = ExplorerStateNames.RESULT_VIEW;
+  getTimeseries(): Dictionary<TimeSeries> {
+    return resultGetters.getPredictedTimeseries(store);
+  }
   fetchTimeseries(args: EI.TIMESERIES.FetchTimeseriesEvent) {
     args.variables.forEach((tsv) => {
       const tsg = tsv.grouping as TimeseriesGrouping;
@@ -217,7 +227,6 @@ export class ResultViewState implements BaseState {
       });
     });
   }
-  name = ExplorerStateNames.RESULT_VIEW;
   getTargetVariable(): Variable {
     return routeGetters.getTargetVariable(store);
   }
@@ -371,25 +380,29 @@ export class ResultViewState implements BaseState {
 }
 
 export class PredictViewState implements BaseState {
+  name = ExplorerStateNames.PREDICTION_VIEW;
+  getTimeseries(): Dictionary<TimeSeries> {
+    return predictionGetters.getPredictedTimeseries(store);
+  }
   fetchTimeseries(args: EI.TIMESERIES.FetchTimeseriesEvent) {
     const activePredictions = requestGetters.getActivePredictions(store);
     args.variables.forEach(async (tsv) => {
       const tsg = tsv.grouping as TimeseriesGrouping;
+      const id = getTimeseriesId(tsg);
       await predictionActions.fetchForecastedTimeseries(store, {
         truthDataset: routeGetters.getRouteDataset(store),
         forecastDataset: activePredictions.dataset,
         xColName: tsg.xCol,
         yColName: tsg.yCol,
-        timeseriesColName: tsg.idCol,
+        timeseriesColName: id,
         predictionsId: activePredictions.requestId,
         uniqueTrail: args.uniqueTrail,
         timeseriesIds: args.timeseriesIds.map((item) => {
-          return item[tsg.idCol].value as string;
+          return item[id].value as string;
         }),
       });
     });
   }
-  name = ExplorerStateNames.PREDICTION_VIEW;
   getTargetVariable(): Variable {
     const activePred = requestGetters.getActivePredictions(store);
     const predSum = getPredictionResultSummary(activePred?.requestId);
@@ -540,10 +553,13 @@ export class PredictViewState implements BaseState {
 }
 
 export class LabelViewState implements BaseState {
+  name = ExplorerStateNames.LABEL_VIEW;
+  getTimeseries(include?: boolean): Dictionary<TimeSeries> {
+    return {};
+  }
   fetchTimeseries(args: EI.TIMESERIES.FetchTimeseriesEvent) {
     console.error("timeseries is not supported in label view");
   }
-  name = ExplorerStateNames.LABEL_VIEW;
   getVariables(): Variable[] {
     const labelScoreName =
       LOW_SHOT_SCORE_COLUMN_PREFIX + routeGetters.getRouteLabel(store);

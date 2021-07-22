@@ -340,7 +340,7 @@ export default Vue.extend({
           items = items?.map((item) => {
             const timeseriesId = item[this.timeseriesVariables[0].key].value;
             const minMaxMean = this.timeserieInfo(
-              timeseriesId + this.uniqueTrail
+              this.timeseriesVariables[0].key + timeseriesId + this.uniqueTrail
             );
             return { ...item, ...minMaxMean };
           });

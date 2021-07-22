@@ -33,6 +33,9 @@ type TimeseriesForecastResult struct {
 	Forecast          []*api.TimeseriesObservation `json:"forecast"`
 	ForecastTestRange []float64                    `json:"forecastTestRange"`
 	IsDateTime        bool                         `json:"isDateTime"`
+	Min               float64                      `json:"min"`
+	Max               float64                      `json:"max"`
+	Mean              float64                      `json:"mean"`
 }
 
 // TimeseriesForecastHandler returns timeseries data.
@@ -155,6 +158,9 @@ func TimeseriesForecastHandler(metaCtor api.MetadataStorageCtor, dataCtor api.Da
 				Forecast:          forecast.Timeseries,
 				ForecastTestRange: []float64{split.SplitValue, split.EndValue},
 				IsDateTime:        true,
+				Min:               t.Min,
+				Max:               t.Max,
+				Mean:              t.Mean,
 			})
 		}
 		err = handleJSON(w, result)

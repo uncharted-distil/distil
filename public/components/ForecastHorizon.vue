@@ -81,6 +81,7 @@ import {
 import { getPredictionsById } from "../util/predictions";
 import { varModesToString, createRouteEntry } from "../util/routes";
 import { PREDICTION_ROUTE } from "../store/route";
+import { EventList } from "../util/events";
 
 /**
  * Modal to request a Forecast Horizon.
@@ -93,6 +94,7 @@ export default Vue.extend({
     fittedSolutionId: { type: String, default: null },
     target: { type: String, default: null },
     targetType: { type: String, default: null },
+    handleStateChange: { type: Boolean as () => boolean, default: false },
   },
 
   data() {
@@ -210,7 +212,10 @@ export default Vue.extend({
         varModes: varModes,
         solutionId: routeGetters.getRouteSolutionId(this.$store),
       };
-
+      if (!this.handleStateChange) {
+        this.$emit(EventList.MODEL.APPLY_EVENT, routeArgs);
+        return;
+      }
       const entry = createRouteEntry(PREDICTION_ROUTE, routeArgs);
       this.$router.push(entry).catch((err) => console.warn(err));
     },

@@ -84,8 +84,8 @@ export default Vue.extend({
     forecastDataset: String as () => string,
     xCol: String as () => string,
     yCol: String as () => string,
-    variableKey: String as () => string,
-    timeseriesId: String as () => string,
+    variableKey: { type: String as () => string, default: "" },
+    timeseriesId: { type: String as () => string, default: "" },
     solutionId: String as () => string,
     predictionsId: String as () => string,
     includeForecast: Boolean as () => boolean,
@@ -108,15 +108,6 @@ export default Vue.extend({
       return this.variableKey + this.timeseriesId + this.uniqueTrail;
     },
     timeseries(): TimeSeriesValue[] {
-      if (this.solutionId) {
-        const timeseries = resultsGetters.getPredictedTimeseries(this.$store);
-        const solutions = timeseries[this.solutionId];
-        if (!solutions) {
-          return null;
-        }
-        return solutions.timeseriesData[this.timeseriesUniqueId];
-      }
-
       if (this.predictionsId) {
         const timeseries = predictionsGetters.getPredictedTimeseries(
           this.$store
@@ -126,6 +117,14 @@ export default Vue.extend({
           return null;
         }
         return predictions.timeseriesData[this.timeseriesUniqueId];
+      }
+      if (this.solutionId) {
+        const timeseries = resultsGetters.getPredictedTimeseries(this.$store);
+        const solutions = timeseries[this.solutionId];
+        if (!solutions) {
+          return null;
+        }
+        return solutions.timeseriesData[this.timeseriesUniqueId];
       }
 
       const timeseries = datasetGetters.getTimeseries(this.$store);
@@ -137,15 +136,6 @@ export default Vue.extend({
     },
 
     forecast(): TimeSeriesValue[] {
-      if (this.solutionId && this.includeForecast) {
-        const forecasts = resultsGetters.getPredictedForecasts(this.$store);
-        const solutions = forecasts[this.solutionId];
-        if (!solutions || !solutions.forecastData[this.timeseriesUniqueId]) {
-          return null;
-        }
-        return solutions.forecastData[this.timeseriesUniqueId];
-      }
-
       if (this.predictionsId && this.includeForecast) {
         const forecasts = predictionsGetters.getPredictedForecasts(this.$store);
         const predictions = forecasts[this.predictionsId];
@@ -156,6 +146,15 @@ export default Vue.extend({
           return null;
         }
         return predictions.forecastData[this.timeseriesUniqueId];
+      }
+
+      if (this.solutionId && this.includeForecast) {
+        const forecasts = resultsGetters.getPredictedForecasts(this.$store);
+        const solutions = forecasts[this.solutionId];
+        if (!solutions || !solutions.forecastData[this.timeseriesUniqueId]) {
+          return null;
+        }
+        return solutions.forecastData[this.timeseriesUniqueId];
       }
 
       return null;
