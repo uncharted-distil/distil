@@ -83,6 +83,10 @@ export interface TimeseriesGrouping extends ClusteredGrouping {
   yCol: string;
 }
 
+export function getTimeseriesId(timeseries: TimeseriesGrouping): string {
+  return timeseries.xCol + "_" + timeseries.yCol;
+}
+
 export interface GeoCoordinateGrouping extends Grouping {
   xCol: string;
   yCol: string;

@@ -187,6 +187,14 @@
           :fitted-solution-id="fittedSolutionId"
           @save="onSaveModel"
         />
+        <forecast-horizon
+          v-if="isTimeseries"
+          :dataset="dataset"
+          :fitted-solution-id="fittedSolutionId"
+          :target="targetName"
+          :target-type="targetType"
+          @model-apply="onApplyModel"
+        />
         <template
           v-if="isResultState && (isSingleSolution || isActiveSolutionSaved)"
         >
@@ -322,6 +330,7 @@ import PredictionsDataUploader from "../components/PredictionsDataUploader.vue";
 import PredictionSummaries from "../components/PredictionSummaries.vue";
 import CreateLabelingForm from "../components/labelingComponents/CreateLabelingForm.vue";
 import LabelHeaderButtons from "../components/labelingComponents/LabelHeaderButtons.vue";
+import ForecastHorizon from "../components/ForecastHorizon.vue";
 // Store
 import {
   viewActions,
@@ -398,6 +407,7 @@ const DataExplorer = Vue.extend({
     CreateSolutionsForm,
     DataSize,
     FacetListPane,
+    ForecastHorizon,
     LabelHeaderButtons,
     LeftSidePanel,
     LegendWeight,
@@ -523,7 +533,7 @@ const DataExplorer = Vue.extend({
       return routeGetters.isSingleSolution(this.$store);
     },
     timeseries(): Dictionary<TimeSeries> {
-      return datasetGetters.getTimeseries(this.$store);
+      return this.state.getTimeseries();
     },
     routeHighlight(): string {
       return routeGetters.getRouteHighlight(this.$store);

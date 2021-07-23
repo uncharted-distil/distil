@@ -20,7 +20,6 @@ import _ from "lodash";
 import { ActionContext } from "vuex";
 import { DistilState } from "../store";
 import {
-  FilterParams,
   EXCLUDE_FILTER,
   Filter,
   emptyFilterParamsObject,
@@ -504,7 +503,10 @@ export const actions = {
       console.warn("`solutionId` argument is missing");
       return null;
     }
-
+    const timeseriesIDs = args.timeseriesIds.map((seriesID) => ({
+      seriesID: seriesID,
+      varKey: args.timeseriesColName,
+    }));
     const predictions = getPredictionsById(
       context.rootState.requestsModule.predictions,
       args.predictionsId
@@ -520,12 +522,17 @@ export const actions = {
           `/${args.timeseriesColName}/${args.xColName}/${args.yColName}` +
           `/${predictions.resultId}`,
         {
-          timeseriesUris: args.timeseriesIds,
+          timeseries: timeseriesIDs,
         }
       );
       const responseMap = new Map(
         Object.keys(response.data).map((k) => {
-          return [k + (args.uniqueTrail ?? ""), response.data[k]];
+          return [
+            timeseriesIDs[k].varKey +
+              timeseriesIDs[k].seriesID +
+              (args.uniqueTrail ?? ""),
+            response.data[k],
+          ];
         })
       );
       mutations.bulkUpdatePredictedTimeseries(context, {
