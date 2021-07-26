@@ -251,7 +251,11 @@
       <template v-if="hasNoVariables">
         <p>No Outcome Variables available.</p>
       </template>
-      <result-facets v-else-if="state.name === 'result'" />
+      <result-facets
+        v-else-if="state.name === 'result'"
+        :single-solution="isSingleSolution"
+        :show-residuals="showResiduals"
+      />
       <facet-list-pane
         v-else-if="state.name === 'label'"
         :variables="secondaryVariables"
@@ -345,6 +349,7 @@ import {
   RowSelection,
   TableColumn,
   TableRow,
+  TaskTypes,
   TimeSeries,
   Variable,
   VariableSummary,
@@ -471,6 +476,15 @@ const DataExplorer = Vue.extend({
         (action) => !this.inactiveMetaTypes.includes(action.paneId)
       );
     },
+    showResiduals(): boolean {
+      const tasks = routeGetters.getRouteTask(this.$store).split(",");
+      return (
+        tasks &&
+        !!tasks.find(
+          (t) => t === TaskTypes.REGRESSION || t === TaskTypes.FORECASTING
+        )
+      );
+    },
     targetName(): string {
       return this.target?.key;
     },
@@ -500,7 +514,7 @@ const DataExplorer = Vue.extend({
     },
 
     hasData(): boolean {
-      return datasetGetters.hasIncludedTableData(this.$store);
+      return this.state.hasData();
     },
 
     hasNoVariables(): boolean {

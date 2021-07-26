@@ -258,10 +258,12 @@ export const actions = {
     if (!context.state.targetSummary) {
       // fetch the target var so we can pull the description out
       const targetVar = dataGetters.getVariablesMap(store)[args.target];
-      mutations.updateTargetSummary(
-        context,
-        createPendingSummary(key, label, targetVar.colDescription, dataset)
-      );
+      if (targetVar) {
+        mutations.updateTargetSummary(
+          context,
+          createPendingSummary(key, label, targetVar?.colDescription, dataset)
+        );
+      }
     }
 
     const filterParamsBlank = emptyFilterParamsObject();

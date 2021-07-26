@@ -77,6 +77,8 @@ export interface BaseState {
   getFields(include?: boolean): Dictionary<TableColumn>;
   // getTimeseries dictionary
   getTimeseries(): TimeSeries;
+  // denotes whether data has been fetched or not
+  hasData(): boolean;
   /******Fetch Functions**********/
   init(): Promise<void>;
   fetchVariables(): Promise<unknown>;
@@ -89,6 +91,9 @@ export interface BaseState {
 
 export class SelectViewState implements BaseState {
   name = ExplorerStateNames.SELECT_VIEW;
+  hasData(): boolean {
+    return datasetGetters.hasIncludedTableData(store);
+  }
   resetState(): void {
     datasetActions.resetState(store);
   }
@@ -214,6 +219,9 @@ export class SelectViewState implements BaseState {
 
 export class ResultViewState implements BaseState {
   name = ExplorerStateNames.RESULT_VIEW;
+  hasData(): boolean {
+    return !!resultGetters.getIncludedResultTableDataItems(store);
+  }
   resetState(): void {
     resultActions.resetState(store);
   }
@@ -391,6 +399,9 @@ export class ResultViewState implements BaseState {
 
 export class PredictViewState implements BaseState {
   name = ExplorerStateNames.PREDICTION_VIEW;
+  hasData(): boolean {
+    return !!predictionGetters.getIncludedPredictionTableDataItems(store);
+  }
   resetState(): void {
     predictionActions.resetState(store);
   }
@@ -568,6 +579,9 @@ export class PredictViewState implements BaseState {
 
 export class LabelViewState implements BaseState {
   name = ExplorerStateNames.LABEL_VIEW;
+  hasData(): boolean {
+    return datasetGetters.hasIncludedTableData(store);
+  }
   resetState(): void {
     predictionActions.resetState(store);
   }
