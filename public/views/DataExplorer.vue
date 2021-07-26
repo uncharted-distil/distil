@@ -251,11 +251,13 @@
       <template v-if="hasNoVariables">
         <p>No Outcome Variables available.</p>
       </template>
-      <result-facets
-        v-else-if="state.name === 'result'"
-        :single-solution="isSingleSolution"
-        :show-residuals="showResiduals"
-      />
+      <div v-else-if="state.name === 'result'">
+        <error-threshold-slider v-if="showResiduals && !isTimeseries" />
+        <result-facets
+          :single-solution="isSingleSolution"
+          :show-residuals="showResiduals"
+        />
+      </div>
       <facet-list-pane
         v-else-if="state.name === 'label'"
         :variables="secondaryVariables"
@@ -317,6 +319,7 @@ import ActionColumn from "../components/layout/ActionColumn.vue";
 import AddVariablePane from "../components/panel/AddVariablePane.vue";
 import CreateSolutionsForm from "../components/CreateSolutionsForm.vue";
 import DataSize from "../components/buttons/DataSize.vue";
+import ErrorThresholdSlider from "../components/ErrorThresholdSlider.vue";
 import FacetListPane from "../components/panel/FacetListPane.vue";
 import LeftSidePanel from "../components/layout/LeftSidePanel.vue";
 import ImageMosaic from "../components/ImageMosaic.vue";
@@ -412,6 +415,7 @@ const DataExplorer = Vue.extend({
     CreateLabelingForm,
     CreateSolutionsForm,
     DataSize,
+    ErrorThresholdSlider,
     FacetListPane,
     ForecastHorizon,
     LabelHeaderButtons,
