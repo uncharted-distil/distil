@@ -41,26 +41,29 @@ export interface PredictionState {
   fittedSolutionId: string;
   produceRequestId: string;
 }
-
-export const state: PredictionState = {
-  // table data
-  includedPredictionTableData: null,
-  excludedPredictionTableData: null,
-  // baseline table data
-  baselinePredictionTableData: null,
-  // training / target
-  trainingSummaries: {},
-  targetSummary: null,
-  // predicted
-  predictedSummaries: [],
-  confidenceSummaries: [],
-  rankSummaries: [],
-  // forecasts
-  timeseries: {},
-  forecasts: {},
-  // areaOfInterest
-  areaOfInterestInner: null,
-  areaOfInterestOuter: null,
-  fittedSolutionId: null,
-  produceRequestId: null,
+export const defaultState = (): PredictionState => {
+  return {
+    // table data
+    includedPredictionTableData: null,
+    excludedPredictionTableData: null,
+    // baseline table data
+    baselinePredictionTableData: null,
+    // training / target
+    trainingSummaries: {},
+    targetSummary: null,
+    // predicted
+    predictedSummaries: [],
+    confidenceSummaries: [],
+    rankSummaries: [],
+    // forecasts
+    timeseries: {},
+    forecasts: {},
+    // areaOfInterest
+    areaOfInterestInner: null,
+    areaOfInterestOuter: null,
+    fittedSolutionId: null,
+    produceRequestId: null,
+  };
 };
+
+export const state: PredictionState = defaultState();

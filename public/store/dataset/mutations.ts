@@ -34,6 +34,7 @@ import {
   Dataset,
   DatasetPendingRequest,
   DatasetState,
+  defaultState,
   Metric,
   TableData,
   Task,
@@ -508,5 +509,8 @@ export const mutations = {
 
   updateMetrics(state: DatasetState, metrics: Metric[]) {
     state.metrics = metrics;
+  },
+  resetState(state: DatasetState) {
+    Object.assign(state, defaultState());
   },
 };

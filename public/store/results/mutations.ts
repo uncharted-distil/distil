@@ -24,7 +24,7 @@ import {
 } from "../../util/data";
 import { Extrema, TableData, VariableSummary } from "../dataset/index";
 import { TimeSeriesForecastUpdate } from "../dataset/mutations";
-import { ResultsState } from "./index";
+import { defaultState, ResultsState } from "./index";
 
 export const mutations = {
   // training / target
@@ -271,5 +271,8 @@ export const mutations = {
     args: { solutionID: string; rankings: Dictionary<number> }
   ) {
     Vue.set(state.featureImportanceRanking, args.solutionID, args.rankings);
+  },
+  resetState(state: ResultsState): void {
+    Object.assign(state, defaultState());
   },
 };

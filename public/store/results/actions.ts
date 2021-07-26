@@ -1133,4 +1133,7 @@ export const actions = {
       rankings: _.pickBy(rankings, (ranking) => ranking !== null),
     });
   },
+  resetState(context: ResultsContext) {
+    mutations.resetState(context);
+  },
 };

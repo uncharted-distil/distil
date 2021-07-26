@@ -68,35 +68,38 @@ export interface ResultsState {
   // variable rankings - maps {solutionID, {featureName: rank value}}
   featureImportanceRanking: Dictionary<Dictionary<number>>;
 }
-
-export const state: ResultsState = {
-  // table data
-  includedResultTableData: null,
-  excludedResultTableData: null,
-  fullIncludedResultTableData: null,
-  // area of interest for tiles clicks in geo map
-  areaOfInterestInner: null,
-  areaOfInterestOuter: null,
-  // training / target
-  trainingSummaries: {},
-  targetSummary: null,
-  // predicted
-  predictedSummaries: [],
-  // residuals
-  residualSummaries: [],
-  residualsExtrema: { min: null, max: null },
-  // correctness summary (correct vs. incorrect) for predicted categorical data
-  correctnessSummaries: [],
-  // confidence summary (how sure the system is of it's predictions) for any predicted data
-  confidenceSummaries: [],
-  // ranking summary (used in tandem with confidence)
-  rankingSummaries: [],
-  // forecasts
-  timeseries: {},
-  forecasts: {},
-  // result IDs
-  fittedSolutionId: null,
-  produceRequestId: null,
-  // variable rankings
-  featureImportanceRanking: {},
+export const defaultState = (): ResultsState => {
+  return {
+    // table data
+    includedResultTableData: null,
+    excludedResultTableData: null,
+    fullIncludedResultTableData: null,
+    // area of interest for tiles clicks in geo map
+    areaOfInterestInner: null,
+    areaOfInterestOuter: null,
+    // training / target
+    trainingSummaries: {},
+    targetSummary: null,
+    // predicted
+    predictedSummaries: [],
+    // residuals
+    residualSummaries: [],
+    residualsExtrema: { min: null, max: null },
+    // correctness summary (correct vs. incorrect) for predicted categorical data
+    correctnessSummaries: [],
+    // confidence summary (how sure the system is of it's predictions) for any predicted data
+    confidenceSummaries: [],
+    // ranking summary (used in tandem with confidence)
+    rankingSummaries: [],
+    // forecasts
+    timeseries: {},
+    forecasts: {},
+    // result IDs
+    fittedSolutionId: null,
+    produceRequestId: null,
+    // variable rankings
+    featureImportanceRanking: {},
+  };
 };
+
+export const state: ResultsState = defaultState();

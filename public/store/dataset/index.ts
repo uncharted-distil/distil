@@ -460,56 +460,59 @@ export interface MetricDropdownItem {
   };
   text: string;
 }
+export const defaultState = (): DatasetState => {
+  return {
+    // datasets and filtered datasets
+    datasets: [],
+    filteredDatasets: [],
 
-export const state: DatasetState = {
-  // datasets and filtered datasets
-  datasets: [],
-  filteredDatasets: [],
+    // variable list and rankings for the active dataset
+    variables: [],
+    variableRankings: {},
 
-  // variable list and rankings for the active dataset
-  variables: [],
-  variableRankings: {},
+    // working set of data
+    includedSet: {
+      tableData: null,
+      variableSummariesByKey: {},
+      rowSelectionData: [],
+    },
+    excludedSet: {
+      tableData: null,
+      variableSummariesByKey: {},
+      rowSelectionData: [],
+    },
+    // highlight set
+    baselineIncludeSet: null,
+    baselineExcludeSet: null,
+    // tiles surrounding tile that was clicked
+    // include area of interest
+    areaOfInterestIncludeInner: null,
+    areaOfInterestIncludeOuter: null,
+    // exclude area of interest
+    areaOfInterestExcludeInner: null,
+    areaOfInterestExcludeOuter: null,
+    // linked files / representation data
+    files: {},
+    timeseries: {},
+    timeseriesExtrema: {},
 
-  // working set of data
-  includedSet: {
-    tableData: null,
-    variableSummariesByKey: {},
-    rowSelectionData: [],
-  },
-  excludedSet: {
-    tableData: null,
-    variableSummariesByKey: {},
-    rowSelectionData: [],
-  },
-  // highlight set
-  baselineIncludeSet: null,
-  baselineExcludeSet: null,
-  // tiles surrounding tile that was clicked
-  // include area of interest
-  areaOfInterestIncludeInner: null,
-  areaOfInterestIncludeOuter: null,
-  // exclude area of interest
-  areaOfInterestExcludeInner: null,
-  areaOfInterestExcludeOuter: null,
-  // linked files / representation data
-  files: {},
-  timeseries: {},
-  timeseriesExtrema: {},
+    // joined data table data
+    joinTableData: {},
 
-  // joined data table data
-  joinTableData: {},
+    // pending requests for the active dataset
+    pendingRequests: [],
 
-  // pending requests for the active dataset
-  pendingRequests: [],
+    // task information
+    task: {
+      task: [TaskTypes.CLASSIFICATION, TaskTypes.MULTICLASS],
+    },
 
-  // task information
-  task: {
-    task: [TaskTypes.CLASSIFICATION, TaskTypes.MULTICLASS],
-  },
+    // bands
+    bands: [],
 
-  // bands
-  bands: [],
-
-  // metrics
-  metrics: [],
+    // metrics
+    metrics: [],
+  };
 };
+
+export const state: DatasetState = defaultState();

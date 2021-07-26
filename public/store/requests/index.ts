@@ -109,8 +109,8 @@ export interface RequestState {
   predictions: Predictions[];
 }
 
-export const state: RequestState = {
-  solutionRequests: [],
-  solutions: [],
-  predictions: [],
+export const defaultState = (): RequestState => {
+  return { solutionRequests: [], solutions: [], predictions: [] };
 };
+
+export const state: RequestState = defaultState();

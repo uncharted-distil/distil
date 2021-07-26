@@ -16,7 +16,6 @@
  */
 
 import axios, { AxiosResponse } from "axios";
-import { BIconLayoutThreeColumns } from "bootstrap-vue";
 import _ from "lodash";
 import { ActionContext } from "vuex";
 import {
@@ -75,7 +74,6 @@ import {
   Task,
   Variable,
   VariableRankingPendingRequest,
-  VariableSummary,
   VariableSummaryKey,
   VariableSummaryResp,
 } from "./index";
@@ -1843,5 +1841,8 @@ export const actions = {
       console.error(error);
       return null;
     }
+  },
+  resetState(context: DatasetContext): void {
+    mutations.resetState(context);
   },
 };

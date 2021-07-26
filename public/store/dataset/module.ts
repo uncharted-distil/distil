@@ -198,6 +198,7 @@ export const actions = {
   updateDataset: dispatch(moduleActions.updateDataset),
   extractDataset: dispatch(moduleActions.extractDataset),
   saveDataset: dispatch(moduleActions.saveDataset),
+  resetState: dispatch(moduleActions.resetState),
 };
 
 // Typed mutations
@@ -273,4 +274,5 @@ export const mutations = {
   updateBands: commit(moduleMutations.updateBands),
   updateRowSelectionData: commit(moduleMutations.updateRowSelectionData),
   updateMetrics: commit(moduleMutations.updateMetrics),
+  resetState: commit(moduleMutations.resetState),
 };
