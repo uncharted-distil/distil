@@ -103,6 +103,7 @@ import {
   GeoCoordinateGrouping,
   VariableSummary,
   GeoBoundsGrouping,
+  Variable,
 } from "../store/dataset/index";
 import { updateHighlight, highlightsExist } from "../util/highlights";
 import ImagePreview from "../components/ImagePreview.vue";
@@ -223,6 +224,12 @@ export default Vue.extend({
       type: Number as () => number,
       default: Number.MAX_SAFE_INTEGER,
     },
+    variables: {
+      type: Array as () => Variable[],
+      default: (): Variable[] => {
+        return [];
+      },
+    },
   },
 
   data() {
@@ -297,20 +304,6 @@ export default Vue.extend({
     },
     target(): string {
       return routeGetters.getRouteTargetVariable(this.$store);
-    },
-    getTopVariables(): string[] {
-      const variables = datasetGetters
-        .getVariables(this.$store)
-        .filter((v) => v.datasetName === this.dataset);
-      return variables
-        .map((variable) => ({
-          variable: variable.key,
-          order: _.isNumber(variable.ranking)
-            ? variable.ranking
-            : variable.importance,
-        }))
-        .sort((a, b) => b.order - a.order)
-        .map((r) => r.variable);
     },
     mapID(): string {
       return `map-${this.instanceName}`;
@@ -1198,7 +1191,10 @@ export default Vue.extend({
             ? fieldSpec.field
             : this.fieldHash(fieldSpec);
       } else if (!!this.geoSummary[0].key) {
-        key = this.geoSummary[0].key;
+        const variable = this.variables.find((v) => {
+          return v.key === this.geoSummary[0].key;
+        });
+        key = (variable.grouping as GeoBoundsGrouping).polygonCol;
       } else {
         console.error("Error createHighlight no available key");
         return;

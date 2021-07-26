@@ -94,6 +94,7 @@ export interface GeoCoordinateGrouping extends Grouping {
 
 export interface GeoBoundsGrouping extends Grouping {
   coordinatesCol: string;
+  polygonCol: string;
 }
 
 export interface MultiBandImageGrouping extends ClusteredGrouping {

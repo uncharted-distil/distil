@@ -628,7 +628,8 @@ export function filtersToValueState(
 */
 export function lexQueryToFiltersAndHighlight(
   lexQuery: any[][],
-  dataset: string
+  dataset: string,
+  variables: Variable[]
 ): { filters: Filter[]; highlights: Highlight[] } {
   const filters = [] as Filter[];
   const highlights = [] as Highlight[];
@@ -647,9 +648,11 @@ export function lexQueryToFiltersAndHighlight(
           key,
           set: meta.set,
         };
-
+        const variable = variables.find((v) => {
+          return v.colDisplayName === filter.key;
+        });
         if (type === GEOBOUNDS_FILTER || type === GEOCOORDINATE_FILTER) {
-          filter.key = filter.key;
+          filter.key = variable.key;
           filter.minX = parseFloat(lq[`minX_${i}`].key);
           filter.maxX = parseFloat(lq[`maxX_${i}`].key);
           filter.minY = parseFloat(lq[`minY_${i}`].key);
@@ -680,13 +683,15 @@ export function lexQueryToFiltersAndHighlight(
           key,
           value: {},
         } as Highlight;
-
+        const variable = variables.find((v) => {
+          return v.colDisplayName === highlight.key;
+        });
         if (
           type === GEOBOUNDS_FILTER ||
           type === GEOCOORDINATE_FILTER ||
           type === BIVARIATE_FILTER
         ) {
-          highlight.key = highlight.key;
+          highlight.key = variable.key;
           highlight.value.minX = parseFloat(lq[`minX_${i}`].key);
           highlight.value.maxX = parseFloat(lq[`maxX_${i}`].key);
           highlight.value.minY = parseFloat(lq[`minY_${i}`].key);

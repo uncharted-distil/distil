@@ -251,7 +251,13 @@
       <template v-if="hasNoVariables">
         <p>No Outcome Variables available.</p>
       </template>
-      <result-facets v-else-if="state.name === 'result'" />
+      <div v-else-if="state.name === 'result'">
+        <error-threshold-slider v-if="showResiduals && !isTimeseries" />
+        <result-facets
+          :single-solution="isSingleSolution"
+          :show-residuals="showResiduals"
+        />
+      </div>
       <facet-list-pane
         v-else-if="state.name === 'label'"
         :variables="secondaryVariables"
@@ -313,6 +319,7 @@ import ActionColumn from "../components/layout/ActionColumn.vue";
 import AddVariablePane from "../components/panel/AddVariablePane.vue";
 import CreateSolutionsForm from "../components/CreateSolutionsForm.vue";
 import DataSize from "../components/buttons/DataSize.vue";
+import ErrorThresholdSlider from "../components/ErrorThresholdSlider.vue";
 import FacetListPane from "../components/panel/FacetListPane.vue";
 import LeftSidePanel from "../components/layout/LeftSidePanel.vue";
 import ImageMosaic from "../components/ImageMosaic.vue";
@@ -345,6 +352,7 @@ import {
   RowSelection,
   TableColumn,
   TableRow,
+  TaskTypes,
   TimeSeries,
   Variable,
   VariableSummary,
@@ -407,6 +415,7 @@ const DataExplorer = Vue.extend({
     CreateLabelingForm,
     CreateSolutionsForm,
     DataSize,
+    ErrorThresholdSlider,
     FacetListPane,
     ForecastHorizon,
     LabelHeaderButtons,
@@ -471,6 +480,15 @@ const DataExplorer = Vue.extend({
         (action) => !this.inactiveMetaTypes.includes(action.paneId)
       );
     },
+    showResiduals(): boolean {
+      const tasks = routeGetters.getRouteTask(this.$store).split(",");
+      return (
+        tasks &&
+        !!tasks.find(
+          (t) => t === TaskTypes.REGRESSION || t === TaskTypes.FORECASTING
+        )
+      );
+    },
     targetName(): string {
       return this.target?.key;
     },
@@ -500,7 +518,7 @@ const DataExplorer = Vue.extend({
     },
 
     hasData(): boolean {
-      return datasetGetters.hasIncludedTableData(this.$store);
+      return this.state.hasData();
     },
 
     hasNoVariables(): boolean {
