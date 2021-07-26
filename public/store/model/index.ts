@@ -44,7 +44,11 @@ export interface VariableDetail {
   varType: string;
 }
 
-export const state: ModelState = {
-  models: {},
-  filteredModelIds: [],
+export const defaultState = (): ModelState => {
+  return {
+    models: {},
+    filteredModelIds: [],
+  };
 };
+
+export const state: ModelState = defaultState();

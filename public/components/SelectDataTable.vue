@@ -90,6 +90,7 @@
             :include-forecast="isTargetTimeseries"
             :unique-trail="uniqueTrail"
             :predictions-id="predictionId"
+            :get-timeseries="getTimeseries"
           />
         </div>
       </template>
@@ -169,7 +170,7 @@
 </template>
 
 <script lang="ts">
-import _, { indexOf, isEmpty } from "lodash";
+import _, { isEmpty } from "lodash";
 import Vue from "vue";
 import IconBase from "./icons/IconBase.vue";
 import IconFork from "./icons/IconFork.vue";
@@ -260,9 +261,9 @@ export default Vue.extend({
     },
     itemCount: { type: Number as () => number, default: 0 },
     timeseriesInfo: {
-      type: Object as () => Dictionary<TimeSeries>,
+      type: Object as () => TimeSeries,
       default: () => {
-        return {} as Dictionary<TimeSeries>;
+        return {} as TimeSeries;
       },
     },
     residualExtrema: {
@@ -272,6 +273,7 @@ export default Vue.extend({
       },
     },
     solution: { type: Object as () => Solution, default: null },
+    getTimeseries: { type: Function, default: null }, // this is supplied for the sparklines
   },
 
   data() {
@@ -299,16 +301,9 @@ export default Vue.extend({
 
       // In the case of timeseries, we add their Min/Max/Mean.
       if (this.isTimeseries) {
-        let infoKey = this.dataset;
-        if (this.solutionId) {
-          infoKey = this.solutionId;
-        }
-        if (this.predictionId) {
-          infoKey = this.predictionId;
-        }
         items = items?.map((item) => {
           const timeserieId = item[this.timeseriesVariables?.[0]?.key]?.value;
-          const minMaxMean = this.timeseriesInfo?.[infoKey]?.info?.[
+          const minMaxMean = this.timeseriesInfo?.info?.[
             this.timeseriesVariables?.[0]?.key + timeserieId + this.uniqueTrail
           ];
           return { ...item, ...minMaxMean };
@@ -494,7 +489,11 @@ export default Vue.extend({
     onPagination(page: number) {
       // remove old data from store
       removeTimeseries(
-        { dataset: this.dataset },
+        {
+          dataset: this.dataset,
+          predictionsId: this.predictionId,
+          solutionId: this.solutionId,
+        },
         this.pageItems,
         this.uniqueTrail
       );

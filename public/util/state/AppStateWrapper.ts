@@ -48,6 +48,8 @@ import { DISTIL_ROLES } from "../types";
 
 export interface BaseState {
   name: ExplorerStateNames;
+  // resets the state, note this sets the store's module back to defaultState
+  resetState(): void;
   // gets basic variables
   getVariables(): Variable[];
   // gets secondary variables related to secondary variableSummaries
@@ -74,7 +76,7 @@ export interface BaseState {
   // gets table data fields
   getFields(include?: boolean): Dictionary<TableColumn>;
   // getTimeseries dictionary
-  getTimeseries(include?: boolean): Dictionary<TimeSeries>;
+  getTimeseries(): TimeSeries;
   /******Fetch Functions**********/
   init(): Promise<void>;
   fetchVariables(): Promise<unknown>;
@@ -87,8 +89,12 @@ export interface BaseState {
 
 export class SelectViewState implements BaseState {
   name = ExplorerStateNames.SELECT_VIEW;
-  getTimeseries(): Dictionary<TimeSeries> {
-    return datasetGetters.getTimeseries(store);
+  resetState(): void {
+    datasetActions.resetState(store);
+  }
+  getTimeseries(): TimeSeries {
+    const datasetId = routeGetters.getRouteDataset(store);
+    return datasetGetters.getTimeseries(store)[datasetId];
   }
   fetchTimeseries(args: EI.TIMESERIES.FetchTimeseriesEvent) {
     args.variables.forEach((tsv) => {
@@ -208,8 +214,12 @@ export class SelectViewState implements BaseState {
 
 export class ResultViewState implements BaseState {
   name = ExplorerStateNames.RESULT_VIEW;
-  getTimeseries(): Dictionary<TimeSeries> {
-    return resultGetters.getPredictedTimeseries(store);
+  resetState(): void {
+    resultActions.resetState(store);
+  }
+  getTimeseries(): TimeSeries {
+    const solutionId = routeGetters.getRouteSolutionId(store);
+    return resultGetters.getPredictedTimeseries(store)[solutionId];
   }
   fetchTimeseries(args: EI.TIMESERIES.FetchTimeseriesEvent) {
     args.variables.forEach((tsv) => {
@@ -381,8 +391,12 @@ export class ResultViewState implements BaseState {
 
 export class PredictViewState implements BaseState {
   name = ExplorerStateNames.PREDICTION_VIEW;
-  getTimeseries(): Dictionary<TimeSeries> {
-    return predictionGetters.getPredictedTimeseries(store);
+  resetState(): void {
+    predictionActions.resetState(store);
+  }
+  getTimeseries(): TimeSeries {
+    const predictionId = routeGetters.getRouteProduceRequestId(store);
+    return predictionGetters.getPredictedTimeseries(store)[predictionId];
   }
   fetchTimeseries(args: EI.TIMESERIES.FetchTimeseriesEvent) {
     const activePredictions = requestGetters.getActivePredictions(store);
@@ -554,8 +568,11 @@ export class PredictViewState implements BaseState {
 
 export class LabelViewState implements BaseState {
   name = ExplorerStateNames.LABEL_VIEW;
-  getTimeseries(include?: boolean): Dictionary<TimeSeries> {
-    return {};
+  resetState(): void {
+    predictionActions.resetState(store);
+  }
+  getTimeseries(): TimeSeries {
+    return {} as TimeSeries;
   }
   fetchTimeseries(args: EI.TIMESERIES.FetchTimeseriesEvent) {
     console.error("timeseries is not supported in label view");

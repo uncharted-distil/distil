@@ -107,6 +107,7 @@ export const actions = {
   fetchExportData: dispatch(moduleActions.fetchExportData),
   // cloning results of a prediction to a new dataset
   createDataset: dispatch(moduleActions.createDataset),
+  resetState: dispatch(moduleActions.resetState),
 };
 
 // Typed mutations
@@ -141,4 +142,5 @@ export const mutations = {
     moduleMutations.bulkUpdatePredictedForecast
   ),
   removeTimeseries: commit(moduleMutations.removeTimeseries),
+  resetState: commit(moduleMutations.resetState),
 };

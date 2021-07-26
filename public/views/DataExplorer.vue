@@ -128,6 +128,7 @@
             inner: drillDownBaseline,
             outer: drillDownFiltered,
           }"
+          :get-timeseries="state.getTimeseries"
           @tile-clicked="onTileClick"
           @selection-tool-event="onToolSelection"
           @fetch-timeseries="fetchTimeseries"
@@ -532,7 +533,7 @@ const DataExplorer = Vue.extend({
     isSingleSolution(): boolean {
       return routeGetters.isSingleSolution(this.$store);
     },
-    timeseries(): Dictionary<TimeSeries> {
+    timeseries(): TimeSeries {
       return this.state.getTimeseries();
     },
     routeHighlight(): string {
@@ -802,8 +803,13 @@ const DataExplorer = Vue.extend({
   methods: {
     capitalize,
     async changeStatesByName(state: ExplorerStateNames) {
+      // reset state
+      this.state.resetState();
+      // get the new state object
       this.setState(getStateFromName(state));
+      // set the config used for action bar, could be used for other configs
       this.setConfig(getConfigFromName(state));
+      // init this is the basic fetches needed to get the information for the state
       await this.state.init();
     },
     /* When the user request to fetch a different size of data. */

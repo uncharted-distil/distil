@@ -65,11 +65,15 @@ import * as d3 from "d3";
 import Vue from "vue";
 import SparklineChart from "../components/SparklineChart.vue";
 import SparklineSvg from "../components/SparklineSvg.vue";
-import { TimeseriesExtrema, TimeSeriesValue } from "../store/dataset/index";
+import {
+  TimeSeries,
+  TimeseriesExtrema,
+  TimeSeriesValue,
+} from "../store/dataset/index";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as resultsGetters } from "../store/results/module";
 import { getters as predictionsGetters } from "../store/predictions/module";
-
+import { Dictionary } from "../util/dict";
 export default Vue.extend({
   name: "SparklinePreview",
 
@@ -90,6 +94,10 @@ export default Vue.extend({
     predictionsId: String as () => string,
     includeForecast: Boolean as () => boolean,
     uniqueTrail: { type: String as () => string, default: "" },
+    getTimeseries: {
+      type: Function,
+      default: null,
+    },
   },
   data() {
     return {
@@ -108,6 +116,13 @@ export default Vue.extend({
       return this.variableKey + this.timeseriesId + this.uniqueTrail;
     },
     timeseries(): TimeSeriesValue[] {
+      if (this.getTimeseries != null) {
+        const timeseries = this.getTimeseries() as TimeSeries;
+        if (!timeseries) {
+          return null;
+        }
+        return timeseries.timeseriesData[this.timeseriesUniqueId];
+      }
       if (this.predictionsId) {
         const timeseries = predictionsGetters.getPredictedTimeseries(
           this.$store

@@ -589,4 +589,7 @@ export const actions = {
     }
     return null;
   },
+  resetState(context: PredictionContext): void {
+    mutations.resetState(context);
+  },
 };

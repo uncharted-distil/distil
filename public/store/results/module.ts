@@ -140,6 +140,8 @@ export const actions = {
   // area of interest for tile clicks
   fetchAreaOfInterestInner: dispatch(moduleActions.fetchAreaOfInterestInner),
   fetchAreaOfInterestOuter: dispatch(moduleActions.fetchAreaOfInterestOuter),
+
+  resetState: dispatch(moduleActions.resetState),
 };
 
 // Typed mutations
@@ -190,4 +192,5 @@ export const mutations = {
     moduleMutations.setFeatureImportanceRanking
   ),
   removeTimeseries: commit(moduleMutations.removeTimeseries),
+  resetState: commit(moduleMutations.resetState),
 };

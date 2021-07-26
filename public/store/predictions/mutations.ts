@@ -16,7 +16,7 @@
  */
 
 import Vue from "vue";
-import { PredictionState } from "./index";
+import { defaultState, PredictionState } from "./index";
 import { VariableSummary, TableData } from "../dataset/index";
 import { updateSummaries, updateSummariesPerVariable } from "../../util/data";
 
@@ -218,5 +218,8 @@ export const mutations = {
       args.id,
       args.isDateTime
     );
+  },
+  resetState(state: PredictionState): void {
+    Object.assign(state, defaultState());
   },
 };
