@@ -176,7 +176,11 @@ export default Vue.extend({
           this.$emit(EventList.LEXBAR.QUERY_CHANGE_EVENT, args);
           return;
         }
-        const lqfh = lexQueryToFiltersAndHighlight(args, this.dataset);
+        const lqfh = lexQueryToFiltersAndHighlight(
+          args,
+          this.dataset,
+          this.variables
+        );
         if (
           !this.isSelectView ||
           (this.isSelectView && !this.isHighlightActive)

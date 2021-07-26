@@ -119,7 +119,11 @@ export default Vue.extend({
       this.$emit(EventList.TABLE.COLUMN_CLICKED_EVENT, field);
     },
     updateFilterAndHighlightFromLexQuery(lexQuery) {
-      const lqfh = lexQueryToFiltersAndHighlight(lexQuery, this.dataset);
+      const lqfh = lexQueryToFiltersAndHighlight(
+        lexQuery,
+        this.dataset,
+        this.variables
+      );
       const highlights = routeGetters.getDecodedHighlights(this.$store);
       lqfh.highlights = lqfh.highlights.concat(
         highlights.filter((highlight) => {
