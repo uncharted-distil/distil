@@ -114,66 +114,10 @@ func JoinDistil(dataStorage apiModel.DataStorage, joinLeft *JoinSpec, joinRight 
 		return "", nil, err
 	}
 
-	// want to join learning dataset for performance reasons
-	if joinLeft.ExistingMetadata.LearningDataset == "" {
-		datasetLeftURI := env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetFolder)
-		datasetRightURI := env.ResolvePath(joinRight.DatasetSource, joinRight.DatasetFolder)
-
-		return join(joinLeft, joinRight, pipelineDesc, []string{datasetLeftURI, datasetRightURI}, defaultSubmitter{}, false)
-
-	}
-
-	return joinPrefeaturizedDataset(joinLeft, joinRight, varsLeftMapUpdated, pipelineDesc)
-}
-
-func joinPrefeaturizedDataset(joinLeft *JoinSpec, joinRight *JoinSpec, sourceVarMap map[string]*model.Variable,
-	pipelineDesc *description.FullySpecifiedPipeline) (string, *apiModel.FilteredData, error) {
-	datasetLeftURI := env.ResolvePath(joinLeft.DatasetSource, joinLeft.ExistingMetadata.LearningDataset)
+	datasetLeftURI := env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetFolder)
 	datasetRightURI := env.ResolvePath(joinRight.DatasetSource, joinRight.DatasetFolder)
 
-	joinedPath, joinedData, err := join(joinLeft, joinRight, pipelineDesc, []string{datasetLeftURI, datasetRightURI}, defaultSubmitter{}, true)
-	if err != nil {
-		return "", nil, err
-	}
-
-	// build header for data to add & extract columns to keep
-	prefeaturizedUpdates := [][]string{{}}
-	newCols := []int{}
-	for vName, v := range joinedData.Columns {
-		if v.Key == model.D3MIndexFieldName || sourceVarMap[v.Key] == nil {
-			newCols = append(newCols, v.Index)
-			prefeaturizedUpdates[0] = append(prefeaturizedUpdates[0], vName)
-		}
-	}
-
-	// cycle through the data and copy over the new fields
-	for _, r := range joinedData.Values {
-		newRow := []string{}
-		for _, c := range newCols {
-			newRow = append(newRow, r[c].Value.(string))
-		}
-		prefeaturizedUpdates = append(prefeaturizedUpdates, newRow)
-	}
-
-	// read the source dataset
-	diskDataset, err := apiModel.LoadDiskDatasetFromFolder(env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetFolder))
-	if err != nil {
-		return "", nil, err
-	}
-
-	// update the base dataset with the changes and write the updated data to disk
-	err = diskDataset.UpdateRawData(sourceVarMap, prefeaturizedUpdates, false)
-	if err != nil {
-		return "", nil, err
-	}
-
-	// store the raw data to disk
-	err = serialization.WriteData(joinedPath, diskDataset.Dataset.Data)
-	if err != nil {
-		return "", nil, err
-	}
-
-	return joinedPath, joinedData, err
+	return join(joinLeft, joinRight, pipelineDesc, []string{datasetLeftURI, datasetRightURI}, defaultSubmitter{}, false)
 }
 
 func join(joinLeft *JoinSpec, joinRight *JoinSpec, pipelineDesc *description.FullySpecifiedPipeline,

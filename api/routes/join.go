@@ -277,11 +277,11 @@ func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, params map[st
 	}
 
 	// need to read variables from disk for the variable list
-	metaLeft, err := getDiskMetadata(joinLeft.DatasetID, metaStorage)
+	metaLeft, err := getDiskMetadata(joinLeft.DatasetID, metaStorage, false)
 	if err != nil {
 		return "", nil, err
 	}
-	metaRight, err := getDiskMetadata(joinRight.DatasetID, metaStorage)
+	metaRight, err := getDiskMetadata(joinRight.DatasetID, metaStorage, false)
 	if err != nil {
 		return "", nil, err
 	}
@@ -300,7 +300,71 @@ func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, params map[st
 	joinLeft.ExistingMetadata = metaLeft
 	joinRight.ExistingMetadata = metaRight
 
+	var path string
+	var data *api.FilteredData
+	if dsLeft.LearningDataset != "" {
+		path, data, err = joinPrefeaturized(dataStorage, metaStorage, joinLeft, joinRight, joinPairs)
+	} else {
+		path, data, err = task.JoinDistil(dataStorage, joinLeft, joinRight, joinPairs)
+	}
+	if err != nil {
+		return "", nil, err
+	}
+
+	return path, data, nil
+}
+
+func joinPrefeaturized(dataStorage api.DataStorage, metaStorage api.MetadataStorage, joinLeft *task.JoinSpec,
+	joinRight *task.JoinSpec, joinPairs []*task.JoinPair) (string, *api.FilteredData, error) {
+
+	// switch the left join info to point to the learning dataset
+	sourceVarMap := api.MapVariables(joinLeft.UpdatedVariables, func(variable *model.Variable) string { return variable.Key })
+	metaLeft, err := getDiskMetadata(joinLeft.DatasetID, metaStorage, true)
+	if err != nil {
+		return "", nil, err
+	}
+	joinLeft.ExistingMetadata = metaLeft
+
+	// join as normal
 	path, data, err := task.JoinDistil(dataStorage, joinLeft, joinRight, joinPairs)
+	if err != nil {
+		return "", nil, err
+	}
+
+	// update the source data to have the joined data
+	// build header for data to add & extract columns to keep
+	prefeaturizedUpdates := [][]string{{}}
+	newCols := []int{}
+	for vName, v := range data.Columns {
+		if v.Key == model.D3MIndexFieldName || sourceVarMap[v.Key] == nil {
+			newCols = append(newCols, v.Index)
+			prefeaturizedUpdates[0] = append(prefeaturizedUpdates[0], vName)
+		}
+	}
+
+	// cycle through the data and copy over the new fields
+	for _, r := range data.Values {
+		newRow := []string{}
+		for _, c := range newCols {
+			newRow = append(newRow, r[c].Value.(string))
+		}
+		prefeaturizedUpdates = append(prefeaturizedUpdates, newRow)
+	}
+
+	// read the source dataset
+	diskDataset, err := api.LoadDiskDatasetFromFolder(env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetFolder))
+	if err != nil {
+		return "", nil, err
+	}
+
+	// update the base dataset with the changes and write the updated data to disk
+	err = diskDataset.UpdateRawData(sourceVarMap, prefeaturizedUpdates, false)
+	if err != nil {
+		return "", nil, err
+	}
+
+	// store the raw data to disk
+	err = serialization.WriteData(path, diskDataset.Dataset.Data)
 	if err != nil {
 		return "", nil, err
 	}
@@ -349,17 +413,22 @@ func joinDatamart(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, varsLeft []
 	return path, data, nil
 }
 
-func getDiskMetadata(dataset string, metaStorage api.MetadataStorage) (*model.Metadata, error) {
+func getDiskMetadata(dataset string, metaStorage api.MetadataStorage, useLearningFolder bool) (*model.Metadata, error) {
 	ds, err := metaStorage.FetchDataset(dataset, true, true, true)
 	if err != nil {
 		return nil, err
 	}
 
 	folderPath := env.ResolvePath(ds.Source, ds.Folder)
+	if useLearningFolder {
+		folderPath = ds.GetLearningFolder()
+	}
+
 	dsDisk, err := serialization.ReadDataset(path.Join(folderPath, compute.D3MDataSchema))
 	if err != nil {
 		return nil, err
 	}
+	dsDisk.Metadata.LearningDataset = ds.LearningDataset
 
 	return dsDisk.Metadata, nil
 }
