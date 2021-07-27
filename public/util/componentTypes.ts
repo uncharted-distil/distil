@@ -27,7 +27,7 @@ import {
   VariableSummary,
 } from "../store/dataset";
 import { Solution } from "../store/requests";
-import { ExplorerStateNames } from "./dataExplorer";
+import { ActionNames, ExplorerStateNames } from "./dataExplorer";
 import { RouteArgs } from "./routes";
 import { BaseState } from "./state/AppStateWrapper";
 
@@ -63,6 +63,7 @@ export interface DataExplorerRef {
   changeStatesByName: (name: ExplorerStateNames) => Promise<void>;
   resetHighlightsOrRow: () => void;
   updateTask: () => Promise<void>;
+  toggleAction: (actionName: ActionNames) => void;
   // globals
   $refs: {
     [key: string]: Vue | Element | Vue[] | Element[];
@@ -79,6 +80,8 @@ export interface ActionColumnRef extends Vue {
 // public/components/CreateSolutionsForm.vue
 export interface CreateSolutionsFormRef extends Vue {
   pending: boolean;
+  success: () => void;
+  fail: (err: Error) => void;
 }
 // public/components/SaveModal.vue
 export interface SaveModalRef extends Vue {

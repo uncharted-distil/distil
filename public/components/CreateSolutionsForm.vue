@@ -152,6 +152,15 @@ export default Vue.extend({
   },
 
   methods: {
+    fail(err: Error) {
+      // display error modal
+      this.pending = false;
+      this.createErrorMessage = err.message;
+      this.showCreateFailure = true;
+    },
+    success() {
+      this.pending = false;
+    },
     // create button handler
     create() {
       appActions.logUserEvent(this.$store, {
@@ -217,10 +226,7 @@ export default Vue.extend({
           this.$router.push(entry).catch((err) => console.warn(err));
         })
         .catch((err) => {
-          // display error modal
-          this.pending = false;
-          this.createErrorMessage = err.message;
-          this.showCreateFailure = true;
+          this.fail(err);
         });
     },
   },

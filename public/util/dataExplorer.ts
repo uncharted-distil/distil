@@ -86,6 +86,8 @@ export interface Action {
 export default interface ExplorerConfig {
   // required actions in current state
   actionList: Action[];
+  // these actions will be toggled when the state is switched to
+  defaultAction: ActionNames[];
 }
 
 // DataExplorer possible state, used in route
@@ -144,6 +146,7 @@ export class SelectViewConfig implements ExplorerConfig {
       return ACTION_MAP.get(a);
     });
   }
+  defaultAction = [];
 }
 export class ResultViewConfig implements ExplorerConfig {
   get actionList(): Action[] {
@@ -163,6 +166,7 @@ export class ResultViewConfig implements ExplorerConfig {
       return ACTION_MAP.get(a);
     });
   }
+  defaultAction = [ActionNames.OUTCOME_VARIABLES];
 }
 export class PredictViewConfig implements ExplorerConfig {
   get actionList(): Action[] {
@@ -182,6 +186,7 @@ export class PredictViewConfig implements ExplorerConfig {
       return ACTION_MAP.get(a);
     });
   }
+  defaultAction = [ActionNames.OUTCOME_VARIABLES];
 }
 export class LabelViewConfig implements ExplorerConfig {
   get actionList(): Action[] {
@@ -201,6 +206,7 @@ export class LabelViewConfig implements ExplorerConfig {
       return ACTION_MAP.get(a);
     });
   }
+  defaultAction = [];
 }
 export enum ActionNames {
   CREATE_NEW_VARIABLE = "Create New Variable",
@@ -271,6 +277,22 @@ export const ACTION_MAP = new Map(
   })
 );
 /**************MIXINS********************/
+/*This next portion of the file is dedicated to grouping computes/methods into state objects
+ and will be used in the explorer component.
+The goal here is to move all of the code for the component out of the component file. 
+If this file gets too large we can move each state into their own folder. */
+export const GENERIC_METHODS = {
+  toggleAction: (
+    self: DataExplorerRef
+  ): ((actionName: ActionNames) => void) => {
+    return (actionName: ActionNames) => {
+      const actionColumn = (self.$refs[
+        "action-column"
+      ] as unknown) as ActionColumnRef;
+      actionColumn.toggle(ACTION_MAP.get(actionName).paneId);
+    };
+  },
+};
 export const SELECT_COMPUTES = {
   isExcludedDisabled: (self: DataExplorerRef): boolean => {
     return !self.isFilteringHighlights && !self.isFilteringSelection;
@@ -308,16 +330,14 @@ export const SELECT_METHODS = {
           const modelCreationRef = (self.$refs[
             "model-creation-form"
           ] as unknown) as CreateSolutionsFormRef;
-          modelCreationRef.pending = false;
+          modelCreationRef.success();
           await self.changeStatesByName(ExplorerStateNames.RESULT_VIEW);
-          const actionColumn = (self.$refs[
-            "action-column"
-          ] as unknown) as ActionColumnRef;
-          actionColumn.toggle(
-            ACTION_MAP.get(ActionNames.OUTCOME_VARIABLES).paneId
-          );
         })
         .catch((err) => {
+          const modelCreationRef = (self.$refs[
+            "model-creation-form"
+          ] as unknown) as CreateSolutionsFormRef;
+          modelCreationRef.fail(err);
           console.error(err);
         });
       return;

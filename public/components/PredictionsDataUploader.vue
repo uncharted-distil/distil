@@ -270,6 +270,7 @@ export default Vue.extend({
           return;
         }
         this.$emit(EventList.MODEL.APPLY_EVENT, routeArgs);
+        this.$bvModal.hide("predictions-data-upload-modal");
       }
     },
   },
