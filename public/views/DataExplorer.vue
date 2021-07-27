@@ -470,7 +470,19 @@ const DataExplorer = Vue.extend({
 
     /* All variables, only used for lex as we need to parse the hidden variables from groupings */
     allVariables(): Variable[] {
-      return this.state.getLexBarVariables();
+      const variables = [...this.state.getLexBarVariables()];
+      variables.sort((a, b) => {
+        // If their ranking are identical or do not exist
+        // sort by importance
+        if (a?.ranking === b?.ranking) {
+          return b.importance - a.importance;
+
+          // otherwise by ranking
+        } else {
+          return b.ranking - a.ranking;
+        }
+      });
+      return variables;
     },
 
     /* Actions available based on the variables meta types */

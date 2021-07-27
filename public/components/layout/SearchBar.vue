@@ -219,6 +219,10 @@ header {
 </style>
 
 <style>
+div.lex-assistant-box ul li.selectable.active,
+div.lex-assistant-box ul li.selectable.hoverable:hover {
+  background-color: #255dcc;
+}
 .ml-15px {
   margin-left: 15px;
 }
