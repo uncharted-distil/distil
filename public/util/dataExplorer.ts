@@ -330,10 +330,14 @@ export const SELECT_METHODS = {
           const modelCreationRef = (self.$refs[
             "model-creation-form"
           ] as unknown) as CreateSolutionsFormRef;
-          modelCreationRef.pending = false;
+          modelCreationRef.success();
           await self.changeStatesByName(ExplorerStateNames.RESULT_VIEW);
         })
         .catch((err) => {
+          const modelCreationRef = (self.$refs[
+            "model-creation-form"
+          ] as unknown) as CreateSolutionsFormRef;
+          modelCreationRef.fail(err);
           console.error(err);
         });
       return;

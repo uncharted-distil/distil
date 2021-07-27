@@ -80,6 +80,8 @@ export interface ActionColumnRef extends Vue {
 // public/components/CreateSolutionsForm.vue
 export interface CreateSolutionsFormRef extends Vue {
   pending: boolean;
+  success: () => void;
+  fail: (err: Error) => void;
 }
 // public/components/SaveModal.vue
 export interface SaveModalRef extends Vue {

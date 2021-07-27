@@ -894,12 +894,20 @@ const DataExplorer = Vue.extend({
     },
     setConfig(config: ExplorerConfig) {
       this.config = config;
+      const toggledMap = new Map(
+        routeGetters.getToggledActions(this.$store).map((t) => {
+          return [t, true];
+        })
+      );
       // the switch to the new config will trigger a render of new elements
       // if the defaultActions is one of the new elements it will not exist in the dom yet
       // so we toggle the default actions after the next DOM cycle
       this.$nextTick(() => {
-        this.config.defaultAction.forEach((action) => {
-          this.toggleAction(action);
+        this.config.defaultAction.forEach((actionName) => {
+          const action = ACTION_MAP.get(actionName);
+          if (!toggledMap.has(action.paneId)) {
+            this.toggleAction(actionName);
+          }
         });
       });
     },
