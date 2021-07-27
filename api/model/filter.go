@@ -175,6 +175,15 @@ func (f *FilterParams) IsEmpty(ignoreBaselineFilters bool) bool {
 			}
 		}
 	}
+	for _, set := range f.Highlights {
+		for _, filters := range set.FeatureFilters {
+			for _, filter := range filters.List {
+				if !filter.IsBaselineFilter || !ignoreBaselineFilters {
+					return false
+				}
+			}
+		}
+	}
 	return true
 }
 
