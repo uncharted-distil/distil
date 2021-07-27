@@ -1049,6 +1049,7 @@ export const actions = {
       varModes: Map<string, SummaryMode>;
     }
   ): Promise<void[]> {
+    args.filterParams.highlights.invert = false;
     return actions.fetchVariableSummaries(context, {
       dataset: args.dataset,
       variables: args.variables,
