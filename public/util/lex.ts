@@ -148,7 +148,11 @@ export function variablesToLexLanguage(
   const filteredAllVariables = allVariables.filter((v) => {
     return v.colType !== TIMESERIES_TYPE;
   });
-  const suggestions = variablesToLexSuggestions(filteredVariables, variableMap);
+  const suggestions = variablesToLexSuggestions(
+    filteredVariables,
+    variableMap,
+    true
+  );
   // this generates the base templates used for the user typing into the lexbar
   const baseSuggestion = variablesToLexSuggestions(
     filteredAllVariables.map((v) => {
@@ -160,7 +164,8 @@ export function variablesToLexLanguage(
         isEndOfSet: false,
       };
     }),
-    variableMap
+    variableMap,
+    false
   );
 
   const catVarLexSuggestions = perCategoricalVariableLexSuggestions(
@@ -566,7 +571,8 @@ export function filterParamsToLexQuery(
   ];
   const suggestions = variablesToLexSuggestions(
     templateInfo.activeVariables,
-    variableMap
+    variableMap,
+    true
   );
   const lexQuery = filtersToValueState(lexableElements, suggestions);
   return lexQuery;
@@ -757,7 +763,8 @@ function modeToColor(mode: string): string[] {
 */
 function variablesToLexSuggestions(
   variables: VariableInfo[],
-  variableMap: Map<string, Variable>
+  variableMap: Map<string, Variable>,
+  hidden: boolean
 ): ValueStateValue[] {
   if (!variables) return;
   return variables.reduce((a, v) => {
@@ -778,6 +785,7 @@ function variablesToLexSuggestions(
     } as LexMeta;
     const config = {
       displayKey: v.variable.colDisplayName,
+      hidden: hidden,
     };
     a.push(new ValueStateValue(name, options, config));
     return a;
