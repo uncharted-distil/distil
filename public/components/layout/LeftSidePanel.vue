@@ -58,4 +58,7 @@ export default Vue.extend({
   width: var(--width-left-side-panel);
   z-index: var(--z-index-left-side-panel);
 }
+.panel-body {
+  height: 89vh;
+}
 </style>
