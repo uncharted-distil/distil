@@ -16,27 +16,47 @@
 -->
 
 <template>
-  <variable-facets
-    enable-highlighting
-    enable-search
-    enable-type-change
-    enable-type-filtering
-    ignore-highlights
-    :is-available-features="isSelectedView"
-    :is-result-features="isResultView"
-    :include="include"
-    :enable-color-scales="enableColorScales"
-    :facet-count="searchedActiveVariables.length"
-    :html="buttons"
-    :instance-name="instanceName"
-    :log-activity="problemDefinition"
-    :rows-per-page="numRowsPerPage"
-    :pagination="
-      searchedActiveVariables && searchedActiveVariables.length > numRowsPerPage
-    "
-    :summaries="activeSummaries"
-    @search="onSearch"
-  />
+  <div class="h-100">
+    <header v-if="enableFooter">
+      <b-button size="sm" variant="outline-primary" @click="hideAll">
+        Hide All
+      </b-button>
+      <b-button size="sm" variant="primary" @click="showAll">
+        Show All
+      </b-button>
+      <b-button
+        v-if="hasTarget"
+        size="sm"
+        class="float-right"
+        @click="selectAllTraining"
+      >
+        Select All Training
+      </b-button>
+    </header>
+    <variable-facets
+      enable-highlighting
+      enable-search
+      enable-type-change
+      enable-type-filtering
+      ignore-highlights
+      class="mh-100"
+      :is-available-features="isSelectedView"
+      :is-result-features="isResultView"
+      :include="include"
+      :enable-color-scales="enableColorScales"
+      :facet-count="searchedActiveVariables.length"
+      :html="buttons"
+      :instance-name="instanceName"
+      :log-activity="problemDefinition"
+      :rows-per-page="numRowsPerPage"
+      :pagination="
+        searchedActiveVariables &&
+        searchedActiveVariables.length > numRowsPerPage
+      "
+      :summaries="activeSummaries"
+      @search="onSearch"
+    />
+  </div>
 </template>
 
 <script lang="ts">
@@ -105,6 +125,9 @@ export default Vue.extend({
   },
 
   computed: {
+    hasTarget(): boolean {
+      return !!routeGetters.getTargetVariable(this.$store);
+    },
     isSelectedView(): boolean {
       return (
         routeGetters.getDataExplorerState(this.$store) ===
@@ -122,18 +145,18 @@ export default Vue.extend({
         ? null
         : (group: Group) => {
             const variable = group.key;
-
+            const buttonList = [] as HTMLElement[];
             // Display and Hide variables in the Data Explorer.
             const exploreButton = this.displayButton(variable);
-
-            // Add/Remove a variable as training.
-            const trainingButton = this.trainingButton(variable);
-
+            if (this.hasTarget) {
+              // Add/Remove a variable as training.
+              buttonList.push(this.trainingButton(variable));
+            }
             // Add/Remove a variable as target.
-            const targetButton = this.targetButton(variable);
+            buttonList.push(this.targetButton(variable));
 
             // List of model creation buttons to be added.
-            const buttons = [targetButton, trainingButton].filter((b) => !!b);
+            const buttons = buttonList.filter((b) => !!b);
             const modelButtons = document.createElement("div");
             modelButtons.className = "btn-group ml-auto";
             modelButtons.append(...buttons);
@@ -165,13 +188,14 @@ export default Vue.extend({
     problemDefinition(): string {
       return Activity.PROBLEM_DEFINITION;
     },
-
-    searchedActiveVariables(): Variable[] {
+    activeVariables(): Variable[] {
       // remove variables used in groupedFeature;
-      const activeVariables = this.variables.filter(
+      return this.variables.filter(
         (v) => !this.groupedFeatures.includes(v.key)
       );
-      return searchVariables(activeVariables, this.search);
+    },
+    searchedActiveVariables(): Variable[] {
+      return searchVariables(this.activeVariables, this.search);
     },
 
     activeSummaries(): VariableSummary[] {
@@ -229,7 +253,42 @@ export default Vue.extend({
     onSearch(term): void {
       this.search = term;
     },
+    async selectAllTraining() {
+      const list = this.activeVariables.filter((v) => {
+        return !this.isTraining(v.key) && !this.isTarget(v.key);
+      });
+      const args = await this.addTrainingVariables(list.map((v) => v.key));
+      this.updateRoute(args);
+    },
+    showAll() {
+      const args = {} as RouteArgs;
+      const list = [] as string[];
+      this.activeVariables.forEach((variable) => {
+        if (!this.isExplore(variable.key)) {
+          list.push(variable.key);
+        }
+      });
+      if (!list.length) {
+        return;
+      }
+      args.explore = this.explore.concat(list).join(",");
+      this.updateRoute(args);
+    },
+    hideAll() {
+      const args = {} as RouteArgs;
+      const map = new Map(
+        this.activeVariables
+          .filter((v) => {
+            return this.isExplore(v.key);
+          })
+          .map((v) => {
+            return [v.key, true];
+          })
+      );
 
+      args.explore = this.explore.filter((v) => !map.has(v)).join(",");
+      this.updateRoute(args);
+    },
     displayButton(variable: string): HTMLElement {
       const isInExplore = this.isExplore(variable);
       const button = document.createElement("button");
@@ -367,39 +426,43 @@ export default Vue.extend({
         target,
       });
     },
-
-    async updateTraining(variable: string): Promise<void> {
+    async addTrainingVariables(variables: string[]): Promise<RouteArgs> {
       const args = {} as RouteArgs;
+      const training = this.training.concat(variables);
+      args.training = training.join(",");
+      const taskResponse = await datasetActions.fetchTask(this.$store, {
+        dataset: this.dataset,
+        targetName: this.target,
+        variableNames: training,
+      });
+      const task = taskResponse.data.task.join(",");
+      args.task = task;
+      if (task.includes(TaskTypes.REMOTE_SENSING)) {
+        const available = routeGetters.getAvailableVariables(this.$store);
+        const varModesMap = routeGetters.getDecodedVarModes(this.$store);
+        training.forEach((v) => {
+          varModesMap.set(v, SummaryMode.MultiBandImage);
+        });
+
+        available.forEach((v) => {
+          varModesMap.set(v.key, SummaryMode.MultiBandImage);
+        });
+
+        varModesMap.set(
+          routeGetters.getRouteTargetVariable(this.$store),
+          SummaryMode.MultiBandImage
+        );
+        const varModesStr = varModesToString(varModesMap);
+        args.varModes = varModesStr;
+      }
+      return args;
+    },
+    async updateTraining(variable: string): Promise<void> {
+      let args = {} as RouteArgs;
       if (this.isTraining(variable)) {
         args.training = this.training.filter((v) => v !== variable).join(",");
       } else {
-        const training = this.training.concat([variable]);
-        args.training = training.join(",");
-        const taskResponse = await datasetActions.fetchTask(this.$store, {
-          dataset: this.dataset,
-          targetName: this.target,
-          variableNames: training,
-        });
-        const task = taskResponse.data.task.join(",");
-        args.task = task;
-        if (task.includes(TaskTypes.REMOTE_SENSING)) {
-          const available = routeGetters.getAvailableVariables(this.$store);
-          const varModesMap = routeGetters.getDecodedVarModes(this.$store);
-          training.forEach((v) => {
-            varModesMap.set(v, SummaryMode.MultiBandImage);
-          });
-
-          available.forEach((v) => {
-            varModesMap.set(v.key, SummaryMode.MultiBandImage);
-          });
-
-          varModesMap.set(
-            routeGetters.getRouteTargetVariable(this.$store),
-            SummaryMode.MultiBandImage
-          );
-          const varModesStr = varModesToString(varModesMap);
-          args.varModes = varModesStr;
-        }
+        args = await this.addTrainingVariables([variable]);
       }
 
       this.updateRoute(args);

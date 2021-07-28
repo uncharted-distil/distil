@@ -67,6 +67,11 @@
             />
           </b-tabs>
         </div>
+        <layer-selection
+          v-if="isMultiBandImage"
+          :has-image-attention="isResultState"
+          class="align-self-center mr-2"
+        />
         <b-button
           v-if="include && isSelectState"
           class="select-data-action-exclude align-self-center"
@@ -322,6 +327,7 @@ import DataSize from "../components/buttons/DataSize.vue";
 import ErrorThresholdSlider from "../components/ErrorThresholdSlider.vue";
 import FacetListPane from "../components/panel/FacetListPane.vue";
 import LeftSidePanel from "../components/layout/LeftSidePanel.vue";
+import LayerSelection from "../components/LayerSelection.vue";
 import ImageMosaic from "../components/ImageMosaic.vue";
 import SearchBar from "../components/layout/SearchBar.vue";
 import SelectDataTable from "../components/SelectDataTable.vue";
@@ -373,6 +379,7 @@ import {
   DISTIL_ROLES,
   isGeoLocatedType,
   isImageType,
+  isMultibandImageType,
   META_TYPES,
 } from "../util/types";
 import {
@@ -420,6 +427,7 @@ const DataExplorer = Vue.extend({
     FacetListPane,
     ForecastHorizon,
     LabelHeaderButtons,
+    LayerSelection,
     LeftSidePanel,
     LegendWeight,
     ImageMosaic,
@@ -504,6 +512,11 @@ const DataExplorer = Vue.extend({
     },
     targetName(): string {
       return this.target?.key;
+    },
+    isMultiBandImage(): boolean {
+      return this.allVariables.some((v) => {
+        return isMultibandImageType(v.colType);
+      });
     },
     targetType(): string {
       const target = this.target;

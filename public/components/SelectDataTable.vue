@@ -331,13 +331,14 @@ export default Vue.extend({
 
     tableFields(): TableColumn[] {
       const tableFields = formatFieldsAsArray(this.dataFields);
-
-      if (!this.isTimeseries || _.isEmpty(tableFields)) return tableFields;
-      // For Timeseries we want to display the Min/Max/Mean
-      // disable sorting for timeseries tables
+      // Add a specific class to the predicted values
       tableFields.forEach((tf) => {
-        tf.sortable = false;
+        if (this.predictedCol === tf.key) {
+          tf.class = "predicted-value"; // tdClass for the TD only
+        }
       });
+      if (!this.isTimeseries || _.isEmpty(tableFields)) return tableFields;
+
       return tableFields.concat([
         {
           key: "min",
@@ -705,5 +706,9 @@ table tr {
   left: 50%;
   bottom: 0;
   background-color: #666;
+}
+/* Highlight the predicted column */
+.table td.predicted-value {
+  border-right: 2px solid var(--gray-900);
 }
 </style>

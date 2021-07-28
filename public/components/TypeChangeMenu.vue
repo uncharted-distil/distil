@@ -21,7 +21,7 @@
       id="type-change-dropdown"
       :value="label"
       label="label"
-      class="btn-secondary font-weight-normal"
+      class="btn-secondary font-weight-normal rounded-border"
       :class="{ active: !isDisabled, disabled: isDisabled }"
       font-color="#fff"
       :disabled="isDisabled"
@@ -411,5 +411,8 @@ export default Vue.extend({
 }
 .type-change-dropdown-wrapper {
   position: relative;
+}
+.rounded-border {
+  border-radius: 0.2rem;
 }
 </style>
