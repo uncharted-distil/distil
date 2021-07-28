@@ -1192,7 +1192,7 @@ export const actions = {
       predictionActions.fetchConfidenceSummary(store, {
         dataset: p.dataset,
         highlights: highlights,
-        solutionId: p.requestId,
+        solutionId: p.resultId,
         dataMode,
         varMode,
         target: p.feature,
@@ -1200,7 +1200,7 @@ export const actions = {
       predictionActions.fetchRankSummary(store, {
         dataset: p.dataset,
         highlights: highlights,
-        solutionId: p.requestId,
+        solutionId: p.resultId,
         dataMode,
         varMode,
         target: p.feature,

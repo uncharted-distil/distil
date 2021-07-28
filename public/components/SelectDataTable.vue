@@ -196,6 +196,9 @@ import {
   Field,
   getVarType,
   TIMESERIES_TYPE,
+  NUMERIC_TYPE,
+  CATEGORICAL_TYPE,
+  isNumericType,
 } from "../util/types";
 import {
   addRowSelection,
@@ -389,6 +392,15 @@ export default Vue.extend({
         getVarType(routeGetters.getRouteTargetVariable(this.$store)) ===
         TIMESERIES_TYPE
       );
+    },
+    isTargetNumerical(): boolean {
+      return isNumericType(
+        getVarType(routeGetters.getRouteTargetVariable(this.$store))
+      );
+    },
+    isTargetCategorical(): boolean {
+      const type = getVarType(routeGetters.getRouteTargetVariable(this.$store));
+      return type === CATEGORICAL_TYPE;
     },
     filters(): Filter[] {
       return routeGetters.getDecodedFilters(this.$store);
@@ -673,5 +685,25 @@ table tr {
   overflow: hidden;
   text-overflow: ellipsis;
   min-height: 30px;
+}
+.error-bar-container {
+  position: relative;
+  width: 80px;
+  height: 18px;
+}
+
+.error-bar {
+  position: absolute;
+  height: 80%;
+  bottom: 0;
+}
+
+.error-bar-center {
+  position: absolute;
+  width: 1px;
+  height: 90%;
+  left: 50%;
+  bottom: 0;
+  background-color: #666;
 }
 </style>
