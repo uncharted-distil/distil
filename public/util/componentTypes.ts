@@ -51,6 +51,7 @@ export interface DataExplorerRef {
   fittedSolutionId: string;
   rowSelection: RowSelection;
   variables: Variable[];
+  allVariables: Variable[];
   summaries: VariableSummary[];
   isRemoteSensing: boolean;
   // data

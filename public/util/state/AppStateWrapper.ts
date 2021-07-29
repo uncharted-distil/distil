@@ -24,6 +24,7 @@ import { getters as routeGetters } from "../../store/route/module";
 import store from "../../store/store";
 import {
   getAllVariablesSummaries,
+  LOW_SHOT_RANK_COLUMN_PREFIX,
   LOW_SHOT_SCORE_COLUMN_PREFIX,
 } from "../data";
 import { ExplorerStateNames } from "../dataExplorer";
@@ -592,19 +593,23 @@ export class LabelViewState implements BaseState {
     console.error("timeseries is not supported in label view");
   }
   getVariables(): Variable[] {
-    const labelScoreName =
-      LOW_SHOT_SCORE_COLUMN_PREFIX + routeGetters.getRouteLabel(store);
+    const labelName = routeGetters.getRouteLabel(store);
+    const labelScoreName = LOW_SHOT_SCORE_COLUMN_PREFIX + labelName;
+    const labelRankName = LOW_SHOT_RANK_COLUMN_PREFIX + labelName;
     return datasetGetters.getVariables(store).filter((v) => {
       return (
-        v.distilRole !== DISTIL_ROLES.SystemData || v.key !== labelScoreName
+        v.distilRole !== DISTIL_ROLES.SystemData &&
+        v.key !== labelScoreName &&
+        v.key !== labelRankName
       );
     });
   }
   getSecondaryVariables(): Variable[] {
-    const labelScoreName =
-      LOW_SHOT_SCORE_COLUMN_PREFIX + routeGetters.getRouteLabel(store);
+    const labelName = routeGetters.getRouteLabel(store);
+    const labelScoreName = LOW_SHOT_SCORE_COLUMN_PREFIX + labelName;
+    const labelRankName = LOW_SHOT_RANK_COLUMN_PREFIX + labelName;
     return datasetGetters.getVariables(store).filter((v) => {
-      return v.key === labelScoreName;
+      return v.key === labelScoreName || v.key === labelRankName;
     });
   }
   getData(): TableRow[] {
@@ -656,7 +661,7 @@ export class LabelViewState implements BaseState {
     return datasetGetters.getAreaOfInterestIncludeOuterItems(store);
   }
   getLexBarVariables(): Variable[] {
-    return datasetGetters.getAllVariables(store);
+    return this.getVariables().concat(this.getSecondaryVariables());
   }
   getFields(): Dictionary<TableColumn> {
     return datasetGetters.getIncludedTableDataFields(store);

@@ -70,6 +70,7 @@ import {
   cloneDatasetUpdateRoute,
   downloadFile,
   LowShotLabels,
+  LOW_SHOT_RANK_COLUMN_PREFIX,
   LOW_SHOT_SCORE_COLUMN_PREFIX,
 } from "./data";
 import { LABEL_FEATURE_INSTANCE } from "../store/route";
@@ -640,7 +641,14 @@ export const LABEL_METHODS = {
       self.updateRoute({
         annotationHasChanged: false,
       });
-      return;
+      const outcome = ACTION_MAP.get(ActionNames.OUTCOME_VARIABLES);
+      const open = routeGetters.getToggledActions(store).some((a) => {
+        return a === outcome.paneId;
+      });
+      // open the outcome variable pane to display the new confidence and ranking
+      if (!open) {
+        self.toggleAction(ActionNames.OUTCOME_VARIABLES);
+      }
     };
   },
   onSaveDataset: (
@@ -649,6 +657,7 @@ export const LABEL_METHODS = {
     return async (saveName: string, retainUnlabeled: boolean) => {
       self.isBusy = true;
       const labelScoreName = LOW_SHOT_SCORE_COLUMN_PREFIX + self.labelName;
+      const labelRankName = LOW_SHOT_RANK_COLUMN_PREFIX + self.labelName;
       const highlightsClear = [
         {
           context: LABEL_FEATURE_INSTANCE,
@@ -663,7 +672,7 @@ export const LABEL_METHODS = {
       );
       filterParams = cloneFilters(filterParams);
       if (
-        self.variables.some((v) => {
+        self.allVariables.some((v) => {
           return v.key === labelScoreName;
         })
       ) {
@@ -671,6 +680,10 @@ export const LABEL_METHODS = {
         await datasetActions.deleteVariable(store, {
           dataset: self.dataset,
           key: labelScoreName,
+        });
+        await datasetActions.deleteVariable(store, {
+          dataset: self.dataset,
+          key: labelRankName,
         });
       }
       // clear the unlabeled values when saving
