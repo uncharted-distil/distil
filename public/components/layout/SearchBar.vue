@@ -114,7 +114,7 @@ export default Vue.extend({
     },
     language(): Lex {
       return variablesToLexLanguage(
-        this.templateInfo.activeVariables,
+        this.templateInfo,
         this.variables,
         this.variableMap
       );
