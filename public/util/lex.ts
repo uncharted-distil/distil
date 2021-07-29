@@ -84,6 +84,7 @@ class DistilRelationState extends RelationState {
     super(config);
   }
 }
+
 export interface VariableInfo {
   // basic Variable
   variable: Variable;
@@ -96,12 +97,14 @@ export interface VariableInfo {
   // isEndOfSet denotes if this variable is the last in its filterSet
   isEndOfSet: boolean;
 }
+
 export interface LexVariable {
   // holds the set the variable came from can be empty
   set: string;
   // basic distil variable
   variable: Variable;
 }
+
 export interface TemplateInfo {
   // All of the variables that are present in the filters and highlights
   activeVariables: VariableInfo[];
@@ -109,7 +112,10 @@ export interface TemplateInfo {
   highlightMap: Map<string, Filter[]>;
   // filterMap based on filter.key (its a collection of all the duplicate filters)
   filterMap: Map<string, Filter[]>;
+  // contains a map that holds all of the categories already in use (use this to filter the user suggestions)
+  excludedCategoricalMap: Map<string, string[]>;
 }
+
 export interface LexMeta {
   // type of variable
   type: string;
@@ -137,12 +143,12 @@ export interface LexMeta {
   functions it depends on to support it in the Lex Bar language.
 */
 export function variablesToLexLanguage(
-  variables: VariableInfo[],
+  template: TemplateInfo,
   allVariables: Variable[],
   variableMap: Map<string, Variable>
 ): Lex {
   // remove timeseries
-  const filteredVariables = variables.filter((v) => {
+  const filteredVariables = template.activeVariables.filter((v) => {
     return v.variable.colType !== TIMESERIES_TYPE;
   });
   const filteredAllVariables = allVariables.filter((v) => {
@@ -169,7 +175,8 @@ export function variablesToLexLanguage(
   );
 
   const catVarLexSuggestions = perCategoricalVariableLexSuggestions(
-    allVariables
+    allVariables,
+    template.excludedCategoricalMap
   );
   const allSuggestions = [...suggestions, ...baseSuggestion];
   return Lex.from("field", ValueState, {
@@ -485,6 +492,7 @@ export function variableAggregation(
       }
     }
   });
+  const excludedCategoricalMap = new Map<string, string[]>();
   const highlightVariables = new Map<string, LexVariable[]>();
   decodedHighlights.forEach((h) => {
     if (variableDict[h.key]) {
@@ -499,6 +507,14 @@ export function variableAggregation(
       ]);
       if (isCategoricalType(h.type)) {
         highlightVariables.get(h.key).length = h.categories.length;
+        if (excludedCategoricalMap.has(h.key)) {
+          excludedCategoricalMap.set(
+            h.key,
+            excludedCategoricalMap.get(h.key).concat(h.categories)
+          );
+        } else {
+          excludedCategoricalMap.set(h.key, h.categories);
+        }
       }
     }
   });
@@ -558,7 +574,7 @@ export function variableAggregation(
       filterMap.set(el.key + el.set, [el]);
     }
   });
-  return { activeVariables, highlightMap, filterMap };
+  return { activeVariables, highlightMap, filterMap, excludedCategoricalMap };
 }
 export function filterParamsToLexQuery(
   templateInfo: TemplateInfo,
@@ -786,6 +802,7 @@ function variablesToLexSuggestions(
     const config = {
       displayKey: v.variable.colDisplayName,
       hidden: hidden,
+      validate: null,
     };
     a.push(new ValueStateValue(name, options, config));
     return a;
@@ -797,13 +814,23 @@ function variablesToLexSuggestions(
   of suggestion lists whose values are LexBar ValueStateValues
 */
 function perCategoricalVariableLexSuggestions(
-  variables: Variable[]
+  variables: Variable[],
+  excludedCategories: Map<string, string[]>
 ): Dictionary<ValueStateValue[]> {
   const categoryDict = new Object() as Dictionary<ValueStateValue[]>;
 
   variables.forEach((v) => {
     if (v.colType === CATEGORICAL_TYPE && v.values !== null) {
-      categoryDict[v.key] = v.values.map((c) => new ValueStateValue(c));
+      const excludedCat = new Map(
+        (excludedCategories.get(v.key) ?? []).map((k) => {
+          return [k, true];
+        })
+      );
+      categoryDict[v.key] = v.values
+        .filter((val) => {
+          return !excludedCat.has(val);
+        })
+        .map((c) => new ValueStateValue(c));
     }
   });
 
