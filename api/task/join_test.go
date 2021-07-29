@@ -94,7 +94,7 @@ func TestJoin(t *testing.T) {
 
 	leftJoin := &JoinSpec{
 		DatasetID:        "test_1",
-		DatasetFolder:    "test_1_TRAIN",
+		DatasetPath:      "test_1_TRAIN",
 		DatasetSource:    "contrib",
 		UpdatedVariables: varsLeft,
 		ExistingMetadata: &model.Metadata{
@@ -106,7 +106,7 @@ func TestJoin(t *testing.T) {
 
 	rightJoin := &JoinSpec{
 		DatasetID:        "test_2",
-		DatasetFolder:    "test_2_TRAIN",
+		DatasetPath:      "test_2_TRAIN",
 		DatasetSource:    "contrib",
 		UpdatedVariables: varsRight,
 		ExistingMetadata: &model.Metadata{
@@ -124,7 +124,7 @@ func TestJoin(t *testing.T) {
 	pipelineDesc, err := description.CreateDatamartAugmentPipeline("Join Preview",
 		"Join to be reviewed by user", rightOrigin.SearchResult, rightOrigin.Provenance)
 	assert.NoError(t, err)
-	datasetLeftURI := env.ResolvePath(leftJoin.DatasetSource, leftJoin.DatasetFolder)
+	datasetLeftURI := env.ResolvePath(leftJoin.DatasetSource, leftJoin.DatasetPath)
 	_, result, err := join(leftJoin, rightJoin, pipelineDesc, []string{datasetLeftURI}, testSubmitter{}, false)
 
 	assert.NoError(t, err)

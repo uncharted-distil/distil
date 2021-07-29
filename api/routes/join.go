@@ -67,15 +67,15 @@ func JoinHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor)
 
 		leftJoin := &task.JoinSpec{
 			DatasetID:     datasetLeft["id"].(string),
-			DatasetFolder: datasetLeft["datasetFolder"].(string),
 			DatasetSource: metadata.DatasetSource(datasetLeft["source"].(string)),
 		}
+		leftJoin.DatasetPath = env.ResolvePath(leftJoin.DatasetSource, datasetLeft["datasetFolder"].(string))
 
 		rightJoin := &task.JoinSpec{
 			DatasetID:     datasetRight["id"].(string),
-			DatasetFolder: datasetRight["datasetFolder"].(string),
 			DatasetSource: metadata.DatasetSource(datasetRight["source"].(string)),
 		}
+		rightJoin.DatasetPath = env.ResolvePath(rightJoin.DatasetSource, datasetRight["datasetFolder"].(string))
 
 		leftVariables, err := parseVariables(datasetLeft["variables"].([]interface{}))
 		if err != nil {
@@ -305,7 +305,7 @@ func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, params map[st
 	if dsLeft.LearningDataset != "" {
 		path, data, err = joinPrefeaturized(dataStorage, metaStorage, joinLeft, joinRight, joinPairs)
 	} else {
-		path, data, err = task.JoinDistil(dataStorage, joinLeft, joinRight, joinPairs)
+		path, data, err = task.JoinDistil(dataStorage, joinLeft, joinRight, joinPairs, false)
 	}
 	if err != nil {
 		return "", nil, err
@@ -324,9 +324,10 @@ func joinPrefeaturized(dataStorage api.DataStorage, metaStorage api.MetadataStor
 		return "", nil, err
 	}
 	joinLeft.ExistingMetadata = metaLeft
+	joinLeft.DatasetPath = metaLeft.LearningDataset
 
 	// join as normal
-	path, data, err := task.JoinDistil(dataStorage, joinLeft, joinRight, joinPairs)
+	path, data, err := task.JoinDistil(dataStorage, joinLeft, joinRight, joinPairs, true)
 	if err != nil {
 		return "", nil, err
 	}
@@ -352,7 +353,7 @@ func joinPrefeaturized(dataStorage api.DataStorage, metaStorage api.MetadataStor
 	}
 
 	// read the source dataset
-	diskDataset, err := api.LoadDiskDatasetFromFolder(env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetFolder))
+	diskDataset, err := api.LoadDiskDatasetFromFolder(env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetPath))
 	if err != nil {
 		return "", nil, err
 	}

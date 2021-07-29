@@ -42,7 +42,7 @@ type primitiveSubmitter interface {
 // JoinSpec stores information for one side of a join operation.
 type JoinSpec struct {
 	DatasetID        string
-	DatasetFolder    string
+	DatasetPath      string
 	DatasetSource    ingestMetadata.DatasetSource
 	ExistingMetadata *model.Metadata
 	UpdatedVariables []*model.Variable
@@ -63,13 +63,13 @@ func JoinDatamart(joinLeft *JoinSpec, joinRight *JoinSpec, rightOrigin *model.Da
 	if err != nil {
 		return "", nil, err
 	}
-	datasetLeftURI := env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetFolder)
+	datasetLeftURI := env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetPath)
 
 	return join(joinLeft, joinRight, pipelineDesc, []string{datasetLeftURI}, defaultSubmitter{}, false)
 }
 
 // JoinDistil will bring misery.
-func JoinDistil(dataStorage apiModel.DataStorage, joinLeft *JoinSpec, joinRight *JoinSpec, joinPairs []*JoinPair) (string, *apiModel.FilteredData, error) {
+func JoinDistil(dataStorage apiModel.DataStorage, joinLeft *JoinSpec, joinRight *JoinSpec, joinPairs []*JoinPair, returnRaw bool) (string, *apiModel.FilteredData, error) {
 	isKey := false
 	varsLeftMapUpdated := mapDistilJoinVars(joinLeft.UpdatedVariables)
 	varsRightMapUpdated := mapDistilJoinVars(joinRight.UpdatedVariables)
@@ -114,10 +114,10 @@ func JoinDistil(dataStorage apiModel.DataStorage, joinLeft *JoinSpec, joinRight 
 		return "", nil, err
 	}
 
-	datasetLeftURI := env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetFolder)
-	datasetRightURI := env.ResolvePath(joinRight.DatasetSource, joinRight.DatasetFolder)
+	datasetLeftURI := joinLeft.DatasetPath
+	datasetRightURI := joinRight.DatasetPath
 
-	return join(joinLeft, joinRight, pipelineDesc, []string{datasetLeftURI, datasetRightURI}, defaultSubmitter{}, false)
+	return join(joinLeft, joinRight, pipelineDesc, []string{datasetLeftURI, datasetRightURI}, defaultSubmitter{}, returnRaw)
 }
 
 func join(joinLeft *JoinSpec, joinRight *JoinSpec, pipelineDesc *description.FullySpecifiedPipeline,
