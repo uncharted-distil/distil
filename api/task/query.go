@@ -217,30 +217,40 @@ func writeQueryDataset(ds *api.Dataset, data [][]string) (string, error) {
 
 	return datasetPathTarget, nil
 }
-
-func persistQueryResults(params QueryParams, storageName string, resultData [][]string) error {
-	targetScore := fmt.Sprintf("__query_%s", params.TargetName)
-	// results should be d3mindex, score
-	exists, err := params.DataStorage.DoesVariableExist(params.Dataset, storageName, targetScore)
+func upsertVariable(params QueryParams, dataset string, storageName string, varName string, varType string, displayName string, defaultVal string) error {
+	exists, err := params.DataStorage.DoesVariableExist(params.Dataset, storageName, varName)
 	if err != nil {
 		return err
 	}
 	if !exists {
 		// create the variable to hold the score
-		err = params.DataStorage.AddVariable(params.Dataset, storageName, targetScore, model.RealType, "0.0")
+		err = params.DataStorage.AddVariable(params.Dataset, storageName, varName, varType, defaultVal)
 		if err != nil {
 			return err
 		}
-		err = params.MetaStorage.AddVariable(params.Dataset, targetScore, "confidence", model.RealType, model.VarDistilRoleData)
+		err = params.MetaStorage.AddVariable(params.Dataset, varName, displayName, varType, model.VarDistilRoleData)
 		if err != nil {
 			return err
 		}
 
 	} else {
-		err = params.DataStorage.SetVariableValue(params.Dataset, storageName, targetScore, "0.0", nil)
+		err = params.DataStorage.SetVariableValue(params.Dataset, storageName, varName, defaultVal, nil)
 		if err != nil {
 			return err
 		}
+	}
+	return nil
+}
+func persistQueryResults(params QueryParams, storageName string, resultData [][]string) error {
+	targetScore := fmt.Sprintf("__query_%s", params.TargetName)
+	targetRank := fmt.Sprintf("__rank_%s", params.TargetName)
+	err := upsertVariable(params, params.Dataset, storageName, targetScore, model.RealType, "confidence", "0.0")
+	if err != nil {
+		return err
+	}
+	err = upsertVariable(params, params.Dataset, storageName, targetRank, model.IntegerType, "rank", "0")
+	if err != nil {
+		return err
 	}
 	// create filter for positive only labels
 	filterParams := api.FilterParams{Size: math.MaxInt32, Variables: []string{params.TargetName}, Filters: []*model.FilterSet{}, Invert: false, DataMode: 0}
@@ -258,9 +268,19 @@ func persistQueryResults(params QueryParams, storageName string, resultData [][]
 		}
 	}
 	// restructure the results to match expected collection format
-	updates := map[string]string{}
+	scoreUpdates := map[string]string{}
+	rankUpdates := map[string]string{}
+	rank := 1
+	resultDataLen := len(resultData[1:])
 	for _, r := range resultData[1:] {
-		updates[r[0]] = r[1]
+		currentIdx := resultDataLen-rank
+		scoreUpdates[r[0]] = r[1]
+		// for ranking we iterate in reverse as the lowest ranks are at the end of the array
+		rankUpdates[resultData[currentIdx][0]] = strconv.Itoa(rank)
+		// make sure to stay within bounds and check that the next element is different if it is increase rank (the array is sorted)
+		if resultDataLen-(rank+1) >= 0 && resultData[currentIdx][1] != resultData[currentIdx-1][1]{
+			rank++
+		}
 	}
 
 	// parse all positive labels and assign confidence of 1
@@ -270,15 +290,21 @@ func persistQueryResults(params QueryParams, storageName string, resultData [][]
 			return errors.New("Error parsing positive labels")
 		}
 		// range filters upper range is exclusive, therefore if the confidence value is 1 it would be out of range of filtering
-		updates[strconv.Itoa(int(d3mIdx))] = "0.99"
+		typedD3mIndex:=strconv.Itoa(int(d3mIdx))
+		scoreUpdates[typedD3mIndex] = "0.99"
+		rankUpdates[typedD3mIndex] = strconv.Itoa(rank)
 	}
 
-	// overwrite the stored ranking
-	err = params.DataStorage.UpdateVariableBatch(storageName, targetScore, updates)
+	// overwrite the stored scores
+	err = params.DataStorage.UpdateVariableBatch(storageName, targetScore, scoreUpdates)
 	if err != nil {
 		return err
 	}
-
+	// overwrite the stored ranking
+	err = params.DataStorage.UpdateVariableBatch(storageName, targetRank, rankUpdates)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

@@ -110,6 +110,7 @@ export const FILE_PROVENANCE = "file";
 
 export const IMPORTANT_VARIABLE_RANKING_THRESHOLD = 0.5;
 export const LOW_SHOT_SCORE_COLUMN_PREFIX = "__query_";
+export const LOW_SHOT_RANK_COLUMN_PREFIX = "__rank_";
 export enum UnitTypes {
   Time,
   Distance,

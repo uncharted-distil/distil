@@ -86,7 +86,7 @@
             :active="explorerSelectState"
             @click="explorerNav('select')"
           >
-            <i class="fa fa-dot-circle-o nav-icon" /> New Model: Select Target
+            <i class="fa fa-dot-circle-o nav-icon" /> New Model
           </b-nav-item>
           <b-nav-item
             :active="explorerResultState"
