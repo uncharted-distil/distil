@@ -16,7 +16,6 @@
 package task
 
 import (
-	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -27,12 +26,6 @@ import (
 	"github.com/uncharted-distil/distil/api/env"
 	apiModel "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/serialization"
-	log "github.com/unchartedsoftware/plog"
-)
-
-const (
-	lineCount         = 100
-	maxReportedErrors = 50
 )
 
 type primitiveSubmitter interface {
@@ -141,7 +134,7 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, pipelineDesc *description.Ful
 	}
 
 	// return some of the data for the client to preview
-	data, err := createFilteredData(csvFilename, mergedVariables, returnRaw, lineCount)
+	data, err := createFilteredData(csvFilename, mergedVariables, returnRaw, 100)
 	if err != nil {
 		return "", nil, err
 	}
@@ -194,83 +187,7 @@ func createFilteredData(csvFile string, variables []*model.Variable, returnRaw b
 		return nil, errors.Wrap(err, "failed to read joined data")
 	}
 
-	data := &apiModel.FilteredData{}
-
-	data.Columns = map[string]*apiModel.Column{}
-	for _, variable := range variables {
-		data.Columns[variable.Key] = &apiModel.Column{
-			Label: variable.DisplayName,
-			Key:   variable.Key,
-			Type:  variable.Type,
-			Index: len(data.Columns),
-		}
-	}
-
-	data.Values = [][]*apiModel.FilteredDataValue{}
-
-	// discard header
-	inputData = inputData[1:]
-
-	maxCount := lineCount
-	if returnRaw {
-		maxCount = len(inputData)
-	}
-
-	errorCount := 0
-	discardCount := 0
-	for i := 0; i < maxCount && i < len(inputData); i++ {
-		row := inputData[i]
-
-		// convert row values to schema type
-		// rows that are malformed are discarded
-		typedRow := make([]*apiModel.FilteredDataValue, len(row))
-		var rowError error
-		for j := 0; j < len(row); j++ {
-			varType := variables[j].Type
-			typedRow[j] = &apiModel.FilteredDataValue{}
-			if !returnRaw && model.IsNumerical(varType) && row[j] != "" {
-				if model.IsFloatingPoint(varType) {
-					typedRow[j].Value, err = strconv.ParseFloat(row[j], 64)
-					if err != nil {
-						rowError = errors.Wrapf(err, "failed conversion for row %d", i)
-						errorCount++
-						break
-					}
-				} else {
-					typedRow[j].Value, err = strconv.ParseInt(row[j], 10, 64)
-					if err != nil {
-						flt, err := strconv.ParseFloat(row[j], 64)
-						if err != nil {
-							rowError = errors.Wrapf(err, "failed conversion for row %d", i)
-							errorCount++
-							break
-						}
-						typedRow[j].Value = int64(flt)
-					}
-				}
-			} else {
-				typedRow[j].Value = row[j]
-			}
-		}
-		if rowError != nil {
-			discardCount++
-			if errorCount < maxReportedErrors {
-				log.Warn(rowError)
-			} else if errorCount == maxReportedErrors {
-				log.Warn("too many errors - logging of remainder surpressed")
-			}
-			continue
-		}
-		data.Values = append(data.Values, typedRow)
-	}
-
-	if discardCount > 0 {
-		log.Warnf("discarded %d rows due to parsing parsing errors", discardCount)
-	}
-
-	data.NumRows = len(data.Values)
-
-	return data, nil
+	return apiModel.CreateFilteredData(inputData, variables, returnRaw, lineCount)
 }
 
 func denormVariableName(variable *model.Variable) string {

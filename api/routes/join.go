@@ -317,6 +317,7 @@ func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, params map[st
 func joinPrefeaturized(dataStorage api.DataStorage, metaStorage api.MetadataStorage, joinLeft *task.JoinSpec,
 	joinRight *task.JoinSpec, joinPairs []*task.JoinPair) (string, *api.FilteredData, error) {
 
+	log.Infof("joining a prefeaturized dataset")
 	// switch the left join info to point to the learning dataset
 	sourceVarMap := api.MapVariables(joinLeft.UpdatedVariables, func(variable *model.Variable) string { return variable.Key })
 	metaLeft, err := getDiskMetadata(joinLeft.DatasetID, metaStorage, true)
@@ -353,7 +354,7 @@ func joinPrefeaturized(dataStorage api.DataStorage, metaStorage api.MetadataStor
 	}
 
 	// read the source dataset
-	diskDataset, err := api.LoadDiskDatasetFromFolder(env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetPath))
+	diskDataset, err := api.LoadDiskDatasetFromFolder(joinLeft.DatasetPath)
 	if err != nil {
 		return "", nil, err
 	}
@@ -365,12 +366,18 @@ func joinPrefeaturized(dataStorage api.DataStorage, metaStorage api.MetadataStor
 	}
 
 	// store the raw data to disk
-	err = serialization.WriteData(path, diskDataset.Dataset.Data)
+	log.Infof("writing updated source data to %s", path)
+	err = diskDataset.SaveDataset()
 	if err != nil {
 		return "", nil, err
 	}
 
-	return path, data, nil
+	dataParsed, err := api.CreateFilteredData(diskDataset.Dataset.Data, diskDataset.Dataset.Metadata.GetMainDataResource().Variables, false, 100)
+	if err != nil {
+		return "", nil, err
+	}
+
+	return path, dataParsed, nil
 }
 
 func joinDatamart(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, varsLeft []*model.Variable,
