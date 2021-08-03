@@ -749,7 +749,7 @@ func DefaultPostgresValueFromD3MType(typ string) interface{} {
 	switch typ {
 	case model.IndexType:
 		return float64(0)
-	case model.LongitudeType, model.LatitudeType, model.RealType:
+	case model.LongitudeType, model.LatitudeType, model.RealType, model.GeoCoordinateType:
 		return "'NaN'::double precision"
 	case model.IntegerType, model.TimestampType, model.DateTimeType:
 		return "NULL"
