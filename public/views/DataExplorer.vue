@@ -929,7 +929,7 @@ const DataExplorer = Vue.extend({
       if (!isEmpty(this.explore)) return;
 
       // get the top 5 variables
-      const top5Variables = [...sortVariablesByImportance(this.variables)]
+      const top5Variables = [...this.variables]
         .slice(0, number)
         .map((variable) => variable.key)
         .join(",");
