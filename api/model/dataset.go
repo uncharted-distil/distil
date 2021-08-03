@@ -204,6 +204,11 @@ func (d *DiskDataset) UpdateRawData(varMap map[string]*model.Variable, data [][]
 	return nil
 }
 
+// UpdatePath updates the path of the disk dataset to point to a new location.
+func (d *DiskDataset) UpdatePath(datasetFolder string) {
+	d.schemaPath = path.Join(datasetFolder, compute.D3MDataSchema)
+}
+
 // SaveDataset saves a dataset to disk.
 func (d *DiskDataset) SaveDataset() error {
 	err := serialization.WriteDataset(path.Dir(d.schemaPath), d.Dataset)

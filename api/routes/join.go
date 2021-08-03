@@ -326,6 +326,10 @@ func joinPrefeaturized(dataStorage api.DataStorage, metaStorage api.MetadataStor
 	}
 	joinLeft.ExistingMetadata = metaLeft
 	joinLeft.DatasetPath = metaLeft.LearningDataset
+	existingVarLeft := map[string]bool{}
+	for _, v := range metaLeft.GetMainDataResource().Variables {
+		existingVarLeft[v.HeaderName] = true
+	}
 
 	// join as normal
 	path, data, err := task.JoinDistil(dataStorage, joinLeft, joinRight, joinPairs, true)
@@ -338,7 +342,7 @@ func joinPrefeaturized(dataStorage api.DataStorage, metaStorage api.MetadataStor
 	prefeaturizedUpdates := [][]string{{}}
 	newCols := []int{}
 	for vName, v := range data.Columns {
-		if v.Key == model.D3MIndexFieldName || sourceVarMap[v.Key] == nil {
+		if v.Key == model.D3MIndexFieldName || !existingVarLeft[v.Key] {
 			newCols = append(newCols, v.Index)
 			prefeaturizedUpdates[0] = append(prefeaturizedUpdates[0], vName)
 		}
@@ -367,6 +371,7 @@ func joinPrefeaturized(dataStorage api.DataStorage, metaStorage api.MetadataStor
 
 	// store the raw data to disk
 	log.Infof("writing updated source data to %s", path)
+	diskDataset.UpdatePath(path)
 	err = diskDataset.SaveDataset()
 	if err != nil {
 		return "", nil, err
