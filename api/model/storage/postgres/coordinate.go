@@ -23,6 +23,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/postgres"
 )
 
 const coordinateBuckets = 20
@@ -293,4 +294,20 @@ func (f *CoordinateField) parseHistogram(rows pgx.Rows, xExtrema *api.Extrema, y
 // the coordinate histogram for the field.
 func (f *CoordinateField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.VariableSummary, error) {
 	return nil, fmt.Errorf("not implemented")
+}
+
+func (f *CoordinateField) getDefaultFilter(inverse bool) string {
+	defaultValue := fmt.Sprintf("%v", postgres.DefaultPostgresValueFromD3MType(f.GetType()))
+
+	// null comparison is done with "is" rather than "="
+	op := "="
+	if defaultValue == "NULL" {
+		op = "is"
+	}
+	negate := ""
+	if inverse {
+		negate = "NOT"
+	}
+
+	return fmt.Sprintf("%s(\"%s\" %s %s AND \"%s\" %s %s)", negate, f.XCol, op, defaultValue, f.YCol, op, defaultValue)
 }
