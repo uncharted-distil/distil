@@ -37,6 +37,7 @@
         </template>
         <facet-list-pane
           v-else
+          :is-target-panel="activePane === 'target' && isSelectState"
           :variables="activeVariables"
           :enable-color-scales="geoVarExists"
           :include="include"
@@ -411,7 +412,7 @@ import ExplorerConfig, {
   LABEL_METHODS,
   GENERIC_METHODS,
 } from "../util/dataExplorer";
-import { LowShotLabels } from "../util/data";
+import { LowShotLabels, sortVariablesByImportance } from "../util/data";
 import _ from "lodash";
 
 const DataExplorer = Vue.extend({
@@ -480,18 +481,7 @@ const DataExplorer = Vue.extend({
     /* All variables, only used for lex as we need to parse the hidden variables from groupings */
     allVariables(): Variable[] {
       const variables = [...this.state.getLexBarVariables()];
-      variables.sort((a, b) => {
-        // If their ranking are identical or do not exist
-        // sort by importance
-        if (a?.ranking === b?.ranking) {
-          return b.importance - a.importance;
-
-          // otherwise by ranking
-        } else {
-          return b.ranking - a.ranking;
-        }
-      });
-      return variables;
+      return sortVariablesByImportance(variables);
     },
 
     /* Actions available based on the variables meta types */
@@ -637,18 +627,7 @@ const DataExplorer = Vue.extend({
       const variables = this.state
         .getVariables()
         .filter((v) => v.distilRole !== DISTIL_ROLES.Meta);
-      variables.sort((a, b) => {
-        // If their ranking are identical or do not exist
-        // sort by importance
-        if (a?.ranking === b?.ranking) {
-          return b.importance - a.importance;
-
-          // otherwise by ranking
-        } else {
-          return b.ranking - a.ranking;
-        }
-      });
-      return variables;
+      return sortVariablesByImportance(variables);
     },
 
     variablesPerActions() {
@@ -950,7 +929,7 @@ const DataExplorer = Vue.extend({
       if (!isEmpty(this.explore)) return;
 
       // get the top 5 variables
-      const top5Variables = [...this.variables]
+      const top5Variables = [...sortVariablesByImportance(this.variables)]
         .slice(0, number)
         .map((variable) => variable.key)
         .join(",");

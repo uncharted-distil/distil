@@ -26,6 +26,7 @@ import {
   getAllVariablesSummaries,
   LOW_SHOT_RANK_COLUMN_PREFIX,
   LOW_SHOT_SCORE_COLUMN_PREFIX,
+  sortVariablesByImportance,
 } from "../data";
 import { ExplorerStateNames } from "../dataExplorer";
 import { Dictionary } from "../dict";
@@ -201,7 +202,9 @@ export class SelectViewState implements BaseState {
   fetchVariableSummaries(): Promise<unknown> {
     const fetchArgs = {
       dataset: routeGetters.getRouteDataset(store),
-      variables: this.getVariables().concat(this.getSecondaryVariables()),
+      variables: sortVariablesByImportance(
+        this.getVariables().concat(this.getSecondaryVariables())
+      ),
       filterParams: routeGetters.getDecodedSolutionRequestFilterParams(store),
       highlights: routeGetters.getDecodedHighlights(store),
       dataMode: routeGetters.getDataMode(store),
