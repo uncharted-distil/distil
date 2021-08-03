@@ -30,7 +30,11 @@ import {
 import { getters as resultsGetters } from "../store/results/module";
 import { overlayRouteEntry } from "../util/routes";
 import { Filter, ROW_FILTER } from "../util/filters";
-import { SELECT_TRAINING_ROUTE, RESULTS_ROUTE } from "../store/route/index";
+import {
+  SELECT_TRAINING_ROUTE,
+  RESULTS_ROUTE,
+  DATA_EXPLORER_ROUTE,
+} from "../store/route/index";
 import _ from "lodash";
 import store from "../store/store";
 import VueRouter from "vue-router";
@@ -161,6 +165,10 @@ export function getSelectedRows(include: boolean): Row[] {
     tableData = include
       ? resultsGetters.getIncludedResultTableDataItems(store)
       : resultsGetters.getExcludedResultTableDataItems(store);
+  } else if (path === DATA_EXPLORER_ROUTE) {
+    tableData = include
+      ? dataGetters.getIncludedTableDataItems(store)
+      : dataGetters.getExcludedTableDataItems(store);
   }
 
   if (!tableData) {

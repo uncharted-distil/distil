@@ -32,6 +32,11 @@
       >
         Select All Training
       </b-button>
+      <positive-label
+        v-if="labels && isTargetPanel"
+        class="pt-2"
+        :labels="labels"
+      />
     </header>
     <variable-facets
       enable-highlighting
@@ -64,7 +69,7 @@ import Vue from "vue";
 import { isNil } from "lodash";
 
 import VariableFacets from "../../components/facets/VariableFacets.vue";
-
+import PositiveLabel from "../buttons/PositiveLabel.vue";
 import {
   SummaryMode,
   TaskTypes,
@@ -99,6 +104,7 @@ export default Vue.extend({
   name: "FacetListPane",
 
   components: {
+    PositiveLabel,
     VariableFacets,
   },
 
@@ -114,6 +120,7 @@ export default Vue.extend({
     enableColorScales: { type: Boolean as () => boolean, default: false },
     include: { type: Boolean as () => boolean, default: true },
     enableFooter: { type: Boolean as () => boolean, default: false },
+    isTargetPanel: { type: Boolean as () => boolean, default: false },
   },
 
   data() {
@@ -125,6 +132,20 @@ export default Vue.extend({
   },
 
   computed: {
+    targetSummaries(): VariableSummary[] {
+      return routeGetters.getTargetVariableSummaries(this.$store)(this.include);
+    },
+    labels(): string[] {
+      // make sure we are only on a binary classification task
+      if (!routeGetters.isBinaryClassification(this.$store)) return;
+
+      // retreive the target variable buckets
+      const buckets = this.targetSummaries?.[0]?.baseline?.buckets;
+      if (!buckets) return;
+
+      // use the buckets keys as labels
+      return buckets.map((bucket) => bucket.key);
+    },
     hasTarget(): boolean {
       return !!routeGetters.getTargetVariable(this.$store);
     },
@@ -200,16 +221,20 @@ export default Vue.extend({
 
     activeSummaries(): VariableSummary[] {
       const searchedMap = new Map(
-        this.searchedActiveVariables.map((v) => {
-          return [v.key, true];
+        this.searchedActiveVariables.map((v, idx) => {
+          return [v.key, idx];
         })
       );
       const pageId = DATA_EXPLORER_VAR_INSTANCE + ROUTE_PAGE_SUFFIX;
       const page = getRouteFacetPage(pageId, this.$route);
       const begin = (page - 1) * this.numRowsPerPage;
-      const currentSummaries = this.summaries.filter((s) => {
-        return searchedMap.has(s.key);
-      });
+      const currentSummaries = this.summaries
+        .filter((s) => {
+          return searchedMap.has(s.key);
+        })
+        .sort((a, b) => {
+          return searchedMap.get(a.key) - searchedMap.get(b.key);
+        });
       const end = Math.min(page * this.numRowsPerPage, currentSummaries.length);
       return currentSummaries.slice(begin, end);
     },

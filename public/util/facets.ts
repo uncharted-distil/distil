@@ -22,7 +22,6 @@ import {
   RowSelection,
   VariableSummary,
 } from "../store/dataset/index";
-import { getters as routeGetters } from "../store/route/module";
 import { getters as datasetGetters } from "../store/dataset/module";
 import store from "../store/store";
 import { getTimeseriesSummaryTopCategories } from "../util/data";
@@ -46,7 +45,6 @@ import {
   URI_TYPE,
 } from "../util/types";
 import { ColorScaleNames, COLOR_SCALES, DISCRETE_COLOR_MAPS } from "./color";
-import { Color, color } from "d3-color";
 
 export const CATEGORICAL_CHUNK_SIZE = 5;
 export const IMAGE_CHUNK_SIZE = 5;
