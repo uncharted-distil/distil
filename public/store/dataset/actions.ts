@@ -412,7 +412,10 @@ export const actions = {
     if (routeGetters.isOutlierApplied(store) || isOutlierExist()) return;
 
     const variableName = getOutlierVariableName();
-
+    if (!variableName) {
+      console.warn("No suitable variables found for outlier detection");
+      return;
+    }
     // Create the request.
     let status: DatasetPendingRequestStatus;
     const request: OutlierPendingRequest = {
