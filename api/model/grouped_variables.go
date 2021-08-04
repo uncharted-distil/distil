@@ -78,6 +78,13 @@ func ExpandFilterParams(dataset string, filterParams *FilterParams, includeHidde
 				}
 			}
 		}
+		for _, fo := range updatedFilterParams.Highlights {
+			for _, fl := range fo.FeatureFilters {
+				for _, f := range fl.List {
+					UpdateFilterKey(metaStore, dataset, updatedFilterParams.DataMode, f, variable)
+				}
+			}
+		}
 	}
 
 	// create variable lookup
