@@ -352,6 +352,7 @@ import {
   datasetGetters,
   requestGetters,
   resultGetters,
+  datasetActions,
 } from "../store";
 import {
   Extrema,
@@ -809,6 +810,9 @@ const DataExplorer = Vue.extend({
       const route = routeGetters.getRoute(this.$store);
       const entry = overlayRouteEntry(route, { hasGeoData: this.geoVarExists });
       this.$router.push(entry).catch((err) => console.warn(err));
+    },
+    targetName() {
+      datasetActions.fetchOutliers(this.$store, this.dataset);
     },
   },
 
