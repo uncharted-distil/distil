@@ -56,6 +56,12 @@ func VariableRankingHandler(metaCtor api.MetadataStorageCtor) func(http.Response
 			handleError(w, errors.Wrap(err, "unable to expand grouped variables"))
 			return
 		}
+		d3mIndex, err := storage.FetchVariable(dataset, model.D3MIndexFieldName)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to fetch d3mIndex variable"))
+			return
+		}
+		summaryVariables = append(summaryVariables, d3mIndex)
 		rankings, err = targetRank(d, target, summaryVariables, d.Source)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable get variable ranking"))
