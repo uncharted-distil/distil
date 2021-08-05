@@ -100,9 +100,14 @@ func VariableSummaryHandler(metaCtor api.MetadataStorageCtor, ctorStorage api.Da
 			boundsFilter.IsBaselineFilter = true
 			filterParams.AddFilter(boundsFilter)
 		}
-
+		// replace any grouped variables in filter params with the group's
+		expandedFilterParams, err := api.ExpandFilterParams(dataset, filterParams, false, meta)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to expand filter params"))
+			return
+		}
 		// fetch summary histogram
-		summary, err := storage.FetchSummary(dataset, storageName, variable, filterParams, mode)
+		summary, err := storage.FetchSummary(dataset, storageName, variable, expandedFilterParams, mode)
 		if err != nil {
 			handleError(w, err)
 			return
