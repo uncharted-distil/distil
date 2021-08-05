@@ -310,7 +310,7 @@ export const mutations = {
   },
 
   updateFile(state: DatasetState, args: { url: string; file: any }) {
-    Vue.set(state.files, args.url, args.file);
+    Vue.set(state.files, args.url, Object.freeze(args.file));
   },
   bulkUpdateFiles(state: DatasetState, args: { urls: string[]; files: any[] }) {
     const clone = _.cloneDeep(state.files);
@@ -454,16 +454,16 @@ export const mutations = {
     updateTableDataItems(state.areaOfInterestIncludeInner, tableData);
   },
   setAreaOfInterestIncludeInner(state: DatasetState, tableData: TableData) {
-    state.areaOfInterestIncludeInner = tableData;
+    state.areaOfInterestIncludeInner = Object.freeze(tableData);
   },
   setAreaOfInterestIncludeOuter(state: DatasetState, tableData: TableData) {
-    state.areaOfInterestIncludeOuter = tableData;
+    state.areaOfInterestIncludeOuter = Object.freeze(tableData);
   },
   setAreaOfInterestExcludeInner(state: DatasetState, tableData: TableData) {
-    state.areaOfInterestExcludeInner = tableData;
+    state.areaOfInterestExcludeInner = Object.freeze(tableData);
   },
   setAreaOfInterestExcludeOuter(state: DatasetState, tableData: TableData) {
-    state.areaOfInterestExcludeOuter = tableData;
+    state.areaOfInterestExcludeOuter = Object.freeze(tableData);
   },
   clearAreaOfInterestIncludeInner(state: DatasetState) {
     state.areaOfInterestIncludeInner = null;
@@ -495,8 +495,8 @@ export const mutations = {
   },
 
   updateRowSelectionData(state) {
-    state.includedSet.rowSelectionData = getSelectedRows(true);
-    state.excludedSet.rowSelectionData = getSelectedRows(false);
+    state.includedSet.rowSelectionData = Object.freeze(getSelectedRows(true));
+    state.excludedSet.rowSelectionData = Object.freeze(getSelectedRows(false));
   },
 
   updateTask(state: DatasetState, task: Task) {

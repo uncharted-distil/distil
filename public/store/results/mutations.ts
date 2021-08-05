@@ -76,10 +76,10 @@ export const mutations = {
     state.areaOfInterestOuter = null;
   },
   setAreaOfInterestInner(state: ResultsState, resultData: TableData) {
-    state.areaOfInterestInner = resultData;
+    state.areaOfInterestInner = Object.freeze(resultData);
   },
   setAreaOfInterestOuter(state: ResultsState, resultData: TableData) {
-    state.areaOfInterestOuter = resultData;
+    state.areaOfInterestOuter = Object.freeze(resultData);
   },
   // predicted
 

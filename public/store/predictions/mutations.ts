@@ -45,10 +45,10 @@ export const mutations = {
     state.includedPredictionTableData = Object.freeze(predictionData);
   },
   setAreaOfInterestInner(state: PredictionState, resultData: TableData) {
-    state.areaOfInterestInner = resultData;
+    state.areaOfInterestInner = Object.freeze(resultData);
   },
   setAreaOfInterestOuter(state: PredictionState, resultData: TableData) {
-    state.areaOfInterestOuter = resultData;
+    state.areaOfInterestOuter = Object.freeze(resultData);
   },
   clearAreaOfInterestInner(state: PredictionState) {
     state.areaOfInterestInner = null;

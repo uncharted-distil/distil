@@ -46,7 +46,7 @@ import DataExplorer from "./views/DataExplorer.vue";
 Vue.component("v-select", vSelect);
 Vue.use(BootstrapVue);
 Vue.use(VueObserveVisibility);
-
+Vue.config.performance = true;
 // sync store and router
 VueRouterSync.sync(store, router, { moduleName: "routeModule" });
 
