@@ -545,7 +545,7 @@ const DataExplorer = Vue.extend({
       return routeGetters.isTimeseries(this.$store);
     },
     highlights(): Highlight[] {
-      return routeGetters.getDecodedHighlights(this.$store);
+      return _.cloneDeep(routeGetters.getDecodedHighlights(this.$store));
     },
     solution(): Solution {
       return requestGetters.getActiveSolution(this.$store);
@@ -798,7 +798,7 @@ const DataExplorer = Vue.extend({
     },
 
     highlights(n, o) {
-      if (n === o) return;
+      if (_.isEqual(n, o)) return;
       this.state.fetchData();
     },
 
