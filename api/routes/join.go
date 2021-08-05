@@ -316,10 +316,12 @@ func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, params map[st
 
 func joinPrefeaturized(dataStorage api.DataStorage, metaStorage api.MetadataStorage, joinLeft *task.JoinSpec,
 	joinRight *task.JoinSpec, joinPairs []*task.JoinPair) (string, *api.FilteredData, error) {
+	sourceDataset := joinLeft.DatasetPath
 
 	log.Infof("joining a prefeaturized dataset")
 	// switch the left join info to point to the learning dataset
 	sourceVarMap := api.MapVariables(joinLeft.UpdatedVariables, func(variable *model.Variable) string { return variable.Key })
+	rightVarMap := api.MapVariables(joinRight.UpdatedVariables, func(variable *model.Variable) string { return variable.Key })
 	metaLeft, err := getDiskMetadata(joinLeft.DatasetID, metaStorage, true)
 	if err != nil {
 		return "", nil, err
@@ -345,6 +347,11 @@ func joinPrefeaturized(dataStorage api.DataStorage, metaStorage api.MetadataStor
 		if v.Key == model.D3MIndexFieldName || !existingVarLeft[v.Key] {
 			newCols = append(newCols, v.Index)
 			prefeaturizedUpdates[0] = append(prefeaturizedUpdates[0], vName)
+			if rightVarMap[v.Key] != nil {
+				vNew := rightVarMap[v.Key].Clone()
+				vNew.Immutable = false
+				sourceVarMap[v.Key] = vNew
+			}
 		}
 	}
 
@@ -358,7 +365,7 @@ func joinPrefeaturized(dataStorage api.DataStorage, metaStorage api.MetadataStor
 	}
 
 	// read the source dataset
-	diskDataset, err := api.LoadDiskDatasetFromFolder(joinLeft.DatasetPath)
+	diskDataset, err := api.LoadDiskDatasetFromFolder(sourceDataset)
 	if err != nil {
 		return "", nil, err
 	}

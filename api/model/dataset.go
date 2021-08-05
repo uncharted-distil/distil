@@ -207,6 +207,12 @@ func (d *DiskDataset) UpdateRawData(varMap map[string]*model.Variable, data [][]
 // UpdatePath updates the path of the disk dataset to point to a new location.
 func (d *DiskDataset) UpdatePath(datasetFolder string) {
 	d.schemaPath = path.Join(datasetFolder, compute.D3MDataSchema)
+
+	// need to update the metadata to set the path of the main data resource
+	if d.Dataset.Metadata != nil {
+		mainDR := d.Dataset.Metadata.GetMainDataResource()
+		mainDR.ResPath = path.Join(datasetFolder, path.Base(path.Dir(mainDR.ResPath)), path.Base(mainDR.ResPath))
+	}
 }
 
 // SaveDataset saves a dataset to disk.
