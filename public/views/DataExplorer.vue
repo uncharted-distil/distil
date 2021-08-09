@@ -457,7 +457,6 @@ const DataExplorer = Vue.extend({
 
   data() {
     return {
-      activePane: "available",
       activeView: 0, // TABLE_VIEW
       instanceName: DATA_EXPLORER_VAR_INSTANCE,
       metaTypes: Object.keys(META_TYPES),
@@ -480,7 +479,7 @@ const DataExplorer = Vue.extend({
 
     /* Variables displayed on the Facet Panel */
     activeVariables(): Variable[] {
-      return this.variablesPerActions[this.activePane] ?? [];
+      return this.variablesPerActions[this.config.currentPane] ?? [];
     },
 
     activeViews(): string[] {
@@ -527,8 +526,9 @@ const DataExplorer = Vue.extend({
     },
     currentAction(): string {
       return (
-        this.activePane &&
-        this.config.actionList.find((a) => a.paneId === this.activePane).name
+        this.config.currentPane &&
+        this.config.actionList.find((a) => a.paneId === this.config.currentPane)
+          .name
       );
     },
     dataset(): string {
@@ -545,7 +545,9 @@ const DataExplorer = Vue.extend({
     hasData(): boolean {
       return this.state.hasData();
     },
-
+    activePane(): string {
+      return this.config.currentPane;
+    },
     hasNoVariables(): boolean {
       return isEmpty(this.activeVariables);
     },
@@ -642,32 +644,8 @@ const DataExplorer = Vue.extend({
     variablesPerActions() {
       const variables = {};
       this.availableActions.forEach((action) => {
-        if (!!action.toggle) {
-          return;
-        }
-        if (action.paneId === "add") variables[action.paneId] = null;
-        else if (action.paneId === "available") {
-          variables[action.paneId] = this.variables;
-        } else if (action.paneId === "target") {
-          variables[action.paneId] = this.target ? [this.target] : [];
-        } else if (action.paneId === "training") {
-          variables[action.paneId] = this.variables.filter((variable) =>
-            this.training.includes(variable.key)
-          );
-        } else if (action.paneId === "outcome") {
-          variables[action.paneId] = this.state.getSecondaryVariables();
-        } else {
-          variables[action.paneId] = this.variables.filter((variable) => {
-            if (!META_TYPES[action.paneId]) {
-              console.log(action);
-              return false;
-            }
-
-            return META_TYPES[action.paneId].includes(variable.colType);
-          });
-        }
+        variables[action.paneId] = action.variables(this);
       });
-
       return variables;
     },
 
@@ -860,14 +838,14 @@ const DataExplorer = Vue.extend({
       viewActions.updateDataExplorerData(this.$store);
     },
     onSetActive(actionName: string): void {
-      if (actionName === this.activePane) return;
+      if (actionName === this.config.currentPane) return;
 
       let activePane = "available"; // default
       if (actionName !== "") {
         activePane = this.config.actionList.find((a) => a.name === actionName)
           .paneId;
       }
-      this.activePane = activePane;
+      this.config.currentPane = activePane;
 
       // update the selected pane, and reset the page var to 1
       this.updateRoute({
@@ -898,7 +876,6 @@ const DataExplorer = Vue.extend({
           dataExplorerState: state.name,
           toggledActions: "[]",
         } as RouteArgs);
-        this.activePane = "available";
       }
     },
     setConfig(config: ExplorerConfig) {
