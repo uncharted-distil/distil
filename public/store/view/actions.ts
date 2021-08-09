@@ -1076,12 +1076,18 @@ export const actions = {
       context.getters.getActivePredictionTrainingVariables,
       currentSearch
     ) as Variable[];
-    const page = routeGetters.getRouteResultTrainingVarsPage(store);
+    const currentRoute = routeGetters.getRoutePath(store);
+    const pages = routeGetters.getAllRoutePages(store);
+    let currentPageIndexes = [];
+    if (pages[currentRoute]) {
+      currentPageIndexes = pages[currentRoute];
+    }
+    const page = currentPageIndexes?.[0];
     const pageSize = NUM_PER_PAGE;
     const activeTrainingVariables = filterArrayByPage(
       page,
       pageSize,
-      trainingVariables
+      sortVariablesByImportance(trainingVariables)
     );
 
     predictionActions.fetchTrainingSummaries(store, {
