@@ -17,7 +17,7 @@
 
 <template>
   <span class="stacked-icons">
-    <i v-if="shouldRender" class="fa fa-circle fa-stack-1x p-1" />
+    <i v-if="shouldRender" class="fa fa-circle fa-stack-1x pl-1" />
     <i :class="getLabel" />
   </span>
 </template>
@@ -35,10 +35,10 @@ export default Vue.extend({
     getLabel(): string {
       switch (this.item[this.labelFeatureName].value) {
         case LowShotLabels.positive:
-          return "fa fa-plus-circle text-success p-1 fa-stack-1x";
+          return "fa fa-plus-circle text-success pl-1 fa-stack-1x";
           break;
         case LowShotLabels.negative:
-          return "fa fa-minus-circle red p-1 fa-stack-1x";
+          return "fa fa-minus-circle red pl-1 fa-stack-1x";
           break;
         default:
           return "d-none";
@@ -61,7 +61,6 @@ export default Vue.extend({
   display: inline-block;
   width: 1em;
   height: 1em;
-  line-height: 1em;
   vertical-align: middle;
 }
 </style>

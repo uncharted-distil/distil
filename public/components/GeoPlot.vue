@@ -38,6 +38,7 @@
       :center-tile="drillDownState.centerTile"
       :bounds="drillDownState.bounds"
       :summaries="summaries"
+      :label-feature-name="labelFeatureName"
       @close="onFocusOut"
     />
     <geoplot-toggle-buttons
@@ -230,6 +231,7 @@ export default Vue.extend({
         return [];
       },
     },
+    labelFeatureName: { type: String, default: "" },
   },
 
   data() {

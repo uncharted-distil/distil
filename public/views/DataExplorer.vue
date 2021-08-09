@@ -130,6 +130,8 @@
           :residual-extrema="residualExtrema"
           :enable-selection-tool-event="isLabelState"
           :variables="allVariables"
+          :label-feature-name="labelName"
+          :label-score-name="labelName"
           :area-of-interest-items="{
             inner: drillDownBaseline,
             outer: drillDownFiltered,
@@ -413,7 +415,11 @@ import ExplorerConfig, {
   LABEL_METHODS,
   GENERIC_METHODS,
 } from "../util/dataExplorer";
-import { LowShotLabels, sortVariablesByImportance } from "../util/data";
+import {
+  LowShotLabels,
+  LOW_SHOT_SCORE_COLUMN_PREFIX,
+  sortVariablesByImportance,
+} from "../util/data";
 import _ from "lodash";
 
 const DataExplorer = Vue.extend({
@@ -747,6 +753,9 @@ const DataExplorer = Vue.extend({
     isRemoteSensing(): boolean {
       return routeGetters.isMultiBandImage(this.$store);
     },
+    labelScoreName(): string {
+      return LOW_SHOT_SCORE_COLUMN_PREFIX + this.labelName;
+    },
     training(): string[] {
       return SELECT_COMPUTES.training(this);
     },
@@ -834,6 +843,8 @@ const DataExplorer = Vue.extend({
     async changeStatesByName(state: ExplorerStateNames) {
       // reset state
       this.state.resetState();
+      // reset config state
+      this.config.resetConfig(this);
       // get the new state object
       this.setState(getStateFromName(state));
       // set the config used for action bar, could be used for other configs

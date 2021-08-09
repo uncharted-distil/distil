@@ -89,6 +89,7 @@ export default interface ExplorerConfig {
   actionList: Action[];
   // these actions will be toggled when the state is switched to
   defaultAction: ActionNames[];
+  resetConfig: (self: DataExplorerRef) => void;
 }
 
 // DataExplorer possible state, used in route
@@ -147,6 +148,9 @@ export class SelectViewConfig implements ExplorerConfig {
       return ACTION_MAP.get(a);
     });
   }
+  resetConfig(self: DataExplorerRef) {
+    return;
+  }
   defaultAction = [];
 }
 export class ResultViewConfig implements ExplorerConfig {
@@ -166,6 +170,9 @@ export class ResultViewConfig implements ExplorerConfig {
     return actions.map((a) => {
       return ACTION_MAP.get(a);
     });
+  }
+  resetConfig(self: DataExplorerRef) {
+    return;
   }
   defaultAction = [ActionNames.OUTCOME_VARIABLES];
 }
@@ -187,6 +194,9 @@ export class PredictViewConfig implements ExplorerConfig {
       return ACTION_MAP.get(a);
     });
   }
+  resetConfig(self: DataExplorerRef) {
+    return;
+  }
   defaultAction = [ActionNames.OUTCOME_VARIABLES];
 }
 export class LabelViewConfig implements ExplorerConfig {
@@ -206,6 +216,9 @@ export class LabelViewConfig implements ExplorerConfig {
     return actions.map((a) => {
       return ACTION_MAP.get(a);
     });
+  }
+  resetConfig(self: DataExplorerRef) {
+    self.labelName = "";
   }
   defaultAction = [];
 }

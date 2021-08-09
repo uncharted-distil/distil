@@ -194,9 +194,7 @@ const fetchVariableSummaries = async (context, args) => {
     sv.colDisplayName.toLowerCase()
   );
 
-  const presortedVariables = ranked
-    ? sortVariablesByImportance(variables.slice())
-    : variables;
+  const presortedVariables = sortVariablesByImportance(variables.slice());
 
   const searchedPresortedVariables = searchVariables(
     presortedVariables,
