@@ -324,6 +324,10 @@ export const SELECT_METHODS = {
     self: DataExplorerRef
   ): ((msg: SolutionRequestMsg) => void) => {
     return (solutionRequestMsg: SolutionRequestMsg) => {
+      solutionRequestMsg.filters.variables = routeGetters
+        .getRouteTrainingVariables(store)
+        .split(",")
+        .concat(routeGetters.getRouteTargetVariable(store));
       requestActions
         .createSolutionRequest(store, solutionRequestMsg)
         .then(async (res: Solution) => {

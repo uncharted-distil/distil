@@ -43,6 +43,7 @@
           :include="include"
           :summaries="summaries"
           :enable-footer="isSelectState"
+          @fetch-summaries="fetchSummaries"
         />
       </template>
     </left-side-panel>
@@ -273,6 +274,7 @@
         :include="include"
         :summaries="secondarySummaries"
         :enable-footer="isSelectState"
+        @fetch-summaries="fetchSummaries"
       />
       <prediction-summaries v-else />
     </left-side-panel>
@@ -954,6 +956,9 @@ const DataExplorer = Vue.extend({
     },
     fetchTimeseries(args: EI.TIMESERIES.FetchTimeseriesEvent) {
       this.state.fetchTimeseries(args);
+    },
+    fetchSummaries() {
+      this.state.fetchVariableSummaries();
     },
     toggleAction(actionName: ActionNames) {
       GENERIC_METHODS.toggleAction(this)(actionName);
