@@ -35,6 +35,7 @@
                 shorten-labels
                 align-horizontal
                 :item="renderTiles[i][j].selected.item"
+                :label-feature-name="labelFeatureName"
               />
               <image-preview
                 class="image-preview"
@@ -141,6 +142,7 @@ export default Vue.extend({
     },
     instanceName: { type: String as () => string, default: "" },
     summaries: { type: Array as () => VariableSummary[], default: () => [] },
+    labelFeatureName: { type: String, default: "" },
   },
 
   data() {

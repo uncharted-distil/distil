@@ -59,7 +59,11 @@
         @range-change="lonRangeChange"
       />
     </div>
-    <div v-show="displayFooter" class="facet-footer-custom-html" ref="footer" />
+    <div
+      v-show="displayFooter"
+      class="facet-footer-custom-html padding-right-12"
+      ref="footer"
+    />
   </div>
 </template>
 
@@ -1075,7 +1079,7 @@ export default Vue.extend({
   font-weight: 700;
   color: var(--color-text-second);
   background: var(--white);
-  padding: 4px 8px 6px;
+  padding: 4px 12px 6px;
   position: relative;
   z-index: 1;
 }
@@ -1092,7 +1096,7 @@ export default Vue.extend({
 .facet-footer-custom-html {
   color: var(--color-text-second);
   background: var(--white);
-  padding: 4px 8px 6px;
+  padding: 6px 8px 12px 5px;
   font-family: inherit;
   font-size: 0.867rem;
   font-weight: 700;
@@ -1121,7 +1125,9 @@ export default Vue.extend({
   height: 214px;
   width: 100%;
 }
-
+.padding-right-12 {
+  padding-right: 12px;
+}
 .facet-card .group-header .type-change-dropdown-wrapper {
   float: right;
 }

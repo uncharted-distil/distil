@@ -99,6 +99,7 @@ import {
 import { Feature, Activity, SubActivity } from "../../util/userEvents";
 import { isUnsupportedTargetVar } from "../../util/types";
 import { ExplorerStateNames } from "../../util/dataExplorer";
+import { EventList } from "../../util/events";
 
 export default Vue.extend({
   name: "FacetListPane",
@@ -266,11 +267,11 @@ export default Vue.extend({
 
   watch: {
     varsPage() {
-      viewActions.fetchDataExplorerData(this.$store, this.variables);
+      this.$emit(EventList.SUMMARIES.FETCH_SUMMARIES_EVENT);
     },
 
     varsSearch() {
-      viewActions.fetchDataExplorerData(this.$store, this.variables);
+      this.$emit(EventList.SUMMARIES.FETCH_SUMMARIES_EVENT);
     },
   },
 

@@ -65,6 +65,9 @@ export class EventList {
     // occurs when a group of variables is removed or added to the training set
     VAR_SET_GROUP_CHANGE_EVENT: "group-change",
   };
+  static readonly SUMMARIES = {
+    FETCH_SUMMARIES_EVENT: "fetch-summaries",
+  };
   /*********TABLE EVENTS*************/
   static readonly TABLE = {
     // table column was click

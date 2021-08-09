@@ -271,14 +271,14 @@ func persistQueryResults(params QueryParams, storageName string, resultData [][]
 	scoreUpdates := map[string]string{}
 	rankUpdates := map[string]string{}
 	rank := 1
-	resultDataLen := len(resultData[1:])
-	for _, r := range resultData[1:] {
-		currentIdx := resultDataLen-rank
+	resultDataLen := len(resultData[1:])-1
+	for i, r := range resultData[1:] {
+		currentIdx := resultDataLen-i
 		scoreUpdates[r[0]] = r[1]
 		// for ranking we iterate in reverse as the lowest ranks are at the end of the array
 		rankUpdates[resultData[currentIdx][0]] = strconv.Itoa(rank)
-		// make sure to stay within bounds and check that the next element is different if it is increase rank (the array is sorted)
-		if resultDataLen-(rank+1) >= 0 && resultData[currentIdx][1] != resultData[currentIdx-1][1]{
+		// make sure to stay within bounds and check that the next element is different if it is, increase rank (the array is sorted)
+		if resultDataLen-(i+1) >= 0 && resultData[currentIdx][1] != resultData[currentIdx-1][1]{
 			rank++
 		}
 	}
