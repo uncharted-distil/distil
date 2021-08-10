@@ -72,7 +72,7 @@ import {
   SOLUTION_ERRORED,
   Solution,
 } from "../store/requests/index";
-import { RESULTS_ROUTE } from "../store/route/index";
+import { APPLY_MODEL_ROUTE, RESULTS_ROUTE } from "../store/route/index";
 import Vue from "vue";
 import { Location } from "vue-router";
 import { Dictionary } from "lodash";
@@ -122,13 +122,15 @@ export default Vue.extend({
   },
 
   methods: {
-    onResult() {
-      openModelSolution(this.$router, {
+    async onResult(): Promise<void> {
+      const args = await openModelSolution(this.$router, {
         datasetId: this.solution.dataset,
         targetFeature: this.solution.feature,
         solutionId: this.solution.solutionId,
         variableFeatures: this.solution.features.map((f) => f.featureName),
       });
+      const entry = createRouteEntry(APPLY_MODEL_ROUTE, args);
+      this.$router.push(entry).catch((err) => console.debug(err));
     },
   },
 });
