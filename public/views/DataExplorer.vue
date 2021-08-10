@@ -776,6 +776,9 @@ const DataExplorer = Vue.extend({
 
   // Update either the summaries or explore data on user interaction.
   watch: {
+    solutionId() {
+      this.state.fetchData();
+    },
     activeVariables(n, o) {
       if (_.isEqual(n, o)) return;
       viewActions.fetchDataExplorerData(this.$store, this.activeVariables);

@@ -57,16 +57,7 @@
       </div>
 
       <div class="row mt-1">
-        <div v-if="!expanded" class="col-12">
-          <b-button
-            class="full-width hover"
-            variant="outline-secondary"
-            @click="toggleExpansion()"
-          >
-            More Details...
-          </b-button>
-        </div>
-        <div v-if="expanded" class="col-12">
+        <div v-if="expanded" class="padding-15">
           <span><b>All Variables:</b></span>
           <p>
             <span
@@ -79,13 +70,26 @@
               }}
             </span>
           </p>
-          <b-button
-            class="full-width hover"
-            variant="outline-secondary"
-            @click="toggleExpansion()"
-          >
-            Less Details...
-          </b-button>
+        </div>
+        <div class="col-12">
+          <div class="col-12 d-flex justify-content-center">
+            <b-button
+              class="flex-grow-1 hover"
+              variant="outline-secondary"
+              @click="toggleExpansion()"
+            >
+              <span v-if="!expanded">More</span>
+              <span v-else>Less</span> Details...
+            </b-button>
+            <b-button
+              v-if="isPrototype"
+              variant="outline-secondary"
+              class="ml-2"
+              @click="exploreModel"
+            >
+              <i class="fa fa-stack-overflow" /> Explore Model
+            </b-button>
+          </div>
         </div>
       </div>
     </div>
@@ -98,6 +102,10 @@ import Vue from "vue";
 import { Model, VariableDetail } from "../store/model/index";
 import { openModelSolution } from "../util/solutions";
 import { EventList } from "../util/events";
+import { appGetters } from "../store";
+import { APPLY_MODEL_ROUTE, DATA_EXPLORER_ROUTE } from "../store/route";
+import { createRouteEntry } from "../util/routes";
+import { ExplorerStateNames } from "../util/dataExplorer";
 
 const NUM_TOP_FEATURES = 5;
 
@@ -123,19 +131,36 @@ export default Vue.extend({
         .slice(0, NUM_TOP_FEATURES)
         .map((a) => a.displayName);
     },
+    isPrototype(): boolean {
+      return appGetters.isPrototype(this.$store);
+    },
   },
 
   methods: {
     onDeleteClicked(model: Model) {
       this.$emit(EventList.MODEL.DELETE_EVENT, model);
     },
-    onResult() {
-      openModelSolution(this.$router, {
+    async onResult(): Promise<void> {
+      const args = await openModelSolution(this.$router, {
         datasetId: this.model.datasetId,
         targetFeature: this.model.target.key,
         fittedSolutionId: this.model.fittedSolutionId,
         variableFeatures: this.model.variables,
       });
+      const entry = createRouteEntry(APPLY_MODEL_ROUTE, args);
+      this.$router.push(entry).catch((err) => console.debug(err));
+    },
+    async exploreModel(): Promise<void> {
+      const route = DATA_EXPLORER_ROUTE;
+      const args = await openModelSolution(this.$router, {
+        datasetId: this.model.datasetId,
+        targetFeature: this.model.target.key,
+        fittedSolutionId: this.model.fittedSolutionId,
+        variableFeatures: this.model.variables,
+      });
+      args.dataExplorerState = ExplorerStateNames.RESULT_VIEW;
+      const entry = createRouteEntry(route, args);
+      this.$router.push(entry).catch((err) => console.debug(err));
     },
     toggleExpansion() {
       this.expanded = !this.expanded;
@@ -169,5 +194,9 @@ export default Vue.extend({
 }
 .model-header:hover {
   text-decoration: underline;
+}
+.padding-15 {
+  padding-right: 15px;
+  padding-left: 15px;
 }
 </style>
