@@ -16,7 +16,12 @@
 -->
 
 <template>
-  <b-modal id="settings" title="Model Creation Settings" @ok="handleOk">
+  <b-modal
+    id="settings"
+    title="Model Creation Settings"
+    @ok="handleOk"
+    @show="onShow"
+  >
     <b-form-group
       id="model-limit"
       label="Maximum Generated Models:"
@@ -275,6 +280,26 @@ export default Vue.extend({
   },
 
   methods: {
+    onShow() {
+      const routeMetric = routeGetters.getModelMetrics(this.$store);
+      if (routeMetric) {
+        this.selectedMetric = routeMetric[0];
+        return;
+      }
+      if (this.task.includes(TaskTypes.CLASSIFICATION)) {
+        if (this.task.includes(TaskTypes.MULTICLASS)) {
+          this.selectedMetric = "f1Macro";
+        } else {
+          this.selectedMetric = "f1";
+        }
+      } else if (this.task.includes(TaskTypes.REGRESSION)) {
+        this.selectedMetric = "meanAbsoluteError";
+      } else {
+        this.selectedMetric = null;
+      }
+      this.trainingCount =
+        Math.floor(this.totalDataCount * this.baseSplit) || 1;
+    },
     secondsToMillis(seconds: number): number {
       return seconds * 1000;
     },

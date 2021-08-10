@@ -35,6 +35,7 @@ import {
   D3M_INDEX_FIELD,
   DataMode,
   TableRow,
+  Variable,
   VariableSummary,
 } from "../store/dataset";
 import { getters as routeGetters } from "../store/route/module";
@@ -64,7 +65,7 @@ import {
 } from "./row";
 import { Activity, Feature, SubActivity } from "./userEvents";
 import { EI } from "./events";
-import { CATEGORICAL_TYPE } from "./types";
+import { CATEGORICAL_TYPE, META_TYPES } from "./types";
 import {
   addOrderBy,
   cloneDatasetUpdateRoute,
@@ -82,6 +83,7 @@ export interface Action {
   paneId: string;
   count?: number;
   toggle?: boolean;
+  variables: (self: DataExplorerRef) => Variable[];
 }
 
 export default interface ExplorerConfig {
@@ -89,6 +91,7 @@ export default interface ExplorerConfig {
   actionList: Action[];
   // these actions will be toggled when the state is switched to
   defaultAction: ActionNames[];
+  currentPane: string;
   resetConfig: (self: DataExplorerRef) => void;
 }
 
@@ -151,12 +154,13 @@ export class SelectViewConfig implements ExplorerConfig {
   resetConfig(self: DataExplorerRef) {
     return;
   }
+  currentPane = ACTION_MAP.get(ActionNames.ALL_VARIABLES).paneId;
   defaultAction = [];
 }
 export class ResultViewConfig implements ExplorerConfig {
   get actionList(): Action[] {
     const actions = [
-      ActionNames.ALL_VARIABLES,
+      ActionNames.MODEL_VARIABLES,
       ActionNames.TEXT_VARIABLES,
       ActionNames.CATEGORICAL_VARIABLES,
       ActionNames.NUMBER_VARIABLES,
@@ -164,7 +168,6 @@ export class ResultViewConfig implements ExplorerConfig {
       ActionNames.IMAGE_VARIABLES,
       ActionNames.UNKNOWN_VARIABLES,
       ActionNames.TARGET_VARIABLE,
-      ActionNames.TRAINING_VARIABLE,
       ActionNames.OUTCOME_VARIABLES,
     ];
     return actions.map((a) => {
@@ -174,12 +177,13 @@ export class ResultViewConfig implements ExplorerConfig {
   resetConfig(self: DataExplorerRef) {
     return;
   }
+  currentPane = ACTION_MAP.get(ActionNames.MODEL_VARIABLES).paneId;
   defaultAction = [ActionNames.OUTCOME_VARIABLES];
 }
 export class PredictViewConfig implements ExplorerConfig {
   get actionList(): Action[] {
     const actions = [
-      ActionNames.ALL_VARIABLES,
+      ActionNames.MODEL_VARIABLES,
       ActionNames.TEXT_VARIABLES,
       ActionNames.CATEGORICAL_VARIABLES,
       ActionNames.NUMBER_VARIABLES,
@@ -187,7 +191,6 @@ export class PredictViewConfig implements ExplorerConfig {
       ActionNames.IMAGE_VARIABLES,
       ActionNames.UNKNOWN_VARIABLES,
       ActionNames.TARGET_VARIABLE,
-      ActionNames.TRAINING_VARIABLE,
       ActionNames.OUTCOME_VARIABLES,
     ];
     return actions.map((a) => {
@@ -197,6 +200,7 @@ export class PredictViewConfig implements ExplorerConfig {
   resetConfig(self: DataExplorerRef) {
     return;
   }
+  currentPane = ACTION_MAP.get(ActionNames.MODEL_VARIABLES).paneId;
   defaultAction = [ActionNames.OUTCOME_VARIABLES];
 }
 export class LabelViewConfig implements ExplorerConfig {
@@ -220,6 +224,7 @@ export class LabelViewConfig implements ExplorerConfig {
   resetConfig(self: DataExplorerRef) {
     self.labelName = "";
   }
+  currentPane = ACTION_MAP.get(ActionNames.ALL_VARIABLES).paneId;
   defaultAction = [];
 }
 export enum ActionNames {
@@ -235,53 +240,130 @@ export enum ActionNames {
   TARGET_VARIABLE = "Target Variable",
   TRAINING_VARIABLE = "Training Variables",
   OUTCOME_VARIABLES = "Outcome Variables",
+  MODEL_VARIABLES = "Model Variables",
 }
 
 export const ACTIONS = [
-  { name: ActionNames.CREATE_NEW_VARIABLE, icon: "fa fa-plus", paneId: "add" },
+  {
+    name: ActionNames.CREATE_NEW_VARIABLE,
+    icon: "fa fa-plus",
+    paneId: "add",
+    variables: (self: DataExplorerRef) => {
+      return [];
+    },
+  },
   {
     name: ActionNames.ALL_VARIABLES,
     icon: "fa fa-database",
     paneId: "available",
+    variables: (self: DataExplorerRef) => {
+      return self.variables;
+    },
   },
-  { name: ActionNames.TEXT_VARIABLES, icon: "fa fa-font", paneId: "text" },
+  {
+    name: ActionNames.TEXT_VARIABLES,
+    icon: "fa fa-font",
+    paneId: "text",
+    variables: function (self: DataExplorerRef) {
+      return self.variables.filter((v) => {
+        return META_TYPES[this.paneId].includes(v.colType);
+      });
+    },
+  },
   {
     name: ActionNames.CATEGORICAL_VARIABLES,
     icon: "fa fa-align-left",
     paneId: "categorical",
+    variables: function (self: DataExplorerRef) {
+      return self.variables.filter((v) => {
+        return META_TYPES[this.paneId].includes(v.colType);
+      });
+    },
   },
   {
     name: ActionNames.NUMBER_VARIABLES,
     icon: "fa fa-bar-chart",
     paneId: "number",
+    variables: function (self: DataExplorerRef) {
+      return self.variables.filter((v) => {
+        return META_TYPES[this.paneId].includes(v.colType);
+      });
+    },
   },
-  { name: ActionNames.TIME_VARIABLES, icon: "fa fa-clock-o", paneId: "time" },
+  {
+    name: ActionNames.TIME_VARIABLES,
+    icon: "fa fa-clock-o",
+    paneId: "time",
+    variables: function (self: DataExplorerRef) {
+      return self.variables.filter((v) => {
+        return META_TYPES[this.paneId].includes(v.colType);
+      });
+    },
+  },
   {
     name: ActionNames.LOCATION_VARIABLES,
     icon: "fa fa-map-o",
     paneId: "location",
+    variables: function (self: DataExplorerRef) {
+      return self.variables.filter((v) => {
+        return META_TYPES[this.paneId].includes(v.colType);
+      });
+    },
   },
-  { name: ActionNames.IMAGE_VARIABLES, icon: "fa fa-image", paneId: "image" },
+  {
+    name: ActionNames.IMAGE_VARIABLES,
+    icon: "fa fa-image",
+    paneId: "image",
+    variables: function (self: DataExplorerRef) {
+      return self.variables.filter((v) => {
+        return META_TYPES[this.paneId].includes(v.colType);
+      });
+    },
+  },
   {
     name: ActionNames.UNKNOWN_VARIABLES,
     icon: "fa fa-question",
     paneId: "unknown",
+    variables: function (self: DataExplorerRef) {
+      return self.variables.filter((v) => {
+        return META_TYPES[this.paneId].includes(v.colType);
+      });
+    },
   },
   {
     name: ActionNames.TARGET_VARIABLE,
     icon: "fa fa-crosshairs",
     paneId: "target",
+    variables: function (self: DataExplorerRef) {
+      return self.target ? [self.target] : [];
+    },
   },
   {
     name: ActionNames.TRAINING_VARIABLE,
     icon: "fa fa-asterisk",
     paneId: "training",
+    variables: function (self: DataExplorerRef) {
+      return self.variables.filter((variable) =>
+        self.training.includes(variable.key)
+      );
+    },
+  },
+  {
+    name: ActionNames.MODEL_VARIABLES,
+    icon: "fa fa-database",
+    paneId: "model",
+    variables: function (self: DataExplorerRef) {
+      return self.variables;
+    },
   },
   {
     name: ActionNames.OUTCOME_VARIABLES,
     icon: "fas fa-poll",
     paneId: "outcome",
     toggle: false,
+    variables: function (self: DataExplorerRef) {
+      return self.state.getSecondaryVariables();
+    },
   },
 ] as Action[];
 

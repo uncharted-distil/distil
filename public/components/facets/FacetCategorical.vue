@@ -241,7 +241,7 @@ export default Vue.extend({
       return this.moreNumToDisplay > 0;
     },
     displayFooter(): boolean {
-      return !!this.html && this.summary.distilRole != DISTIL_ROLES.Augmented;
+      return !!this.html;
     },
   },
 
