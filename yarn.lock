@@ -525,9 +525,9 @@
     lit-html "^1.1.2"
 
 "@uncharted.software/lex@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@uncharted.software/lex/-/lex-1.0.0.tgz#22935ff1b095543795186a71841f67401951072e"
-  integrity sha512-ZiA5FwPozkkaUblsv3qYhYmQj+0Li8oUQJ9KpHwCojisN9nu+ZS7YZz5l6m60E4x0mTlCptVCiIQnkNTL66LTw==
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@uncharted.software/lex/-/lex-1.0.1.tgz#774fba60b7395ac048ea06a9bd7a9a42909436c9"
+  integrity sha512-1nsLv8UA9z7jZB12+/S5u3v/NPSjvucUXSzXsSeMIsMIH9OfpNuQ9Vw5Fqp6YfHtJwxZUTvZ76wGsCgjxHirzQ==
   dependencies:
     lodash "4.17.15"
     lodash-decorators "5.0.0"

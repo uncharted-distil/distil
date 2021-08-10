@@ -609,9 +609,7 @@ const DataExplorer = Vue.extend({
     },
 
     numRows(): number {
-      return this.hasData
-        ? datasetGetters.getIncludedTableDataLength(this.$store)
-        : 0;
+      return this.items.length;
     },
 
     rowSelection(): RowSelection {
@@ -629,9 +627,7 @@ const DataExplorer = Vue.extend({
     },
 
     totalNumRows(): number {
-      return this.hasData
-        ? datasetGetters.getIncludedTableDataNumRows(this.$store)
-        : 0;
+      return this.state.getTotalItems(this.include);
     },
 
     variables(): Variable[] {
@@ -838,7 +834,7 @@ const DataExplorer = Vue.extend({
     /* When the user request to fetch a different size of data. */
     onDataSizeSubmit(dataSize: number) {
       this.updateRoute({ dataSize });
-      viewActions.updateDataExplorerData(this.$store);
+      this.state.fetchData();
     },
     onSetActive(actionName: string): void {
       if (actionName === this.config.currentPane) return;
