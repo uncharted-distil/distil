@@ -273,12 +273,12 @@ func persistQueryResults(params QueryParams, storageName string, resultData [][]
 	rank := 1
 	resultDataLen := len(resultData[1:])
 	for _, r := range resultData[1:] {
-		currentIdx := resultDataLen-rank
+		currentIdx := resultDataLen - rank
 		scoreUpdates[r[0]] = r[1]
 		// for ranking we iterate in reverse as the lowest ranks are at the end of the array
 		rankUpdates[resultData[currentIdx][0]] = strconv.Itoa(rank)
 		// make sure to stay within bounds and check that the next element is different if it is increase rank (the array is sorted)
-		if resultDataLen-(rank+1) >= 0 && resultData[currentIdx][1] != resultData[currentIdx-1][1]{
+		if resultDataLen-(rank+1) >= 0 && resultData[currentIdx][1] != resultData[currentIdx-1][1] {
 			rank++
 		}
 	}
@@ -290,7 +290,7 @@ func persistQueryResults(params QueryParams, storageName string, resultData [][]
 			return errors.New("Error parsing positive labels")
 		}
 		// range filters upper range is exclusive, therefore if the confidence value is 1 it would be out of range of filtering
-		typedD3mIndex:=strconv.Itoa(int(d3mIdx))
+		typedD3mIndex := strconv.Itoa(int(d3mIdx))
 		scoreUpdates[typedD3mIndex] = "0.99"
 		rankUpdates[typedD3mIndex] = strconv.Itoa(rank)
 	}

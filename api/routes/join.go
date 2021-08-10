@@ -77,6 +77,18 @@ func JoinHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor)
 			DatasetSource: metadata.DatasetSource(datasetRight["source"].(string)),
 		}
 
+		dataStorage, err := dataCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		// check for vertical concat operation
+		if params["operation"] != nil && params["operation"].(string) == "vertical" {
+			union(w, dataStorage, leftJoin, rightJoin)
+			return
+		}
+
 		leftVariables, err := parseVariables(datasetLeft["variables"].([]interface{}))
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to parse left variables"))
@@ -119,12 +131,6 @@ func JoinHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor)
 
 				break
 			}
-		}
-
-		dataStorage, err := dataCtor()
-		if err != nil {
-			handleError(w, err)
-			return
 		}
 
 		// add d3m variables to left variables
@@ -362,4 +368,26 @@ func getDiskMetadata(dataset string, metaStorage api.MetadataStorage) (*model.Me
 	}
 
 	return dsDisk.Metadata, nil
+}
+
+func union(w http.ResponseWriter, dataStorage api.DataStorage, joinLeft *task.JoinSpec, joinRight *task.JoinSpec) {
+	path, data, err := task.VerticalConcat(dataStorage, joinLeft, joinRight)
+	if err != nil {
+		handleError(w, errors.Wrap(err, "unable to parse left variables"))
+		return
+	}
+
+	// marshal output into JSON
+	bytes, err := json.Marshal(map[string]interface{}{"path": path, "data": transformDataForClient(data, api.EmptyString)})
+	if err != nil {
+		handleError(w, errors.Wrap(err, "unable marshal filtered data result into JSON"))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(bytes)
+	if err != nil {
+		handleError(w, errors.Wrap(err, "unable to write filtered data to response writer"))
+		return
+	}
 }
