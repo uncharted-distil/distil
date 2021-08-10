@@ -127,8 +127,14 @@ func TrainingSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.S
 			boundsFilter.IsBaselineFilter = true
 			filterParams.AddFilter(boundsFilter)
 		}
+		// replace any grouped variables in filter params with the group's
+		expandedFilterParams, err := api.ExpandFilterParams(dataset, filterParams, false, meta)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to expand filter params"))
+			return
+		}
 		// fetch summary histogram
-		summary, err := data.FetchSummaryByResult(dataset, storageName, variable, result.ResultURI, filterParams, nil, api.SummaryMode(mode))
+		summary, err := data.FetchSummaryByResult(dataset, storageName, variable, result.ResultURI, expandedFilterParams, nil, api.SummaryMode(mode))
 		if err != nil {
 			handleError(w, err)
 			return

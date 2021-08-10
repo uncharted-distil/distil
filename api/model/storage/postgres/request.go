@@ -110,7 +110,30 @@ func (s *Storage) FetchRequest(requestID string) (*api.Request, error) {
 
 	return s.loadRequest(rows)
 }
+// FetchRequestByResultUUID pulls request information from Postgres using
+// a result UUID.
+func (s *Storage) FetchRequestByResultUUID(resultUUID string) (*api.Request, error) {
+	sql := fmt.Sprintf("SELECT req.request_id, req.dataset, req.progress, req.created_time, req.last_updated_time "+
+		"FROM %s as req INNER JOIN %s as sol ON req.request_id = sol.request_id INNER JOIN %s as sol_res ON sol.solution_id = sol_res.solution_id "+
+		"WHERE sol_res.result_uuid = $1;", postgres.RequestTableName, postgres.SolutionTableName, postgres.SolutionResultTableName)
 
+	rows, err := s.client.Query(sql, resultUUID)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to pull request from Postgres")
+	}
+	if rows != nil {
+		defer rows.Close()
+	}
+	if !rows.Next() {
+		return nil, errors.Errorf("no request for result UUID %s", resultUUID)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error reading data from postgres")
+	}
+
+	return s.loadRequest(rows)
+}
 // FetchRequestBySolutionID pulls request information from Postgres using
 // a solution ID.
 func (s *Storage) FetchRequestBySolutionID(solutionID string) (*api.Request, error) {
