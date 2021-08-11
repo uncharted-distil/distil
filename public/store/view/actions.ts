@@ -448,9 +448,7 @@ export const actions = {
 
   async fetchDataExplorerData(context: ViewContext, variables: Variable[]) {
     // fetch new state
-    const dataset =
-      routeGetters.getRoutePredictionsDataset(store) ??
-      context.getters.getRouteDataset;
+    const dataset = context.getters.getRouteDataset;
     await fetchVariableSummaries(context, { dataset, variables });
     fetchClusters(context, { dataset });
     fetchOutliers(context, { dataset });
@@ -461,9 +459,7 @@ export const actions = {
 
   updateDataExplorerData(context: ViewContext) {
     const args = {
-      dataset:
-        routeGetters.getRoutePredictionsDataset(store) ??
-        context.getters.getRouteDataset,
+      dataset: context.getters.getRouteDataset,
       filterParams: context.getters
         .getDecodedSolutionRequestFilterParams as FilterParams,
       highlights: context.getters.getDecodedHighlights as Highlight[],
