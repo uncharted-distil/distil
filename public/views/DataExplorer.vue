@@ -802,12 +802,12 @@ const DataExplorer = Vue.extend({
     },
     activeVariables(n, o) {
       if (_.isEqual(n, o)) return;
-      viewActions.fetchDataExplorerData(this.$store, this.activeVariables);
+      this.state.fetchVariableSummaries();
     },
 
     filters(n, o) {
       if (n === o) return;
-      viewActions.updateDataExplorerData(this.$store);
+      this.state.fetchData();
     },
 
     highlights(n, o) {
