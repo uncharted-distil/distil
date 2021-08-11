@@ -65,6 +65,7 @@
         :correctness-summary="group.correctnessSummary"
         :confidence-summary="group.confidenceSummary"
         :ranking-summary="group.rankingSummary"
+        @fetch-summary-solution="fetchSummarySolution"
       />
     </div>
   </div>
@@ -98,6 +99,8 @@ import {
   getConfidenceSummary,
   getRankingSummary,
 } from "../util/summaries";
+import { eventListeners } from "@popperjs/core";
+import { EventList } from "../util/events";
 
 interface SummaryGroup {
   requestId: string;
@@ -278,6 +281,9 @@ export default Vue.extend({
     /* Sort RequestGroup DESC by RequestIndex. */
     sortByRequestIndexDESC(a, b) {
       return b.requestIndex - a.requestIndex;
+    },
+    fetchSummarySolution(requestId: string) {
+      this.$emit(EventList.SUMMARIES.FETCH_SUMMARY_SOLUTION, requestId);
     },
   },
 });

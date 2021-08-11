@@ -22,6 +22,7 @@ import {
   requestActions,
   requestGetters,
   resultGetters,
+  viewActions,
 } from "../store";
 import {
   BaseState,
@@ -529,6 +530,13 @@ export const RESULT_METHODS = {
   ): ((id: string) => boolean) => {
     return isFittedSolutionIdSavedAsModel;
   },
+  fetchSummarySolution: (
+    self: DataExplorerRef
+  ): ((id: string) => Promise<void>) => {
+    return async (id: string) => {
+      viewActions.updateResultSummaries(store, { requestIds: [id] });
+    };
+  },
   onSaveModel: (
     self: DataExplorerRef
   ): ((args: EI.RESULT.SaveInfo) => Promise<void>) => {
@@ -561,6 +569,28 @@ export const RESULT_METHODS = {
     };
   },
 };
+export const PREDICTION_COMPUTES = {
+  produceRequestId: (self: DataExplorerRef): string => {
+    return routeGetters.getRouteProduceRequestId(store);
+  },
+};
+export const PREDICTION_METHODS = {
+  fetchSummaryPrediction: (
+    self: DataExplorerRef
+  ): ((id: string) => Promise<void>) => {
+    return async (id: string) => {
+      const predictions = requestGetters
+        .getRelevantPredictions(store)
+        .filter((p) => {
+          return p.requestId === id;
+        });
+      viewActions.updatePredictionSummaries(store, {
+        predictions: predictions,
+      });
+    };
+  },
+};
+
 // label view computes
 export const LABEL_COMPUTES = {
   isClone: (self: DataExplorerRef): boolean | null => {

@@ -454,7 +454,11 @@ export class PredictViewState implements BaseState {
     return summaryToVariable(predSum);
   }
   getVariables(): Variable[] {
-    return requestGetters.getActivePredictionTrainingVariables(store);
+    return requestGetters
+      .getActivePredictionTrainingVariables(store)
+      .filter((v) => {
+        return !!v;
+      });
   }
   getSecondaryVariables(): Variable[] {
     const predictionVariables = [] as Variable[];
