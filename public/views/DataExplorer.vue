@@ -23,8 +23,7 @@
       :current-action="currentAction"
       @set-active-pane="onSetActive"
     />
-
-    <left-side-panel :panel-title="currentAction">
+    <left-side-panel v-if="currentAction !== ''" :panel-title="currentAction">
       <add-variable-pane
         v-if="activePane === 'add'"
         :enable-label="imageVarExists"
@@ -147,7 +146,7 @@
       <footer
         class="d-flex align-items-end d-flex justify-content-between mt-1 mb-0"
       >
-        <div class="flex-grow-1">
+        <div v-if="!isGeoView" class="flex-grow-1">
           <data-size
             :current-size="numRows"
             :total="totalNumRows"
@@ -158,6 +157,14 @@
             , {{ selectionNumRows }}
             <strong class="selected-color">selected</strong>
           </template>
+        </div>
+        <div v-else class="flex-grow-1">
+          <p class="m-0">
+            Selected Area Coverage:
+            <strong class="matching-color">
+              {{ areaCoverage }}km<sup>2</sup>
+            </strong>
+          </p>
         </div>
         <b-button-toolbar v-if="isSelectState">
           <b-button-group class="ml-2 mt-1">
@@ -265,6 +272,7 @@
         <result-facets
           :single-solution="isSingleSolution"
           :show-residuals="showResiduals"
+          @fetch-summary-solution="fetchSummarySolution"
         />
       </div>
       <facet-list-pane
@@ -276,7 +284,10 @@
         :enable-footer="isSelectState"
         @fetch-summaries="fetchSummaries"
       />
-      <prediction-summaries v-else />
+      <prediction-summaries
+        v-else
+        @fetch-summary-prediction="fetchSummaryPrediction"
+      />
     </left-side-panel>
     <status-sidebar />
     <status-panel />
@@ -353,7 +364,6 @@ import ForecastHorizon from "../components/ForecastHorizon.vue";
 // Store
 import {
   viewActions,
-  datasetGetters,
   requestGetters,
   resultGetters,
   datasetActions,
@@ -416,11 +426,14 @@ import ExplorerConfig, {
   SELECT_METHODS,
   LABEL_METHODS,
   GENERIC_METHODS,
+  PREDICTION_COMPUTES,
+  PREDICTION_METHODS,
 } from "../util/dataExplorer";
 import {
   LowShotLabels,
   LOW_SHOT_SCORE_COLUMN_PREFIX,
   sortVariablesByImportance,
+  totalAreaCoverage,
 } from "../util/data";
 import _ from "lodash";
 
@@ -633,7 +646,7 @@ const DataExplorer = Vue.extend({
     variables(): Variable[] {
       const variables = this.state
         .getVariables()
-        .filter((v) => v.distilRole !== DISTIL_ROLES.Meta);
+        .filter((v) => v?.distilRole !== DISTIL_ROLES.Meta);
       return sortVariablesByImportance(variables);
     },
 
@@ -660,6 +673,9 @@ const DataExplorer = Vue.extend({
       return varSums.some((v) => {
         return isImageType(v.colType);
       });
+    },
+    isGeoView(): boolean {
+      return this.viewComponent === "GeoPlot";
     },
     viewComponent() {
       const viewType = this.activeViews[this.activeView] as string;
@@ -719,6 +735,9 @@ const DataExplorer = Vue.extend({
     explorerRouteState(): ExplorerStateNames {
       return routeGetters.getDataExplorerState(this.$store);
     },
+    areaCoverage(): number {
+      return totalAreaCoverage(this.items, this.variables);
+    },
     // toggles right side variable pane
     isOutcomeToggled(): boolean {
       const outcome = ACTION_MAP.get(ActionNames.OUTCOME_VARIABLES).paneId;
@@ -768,11 +787,17 @@ const DataExplorer = Vue.extend({
     hasWeight(): boolean {
       return RESULT_COMPUTES.hasWeight(this);
     },
+    produceRequestId(): string {
+      return PREDICTION_COMPUTES.produceRequestId(this);
+    },
   },
 
   // Update either the summaries or explore data on user interaction.
   watch: {
     solutionId() {
+      this.state.fetchData();
+    },
+    produceRequestId() {
       this.state.fetchData();
     },
     activeVariables(n, o) {
@@ -838,8 +863,7 @@ const DataExplorer = Vue.extend({
     },
     onSetActive(actionName: string): void {
       if (actionName === this.config.currentPane) return;
-
-      let activePane = "available"; // default
+      let activePane = "";
       if (actionName !== "") {
         activePane = this.config.actionList.find((a) => a.name === actionName)
           .paneId;
@@ -983,11 +1007,17 @@ const DataExplorer = Vue.extend({
     async onSaveModel(args: EI.RESULT.SaveInfo) {
       RESULT_METHODS.onSaveModel(this)(args);
     },
+    async fetchSummarySolution(requestId: string) {
+      RESULT_METHODS.fetchSummarySolution(this)(requestId);
+    },
     isFittedSolutionIdSavedAsModel(id: string): boolean {
       return RESULT_METHODS.isFittedSolutionIdSavedAsModel(this)(id);
     },
     async onApplyModel(args: RouteArgs) {
       RESULT_METHODS.onApplyModel(this)(args);
+    },
+    async fetchSummaryPrediction(requestId: string) {
+      return PREDICTION_METHODS.fetchSummaryPrediction(this)(requestId);
     },
   },
 });

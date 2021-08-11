@@ -67,6 +67,10 @@ export class EventList {
   };
   static readonly SUMMARIES = {
     FETCH_SUMMARIES_EVENT: "fetch-summaries",
+    // fetch specific solution
+    FETCH_SUMMARY_SOLUTION: "fetch-summary-solution",
+    // fetch specific prediction request
+    FETCH_SUMMARY_PREDICTION: "fetch-summary-prediction",
   };
   /*********TABLE EVENTS*************/
   static readonly TABLE = {

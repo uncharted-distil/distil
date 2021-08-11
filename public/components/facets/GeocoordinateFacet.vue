@@ -1096,7 +1096,7 @@ export default Vue.extend({
 .facet-footer-custom-html {
   color: var(--color-text-second);
   background: var(--white);
-  padding: 6px 8px 12px 5px;
+  padding: 6px 8px 5px 5px;
   font-family: inherit;
   font-size: 0.867rem;
   font-weight: 700;

@@ -480,6 +480,9 @@ export default Vue.extend({
   methods: {
     onCollapseClick() {
       reviseOpenSolutions(this.requestId, this.$route, this.$router);
+      if (this.isOpenInRoute) {
+        this.$emit(EventList.SUMMARIES.FETCH_SUMMARY_SOLUTION, this.requestId);
+      }
     },
     getFacetByType: getFacetByType,
     onResultCategoricalClick(
