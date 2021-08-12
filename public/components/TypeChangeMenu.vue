@@ -71,6 +71,7 @@ import {
   EXPLODE_ACTION_TYPE,
   isTimeSeriesType,
   isGeoLocatedType,
+  GEOBOUNDS_TYPE,
 } from "../util/types";
 import { hasFilterInRoute } from "../util/filters";
 import { createRouteEntry } from "../util/routes";
@@ -245,7 +246,11 @@ export default Vue.extend({
             label: "Expand",
           });
         }
-        if (!this.isPredictionOrResultsView && !this.isPageSelectTraining) {
+        if (
+          !this.isPredictionOrResultsView &&
+          !this.isPageSelectTraining &&
+          this.variable.colType !== GEOBOUNDS_TYPE
+        ) {
           options.push({
             type: EXPLODE_ACTION_TYPE,
             label: "Explode",
@@ -330,6 +335,12 @@ export default Vue.extend({
     onTypeChange(suggestedType: SuggestedInfo) {
       if (this.isGroupedCluster) {
         this.onGroupingSelect(suggestedType.type);
+        if (
+          suggestedType.type === EXPAND_ACTION_TYPE ||
+          suggestedType.type === COLLAPSE_ACTION_TYPE
+        ) {
+          return;
+        }
       }
       const type = suggestedType.type;
       const field = this.field;

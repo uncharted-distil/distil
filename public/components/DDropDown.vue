@@ -19,8 +19,9 @@
       v-for="slot in Object.keys($scopedSlots)"
       :slot="slot"
       slot-scope="scope"
-      ><slot :name="slot" v-bind="scope"
-    /></template>
+    >
+      <slot :name="slot" v-bind="scope" />
+    </template>
     <template #open-indicator="{ attributes }">
       <span v-bind="attributes"><i class="fas fa-caret-down"></i></span>
     </template>
@@ -36,7 +37,7 @@ export default Vue.extend({
   name: "d-drop-down",
   props: {
     disabled: { type: Boolean as () => boolean, default: false },
-    options: { type: Array, default: [] }, // this can really receive anything
+    options: { type: Array, default: () => [] }, // this can really receive anything
     value: null, // this can receive string and object input. if there is a way to use generics here we should use it.
     label: { type: String, default: "" },
     fontColor: { type: String, default: "" },
