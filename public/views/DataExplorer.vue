@@ -802,12 +802,12 @@ const DataExplorer = Vue.extend({
     },
     activeVariables(n, o) {
       if (_.isEqual(n, o)) return;
-      viewActions.fetchDataExplorerData(this.$store, this.activeVariables);
+      this.state.fetchVariableSummaries();
     },
 
     filters(n, o) {
       if (n === o) return;
-      viewActions.updateDataExplorerData(this.$store);
+      this.state.fetchData();
     },
 
     highlights(n, o) {
@@ -830,12 +830,14 @@ const DataExplorer = Vue.extend({
   },
 
   async beforeMount() {
-    // First get the dataset informations
-    await viewActions.fetchDataExplorerData(this.$store, [] as Variable[]);
-    // Pre-select the top 5 variables by importance
-    this.preSelectTopVariables();
-    // Update the explore data
-    viewActions.updateDataExplorerData(this.$store);
+    if (this.isSelectState) {
+      // First get the dataset informations
+      await viewActions.fetchDataExplorerData(this.$store, [] as Variable[]);
+      // Pre-select the top 5 variables by importance
+      this.preSelectTopVariables();
+      // Update the explore data
+      await viewActions.updateDataExplorerData(this.$store);
+    }
   },
   mounted() {
     this.changeStatesByName(this.explorerRouteState);
