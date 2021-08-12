@@ -110,6 +110,7 @@ func (s *Storage) FetchRequest(requestID string) (*api.Request, error) {
 
 	return s.loadRequest(rows)
 }
+
 // FetchRequestByResultUUID pulls request information from Postgres using
 // a result UUID.
 func (s *Storage) FetchRequestByResultUUID(resultUUID string) (*api.Request, error) {
@@ -134,6 +135,7 @@ func (s *Storage) FetchRequestByResultUUID(resultUUID string) (*api.Request, err
 
 	return s.loadRequest(rows)
 }
+
 // FetchRequestBySolutionID pulls request information from Postgres using
 // a solution ID.
 func (s *Storage) FetchRequestBySolutionID(solutionID string) (*api.Request, error) {

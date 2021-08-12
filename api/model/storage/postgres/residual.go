@@ -196,13 +196,11 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, datasetName, storage
 	fromClause := getResultJoin("result", storageName)
 
 	// create the filter for the query
-	params := make([]interface{}, 0)
-	params = append(params, resultURI)
-	params = append(params, variable.Key)
 
-	wheres := make([]string, 0)
-	wheres, params = s.buildFilteredQueryWhere(datasetName, wheres, params, "", filterParams)
-
+	wheres, params, err := s.buildResultQueryFilters(datasetName, storageName, resultURI, filterParams, baseTableAlias)
+	if err != nil {
+		return nil, err
+	}
 	where := ""
 	if len(wheres) > 0 {
 		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
@@ -212,9 +210,9 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, datasetName, storage
 	query := fmt.Sprintf(`
 		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count
 		FROM %s
-		WHERE result.result_id = $1 AND result.target = $2 AND result.%s != '' %s
+		WHERE result.result_id = '%s' AND result.target = '%s' AND result.%s != '' %s
 		GROUP BY %s ORDER BY %s;`, bucketQuery, histogramQuery, histogramName,
-		fromClause, resultVariable.Key, where, bucketQuery, histogramName)
+		fromClause, resultURI, variable.Key, resultVariable.Key, where, bucketQuery, histogramName)
 
 	// execute the postgres query
 	res, err := s.client.Query(query, params...)
