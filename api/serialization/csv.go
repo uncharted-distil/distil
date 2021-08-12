@@ -90,7 +90,7 @@ func (d *CSV) ReadData(uri string) ([][]string, error) {
 
 // WriteData writes data to a csv file.
 func (d *CSV) WriteData(uri string, data [][]string) error {
-	log.Infof("writing data to '%s'", uri)
+	log.Infof("writing csv data to '%s'", uri)
 	var outputBuffer bytes.Buffer
 	csvWriter := csv.NewWriter(&outputBuffer)
 	err := csvWriter.WriteAll(data)
@@ -101,7 +101,7 @@ func (d *CSV) WriteData(uri string, data [][]string) error {
 
 	err = util.WriteFileWithDirs(uri, outputBuffer.Bytes(), os.ModePerm)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "unable to write csv data to disk")
 	}
 
 	return nil

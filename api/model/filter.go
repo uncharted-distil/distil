@@ -19,8 +19,10 @@ import (
 	encoding "encoding/json"
 	"fmt"
 	"math"
+	"strconv"
 
 	"github.com/pkg/errors"
+	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil/api/util/json"
@@ -34,6 +36,8 @@ const (
 	DefaultDataMode = iota + 1
 	// ClusterDataMode use computed cluster information for filtering if availble, ex. timeseries clusters
 	ClusterDataMode
+
+	maxReportedErrors = 50
 )
 
 var (
@@ -284,6 +288,87 @@ type FilteredData struct {
 // EmptyFilterData returns an empty FilteredData object
 func EmptyFilterData() *FilteredData {
 	return &FilteredData{NumRows: 0, NumRowsFiltered: 0, Columns: map[string]*Column{}, Values: [][]*FilteredDataValue{}}
+}
+
+// CreateFilteredData creates a filtered data structure from raw string data.
+func CreateFilteredData(inputData [][]string, variables []*model.Variable, returnRaw bool, lineCount int) (*FilteredData, error) {
+	data := &FilteredData{}
+
+	data.Columns = map[string]*Column{}
+	for _, variable := range variables {
+		data.Columns[variable.Key] = &Column{
+			Label: variable.DisplayName,
+			Key:   variable.Key,
+			Type:  variable.Type,
+			Index: len(data.Columns),
+		}
+	}
+
+	data.Values = [][]*FilteredDataValue{}
+
+	// discard header
+	inputData = inputData[1:]
+
+	maxCount := lineCount
+	if returnRaw {
+		maxCount = len(inputData)
+	}
+
+	errorCount := 0
+	discardCount := 0
+	for i := 0; i < maxCount && i < len(inputData); i++ {
+		row := inputData[i]
+
+		// convert row values to schema type
+		// rows that are malformed are discarded
+		typedRow := make([]*FilteredDataValue, len(row))
+		var rowError, err error
+		for j := 0; j < len(row); j++ {
+			varType := variables[j].Type
+			typedRow[j] = &FilteredDataValue{}
+			if !returnRaw && model.IsNumerical(varType) && row[j] != "" {
+				if model.IsFloatingPoint(varType) {
+					typedRow[j].Value, err = strconv.ParseFloat(row[j], 64)
+					if err != nil {
+						rowError = errors.Wrapf(err, "failed conversion for row %d", i)
+						errorCount++
+						break
+					}
+				} else {
+					typedRow[j].Value, err = strconv.ParseInt(row[j], 10, 64)
+					if err != nil {
+						flt, err := strconv.ParseFloat(row[j], 64)
+						if err != nil {
+							rowError = errors.Wrapf(err, "failed conversion for row %d", i)
+							errorCount++
+							break
+						}
+						typedRow[j].Value = int64(flt)
+					}
+				}
+			} else {
+				typedRow[j].Value = row[j]
+			}
+		}
+		if rowError != nil {
+			discardCount++
+			if errorCount < maxReportedErrors {
+				log.Warn(rowError)
+			} else if errorCount == maxReportedErrors {
+				log.Warn("too many errors - logging of remainder surpressed")
+			}
+			continue
+		}
+		data.Values = append(data.Values, typedRow)
+	}
+
+	if discardCount > 0 {
+		log.Warnf("discarded %d rows due to parsing parsing errors", discardCount)
+	}
+
+	data.NumRows = len(data.Values)
+
+	return data, nil
 }
 
 // GetFilterVariables builds the filtered list of fields based on the filtering parameters.

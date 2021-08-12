@@ -147,6 +147,21 @@ func UpdateDiskDataset(ds *Dataset, data [][]string) error {
 func (d *DiskDataset) UpdateOnDisk(ds *Dataset, data [][]string, updateImmutable bool) error {
 	// use the header row to determine the variables to update
 	varMap := MapVariables(ds.Variables, func(variable *model.Variable) string { return variable.HeaderName })
+	err := d.UpdateRawData(varMap, data, updateImmutable)
+	if err != nil {
+		return err
+	}
+
+	err = d.SaveDataset()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateRawData updates the data in a disk dataset but does not save it.
+func (d *DiskDataset) UpdateRawData(varMap map[string]*model.Variable, data [][]string, updateImmutable bool) error {
 	d3mIndexIndex := -1
 	updates := map[string]map[string]string{}
 	headerMap := map[string]int{}
@@ -186,12 +201,18 @@ func (d *DiskDataset) UpdateOnDisk(ds *Dataset, data [][]string, updateImmutable
 		return err
 	}
 
-	err = d.SaveDataset()
-	if err != nil {
-		return err
-	}
-
 	return nil
+}
+
+// UpdatePath updates the path of the disk dataset to point to a new location.
+func (d *DiskDataset) UpdatePath(datasetFolder string) {
+	d.schemaPath = path.Join(datasetFolder, compute.D3MDataSchema)
+
+	// need to update the metadata to set the path of the main data resource
+	if d.Dataset.Metadata != nil {
+		mainDR := d.Dataset.Metadata.GetMainDataResource()
+		mainDR.ResPath = path.Join(datasetFolder, path.Base(path.Dir(mainDR.ResPath)), path.Base(mainDR.ResPath))
+	}
 }
 
 // SaveDataset saves a dataset to disk.
