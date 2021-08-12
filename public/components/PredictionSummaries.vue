@@ -237,6 +237,9 @@ export default Vue.extend({
     getFacetByType: getFacetByType,
     onCollapseClick(requestId: string) {
       reviseOpenSolutions(requestId, this.$route, this.$router);
+      if (this.openSolution.has(requestId)) {
+        this.$emit(EventList.SUMMARIES.FETCH_SUMMARY_PREDICTION, requestId);
+      }
     },
     onClick(key: string) {
       // Note that the key is of the form <requestId>:predicted and so needs to be parsed.

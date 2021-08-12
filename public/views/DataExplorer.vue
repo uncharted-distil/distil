@@ -23,8 +23,7 @@
       :current-action="currentAction"
       @set-active-pane="onSetActive"
     />
-
-    <left-side-panel :panel-title="currentAction">
+    <left-side-panel v-if="currentAction !== ''" :panel-title="currentAction">
       <add-variable-pane
         v-if="activePane === 'add'"
         :enable-label="imageVarExists"
@@ -43,6 +42,7 @@
           :include="include"
           :summaries="summaries"
           :enable-footer="isSelectState"
+          @fetch-summaries="fetchSummaries"
         />
       </template>
     </left-side-panel>
@@ -130,6 +130,8 @@
           :residual-extrema="residualExtrema"
           :enable-selection-tool-event="isLabelState"
           :variables="allVariables"
+          :label-feature-name="labelName"
+          :label-score-name="labelName"
           :area-of-interest-items="{
             inner: drillDownBaseline,
             outer: drillDownFiltered,
@@ -144,7 +146,7 @@
       <footer
         class="d-flex align-items-end d-flex justify-content-between mt-1 mb-0"
       >
-        <div class="flex-grow-1">
+        <div v-if="!isGeoView" class="flex-grow-1">
           <data-size
             :current-size="numRows"
             :total="totalNumRows"
@@ -155,6 +157,14 @@
             , {{ selectionNumRows }}
             <strong class="selected-color">selected</strong>
           </template>
+        </div>
+        <div v-else class="flex-grow-1">
+          <p class="m-0">
+            Selected Area Coverage:
+            <strong class="matching-color">
+              {{ areaCoverage }}km<sup>2</sup>
+            </strong>
+          </p>
         </div>
         <b-button-toolbar v-if="isSelectState">
           <b-button-group class="ml-2 mt-1">
@@ -262,6 +272,7 @@
         <result-facets
           :single-solution="isSingleSolution"
           :show-residuals="showResiduals"
+          @fetch-summary-solution="fetchSummarySolution"
         />
       </div>
       <facet-list-pane
@@ -271,8 +282,12 @@
         :include="include"
         :summaries="secondarySummaries"
         :enable-footer="isSelectState"
+        @fetch-summaries="fetchSummaries"
       />
-      <prediction-summaries v-else />
+      <prediction-summaries
+        v-else
+        @fetch-summary-prediction="fetchSummaryPrediction"
+      />
     </left-side-panel>
     <status-sidebar />
     <status-panel />
@@ -349,7 +364,6 @@ import ForecastHorizon from "../components/ForecastHorizon.vue";
 // Store
 import {
   viewActions,
-  datasetGetters,
   requestGetters,
   resultGetters,
   datasetActions,
@@ -412,8 +426,15 @@ import ExplorerConfig, {
   SELECT_METHODS,
   LABEL_METHODS,
   GENERIC_METHODS,
+  PREDICTION_COMPUTES,
+  PREDICTION_METHODS,
 } from "../util/dataExplorer";
-import { LowShotLabels, sortVariablesByImportance } from "../util/data";
+import {
+  LowShotLabels,
+  LOW_SHOT_SCORE_COLUMN_PREFIX,
+  sortVariablesByImportance,
+  totalAreaCoverage,
+} from "../util/data";
 import _ from "lodash";
 
 const DataExplorer = Vue.extend({
@@ -449,7 +470,6 @@ const DataExplorer = Vue.extend({
 
   data() {
     return {
-      activePane: "available",
       activeView: 0, // TABLE_VIEW
       instanceName: DATA_EXPLORER_VAR_INSTANCE,
       metaTypes: Object.keys(META_TYPES),
@@ -472,7 +492,7 @@ const DataExplorer = Vue.extend({
 
     /* Variables displayed on the Facet Panel */
     activeVariables(): Variable[] {
-      return this.variablesPerActions[this.activePane] ?? [];
+      return this.variablesPerActions[this.config.currentPane] ?? [];
     },
 
     activeViews(): string[] {
@@ -519,8 +539,9 @@ const DataExplorer = Vue.extend({
     },
     currentAction(): string {
       return (
-        this.activePane &&
-        this.config.actionList.find((a) => a.paneId === this.activePane).name
+        this.config.currentPane &&
+        this.config.actionList.find((a) => a.paneId === this.config.currentPane)
+          .name
       );
     },
     dataset(): string {
@@ -537,7 +558,9 @@ const DataExplorer = Vue.extend({
     hasData(): boolean {
       return this.state.hasData();
     },
-
+    activePane(): string {
+      return this.config.currentPane;
+    },
     hasNoVariables(): boolean {
       return isEmpty(this.activeVariables);
     },
@@ -599,9 +622,7 @@ const DataExplorer = Vue.extend({
     },
 
     numRows(): number {
-      return this.hasData
-        ? datasetGetters.getIncludedTableDataLength(this.$store)
-        : 0;
+      return this.items.length;
     },
 
     rowSelection(): RowSelection {
@@ -619,47 +640,21 @@ const DataExplorer = Vue.extend({
     },
 
     totalNumRows(): number {
-      return this.hasData
-        ? datasetGetters.getIncludedTableDataNumRows(this.$store)
-        : 0;
+      return this.state.getTotalItems(this.include);
     },
 
     variables(): Variable[] {
       const variables = this.state
         .getVariables()
-        .filter((v) => v.distilRole !== DISTIL_ROLES.Meta);
+        .filter((v) => v?.distilRole !== DISTIL_ROLES.Meta);
       return sortVariablesByImportance(variables);
     },
 
     variablesPerActions() {
       const variables = {};
       this.availableActions.forEach((action) => {
-        if (!!action.toggle) {
-          return;
-        }
-        if (action.paneId === "add") variables[action.paneId] = null;
-        else if (action.paneId === "available") {
-          variables[action.paneId] = this.variables;
-        } else if (action.paneId === "target") {
-          variables[action.paneId] = this.target ? [this.target] : [];
-        } else if (action.paneId === "training") {
-          variables[action.paneId] = this.variables.filter((variable) =>
-            this.training.includes(variable.key)
-          );
-        } else if (action.paneId === "outcome") {
-          variables[action.paneId] = this.state.getSecondaryVariables();
-        } else {
-          variables[action.paneId] = this.variables.filter((variable) => {
-            if (!META_TYPES[action.paneId]) {
-              console.log(action);
-              return false;
-            }
-
-            return META_TYPES[action.paneId].includes(variable.colType);
-          });
-        }
+        variables[action.paneId] = action.variables(this);
       });
-
       return variables;
     },
 
@@ -678,6 +673,9 @@ const DataExplorer = Vue.extend({
       return varSums.some((v) => {
         return isImageType(v.colType);
       });
+    },
+    isGeoView(): boolean {
+      return this.viewComponent === "GeoPlot";
     },
     viewComponent() {
       const viewType = this.activeViews[this.activeView] as string;
@@ -737,6 +735,9 @@ const DataExplorer = Vue.extend({
     explorerRouteState(): ExplorerStateNames {
       return routeGetters.getDataExplorerState(this.$store);
     },
+    areaCoverage(): number {
+      return totalAreaCoverage(this.items, this.variables);
+    },
     // toggles right side variable pane
     isOutcomeToggled(): boolean {
       const outcome = ACTION_MAP.get(ActionNames.OUTCOME_VARIABLES).paneId;
@@ -746,6 +747,9 @@ const DataExplorer = Vue.extend({
     },
     isRemoteSensing(): boolean {
       return routeGetters.isMultiBandImage(this.$store);
+    },
+    labelScoreName(): string {
+      return LOW_SHOT_SCORE_COLUMN_PREFIX + this.labelName;
     },
     training(): string[] {
       return SELECT_COMPUTES.training(this);
@@ -783,18 +787,27 @@ const DataExplorer = Vue.extend({
     hasWeight(): boolean {
       return RESULT_COMPUTES.hasWeight(this);
     },
+    produceRequestId(): string {
+      return PREDICTION_COMPUTES.produceRequestId(this);
+    },
   },
 
   // Update either the summaries or explore data on user interaction.
   watch: {
+    solutionId() {
+      this.state.fetchData();
+    },
+    produceRequestId() {
+      this.state.fetchData();
+    },
     activeVariables(n, o) {
       if (_.isEqual(n, o)) return;
-      viewActions.fetchDataExplorerData(this.$store, this.activeVariables);
+      this.state.fetchVariableSummaries();
     },
 
     filters(n, o) {
       if (n === o) return;
-      viewActions.updateDataExplorerData(this.$store);
+      this.state.fetchData();
     },
 
     highlights(n, o) {
@@ -817,12 +830,14 @@ const DataExplorer = Vue.extend({
   },
 
   async beforeMount() {
-    // First get the dataset informations
-    await viewActions.fetchDataExplorerData(this.$store, [] as Variable[]);
-    // Pre-select the top 5 variables by importance
-    this.preSelectTopVariables();
-    // Update the explore data
-    viewActions.updateDataExplorerData(this.$store);
+    if (this.isSelectState) {
+      // First get the dataset informations
+      await viewActions.fetchDataExplorerData(this.$store, [] as Variable[]);
+      // Pre-select the top 5 variables by importance
+      this.preSelectTopVariables();
+      // Update the explore data
+      await viewActions.updateDataExplorerData(this.$store);
+    }
   },
   mounted() {
     this.changeStatesByName(this.explorerRouteState);
@@ -834,6 +849,8 @@ const DataExplorer = Vue.extend({
     async changeStatesByName(state: ExplorerStateNames) {
       // reset state
       this.state.resetState();
+      // reset config state
+      this.config.resetConfig(this);
       // get the new state object
       this.setState(getStateFromName(state));
       // set the config used for action bar, could be used for other configs
@@ -844,17 +861,16 @@ const DataExplorer = Vue.extend({
     /* When the user request to fetch a different size of data. */
     onDataSizeSubmit(dataSize: number) {
       this.updateRoute({ dataSize });
-      viewActions.updateDataExplorerData(this.$store);
+      this.state.fetchData();
     },
     onSetActive(actionName: string): void {
-      if (actionName === this.activePane) return;
-
-      let activePane = "available"; // default
+      if (actionName === this.config.currentPane) return;
+      let activePane = "";
       if (actionName !== "") {
         activePane = this.config.actionList.find((a) => a.name === actionName)
           .paneId;
       }
-      this.activePane = activePane;
+      this.config.currentPane = activePane;
 
       // update the selected pane, and reset the page var to 1
       this.updateRoute({
@@ -885,7 +901,6 @@ const DataExplorer = Vue.extend({
           dataExplorerState: state.name,
           toggledActions: "[]",
         } as RouteArgs);
-        this.activePane = "available";
       }
     },
     setConfig(config: ExplorerConfig) {
@@ -944,6 +959,9 @@ const DataExplorer = Vue.extend({
     fetchTimeseries(args: EI.TIMESERIES.FetchTimeseriesEvent) {
       this.state.fetchTimeseries(args);
     },
+    fetchSummaries() {
+      this.state.fetchVariableSummaries();
+    },
     toggleAction(actionName: ActionNames) {
       GENERIC_METHODS.toggleAction(this)(actionName);
     },
@@ -991,11 +1009,17 @@ const DataExplorer = Vue.extend({
     async onSaveModel(args: EI.RESULT.SaveInfo) {
       RESULT_METHODS.onSaveModel(this)(args);
     },
+    async fetchSummarySolution(requestId: string) {
+      RESULT_METHODS.fetchSummarySolution(this)(requestId);
+    },
     isFittedSolutionIdSavedAsModel(id: string): boolean {
       return RESULT_METHODS.isFittedSolutionIdSavedAsModel(this)(id);
     },
     async onApplyModel(args: RouteArgs) {
       RESULT_METHODS.onApplyModel(this)(args);
+    },
+    async fetchSummaryPrediction(requestId: string) {
+      return PREDICTION_METHODS.fetchSummaryPrediction(this)(requestId);
     },
   },
 });

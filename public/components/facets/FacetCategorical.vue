@@ -241,7 +241,7 @@ export default Vue.extend({
       return this.moreNumToDisplay > 0;
     },
     displayFooter(): boolean {
-      return !!this.html && this.summary.distilRole != DISTIL_ROLES.Augmented;
+      return !!this.html;
     },
   },
 
@@ -344,7 +344,7 @@ export default Vue.extend({
 
 .facet-footer-container {
   min-height: 12px;
-  padding: 6px 12px 5px;
+  padding: 6px 4px 5px 5px;
   font-family: "IBM Plex Sans", sans-serif;
   font-size: 12px;
   font-weight: 600;
@@ -363,7 +363,6 @@ export default Vue.extend({
   align-content: stretch;
   align-items: flex-start;
 }
-
 .facet-footer-more-count {
   order: 0;
   flex: 1 1 auto;

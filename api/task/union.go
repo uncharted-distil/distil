@@ -23,17 +23,12 @@ import (
 
 // VerticalConcat will bring mastery.
 func VerticalConcat(dataStorage apiModel.DataStorage, joinLeft *JoinSpec, joinRight *JoinSpec) (string, *apiModel.FilteredData, error) {
-	cfg, err := env.LoadConfig()
-	if err != nil {
-		return "", nil, err
-	}
-
 	pipelineDesc, err := description.CreateVerticalConcatPipeline("Unioner", "Combine existing data")
 	if err != nil {
 		return "", nil, err
 	}
-	datasetLeftURI := env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetFolder)
-	datasetRightURI := env.ResolvePath(joinRight.DatasetSource, joinRight.DatasetFolder)
+	datasetLeftURI := env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetPath)
+	datasetRightURI := env.ResolvePath(joinRight.DatasetSource, joinRight.DatasetPath)
 
-	return join(joinLeft, joinRight, pipelineDesc, []string{datasetLeftURI, datasetRightURI}, defaultSubmitter{}, &cfg)
+	return join(joinLeft, joinRight, pipelineDesc, []string{datasetLeftURI, datasetRightURI}, defaultSubmitter{}, true)
 }

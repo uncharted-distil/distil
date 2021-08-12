@@ -25,7 +25,7 @@ import {
 } from "../store/requests/module";
 import { getters as routeGetters } from "../store/route/module";
 import { actions as dataActions } from "../store/dataset/module";
-import { createRouteEntry, overlayRouteEntry } from "../util/routes";
+import { createRouteEntry, overlayRouteEntry, RouteArgs } from "../util/routes";
 import { Solution, SolutionStatus } from "../store/requests/index";
 import { APPLY_MODEL_ROUTE } from "../store/route/index";
 import store from "../store/store";
@@ -150,7 +150,7 @@ export async function openModelSolution(
     solutionId?: string;
     variableFeatures: string[];
   }
-) {
+): Promise<RouteArgs> {
   let task = routeGetters.getRouteTask(store);
   if (!task) {
     const taskResponse = await dataActions.fetchTask(store, {
@@ -181,9 +181,5 @@ export async function openModelSolution(
     singleSolution: true.toString(),
     applyModel: true.toString(),
   };
-
-  const entry = createRouteEntry(APPLY_MODEL_ROUTE, routeDefintion);
-  router.push(entry).catch((err) => {
-    console.warn(err);
-  });
+  return routeDefintion;
 }

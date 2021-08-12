@@ -65,7 +65,7 @@
             :should-fetch-image="false"
           />
           <image-label
-            class="image-label"
+            class="image-label pt-1"
             included-active
             shorten-labels
             align-horizontal

@@ -86,7 +86,6 @@ import {
   ROUTE_PAGE_SUFFIX,
 } from "../../store/route/index";
 import { getters as routeGetters } from "../../store/route/module";
-import { actions as viewActions } from "../../store/view/module";
 
 import { NUM_PER_PAGE, searchVariables } from "../../util/data";
 import { Group } from "../../util/facets";
@@ -97,8 +96,9 @@ import {
   varModesToString,
 } from "../../util/routes";
 import { Feature, Activity, SubActivity } from "../../util/userEvents";
-import { isUnsupportedTargetVar } from "../../util/types";
+import { DISTIL_ROLES, isUnsupportedTargetVar } from "../../util/types";
 import { ExplorerStateNames } from "../../util/dataExplorer";
+import { EventList } from "../../util/events";
 
 export default Vue.extend({
   name: "FacetListPane",
@@ -165,16 +165,19 @@ export default Vue.extend({
       return !this.enableFooter
         ? null
         : (group: Group) => {
-            const variable = group.key;
+            const variableName = group.key;
+            const variable = this.variables.find((v) => v.key === variableName);
             const buttonList = [] as HTMLElement[];
             // Display and Hide variables in the Data Explorer.
-            const exploreButton = this.displayButton(variable);
-            if (this.hasTarget) {
-              // Add/Remove a variable as training.
-              buttonList.push(this.trainingButton(variable));
+            const exploreButton = this.displayButton(variableName);
+            if (variable?.distilRole !== DISTIL_ROLES.Augmented) {
+              if (this.hasTarget) {
+                // Add/Remove a variable as training.
+                buttonList.push(this.trainingButton(variableName));
+              }
+              // Add/Remove a variable as target.
+              buttonList.push(this.targetButton(variableName));
             }
-            // Add/Remove a variable as target.
-            buttonList.push(this.targetButton(variable));
 
             // List of model creation buttons to be added.
             const buttons = buttonList.filter((b) => !!b);
@@ -266,11 +269,11 @@ export default Vue.extend({
 
   watch: {
     varsPage() {
-      viewActions.fetchDataExplorerData(this.$store, this.variables);
+      this.$emit(EventList.SUMMARIES.FETCH_SUMMARIES_EVENT);
     },
 
     varsSearch() {
-      viewActions.fetchDataExplorerData(this.$store, this.variables);
+      this.$emit(EventList.SUMMARIES.FETCH_SUMMARIES_EVENT);
     },
   },
 
@@ -430,6 +433,9 @@ export default Vue.extend({
             }
           });
         }
+        await datasetActions.fetchModelingMetrics(this.$store, {
+          task: args.task,
+        });
       } catch (error) {
         console.log(error);
       }

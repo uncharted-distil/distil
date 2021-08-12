@@ -38,6 +38,7 @@
       :center-tile="drillDownState.centerTile"
       :bounds="drillDownState.bounds"
       :summaries="summaries"
+      :label-feature-name="labelFeatureName"
       @close="onFocusOut"
     />
     <geoplot-toggle-buttons
@@ -230,6 +231,7 @@ export default Vue.extend({
         return [];
       },
     },
+    labelFeatureName: { type: String, default: "" },
   },
 
   data() {
@@ -629,6 +631,7 @@ export default Vue.extend({
     baselineItems() {
       if (this.baselineItems && !this.areas.length) {
         this.areas = this.tableDataToAreas(this.baselineItems);
+        this.onNewData();
       }
     },
     colorScale() {
@@ -679,7 +682,6 @@ export default Vue.extend({
       color.g / maxVal,
       color.b / maxVal,
     ]);
-    this.fitBounds();
     const entry = overlayRouteEntry(this.$route, {
       dataSize: this.maxDataSize,
     });
@@ -1269,7 +1271,20 @@ export default Vue.extend({
     },
     onNewData() {
       if (!this.overlay.getQuad(this.currentState.layerId())) {
-        return;
+        if (!this.areas.length) {
+          return;
+        }
+        this.addPrimitives();
+
+        // add listener for clicks on quads
+        this.renderer.addListener(
+          EVENT_TYPES.MOUSE_CLICK,
+          this.currentState.onClick
+        );
+        this.renderer.addListener(
+          EVENT_TYPES.MOUSE_HOVER,
+          this.currentState.onHover
+        );
       }
       if (this.overlay.getQuad(this.tileState.layerId())) {
         updateVertexPrimitiveColor(

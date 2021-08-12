@@ -64,11 +64,14 @@ func DatasetHandler(ctor model.MetadataStorageCtor) func(http.ResponseWriter, *h
 			return
 		}
 
-		// get dataset summary
+		// get dataset summary - return a 404 if no matching dataset exists
 		res, err := storage.FetchDataset(dataset, false, false, false)
 		if err != nil {
 			handleError(w, err)
 			return
+		}
+		if res == nil {
+			handleErrorType(w, errors.Errorf("dataset %s does not exist", dataset), http.StatusNotFound)
 		}
 
 		// marshal data

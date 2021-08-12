@@ -121,7 +121,7 @@ export default Vue.extend({
     },
     isOpenInRoute(): boolean {
       return this.openPredictions.some((s) => {
-        s === this.prediction?.requestId;
+        return s === this.prediction?.requestId;
       });
     },
     openPredictions(): string[] {

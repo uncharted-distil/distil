@@ -360,7 +360,7 @@ export default Vue.extend({
 
 .facet-footer-container {
   min-height: 12px;
-  padding: 6px 12px 5px;
+  padding: 6px 4px 5px 5px;
   font-family: "IBM Plex Sans", sans-serif;
   font-size: 12px;
   font-weight: 600;

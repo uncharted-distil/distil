@@ -81,6 +81,8 @@ export interface BaseState {
   getTimeseries(): TimeSeries;
   // denotes whether data has been fetched or not
   hasData(): boolean;
+  // returns the total number of records in table
+  getTotalItems(include?: boolean): number;
   /******Fetch Functions**********/
   init(): Promise<void>;
   fetchVariables(): Promise<unknown>;
@@ -93,6 +95,11 @@ export interface BaseState {
 
 export class SelectViewState implements BaseState {
   name = ExplorerStateNames.SELECT_VIEW;
+  getTotalItems(include: boolean): number {
+    return include
+      ? datasetGetters.getIncludedTableDataNumRows(store)
+      : datasetGetters.getExcludedTableDataNumRows(store);
+  }
   hasData(): boolean {
     return datasetGetters.hasIncludedTableData(store);
   }
@@ -223,6 +230,9 @@ export class SelectViewState implements BaseState {
 
 export class ResultViewState implements BaseState {
   name = ExplorerStateNames.RESULT_VIEW;
+  getTotalItems(include?: boolean): number {
+    return resultGetters.getIncludedResultTableDataCount(store);
+  }
   hasData(): boolean {
     return !!resultGetters.getIncludedResultTableDataItems(store);
   }
@@ -403,6 +413,9 @@ export class ResultViewState implements BaseState {
 
 export class PredictViewState implements BaseState {
   name = ExplorerStateNames.PREDICTION_VIEW;
+  getTotalItems(include?: boolean): number {
+    return predictionGetters.getPredictionDataNumRows(store);
+  }
   hasData(): boolean {
     return !!predictionGetters.getIncludedPredictionTableDataItems(store);
   }
@@ -441,7 +454,12 @@ export class PredictViewState implements BaseState {
     return summaryToVariable(predSum);
   }
   getVariables(): Variable[] {
-    return requestGetters.getActivePredictionTrainingVariables(store);
+    const activePred = requestGetters.getActivePredictions(store);
+    if (!activePred) {
+      return [];
+    }
+    const variables = datasetGetters.getVariables(store);
+    return variables.filter((v) => v.datasetName === activePred.dataset);
   }
   getSecondaryVariables(): Variable[] {
     const predictionVariables = [] as Variable[];
@@ -583,6 +601,9 @@ export class PredictViewState implements BaseState {
 
 export class LabelViewState implements BaseState {
   name = ExplorerStateNames.LABEL_VIEW;
+  getTotalItems(include: boolean): number {
+    return datasetGetters.getIncludedTableDataNumRows(store);
+  }
   hasData(): boolean {
     return datasetGetters.hasIncludedTableData(store);
   }
