@@ -460,6 +460,7 @@ func getDiskMetadata(dataset string, metaStorage api.MetadataStorage, useLearnin
 }
 
 func union(w http.ResponseWriter, dataStorage api.DataStorage, metaStorage api.MetadataStorage, joinLeft *task.JoinSpec, joinRight *task.JoinSpec) {
+	// TODO: SOME VALIDATION SHOULD BE ADDED TO MAKE SURE THE COLUMNS ARE LINED UP PROPERLY!
 	// load the metadata for both left (top) and right (bottom) datasets
 	metaLeft, err := getDiskMetadata(joinLeft.DatasetID, metaStorage, false)
 	if err != nil {
