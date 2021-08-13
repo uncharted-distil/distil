@@ -16,9 +16,14 @@
 package task
 
 import (
+	"fmt"
+	"path"
+
+	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
-	"github.com/uncharted-distil/distil/api/env"
 	apiModel "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/serialization"
 )
 
 // VerticalConcat will bring mastery.
@@ -27,8 +32,47 @@ func VerticalConcat(dataStorage apiModel.DataStorage, joinLeft *JoinSpec, joinRi
 	if err != nil {
 		return "", nil, err
 	}
-	datasetLeftURI := env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetPath)
-	datasetRightURI := env.ResolvePath(joinRight.DatasetSource, joinRight.DatasetPath)
 
-	return join(joinLeft, joinRight, pipelineDesc, []string{datasetLeftURI, datasetRightURI}, defaultSubmitter{}, true)
+	datasetPath, _, err := join(joinLeft, joinRight, pipelineDesc, []string{joinLeft.DatasetPath, joinRight.DatasetPath}, defaultSubmitter{}, true)
+	if err != nil {
+		return "", nil, err
+	}
+
+	// rewrite dataset to have unique d3m index
+	// NOTE: THIS WONT WORK WHEN d3m index is a multi index!
+	data, err := rewriteD3MIndex(datasetPath)
+	if err != nil {
+		return "", nil, err
+	}
+
+	return datasetPath, data, nil
+}
+
+func rewriteD3MIndex(datasetPath string) (*apiModel.FilteredData, error) {
+	// read the raw dataset
+	ds, err := serialization.ReadDataset(path.Join(datasetPath, compute.D3MDataSchema))
+	if err != nil {
+		return nil, err
+	}
+
+	// find the d3m index field
+	d3mIndexIndex := ds.GetVariableIndex(model.D3MIndexFieldName)
+
+	// rewrite the index to make all rows unique (skipping header)
+	for i, r := range ds.Data[1:] {
+		r[d3mIndexIndex] = fmt.Sprintf("%d", i)
+	}
+
+	// save the updated dataset
+	err = serialization.WriteDataset(datasetPath, ds)
+	if err != nil {
+		return nil, err
+	}
+
+	dataParsed, err := apiModel.CreateFilteredData(ds.Data, ds.Metadata.GetMainDataResource().Variables, false, 100)
+	if err != nil {
+		return nil, err
+	}
+
+	return dataParsed, nil
 }

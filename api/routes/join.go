@@ -481,14 +481,6 @@ func union(w http.ResponseWriter, dataStorage api.DataStorage, metaStorage api.M
 		return
 	}
 
-	// rewrite dataset to have unique d3m index
-	// NOTE: THIS WONT WORK WHEN d3m index is a multi index!
-	err = rewriteD3MIndex(path)
-	if err != nil {
-		handleError(w, errors.Wrap(err, "unable to rewrite the d3m index of the joined dataset"))
-		return
-	}
-
 	// marshal output into JSON
 	bytes, err := json.Marshal(map[string]interface{}{"path": path, "data": transformDataForClient(data, api.EmptyString)})
 	if err != nil {
@@ -502,16 +494,4 @@ func union(w http.ResponseWriter, dataStorage api.DataStorage, metaStorage api.M
 		handleError(w, errors.Wrap(err, "unable to write filtered data to response writer"))
 		return
 	}
-}
-
-func rewriteD3MIndex(datasetPath string) error {
-	// read the dataset
-
-	// find the d3m index field
-
-	// rewrite the index to make all rows unique
-
-	// save the updated dataset
-
-	return nil
 }
