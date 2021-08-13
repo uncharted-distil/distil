@@ -827,6 +827,7 @@ export const actions = {
       datasetRight: datasetBrevised,
       joinPairs: args.joinPairs,
       searchResultIndex: args.joinSuggestionIndex,
+      operation: "horizontal",
     });
     return response.data;
   },

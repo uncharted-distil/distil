@@ -77,6 +77,23 @@ func JoinHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor)
 		}
 		rightJoin.DatasetPath = env.ResolvePath(rightJoin.DatasetSource, datasetRight["datasetFolder"].(string))
 
+		meta, err := metaCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		dataStorage, err := dataCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		// check for vertical concat operation
+		if params["operation"] != nil && params["operation"].(string) == "vertical" {
+			union(w, dataStorage, meta, leftJoin, rightJoin)
+			return
+		}
+
 		leftVariables, err := parseVariables(datasetLeft["variables"].([]interface{}))
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to parse left variables"))
@@ -121,18 +138,7 @@ func JoinHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor)
 			}
 		}
 
-		dataStorage, err := dataCtor()
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-
 		// add d3m variables to left variables
-		meta, err := metaCtor()
-		if err != nil {
-			handleError(w, err)
-			return
-		}
 		d3mIndexVar, err := meta.FetchVariable(datasetLeft["id"].(string), model.D3MIndexFieldName)
 		if err != nil {
 			handleError(w, err)
@@ -451,4 +457,42 @@ func getDiskMetadata(dataset string, metaStorage api.MetadataStorage, useLearnin
 	dsDisk.Metadata.LearningDataset = ds.LearningDataset
 
 	return dsDisk.Metadata, nil
+}
+
+func union(w http.ResponseWriter, dataStorage api.DataStorage, metaStorage api.MetadataStorage, joinLeft *task.JoinSpec, joinRight *task.JoinSpec) {
+	// TODO: SOME VALIDATION SHOULD BE ADDED TO MAKE SURE THE COLUMNS ARE LINED UP PROPERLY!
+	// load the metadata for both left (top) and right (bottom) datasets
+	metaLeft, err := getDiskMetadata(joinLeft.DatasetID, metaStorage, false)
+	if err != nil {
+		handleError(w, errors.Wrap(err, "unable to read left metadata"))
+		return
+	}
+	metaRight, err := getDiskMetadata(joinRight.DatasetID, metaStorage, false)
+	if err != nil {
+		handleError(w, errors.Wrap(err, "unable to read right metadata"))
+		return
+	}
+
+	joinLeft.ExistingMetadata = metaLeft
+	joinRight.ExistingMetadata = metaRight
+
+	path, data, err := task.VerticalConcat(dataStorage, joinLeft, joinRight)
+	if err != nil {
+		handleError(w, errors.Wrap(err, "unable to vertically concat datasets"))
+		return
+	}
+
+	// marshal output into JSON
+	bytes, err := json.Marshal(map[string]interface{}{"path": path, "data": transformDataForClient(data, api.EmptyString)})
+	if err != nil {
+		handleError(w, errors.Wrap(err, "unable marshal filtered data result into JSON"))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(bytes)
+	if err != nil {
+		handleError(w, errors.Wrap(err, "unable to write filtered data to response writer"))
+		return
+	}
 }
