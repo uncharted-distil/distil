@@ -74,7 +74,7 @@ import {
   GEOBOUNDS_TYPE,
 } from "../util/types";
 import { hasFilterInRoute } from "../util/filters";
-import { createRouteEntry } from "../util/routes";
+import { createRouteEntry, overlayRouteEntry } from "../util/routes";
 import {
   GROUPING_ROUTE,
   PREDICTION_ROUTE,
@@ -84,6 +84,7 @@ import DDropDown from "./DDropDown.vue";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { hasHighlightInRoute } from "../util/highlights";
+import { EventList } from "../util/events";
 
 const PROBABILITY_THRESHOLD = 0.8;
 interface SuggestedInfo {
@@ -374,6 +375,7 @@ export default Vue.extend({
               dataset: this.dataset,
             });
           }
+          this.$emit(EventList.VARIABLES.TYPE_CHANGE);
           return null;
         })
         .then(() => {

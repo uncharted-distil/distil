@@ -18,6 +18,7 @@
 import axios, { AxiosResponse } from "axios";
 import _ from "lodash";
 import { ActionContext } from "vuex";
+import { datasetGetters } from "..";
 import {
   createEmptyTableData,
   createErrorSummary,
@@ -972,37 +973,7 @@ export const actions = {
         field: args.field,
         type: args.type,
       });
-      const updatedArgs = {
-        ...args,
-        variables: response.data.variables as Variable[],
-      };
-      mutations.updateVariableType(context, updatedArgs);
-      // update variable summary
-      const filterParams =
-        context.getters.getDecodedSolutionRequestFilterParams;
-      const highlights = context.getters.getDecodedHighlights;
-      return Promise.all([
-        actions.fetchVariableSummary(context, {
-          dataset: args.dataset,
-          variable: args.field,
-          filterParams: filterParams,
-          highlights: highlights,
-          include: true,
-          dataMode: DataMode.Default,
-          mode: SummaryMode.Default,
-          handleMutation: true,
-        }),
-        actions.fetchVariableSummary(context, {
-          dataset: args.dataset,
-          variable: args.field,
-          filterParams: filterParams,
-          highlights: highlights,
-          include: false,
-          dataMode: DataMode.Default,
-          mode: SummaryMode.Default,
-          handleMutation: true,
-        }),
-      ]);
+      mutations.setVariables(context, response.data.variables as Variable[]);
     } catch (error) {
       mutations.updateVariableType(context, {
         ...args,

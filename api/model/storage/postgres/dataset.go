@@ -603,8 +603,10 @@ func (s *Storage) insertBulkCopy(storageName string, varNames []string, inserts 
 	}
 
 	// update the stats to make sure postgres runs the best queries possible
-	s.updateStats(storageName)
-
+	err = s.UpdateStats(storageName)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -690,8 +692,10 @@ func (s *Storage) insertBatchData(storageName string, varNames []string, inserts
 	}
 
 	// update the stats to make sure postgres runs the best queries possible
-	s.updateStats(storageName)
-
+	err := s.UpdateStats(storageName)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

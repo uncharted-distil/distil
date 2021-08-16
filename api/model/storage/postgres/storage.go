@@ -111,11 +111,14 @@ func (s *Storage) GetStorageName(dataset string) (string, error) {
 	return currentName, nil
 }
 
-func (s *Storage) updateStats(storageName string) {
+// UpdateStats runs an ANALYZE query on the table specified
+func (s *Storage) UpdateStats(storageName string) error {
 	_, err := s.client.Exec(fmt.Sprintf("ANALYZE \"%s\"", storageName))
 	if err != nil {
 		log.Warnf("error updating postgres stats for %s: %+v", storageName, err)
+		return err
 	}
+	return nil
 }
 
 // VerifyData checks each column in the table against every supported type, then updates what types are valid in the SuggestedType

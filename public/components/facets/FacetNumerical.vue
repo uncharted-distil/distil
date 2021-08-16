@@ -41,6 +41,7 @@
             :dataset="summary.dataset"
             :field="summary.key"
             :expand-collapse="expandCollapse"
+            @type-change="onTypeChange"
           />
         </div>
       </div>
@@ -250,6 +251,9 @@ export default Vue.extend({
   },
 
   methods: {
+    onTypeChange() {
+      this.$emit(EventList.VARIABLES.TYPE_CHANGE);
+    },
     getHighlightValues(): { from: number; to: number }[] {
       return this.highlights.reduce(
         (acc, highlight) =>

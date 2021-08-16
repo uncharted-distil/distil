@@ -216,6 +216,7 @@ export const mutations = {
   updateExcludedVariableSummaries: commit(
     moduleMutations.updateExcludedVariableSummaries
   ),
+  clearVariableSummary: commit(moduleMutations.clearVariableSummary),
   clearVariableSummaries: commit(moduleMutations.clearVariableSummaries),
   setVariableSummary: commit(moduleMutations.setIncludedVariableSummary),
   // ranking

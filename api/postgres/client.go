@@ -170,7 +170,11 @@ func NewClient(host string, port int, user string, password string, database str
 			poolConfig.LazyConnect = false
 			poolConfig.ConnConfig.Logger = logAdapter
 			poolConfig.ConnConfig.LogLevel = level
-
+			// BuildStatementCache set to nil prevents the caching of queries
+			// This does slow down performance when multiple of the same query is ran
+			// However, this also causes issues when types are changing and the caches are not updated
+			// One solution would be to reset all pool connection every time a type is changed (but for now this seems to be the best way)
+			poolConfig.ConnConfig.BuildStatementCache = nil
 			//TODO: Need to close the pool eventually. Not sure how to hook that in.
 			pgxClient, err := pool.ConnectConfig(context.Background(), poolConfig)
 			client = &IntegratedClient{

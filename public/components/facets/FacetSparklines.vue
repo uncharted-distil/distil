@@ -34,6 +34,7 @@
         :field="summary.key"
         :expand-collapse="expandCollapse"
         :expand="expand"
+        @type-change="onTypeChange"
       />
     </div>
     <facet-template target="facet-terms-value">
@@ -212,6 +213,9 @@ export default Vue.extend({
   },
 
   methods: {
+    onTypeChange() {
+      this.$emit(EventList.VARIABLES.TYPE_CHANGE);
+    },
     getFacetValues(): {
       ratio: number;
       label: string;
