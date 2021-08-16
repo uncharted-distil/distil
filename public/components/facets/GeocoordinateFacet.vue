@@ -89,7 +89,11 @@ import {
 } from "../../store/dataset";
 import TypeChangeMenu from "../TypeChangeMenu.vue";
 import FacetNumerical from "./FacetNumerical.vue";
-import { updateHighlight, clearHighlight } from "../../util/highlights";
+import {
+  updateHighlight,
+  clearHighlight,
+  UPDATE_FOR_KEY,
+} from "../../util/highlights";
 import {
   LATITUDE_TYPE,
   LONGITUDE_TYPE,
@@ -650,12 +654,20 @@ export default Vue.extend({
           }
         });
       } else {
-        this.createHighlight({
+        const highlightValue = {
           minX: this.lonSummary.baseline.extrema.min,
           maxX: this.lonSummary.baseline.extrema.max,
           minY: this.latSummary.baseline.extrema.min,
           maxY: this.latSummary.baseline.extrema.max,
-        });
+        };
+        if (geocoordinateComponent === LONGITUDE_TYPE) {
+          highlightValue.minX = value.from;
+          highlightValue.maxX = value.to;
+        } else {
+          highlightValue.minY = value.from;
+          highlightValue.maxY = value.to;
+        }
+        this.createHighlight(highlightValue);
       }
       this.clearSelectionRect();
       this.$emit(actionType, key, value);
@@ -829,12 +841,16 @@ export default Vue.extend({
         }
       }
 
-      updateHighlight(this.$router, {
-        context: this.instanceName,
-        dataset: this.dataset,
-        key: this.summary.key,
-        value: value,
-      });
+      updateHighlight(
+        this.$router,
+        {
+          context: this.instanceName,
+          dataset: this.dataset,
+          key: this.summary.key,
+          value: value,
+        },
+        UPDATE_FOR_KEY
+      );
     },
 
     drawHighlight() {

@@ -282,6 +282,7 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     this.hoverTimeoutId = null;
     this.boundOnMove = this.onMove.bind(this);
     this.boundOnClick = this.onClick.bind(this);
+    this.boundOnMouseDown = this.onMouseDown.bind(this);
     this.boundOnMouseLeave = this.onMouseLeave.bind(this);
     this.drawMode = defaultTo(options.drawMode, DRAW_MODES.TRIANGLES);
     this.pointSize = defaultTo(options.pointSize, 1);
@@ -336,6 +337,7 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     this.gl.canvas.removeEventListener("mouseup", this.boundOnClick);
     this.gl.canvas.removeEventListener("mousemove", this.boundOnMove);
     this.gl.canvas.removeEventListener("mouseleave", this.boundOnMouseLeave);
+    this.gl.canvas.removeEventListener("mousedown", this.boundOnMouseDown);
   }
   /**
    * enables quad interactions such as click and hover
@@ -344,6 +346,7 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     this.gl.canvas.addEventListener("mouseup", this.boundOnClick);
     this.gl.canvas.addEventListener("mousemove", this.boundOnMove);
     this.gl.canvas.addEventListener("mouseleave", this.boundOnMouseLeave);
+    this.gl.canvas.addEventListener("mousedown", this.boundOnMouseDown);
   }
   /**
    * Generate any underlying buffers.
@@ -535,10 +538,17 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
   onMouseLeave() {
     clearInterval(this.hoverTimeoutId);
   }
+  onMouseDown(event) {
+    this.startX = event.layerX;
+    this.startY = event.layerY;
+  }
   // onClick read ID FBO at the pixel the mouse clicked on and extract the ID.
   onClick(event) {
     this.x = event.layerX;
     this.y = event.layerY;
+    if (this.x != this.startX || this.y != this.startY) {
+      return;
+    }
     clearTimeout(this.hoverTimeoutId); // clear hover
     const gl = this.gl;
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
