@@ -435,7 +435,7 @@ func updatePredictionAlignment(updates *alignmentUpdates, dataset *api.Dataset, 
 			}
 		}
 
-		// Next, add the existing data, but re-map the colum order so they line up with what the model expects
+		// Next, add the existing data, but re-map the column order so they line up with what the model expects
 		for j, value := range row {
 			if mappedIndex, ok := updates.reorders[j]; ok {
 				alignedData[i][mappedIndex] = value
@@ -821,11 +821,6 @@ func augmentPredictionDataset(csvData [][]string, target *model.Variable,
 		predictVariablesMap[len(csvData[0])] = target.Index
 	}
 
-	// check if a variable the model needs is missing
-	if len(sourceVariables) > len(predictVariablesMap) {
-		return nil, errors.Errorf("missing some variables for model so unable to get predictions (missing column count: %d)", len(sourceVariables)-len(predictVariablesMap))
-	}
-
 	// read the rest of the data
 	log.Infof("rewriting prediction dataset to match source dataset structure")
 	count := 0
@@ -841,7 +836,7 @@ func augmentPredictionDataset(csvData [][]string, target *model.Variable,
 	for _, line := range csvData[1:] {
 		offset := 0
 		// write the columns in the same order as the source dataset
-		output := make([]string, len(predictVariablesMap))
+		output := make([]string, len(headerSource))
 		i := 0
 		for range predictVariablesMap {
 			sourceIndex := predictVariablesMap[i]
