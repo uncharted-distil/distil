@@ -105,13 +105,13 @@ type DataStorage interface {
 	FetchSolutionFeatureWeights(dataset string, storageName string, resultURI string, d3mIndex int64) (*SolutionFeatureWeight, error)
 	// Dataset manipulation
 	IsValidDataType(dataset string, storageName string, varName string, varType string) (bool, error)
+	SetDataType(dataset string, storageName string, varName string, varType string) error
 	AddVariable(dataset string, storageName string, varName string, varType string, defaultVal string) error
 	AddField(dataset string, storageName string, varName string, varType string, defaultVal string) error
 	DeleteVariable(dataset string, storageName string, varName string) error
 	SetVariableValue(dataset string, storageName string, varName string, value string, filterParams *FilterParams) error
 	UpdateVariableBatch(storageName string, varName string, updates map[string]string) error
 	UpdateData(dataset string, storageName string, varName string, updates map[string]string, filterParams *FilterParams) error
-	UpdateStats(storageName string) error
 	DoesVariableExist(dataset string, storageName string, varName string) (bool, error)
 	VerifyData(datasetID string, tableName string) error
 	// Raw data queries
