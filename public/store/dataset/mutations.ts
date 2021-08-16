@@ -98,6 +98,9 @@ export const mutations = {
   },
 
   setDatasets(state: DatasetState, datasets: Dataset[]) {
+    if (!datasets) {
+      return;
+    }
     // individually add datasets if they do not exist
     const lookup = {};
     state.datasets.forEach((d, index) => {
@@ -255,7 +258,10 @@ export const mutations = {
       state.excludedSet.variableSummariesByKey
     );
   },
-
+  clearVariableSummary(state: DatasetState, key: string) {
+    Vue.delete(state.includedSet, key);
+    Vue.delete(state.excludedSet, key);
+  },
   clearVariableSummaries(state: DatasetState) {
     state.includedSet.variableSummariesByKey = {};
     state.excludedSet.variableSummariesByKey = {};

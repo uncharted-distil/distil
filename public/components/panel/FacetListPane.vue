@@ -60,6 +60,7 @@
       "
       :summaries="activeSummaries"
       @search="onSearch"
+      @type-change="onTypeChange"
     />
   </div>
 </template>
@@ -278,6 +279,9 @@ export default Vue.extend({
   },
 
   methods: {
+    onTypeChange() {
+      this.$emit(EventList.VARIABLES.TYPE_CHANGE);
+    },
     onSearch(term): void {
       this.search = term;
     },

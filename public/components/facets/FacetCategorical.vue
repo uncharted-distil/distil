@@ -43,6 +43,7 @@
             :dataset="summary.dataset"
             :field="summary.key"
             :expand-collapse="expandCollapse"
+            @type-change="onTypeChange"
           />
         </div>
       </div>
@@ -246,6 +247,9 @@ export default Vue.extend({
   },
 
   methods: {
+    onTypeChange() {
+      this.$emit(EventList.VARIABLES.TYPE_CHANGE);
+    },
     getBucketData(bucket): { ratio: number; label: string; value: number } {
       return {
         ratio: bucket.count / this.max,

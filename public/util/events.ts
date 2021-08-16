@@ -64,6 +64,8 @@ export class EventList {
     VAR_SET_CHANGE_EVENT: "var-change",
     // occurs when a group of variables is removed or added to the training set
     VAR_SET_GROUP_CHANGE_EVENT: "group-change",
+    // occurs when a variable has their type changed
+    TYPE_CHANGE: "type-change",
   };
   static readonly SUMMARIES = {
     FETCH_SUMMARIES_EVENT: "fetch-summaries",

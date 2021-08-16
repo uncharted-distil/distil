@@ -28,6 +28,7 @@
         :field="target"
         :expandCollapse="expandCollapse"
         :expand="expand"
+        @type-change="onTypeChange"
       />
     </div>
     <div class="geofacet-container">
@@ -103,6 +104,7 @@ import helpers, { polygon, featureCollection, point } from "@turf/helpers";
 import bbox from "@turf/bbox";
 import booleanContains from "@turf/boolean-contains";
 import { BLUE_PALETTE, BLACK_PALETTE } from "../../util/color";
+import { EventList } from "../../util/events";
 
 const CLOSE_BUTTON_CLASS = "geo-close-button";
 const CLOSE_ICON_CLASS = "fa-times";
@@ -672,7 +674,9 @@ export default Vue.extend({
         this.expand = false;
       }
     },
-
+    onTypeChange() {
+      this.$emit(EventList.VARIABLES.TYPE_CHANGE);
+    },
     clearSelectionRect() {
       if (this.selectedRect) {
         this.selectedRect.remove();

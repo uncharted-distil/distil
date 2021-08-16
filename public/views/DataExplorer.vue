@@ -43,6 +43,7 @@
           :summaries="summaries"
           :enable-footer="isSelectState"
           @fetch-summaries="fetchSummaries"
+          @type-change="fetchSummaries"
         />
       </template>
     </left-side-panel>
@@ -819,10 +820,18 @@ const DataExplorer = Vue.extend({
       if (_.isEqual(n, o)) return;
       viewActions.updateDataExplorerData(this.$store);
     },
-    geoVarExists() {
+    async geoVarExists() {
+      if (
+        (!this.geoVarExists && this.summaries.some((s) => s.pending)) ||
+        this.geoVarExists === routeGetters.hasGeoData(this.$store)
+      ) {
+        return;
+      }
       const route = routeGetters.getRoute(this.$store);
       const entry = overlayRouteEntry(route, { hasGeoData: this.geoVarExists });
       this.$router.push(entry).catch((err) => console.warn(err));
+      await this.state.fetchMapBaseline();
+      await this.state.fetchData();
     },
     targetName() {
       datasetActions.fetchOutliers(this.$store, this.dataset);

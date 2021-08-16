@@ -111,6 +111,7 @@ func (s *Storage) GetStorageName(dataset string) (string, error) {
 	return currentName, nil
 }
 
+// updateStats runs an ANALYZE query on the table specified
 func (s *Storage) updateStats(storageName string) {
 	_, err := s.client.Exec(fmt.Sprintf("ANALYZE \"%s\"", storageName))
 	if err != nil {

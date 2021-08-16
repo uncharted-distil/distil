@@ -71,6 +71,7 @@
               @histogram-numerical-click="onNumericalClick"
               @histogram-categorical-click="onCategoricalClick"
               @histogram-range-change="onRangeChange"
+              @type-change="onTypeChange"
             />
           </template>
           <template v-else-if="isGeoLocated(summary.varType)">
@@ -87,6 +88,7 @@
               :expanded="expandGeoAndTimeseriesFacets"
               @histogram-numerical-click="onNumericalClick"
               @histogram-range-change="onRangeChange"
+              @type-change="onTypeChange"
             />
           </template>
           <template v-else-if="isImage(summary.varType)">
@@ -104,6 +106,7 @@
               :datasetName="datasetName"
               :include="include"
               @facet-click="onFacetCategoryClick"
+              @type-change="onTypeChange"
             />
           </template>
           <template v-else-if="summary.varType === 'dateTime'">
@@ -123,6 +126,7 @@
               :geoEnabled="enableColorScales && geoVariableExists"
               @facet-click="onFacetClick"
               @range-change="onRangeChange"
+              @type-change="onTypeChange"
             />
           </template>
           <template v-else-if="summary.type === 'categorical'">
@@ -140,6 +144,7 @@
               :include="include"
               :geoEnabled="enableColorScales && geoVariableExists"
               @facet-click="onFacetCategoryClick"
+              @type-change="onTypeChange"
             />
           </template>
           <template v-else-if="summary.type === 'numerical'">
@@ -159,6 +164,7 @@
               @numerical-click="onNumericalClick"
               @range-change="onRangeChange"
               @facet-click="onFacetClick"
+              @type-change="onTypeChange"
             />
           </template>
         </div>
@@ -424,6 +430,9 @@ export default Vue.extend({
   },
 
   methods: {
+    onTypeChange() {
+      this.$emit(EventList.VARIABLES.TYPE_CHANGE);
+    },
     // creates a facet key for the route from the instance-name component arg
     routePageKey(): string {
       return `${this.instanceName}${ROUTE_PAGE_SUFFIX}`;
