@@ -41,6 +41,8 @@ export class EventList {
     SELECTION_TOOL_TOGGLE_EVENT: "selection-tool-toggle",
     // turn on/off baseline nodes on map
     BASELINE_TOGGLE_EVENT: "baseline-toggle",
+    // event fires when map has finished loading
+    FINISHED_LOADING: "finished-loading",
   };
   /*********FACET EVENTS*************/
   static readonly FACETS = {

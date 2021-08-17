@@ -66,7 +66,12 @@
               :key="index"
               :active="view === activeViews[activeView]"
               :title="capitalize(view)"
-            />
+              @click="onTabClick(view)"
+            >
+              <template v-slot:title>
+                <b-spinner v-if="dataLoading" small />
+              </template>
+            </b-tab>
           </b-tabs>
         </div>
         <layer-selection
@@ -141,6 +146,7 @@
           @tile-clicked="onTileClick"
           @selection-tool-event="onToolSelection"
           @fetch-timeseries="fetchTimeseries"
+          @finished-loading="onMapFinishedLoading"
         />
       </section>
 
@@ -380,10 +386,7 @@ import {
   Variable,
   VariableSummary,
 } from "../store/dataset/index";
-import {
-  DATA_EXPLORER_VAR_INSTANCE,
-  ROUTE_PAGE_SUFFIX,
-} from "../store/route/index";
+import { DATA_EXPLORER_VAR_INSTANCE } from "../store/route/index";
 import { getters as routeGetters } from "../store/route/module";
 
 // Util
@@ -480,6 +483,7 @@ const DataExplorer = Vue.extend({
       labelName: "",
       labelModalId: "label-input-form",
       isBusy: false,
+      dataLoading: false,
     };
   },
   computed: {
@@ -796,29 +800,39 @@ const DataExplorer = Vue.extend({
   // Update either the summaries or explore data on user interaction.
   watch: {
     solutionId() {
+      this.dataLoading = true;
       this.state.fetchData();
+      this.dataLoading = false;
     },
     produceRequestId() {
+      this.dataLoading = true;
       this.state.fetchData();
+      this.dataLoading = false;
     },
     activeVariables(n, o) {
       if (_.isEqual(n, o)) return;
       this.state.fetchVariableSummaries();
     },
 
-    filters(n, o) {
+    async filters(n, o) {
       if (n === o) return;
-      this.state.fetchData();
+      this.dataLoading = true;
+      await this.state.fetchData();
+      this.dataLoading = false;
     },
 
-    highlights(n, o) {
+    async highlights(n, o) {
       if (_.isEqual(n, o)) return;
-      this.state.fetchData();
+      this.dataLoading = true;
+      await this.state.fetchData();
+      this.dataLoading = false;
     },
 
-    explore(n, o) {
+    async explore(n, o) {
       if (_.isEqual(n, o)) return;
-      viewActions.updateDataExplorerData(this.$store);
+      this.dataLoading = true;
+      await viewActions.updateDataExplorerData(this.$store);
+      this.dataLoading = false;
     },
     async geoVarExists() {
       if (
@@ -830,8 +844,10 @@ const DataExplorer = Vue.extend({
       const route = routeGetters.getRoute(this.$store);
       const entry = overlayRouteEntry(route, { hasGeoData: this.geoVarExists });
       this.$router.push(entry).catch((err) => console.warn(err));
+      this.dataLoading = true;
       await this.state.fetchMapBaseline();
       await this.state.fetchData();
+      this.dataLoading = false;
     },
     targetName() {
       datasetActions.fetchOutliers(this.$store, this.dataset);
@@ -880,12 +896,6 @@ const DataExplorer = Vue.extend({
           .paneId;
       }
       this.config.currentPane = activePane;
-
-      // update the selected pane, and reset the page var to 1
-      this.updateRoute({
-        pane: activePane,
-        [`${DATA_EXPLORER_VAR_INSTANCE}${ROUTE_PAGE_SUFFIX}`]: 1,
-      });
     },
     async onTileClick(data: EI.MAP.TileClickData) {
       // filter for area of interests
@@ -939,7 +949,7 @@ const DataExplorer = Vue.extend({
       this.include = false;
     },
 
-    updateRoute(args) {
+    updateRoute(args: RouteArgs) {
       const entry = overlayRouteEntry(this.$route, args);
       this.$router.push(entry).catch((err) => console.warn(err));
     },
@@ -965,11 +975,24 @@ const DataExplorer = Vue.extend({
       // Update the route with the top 5 variable as training
       this.updateRoute({ explore: top5Variables });
     },
+    onTabClick(view: string) {
+      // if the data size is not set to the max set it then fetch data
+      if (view === GEO_VIEW) {
+        this.dataLoading = true;
+        if (this.numRows !== this.totalNumRows) {
+          this.updateRoute({ dataSize: this.totalNumRows });
+          this.state.fetchData();
+        }
+      }
+    },
     fetchTimeseries(args: EI.TIMESERIES.FetchTimeseriesEvent) {
       this.state.fetchTimeseries(args);
     },
     fetchSummaries() {
       this.state.fetchVariableSummaries();
+    },
+    onMapFinishedLoading() {
+      this.dataLoading = false;
     },
     toggleAction(actionName: ActionNames) {
       GENERIC_METHODS.toggleAction(this)(actionName);
