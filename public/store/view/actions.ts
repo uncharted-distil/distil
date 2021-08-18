@@ -15,7 +15,6 @@
  *    limitations under the License.
  */
 
-import { data } from "jquery";
 import _ from "lodash";
 import { ActionContext } from "vuex";
 import {
@@ -27,12 +26,7 @@ import {
   sortVariablesByImportance,
 } from "../../util/data";
 import { Dictionary } from "../../util/dict";
-import {
-  EXCLUDE_FILTER,
-  Filter,
-  FilterParams,
-  invertFilter,
-} from "../../util/filters";
+import { Filter, FilterParams, invertFilter } from "../../util/filters";
 import { getPredictionsById } from "../../util/predictions";
 import { filterBadRequests } from "../../util/solutions";
 import {
