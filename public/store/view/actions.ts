@@ -15,6 +15,7 @@
  *    limitations under the License.
  */
 
+import { data } from "jquery";
 import _ from "lodash";
 import { ActionContext } from "vuex";
 import {
@@ -450,11 +451,9 @@ export const actions = {
     // fetch new state
     const dataset = context.getters.getRouteDataset;
     await fetchVariableSummaries(context, { dataset, variables });
-    fetchClusters(context, { dataset });
-    fetchOutliers(context, { dataset });
-    fetchJoinSuggestions(context, {
-      dataset: dataset,
-    });
+    datasetActions.fetchClusters(store, { dataset });
+    datasetActions.fetchOutliers(store, dataset);
+    datasetActions.fetchJoinSuggestions(store, { dataset, searchQuery: "" });
   },
 
   updateDataExplorerData(context: ViewContext) {
@@ -493,9 +492,7 @@ export const actions = {
     const dataset = context.getters.getRouteDataset;
     const target = context.getters.getRouteTargetVariable;
 
-    fetchJoinSuggestions(context, {
-      dataset: dataset,
-    });
+    datasetActions.fetchJoinSuggestions(store, { dataset, searchQuery: "" });
 
     await Promise.all([
       fetchVariables(context, {
@@ -508,8 +505,8 @@ export const actions = {
     if (target) {
       fetchVariableRankings(context, { dataset, target });
     }
-    fetchClusters(context, { dataset });
-    fetchOutliers(context, { dataset });
+    datasetActions.fetchClusters(store, { dataset });
+    datasetActions.fetchOutliers(store, dataset);
 
     return actions.updateSelectTrainingData(context);
   },
