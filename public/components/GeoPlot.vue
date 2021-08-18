@@ -143,7 +143,6 @@ import {
   updateVertexPrimitiveColor,
 } from "../util/rendering/coordinates";
 import { isGeoLocatedType } from "../util/types";
-import { overlayRouteEntry } from "../util/routes";
 import { EventList } from "../util/events";
 
 const SINGLE_FIELD = 1;
@@ -275,7 +274,7 @@ export default Vue.extend({
       tileAreaThreshold: 170, // area in pixels
       boundsInitialized: false,
       isHidingBaseline: false,
-      areas: [],
+      areas: [] as readonly Area[],
       debounceKey: null,
     };
   },
@@ -682,10 +681,6 @@ export default Vue.extend({
       color.g / maxVal,
       color.b / maxVal,
     ]);
-    const entry = overlayRouteEntry(this.$route, {
-      dataSize: this.maxDataSize,
-    });
-    this.$router.push(entry).catch((err) => console.warn(err));
   },
   beforeDestroy() {
     this.map.remove(this.overlay);
@@ -711,14 +706,16 @@ export default Vue.extend({
         this.overlay.addQuad(
           this.tileState.layerId(),
           vertices,
-          this.tileState.drawMode()
+          this.tileState.drawMode(),
+          false
         );
       }
       vertices = this.pointState.vertices();
       this.overlay.addQuad(
         this.pointState.layerId(),
         vertices,
-        this.pointState.drawMode()
+        this.pointState.drawMode(),
+        false
       );
       this.renderer.setDrawList([
         this.currentState.layerId(),
@@ -728,7 +725,8 @@ export default Vue.extend({
       this.overlay.addQuad(
         this.clusterState.layerId(),
         vertices,
-        this.clusterState.drawMode()
+        this.clusterState.drawMode(),
+        true
       );
     },
     createLumoMap() {
@@ -1014,25 +1012,32 @@ export default Vue.extend({
       return result;
     },
     areaToPoints(): VertexPrimitive[] {
-      let result = [];
-
-      this.areas.forEach((area, idx) => {
-        result = result.concat(
-          area.info.toPoint(this.renderer, this.pointOpacity, idx)
-            .vertexPrimitives
-        );
-      });
+      const result = [];
+      for (let i = 0; i < this.areas.length; ++i) {
+        const vertexPrimitive = this.areas[i].info.toPoint(
+          this.renderer,
+          this.pointOpacity,
+          i
+        ).vertexPrimitives;
+        for (let j = 0; j < vertexPrimitive.length; ++j) {
+          result.push(vertexPrimitive[j]);
+        }
+      }
       return result;
     },
     // packs all data into single aligned memory array
     areaToQuads(): VertexPrimitive[] {
-      let result = [];
-      this.areas.forEach((area, idx) => {
-        result = result.concat(
-          area.info.toQuad(this.renderer, this.quadOpacity, idx)
-            .vertexPrimitives
-        );
-      });
+      const result = [] as VertexPrimitive[];
+      for (let i = 0; i < this.areas.length; ++i) {
+        const vertexPrimitive = this.areas[i].info.toQuad(
+          this.renderer,
+          this.quadOpacity,
+          i
+        ).vertexPrimitives;
+        for (let j = 0; j < vertexPrimitive.length; ++j) {
+          result.push(vertexPrimitive[j]);
+        }
+      }
       return result;
     },
     pointGroups(tableData: any[]): Area[] {
@@ -1064,7 +1069,7 @@ export default Vue.extend({
 
       return areas;
     },
-    tableDataToAreas(tableData: any[]): Area[] {
+    tableDataToAreas(tableData: any[]): readonly Area[] {
       if (this.getCoordinateType === CoordinateType.PointBased) {
         return this.pointGroups(tableData);
       }
@@ -1101,7 +1106,7 @@ export default Vue.extend({
         return { item, imageUrl, info } as Area;
       });
 
-      return areas;
+      return Object.freeze(areas);
     },
     shouldTilesRender(): boolean {
       if (!this.areas.length) {
@@ -1312,6 +1317,7 @@ export default Vue.extend({
       }
       // don't show exit button
       this.showExit = false;
+      this.$emit(EventList.MAP.FINISHED_LOADING);
     },
   },
 });

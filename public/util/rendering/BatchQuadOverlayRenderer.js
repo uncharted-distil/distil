@@ -38,9 +38,12 @@ const SHADER_GLSL = {
 		uniform float uScale;
     uniform mat4 uProjectionMatrix;
     uniform float uPointSize;
+    uniform vec2 uCellOffset;
+    uniform float uCellExtent;
     varying vec4 oColor;
 		void main() {
-			vec2 wPosition = (aPosition * uScale) - uViewOffset;
+      vec2 cellPosition = (aPosition - uCellOffset) * uCellExtent;
+			vec2 wPosition = (cellPosition * uScale) - uViewOffset;
       gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
       oColor = aColor;
       gl_PointSize = uPointSize;
@@ -73,10 +76,13 @@ const PICKING_SHADER = {
   uniform float uScale;
   uniform mat4 uProjectionMatrix;
   uniform float uPointSize;
+  uniform vec2 uCellOffset;
+  uniform float uCellExtent;
   varying vec4 oId;
   varying vec4 oColor;
   void main() {
-    vec2 wPosition = (aPosition * uScale) - uViewOffset;
+    vec2 cellPosition = (aPosition - uCellOffset) * uCellExtent;
+    vec2 wPosition = (cellPosition * uScale) - uViewOffset;
     gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
     oId = id;
     oColor=aColor;
@@ -106,9 +112,12 @@ const POINT_SHADER = {
   uniform float uScale;
   uniform mat4 uProjectionMatrix;
   uniform float uPointSize;
+  uniform vec2 uCellOffset;
+  uniform float uCellExtent;
   varying vec4 oColor;
   void main() {
-    vec2 wPosition = (aPosition * uScale) - uViewOffset; 
+    vec2 cellPosition = (aPosition - uCellOffset) * uCellExtent;
+    vec2 wPosition = (cellPosition * uScale) - uViewOffset; 
     vec4 zoomedPosition = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
     gl_Position = zoomedPosition;
     oColor = aColor;
@@ -145,10 +154,13 @@ const POINT_PICKING_SHADER = {
   uniform float uScale;
   uniform mat4 uProjectionMatrix;
   uniform float uPointSize;
+  uniform vec2 uCellOffset;
+  uniform float uCellExtent;
   varying vec4 oId;
   varying vec4 oColor;
   void main() {
-    vec2 wPosition = (aPosition * uScale) - uViewOffset;
+    vec2 cellPosition = (aPosition - uCellOffset) * uCellExtent;
+    vec2 wPosition = (cellPosition * uScale) - uViewOffset;
     gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
     oId = id;
     oColor=aColor;
@@ -398,6 +410,8 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
       // set global uniforms
       shader.setUniform("uProjectionMatrix", proj);
       shader.setUniform("uViewOffset", [offset.x, offset.y]);
+      shader.setUniform("uCellExtent", cell.extent);
+      shader.setUniform("uCellOffset", [cell.offset.x, cell.offset.y]);
       shader.setUniform("uScale", scale);
       shader.setUniform("uPointSize", this.pointSize);
       shader.setUniform("uHideFragment", this.hideFragment);
@@ -441,6 +455,8 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
       shader.setUniform("uProjectionMatrix", proj);
       shader.setUniform("uViewOffset", [offset.x, offset.y]);
       shader.setUniform("uScale", scale);
+      shader.setUniform("uCellExtent", cell.extent);
+      shader.setUniform("uCellOffset", [cell.offset.x, cell.offset.y]);
       shader.setUniform("uPointSize", this.pointSize);
       shader.setUniform("uHideFragment", this.hideFragment);
       shader.setUniform("uFragmentToDiscard", this.fragmentToDiscard);

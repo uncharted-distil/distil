@@ -70,7 +70,7 @@ export class TileInfo extends CoordinateInfo {
     this.color = color;
   }
   toQuad(renderer: BatchQuadOverlayRenderer, opacity: number, id: number) {
-    const result = [];
+    const result = [] as VertexPrimitive[];
     const p1 = renderer.latlngToNormalized(this.coordinates[0]);
     const p2 = renderer.latlngToNormalized(this.coordinates[1]);
     const color = Color(this.color).rgb().object(); // convert hex color to rgb
