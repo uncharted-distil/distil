@@ -26,12 +26,7 @@ import {
   sortVariablesByImportance,
 } from "../../util/data";
 import { Dictionary } from "../../util/dict";
-import {
-  EXCLUDE_FILTER,
-  Filter,
-  FilterParams,
-  invertFilter,
-} from "../../util/filters";
+import { Filter, FilterParams, invertFilter } from "../../util/filters";
 import { getPredictionsById } from "../../util/predictions";
 import { filterBadRequests } from "../../util/solutions";
 import {
@@ -450,11 +445,9 @@ export const actions = {
     // fetch new state
     const dataset = context.getters.getRouteDataset;
     await fetchVariableSummaries(context, { dataset, variables });
-    fetchClusters(context, { dataset });
-    fetchOutliers(context, { dataset });
-    fetchJoinSuggestions(context, {
-      dataset: dataset,
-    });
+    datasetActions.fetchClusters(store, { dataset });
+    datasetActions.fetchOutliers(store, dataset);
+    datasetActions.fetchJoinSuggestions(store, { dataset, searchQuery: "" });
   },
 
   updateDataExplorerData(context: ViewContext) {
@@ -493,9 +486,7 @@ export const actions = {
     const dataset = context.getters.getRouteDataset;
     const target = context.getters.getRouteTargetVariable;
 
-    fetchJoinSuggestions(context, {
-      dataset: dataset,
-    });
+    datasetActions.fetchJoinSuggestions(store, { dataset, searchQuery: "" });
 
     await Promise.all([
       fetchVariables(context, {
@@ -508,8 +499,8 @@ export const actions = {
     if (target) {
       fetchVariableRankings(context, { dataset, target });
     }
-    fetchClusters(context, { dataset });
-    fetchOutliers(context, { dataset });
+    datasetActions.fetchClusters(store, { dataset });
+    datasetActions.fetchOutliers(store, dataset);
 
     return actions.updateSelectTrainingData(context);
   },
