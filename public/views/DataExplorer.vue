@@ -271,7 +271,7 @@
       panel-title="Outcome Variables"
       class="overflow-auto"
     >
-      <template v-if="hasNoVariables">
+      <template v-if="hasNoSecondaryVariables">
         <p>No Outcome Variables available.</p>
       </template>
       <div v-else-if="state.name === 'result'">
@@ -565,6 +565,9 @@ const DataExplorer = Vue.extend({
     },
     activePane(): string {
       return this.config.currentPane;
+    },
+    hasNoSecondaryVariables(): boolean {
+      return isEmpty(this.secondaryVariables);
     },
     hasNoVariables(): boolean {
       return isEmpty(this.activeVariables);
