@@ -85,11 +85,8 @@
         </template>
       </b-col>
     </section>
-    <section v-if="isLabeling" class="h-100">
-      <labeling-view />
-    </section>
     <!-- Form -->
-    <section v-if="!isLabeling" class="mt-3 container">
+    <section class="mt-3 container">
       <b-row>
         <b-col cols="6">
           <!-- X column -->
@@ -256,7 +253,6 @@ import { getFacetByType } from "../util/facets";
 import FacetLoading from "../components/facets/FacetLoading.vue";
 import FacetTimeseries from "../components/facets/FacetTimeseries.vue";
 import GeocoordinateFacet from "../components/facets/GeocoordinateFacet.vue";
-import LabelingView from "../views/Labeling.vue";
 
 interface Options {
   text: string;
@@ -271,7 +267,6 @@ export default Vue.extend({
     FacetLoading,
     FacetTimeseries,
     GeocoordinateFacet,
-    LabelingView,
   },
 
   data() {
@@ -314,10 +309,6 @@ export default Vue.extend({
 
     isTimeseries(): boolean {
       return this.groupingType === TIMESERIES_TYPE;
-    },
-
-    isLabeling(): boolean {
-      return this.groupingType === LABELING_TYPE;
     },
 
     xColOptions(): Options[] {

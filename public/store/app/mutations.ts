@@ -66,8 +66,4 @@ export const mutations = {
   closeStatusPanel(state: AppState) {
     Vue.set(state.statusPanelState, "isOpen", false);
   },
-
-  togglePrototype(state: AppState) {
-    state.prototype = !state.prototype;
-  },
 };

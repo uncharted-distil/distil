@@ -43,7 +43,6 @@ export const getters = {
   getStatusPanelState: read(moduleGetters.getStatusPanelState),
   getTA2VersionNumber: read(moduleGetters.getTA2VersionNumber),
   getAllSystemVersions: read(moduleGetters.getAllSystemVersions),
-  isPrototype: read(moduleGetters.isPrototype),
   getTrainTestSplit: read(moduleGetters.getTrainTestSplit),
   getTrainTestSplitTimeSeries: read(moduleGetters.getTrainTestSplitTimeSeries),
   getShouldScaleImages: read(moduleGetters.getShouldScaleImages),
@@ -60,7 +59,6 @@ export const actions = {
   ),
   closeStatusPanel: dispatch(moduleActions.closeStatusPanel),
   logUserEvent: dispatch(moduleActions.logUserEvent),
-  togglePrototype: dispatch(moduleActions.togglePrototype),
 };
 
 // type mutators
@@ -73,7 +71,6 @@ export const mutations = {
   setTA2VersionNumber: commit(moduleMutations.setTA2VersionNumber),
   openStatusPanel: commit(moduleMutations.openStatusPanel),
   closeStatusPanel: commit(moduleMutations.closeStatusPanel),
-  togglePrototype: commit(moduleMutations.togglePrototype),
   setTrainTestSplit: commit(moduleMutations.setTrainTestSplit),
   setTrainTestSplitTimeSeries: commit(
     moduleMutations.setTrainTestSplitTimeSeries

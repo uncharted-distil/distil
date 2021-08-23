@@ -186,10 +186,6 @@ export default Vue.extend({
       );
     },
 
-    isPrototype(): boolean {
-      return appGetters.isPrototype(this.$store);
-    },
-
     topVariables(): Variable[] {
       return sortVariablesByPCARanking(
         filterVariablesByFeature(this.dataset.variables).slice(0)
@@ -223,7 +219,7 @@ export default Vue.extend({
         return;
       }
 
-      const entry = createRouteEntry(SELECT_TARGET_ROUTE, {
+      const entry = createRouteEntry(DATA_EXPLORER_ROUTE, {
         dataset: this.dataset.id,
       });
       this.$router.push(entry).catch((err) => console.warn(err));
