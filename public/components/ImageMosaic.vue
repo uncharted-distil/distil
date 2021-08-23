@@ -207,8 +207,8 @@ export default Vue.extend({
     onImageCycle(cycleInfo: EI.IMAGES.CycleImage) {
       const imagePreview = this.$refs[
         `image-preview-${cycleInfo.index + cycleInfo.side}`
-      ][0] as InstanceType<typeof ImagePreview>;
-      imagePreview.showZoomedImage();
+      ]?.[0] as InstanceType<typeof ImagePreview>;
+      imagePreview?.showZoomedImage();
     },
     selectAll() {
       bulkRowSelectionUpdate(
