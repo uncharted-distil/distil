@@ -38,6 +38,7 @@
           <img ref="imageElem" />
         </div>
         <div
+          v-show="imageAttentionHasRendered"
           class="filter-elem clickable"
           @click.stop.exact="handleClick"
           @click.shift.exact.stop="handleShiftClick"

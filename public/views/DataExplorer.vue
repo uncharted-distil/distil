@@ -271,10 +271,7 @@
       panel-title="Outcome Variables"
       class="overflow-auto"
     >
-      <template v-if="hasNoSecondaryVariables">
-        <p>No Outcome Variables available.</p>
-      </template>
-      <div v-else-if="state.name === 'result'">
+      <div v-if="state.name === 'result'">
         <error-threshold-slider v-if="showResiduals && !isTimeseries" />
         <result-facets
           :single-solution="isSingleSolution"
