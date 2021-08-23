@@ -137,6 +137,7 @@ import {
   removeRowSelection,
 } from "../util/row";
 import { Tile } from "./DrillDown.vue";
+import { ExplorerStateNames } from "../util/dataExplorer";
 const IMAGE_MAX_SIZE = 750; // Maximum size of an image in the drill-down in pixels.
 const IMAGE_MAX_ZOOM = 2.5; // We don't want an image to be too magnified to avoid blurriness.
 
@@ -264,7 +265,10 @@ export default Vue.extend({
       return this.isFilteredToggled ? "Disable" : "Enable";
     },
     isResultScreen(): boolean {
-      return routeGetters.getRouteSolutionId(this.$store) != null;
+      return (
+        routeGetters.getDataExplorerState(this.$store) ===
+        ExplorerStateNames.RESULT_VIEW
+      );
     },
     isMultiBandImage(): boolean {
       return this.type === MULTIBAND_IMAGE_TYPE;
