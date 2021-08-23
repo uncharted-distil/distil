@@ -82,6 +82,8 @@ export class EventList {
     COLUMN_CLICKED_EVENT: "col-clicked",
     // fetch timeseries data
     FETCH_TIMESERIES_EVENT: "fetch-timeseries",
+    // row selection has occured
+    ROW_SELECTION_EVENT: "row-selection",
   };
 
   /*********DATASET EVENTS***********/
@@ -119,6 +121,10 @@ export class EventList {
     NAV_EVENT: "nav-event",
     SWITCH_TO_LABELING_EVENT: "label",
   };
+  static readonly IMAGES = {
+    // an event which changes the image drilldown image to one adjacent
+    CYCLE_IMAGES: "cycle-images",
+  };
 }
 
 // contains dataset name, target name and a list of variables
@@ -127,6 +133,7 @@ export interface GroupChangeParams {
   targetName: string;
   variableNames: string[];
 }
+
 /*********EVENT INTERFACES*************/
 export declare namespace EI {
   /**
@@ -169,6 +176,16 @@ export declare namespace EI {
       fittedSolution: string;
       name: string;
       description: string;
+    }
+  }
+  namespace IMAGES {
+    enum Side {
+      Left = -1,
+      Right = 1,
+    }
+    interface CycleImage {
+      side: Side;
+      index: number;
     }
   }
 }

@@ -45,9 +45,7 @@
                 :height="imageHeight"
                 :type="imageType"
                 :gray="renderTiles[i][j].selected.gray"
-                :overlapped-urls="
-                  renderTiles[i][j].overlapped.map((o) => o.imageUrl)
-                "
+                :overlapped-urls="renderTiles[i][j].overlapped"
                 :shouldFetchImage="false"
                 :shouldCleanUp="false"
                 :uniqueTrail="uniqueTrail"
@@ -99,7 +97,7 @@ import {
 } from "../store/dataset/module";
 import { EventList } from "../util/events";
 
-interface Tile {
+export interface Tile {
   imageUrl: string;
   item: TableRow;
   info: CoordinateInfo;

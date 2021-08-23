@@ -56,13 +56,17 @@
       >
         <div :key="idx" class="position-relative">
           <image-preview
+            :ref="`image-preview-${data.index}`"
             :key="imageField.key"
+            enable-cycling
             :type="imageField.type"
             :row="data.item"
             :image-url="data.item[imageField.key].value"
             :unique-trail="uniqueTrail"
             :should-clean-up="false"
             :should-fetch-image="false"
+            :index="parseInt(data.index)"
+            @cycle-images="onImageCycle"
           />
           <image-label
             class="image-label pt-1"
@@ -222,7 +226,7 @@ import {
 } from "../util/data";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import ImageLabel from "./ImageLabel.vue";
-import { EventList } from "../util/events";
+import { EI, EventList } from "../util/events";
 import { Solution } from "../store/requests";
 import { getSolutionIndex } from "../util/solutions";
 
@@ -467,6 +471,12 @@ export default Vue.extend({
   },
 
   methods: {
+    onImageCycle(cycleInfo: EI.IMAGES.CycleImage) {
+      const imagePreview = this.$refs[
+        `image-preview-${cycleInfo.index + cycleInfo.side}`
+      ]?.[0] as InstanceType<typeof ImagePreview>;
+      imagePreview?.showZoomedImage();
+    },
     debounceImageFetch() {
       debounceFetchImagePack({
         items: this.visibleRows,

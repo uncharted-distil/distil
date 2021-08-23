@@ -21,32 +21,37 @@
     hide-footer
     :title="visibleTitle"
     :visible="visible"
+    dialog-class="fit-content"
     @hide="hide"
   >
     <main class="drill-down">
-      <b-button
-        v-if="isCarousel"
-        class="position-absolute left"
-        :disabled="carouselPosition === 0"
-        @click="rotateSelection(-1)"
-      >
-        <b>&lt;</b>
-      </b-button>
-      <b-button
-        v-if="isCarousel"
-        class="position-absolute right"
-        :disabled="carouselPosition === imageUrls.length - 1"
-        @click="rotateSelection(1)"
-      >
-        <b>&gt;</b>
-      </b-button>
-      <image-transformer
-        ref="transformer"
-        :width="width"
-        :height="height"
-        :img-srcs="imageSources"
-        :hidden="hidden"
-      />
+      <div class="d-flex justify-content-center align-items-center">
+        <b-button
+          v-if="isCarousel || enableCycling"
+          :disabled="carouselPosition === 0 && !enableCycling"
+          @click="cycleFunc(-1)"
+        >
+          <i class="fas fa-arrow-left" />
+        </b-button>
+        <image-transformer
+          ref="transformer"
+          :selected="isSelected"
+          :width="width"
+          :height="height"
+          :img-srcs="imageSources"
+          :hidden="hidden"
+          @row-selection="onRowSelection"
+        />
+        <b-button
+          v-if="isCarousel || enableCycling"
+          :disabled="
+            carouselPosition === imageUrls.length - 1 && !enableCycling
+          "
+          @click="cycleFunc(1)"
+        >
+          <i class="fas fa-arrow-right" />
+        </b-button>
+      </div>
       <div
         v-show="isFilteredToggled"
         ref="imageAttentionElem"
@@ -114,7 +119,7 @@
 
 <script lang="ts">
 import Vue from "vue";
-import { TableRow } from "../store/dataset/index";
+import { RowSelection, TableRow } from "../store/dataset/index";
 import {
   getters as datasetGetters,
   actions as datasetActions,
@@ -125,7 +130,13 @@ import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
 import { IMAGE_TYPE, MULTIBAND_IMAGE_TYPE } from "../util/types";
 import ImageTransformer from "./ImageTransformer.vue";
-import { EventList } from "../util/events";
+import { EventList, EI } from "../util/events";
+import {
+  addRowSelection,
+  isRowSelected,
+  removeRowSelection,
+} from "../util/row";
+import { Tile } from "./DrillDown.vue";
 const IMAGE_MAX_SIZE = 750; // Maximum size of an image in the drill-down in pixels.
 const IMAGE_MAX_ZOOM = 2.5; // We don't want an image to be too magnified to avoid blurriness.
 
@@ -156,10 +167,12 @@ export default Vue.extend({
     type: { type: String, default: IMAGE_TYPE },
     url: { type: String, default: null },
     visible: Boolean,
-    imageUrls: { type: Array as () => string[], default: () => [] as string[] },
+    imageUrls: { type: Array as () => Tile[], default: () => [] as Tile[] },
     items: { type: Array as () => TableRow[], default: () => [] as TableRow[] },
     initialPosition: { type: Number as () => number, default: 0 },
     datasetName: { type: String as () => string, default: null },
+    index: { type: Number as () => number },
+    enableCycling: { type: Boolean as () => boolean, default: false },
   },
 
   data() {
@@ -179,6 +192,12 @@ export default Vue.extend({
   },
 
   computed: {
+    isSelected(): boolean {
+      const d3mIndex = this.imageUrls.length
+        ? this.imageUrls[this.carouselPosition]?.item.d3mIndex
+        : this.items[this.carouselPosition]?.d3mIndex;
+      return d3mIndex ? isRowSelected(this.rowSelection, d3mIndex) : false;
+    },
     shouldImagesScale(): boolean {
       return appGetters.getShouldScaleImages(this.$store);
     },
@@ -214,7 +233,7 @@ export default Vue.extend({
     },
     selectedImageUrl(): string {
       return this.imageUrls.length
-        ? this.imageUrls[this.carouselPosition]
+        ? this.imageUrls[this.carouselPosition].imageUrl
         : this.url;
     },
     image(): HTMLImageElement {
@@ -274,6 +293,12 @@ export default Vue.extend({
     width(): number {
       return this.image?.width * this.ratio;
     },
+    cycleFunc(): (side: EI.IMAGES.Side) => void {
+      return this.enableCycling ? this.cycleImage : this.rotateSelection;
+    },
+    rowSelection(): RowSelection {
+      return routeGetters.getDecodedRowSelection(this.$store);
+    },
   },
 
   watch: {
@@ -297,6 +322,24 @@ export default Vue.extend({
   },
 
   methods: {
+    onRowSelection() {
+      const d3mIndex = this.imageUrls.length
+        ? this.imageUrls[this.carouselPosition]?.item.d3mIndex
+        : this.items[this.carouselPosition]?.d3mIndex;
+      if (d3mIndex) {
+        if (!isRowSelected(this.rowSelection, d3mIndex)) {
+          addRowSelection(this.$router, "", this.rowSelection, d3mIndex);
+          return;
+        }
+        removeRowSelection(this.$router, "", this.rowSelection, d3mIndex);
+      }
+    },
+    cycleImage(sideToCycleTo: EI.IMAGES.Side) {
+      this.$emit(EventList.IMAGES.CYCLE_IMAGES, {
+        side: sideToCycleTo,
+        index: this.index,
+      } as EI.IMAGES.CycleImage);
+    },
     async upscaleFetch() {
       const MAX_GAINL = 2.0;
       this.disableUpscale = true;
@@ -376,7 +419,11 @@ export default Vue.extend({
   },
 });
 </script>
-
+<style>
+.fit-content {
+  max-width: fit-content !important;
+}
+</style>
 <style scoped>
 .drill-down {
   display: flex;
@@ -427,13 +474,5 @@ export default Vue.extend({
 }
 .brightness-slider {
   width: 70%;
-}
-.left {
-  left: 0px;
-  top: 50%;
-}
-.right {
-  right: 0px;
-  top: 50%;
 }
 </style>
