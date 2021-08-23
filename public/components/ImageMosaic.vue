@@ -24,7 +24,9 @@
             <template v-for="(fieldInfo, fieldKey) in dataFields">
               <image-preview
                 v-if="fieldKey === imageField.key"
+                :ref="`image-preview-${idx}`"
                 :key="fieldKey"
+                enable-cycling
                 class="image-preview"
                 :row="item"
                 :image-url="item[fieldKey].value"
@@ -35,8 +37,10 @@
                 :should-clean-up="false"
                 :should-fetch-image="false"
                 :summaries="summaries"
+                :index="idx"
                 @click="onImageClick"
                 @shift-click="onImageShiftClick"
+                @cycle-images="onImageCycle"
               />
             </template>
             <image-label
@@ -90,6 +94,7 @@ import {
   bulkRemoveImages,
   debounceFetchImagePack,
 } from "../util/data";
+import { EI } from "../util/events";
 
 export default Vue.extend({
   name: "ImageMosaic",
@@ -199,7 +204,12 @@ export default Vue.extend({
         debounceKey: this.debounceKey,
       });
     },
-
+    onImageCycle(cycleInfo: EI.IMAGES.CycleImage) {
+      const imagePreview = this.$refs[
+        `image-preview-${cycleInfo.index + cycleInfo.side}`
+      ][0] as InstanceType<typeof ImagePreview>;
+      imagePreview.showZoomedImage();
+    },
     selectAll() {
       bulkRowSelectionUpdate(
         this.$router,

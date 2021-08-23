@@ -24,13 +24,13 @@
     <canvas
       id="canvas-image-transformer"
       ref="canvas"
-      class="border"
+      :class="{ selected: selected, border: !selected }"
       :width="size.width"
       :height="size.height"
       onscroll="onScroll"
       @mousedown="onMouseDown"
       @mousemove="onMouseMove"
-      @mouseup="setMouseDown(false)"
+      @mouseup="onMouseUp"
       @mouseout="setMouseDown(false)"
       @mouseover="setMouseDown(false)"
       @mousewheel="onScroll"
@@ -51,18 +51,21 @@
 
 <script lang="ts">
 import Vue from "vue";
+import { EventList } from "../util/events";
 export default Vue.extend({
   name: "image-transformer",
   props: {
     width: { type: Number as () => number, default: 300 },
     height: { type: Number as () => number, default: 300 },
     imgSrcs: { type: Array as () => HTMLImageElement[], default: [] },
+    selected: { type: Boolean as () => boolean, default: false },
   },
   data() {
     return {
       mouseDown: false,
       start: { x: 0, y: 0 },
       isMouseOnCanvas: false,
+      startMouseEvent: null as MouseEvent,
     };
   },
   watch: {
@@ -178,6 +181,17 @@ export default Vue.extend({
     onMouseDown(event: MouseEvent) {
       this.setMouseDown(true);
       this.start = this.getTransformedPoint(event.offsetX, event.offsetY);
+      this.startMouseEvent = event;
+    },
+    onMouseUp(event: MouseEvent) {
+      // row selection
+      if (
+        this.startMouseEvent.offsetX === event.offsetX &&
+        this.startMouseEvent.offsetY === event.offsetY
+      ) {
+        this.$emit(EventList.TABLE.ROW_SELECTION_EVENT);
+      }
+      this.setMouseDown(false);
     },
   },
 });
@@ -190,5 +204,8 @@ export default Vue.extend({
 }
 .fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
   opacity: 0;
+}
+.selected {
+  border: 2px solid #ff0067;
 }
 </style>

@@ -50,6 +50,7 @@
     </div>
 
     <image-drilldown
+      :enable-cycling="enableCycling"
       :image-urls="overlappedUrls"
       :info="imageDrilldown"
       :initial-position="imageDrilldownPosition"
@@ -57,8 +58,10 @@
       :type="type"
       :url="imageUrl"
       :visible="!!zoomImage"
-      :datasetName="dataset"
+      :dataset-name="dataset"
+      :index="index"
       @close="hideZoomImage"
+      @cycle-images="onCycleImages"
     />
   </div>
 </template>
@@ -84,7 +87,8 @@ import { isRowSelected } from "../util/row";
 import { Dictionary } from "../util/dict";
 import { MULTIBAND_IMAGE_TYPE, IMAGE_TYPE } from "../util/types";
 import { COLOR_SCALES, colorByFacet } from "../util/color";
-import { EventList } from "../util/events";
+import { EI, EventList } from "../util/events";
+import { Tile } from "./DrillDown.vue";
 
 export default Vue.extend({
   name: "ImagePreview",
@@ -97,8 +101,8 @@ export default Vue.extend({
     row: { type: Object as () => TableRow, default: null as TableRow },
     imageUrl: { type: String as () => string, default: null },
     overlappedUrls: {
-      type: Array as () => string[],
-      default: () => [] as string[],
+      type: Array as () => Tile[],
+      default: () => [] as Tile[],
     },
     uniqueTrail: { type: String as () => string, default: "" },
     type: { type: String as () => string, default: IMAGE_TYPE },
@@ -110,6 +114,8 @@ export default Vue.extend({
     shouldFetchImage: { type: Boolean as () => boolean, default: true },
     datasetName: { type: String as () => string, default: null },
     summaries: { type: Array as () => VariableSummary[], default: () => [] },
+    index: { type: Number as () => number },
+    enableCycling: { type: Boolean as () => boolean, default: false },
   },
 
   data() {
@@ -166,7 +172,9 @@ export default Vue.extend({
 
     imageDrilldownPosition(): number {
       return this.overlappedUrls.length
-        ? this.overlappedUrls.indexOf(this.imageUrl)
+        ? this.overlappedUrls.findIndex((o) => {
+            return o.imageUrl === this.imageUrl;
+          })
         : 0;
     },
 
@@ -325,6 +333,10 @@ export default Vue.extend({
   },
 
   methods: {
+    onCycleImages(cycleInfo: EI.IMAGES.CycleImage) {
+      this.hideZoomImage();
+      this.$emit(EventList.IMAGES.CYCLE_IMAGES, cycleInfo);
+    },
     handleShiftClick() {
       this.$emit(EventList.BASIC.SHIFT_CLICK_EVENT, this.row);
     },
