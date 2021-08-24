@@ -145,8 +145,4 @@ export const actions = {
   ) {
     return axios.post(`distil/event`, args);
   },
-
-  togglePrototype(context: AppContext) {
-    mutations.togglePrototype(context);
-  },
 };

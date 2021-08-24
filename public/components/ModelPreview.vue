@@ -20,7 +20,7 @@
     <div
       class="model-header hover card-header"
       variant="dark"
-      @click="onResult()"
+      @click="exploreModel()"
     >
       <a class="nav-link">
         <i class="fa fa-connectdevelop" /> <b>Model Name:</b>
@@ -81,14 +81,6 @@
               <span v-if="!expanded">More</span>
               <span v-else>Less</span> Details...
             </b-button>
-            <b-button
-              v-if="isPrototype"
-              variant="outline-secondary"
-              class="ml-2"
-              @click="exploreModel"
-            >
-              <i class="fa fa-stack-overflow" /> Explore Model
-            </b-button>
           </div>
         </div>
       </div>
@@ -131,24 +123,11 @@ export default Vue.extend({
         .slice(0, NUM_TOP_FEATURES)
         .map((a) => a.displayName);
     },
-    isPrototype(): boolean {
-      return appGetters.isPrototype(this.$store);
-    },
   },
 
   methods: {
     onDeleteClicked(model: Model) {
       this.$emit(EventList.MODEL.DELETE_EVENT, model);
-    },
-    async onResult(): Promise<void> {
-      const args = await openModelSolution(this.$router, {
-        datasetId: this.model.datasetId,
-        targetFeature: this.model.target.key,
-        fittedSolutionId: this.model.fittedSolutionId,
-        variableFeatures: this.model.variables,
-      });
-      const entry = createRouteEntry(APPLY_MODEL_ROUTE, args);
-      this.$router.push(entry).catch((err) => console.debug(err));
     },
     async exploreModel(): Promise<void> {
       const route = DATA_EXPLORER_ROUTE;

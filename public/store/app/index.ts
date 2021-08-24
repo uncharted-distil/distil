@@ -24,7 +24,6 @@ export interface AppState {
   logUserAction: boolean;
   statusPanelState: StatusPanelState;
   ta2Version: string;
-  prototype: boolean;
   trainTestSplit: number;
   trainTestSplitTimeSeries: number;
   shouldScaleImages: boolean;
@@ -46,7 +45,6 @@ export const state: AppState = {
     isOpen: false,
   },
   ta2Version: "unknown",
-  prototype: false,
   trainTestSplit: null,
   trainTestSplitTimeSeries: null,
   shouldScaleImages: false,

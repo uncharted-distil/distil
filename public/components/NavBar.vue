@@ -23,11 +23,9 @@
     <img
       src="/images/uncharted.svg"
       class="app-icon"
-      :class="{ 'is-prototype': isPrototype }"
       height="36"
       width="36"
       :title="version"
-      @click="onLogoClick"
     />
     <b-navbar-brand>Distil</b-navbar-brand>
 
@@ -232,10 +230,6 @@ export default Vue.extend({
     version(): string {
       return appGetters.getAllSystemVersions(this.$store);
     },
-
-    isPrototype(): boolean {
-      return appGetters.isPrototype(this.$store);
-    },
   },
 
   methods: {
@@ -282,10 +276,6 @@ export default Vue.extend({
 
     hasJoinDatasetView(): boolean {
       return !!restoreView(JOIN_DATASETS_ROUTE, this.joinDatasetsHash);
-    },
-
-    onLogoClick() {
-      appActions.togglePrototype(this.$store);
     },
   },
 });
