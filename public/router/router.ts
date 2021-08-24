@@ -39,7 +39,6 @@ Vue.use(VueRouter);
 const router = new VueRouter({
   routes: [
     { path: ROOT_ROUTE, redirect: SEARCH_ROUTE },
-    // { path: HOME_ROUTE, component: Home },
     { path: SEARCH_ROUTE, component: Search },
     { path: JOIN_DATASETS_ROUTE, component: JoinDatasets },
     { path: GROUPING_ROUTE, component: VariableGrouping },
