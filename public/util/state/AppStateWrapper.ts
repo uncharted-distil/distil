@@ -28,7 +28,7 @@ import {
   LOW_SHOT_SCORE_COLUMN_PREFIX,
   sortVariablesByImportance,
 } from "../data";
-import { ExplorerStateNames } from "../dataExplorer";
+import { ExplorerStateNames } from "../explorer";
 import { Dictionary } from "../dict";
 import { EI } from "../events";
 import { Filter } from "../filters";

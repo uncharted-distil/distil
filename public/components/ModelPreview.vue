@@ -97,7 +97,7 @@ import { EventList } from "../util/events";
 import { appGetters } from "../store";
 import { APPLY_MODEL_ROUTE, DATA_EXPLORER_ROUTE } from "../store/route";
 import { createRouteEntry } from "../util/routes";
-import { ExplorerStateNames } from "../util/dataExplorer";
+import { ExplorerStateNames } from "../util/explorer";
 
 const NUM_TOP_FEATURES = 5;
 

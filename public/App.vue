@@ -41,7 +41,7 @@ import "vue-select/dist/vue-select.css";
 
 // DEBUG: this is a mocked graph until we support actual graph data
 import "./assets/graphs/G1.gml";
-import { ExplorerStateNames } from "./util/dataExplorer";
+import { ExplorerStateNames } from "./util/explorer";
 import DataExplorer from "./views/DataExplorer.vue";
 Vue.component("v-select", vSelect);
 Vue.use(BootstrapVue);

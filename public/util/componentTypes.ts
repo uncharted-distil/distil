@@ -27,7 +27,7 @@ import {
   VariableSummary,
 } from "../store/dataset";
 import { Solution } from "../store/requests";
-import { ActionNames, ExplorerStateNames } from "./dataExplorer";
+import ExplorerConfig, { ActionNames, ExplorerStateNames } from "./explorer";
 import { RouteArgs } from "./routes";
 import { BaseState } from "./state/AppStateWrapper";
 
@@ -35,7 +35,6 @@ import { BaseState } from "./state/AppStateWrapper";
  * Add any component types needed for typescript
  * Add a path above the interface
  */
-
 // public/views/DataExplorer.vue
 export interface DataExplorerRef {
   // computes
@@ -58,6 +57,8 @@ export interface DataExplorerRef {
   labelName: string;
   state: BaseState;
   isBusy: boolean;
+  labelModalId: string;
+  config: ExplorerConfig;
   // methods
   isFittedSolutionIdSavedAsModel: (id: string) => boolean;
   updateRoute: (args: RouteArgs) => void;

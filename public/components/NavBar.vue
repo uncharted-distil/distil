@@ -149,7 +149,7 @@ import {
 } from "../store/route/index";
 import { restoreView } from "../util/view";
 import Vue from "vue";
-import { ExplorerStateNames } from "../util/dataExplorer";
+import { ExplorerStateNames } from "../util/explorer";
 import { EventList } from "../util/events";
 
 export default Vue.extend({

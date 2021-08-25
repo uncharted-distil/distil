@@ -115,7 +115,6 @@
         />
         <legend-weight v-if="hasWeight && isResultState" class="ml-5 mr-auto" />
       </div>
-      <!-- <layer-selection v-if="isMultiBandImage" class="layer-select-dropdown" /> -->
       <section class="data-container">
         <div v-if="!hasData" v-html="spinnerHTML" />
         <component
@@ -132,7 +131,6 @@
           :baseline-map="baselineMap"
           :summaries="summaries"
           :solution="solution"
-          :confidence-access-func="confidenceGetter"
           :residual-extrema="residualExtrema"
           :enable-selection-tool-event="isLabelState"
           :variables="allVariables"
@@ -330,7 +328,7 @@
     <save-dataset
       modal-id="save-dataset-modal"
       :dataset-name="dataset"
-      @save="onSaveValid"
+      @save="onSaveDataset"
     />
   </div>
 </template>
@@ -366,19 +364,12 @@ import CreateLabelingForm from "../components/labelingComponents/CreateLabelingF
 import LabelHeaderButtons from "../components/labelingComponents/LabelHeaderButtons.vue";
 import ForecastHorizon from "../components/ForecastHorizon.vue";
 // Store
+import { viewActions, datasetActions } from "../store";
 import {
-  viewActions,
-  requestGetters,
-  resultGetters,
-  datasetActions,
-} from "../store";
-import {
-  Extrema,
   Highlight,
   RowSelection,
   TableColumn,
   TableRow,
-  TaskTypes,
   TimeSeries,
   Variable,
   VariableSummary,
@@ -388,7 +379,6 @@ import { getters as routeGetters } from "../store/route/module";
 
 // Util
 import { Filter, INCLUDE_FILTER } from "../util/filters";
-import { clearHighlight } from "../util/highlights";
 import { overlayRouteEntry, RouteArgs } from "../util/routes";
 import { clearRowSelection, getNumIncludedRows } from "../util/row";
 import { spinnerHTML } from "../util/spinner";
@@ -404,13 +394,10 @@ import {
   GRAPH_VIEW,
   IMAGE_VIEW,
   TABLE_VIEW,
-  TIMESERIES_VIEW,
   filterViews,
 } from "../util/view";
 import { Dictionary } from "vue-router/types/router";
 import { BaseState, SelectViewState } from "../util/state/AppStateWrapper";
-import { SolutionRequestMsg } from "../store/requests/actions";
-import { Solution } from "../store/requests";
 import { EI } from "../util/events";
 import ExplorerConfig, {
   Action,
@@ -420,23 +407,19 @@ import ExplorerConfig, {
   getConfigFromName,
   getStateFromName,
   SelectViewConfig,
-  LABEL_COMPUTES,
-  SELECT_COMPUTES,
-  RESULT_METHODS,
-  RESULT_COMPUTES,
-  SELECT_METHODS,
-  LABEL_METHODS,
-  GENERIC_METHODS,
-  PREDICTION_COMPUTES,
-  PREDICTION_METHODS,
-} from "../util/dataExplorer";
-import {
-  LowShotLabels,
-  LOW_SHOT_SCORE_COLUMN_PREFIX,
-  sortVariablesByImportance,
-  totalAreaCoverage,
-} from "../util/data";
+  genericMethods,
+  labelMethods,
+  labelComputes,
+  resultMethods,
+  resultComputes,
+  selectComputes,
+  selectMethods,
+  predictionMethods,
+  predictionComputes,
+} from "../util/explorer";
+import { sortVariablesByImportance, totalAreaCoverage } from "../util/data";
 import _ from "lodash";
+import { clearHighlight } from "../util/highlights";
 
 const DataExplorer = Vue.extend({
   name: "DataExplorer",
@@ -514,15 +497,6 @@ const DataExplorer = Vue.extend({
         (action) => !this.inactiveMetaTypes.includes(action.paneId)
       );
     },
-    showResiduals(): boolean {
-      const tasks = routeGetters.getRouteTask(this.$store).split(",");
-      return (
-        tasks &&
-        !!tasks.find(
-          (t) => t === TaskTypes.REGRESSION || t === TaskTypes.FORECASTING
-        )
-      );
-    },
     targetName(): string {
       return this.target?.key;
     },
@@ -575,26 +549,11 @@ const DataExplorer = Vue.extend({
     highlights(): Highlight[] {
       return _.cloneDeep(routeGetters.getDecodedHighlights(this.$store));
     },
-    solution(): Solution {
-      return requestGetters.getActiveSolution(this.$store);
-    },
-    solutionId(): string {
-      return this.solution?.solutionId;
-    },
     drillDownBaseline(): TableRow[] {
       return this.state.getMapDrillDownBaseline(this.include);
     },
     drillDownFiltered(): TableRow[] {
       return this.state.getMapDrillDownFiltered(this.include);
-    },
-    fittedSolutionId(): string {
-      return this.solution?.fittedSolutionId;
-    },
-    residualExtrema(): Extrema {
-      return resultGetters.getResidualsExtrema(this.$store);
-    },
-    isSingleSolution(): boolean {
-      return routeGetters.isSingleSolution(this.$store);
     },
     timeseries(): TimeSeries {
       return this.state.getTimeseries();
@@ -664,7 +623,7 @@ const DataExplorer = Vue.extend({
     },
 
     variablesTypes(): string[] {
-      return [...new Set(this.variables.map((v) => v.colType))];
+      return [...new Set(this.variables.map((v) => v.colType))] as string[];
     },
     // enables or disables coloring by facets
     geoVarExists(): boolean {
@@ -688,8 +647,6 @@ const DataExplorer = Vue.extend({
       if (viewType === GRAPH_VIEW) return "SelectGraphView";
       if (viewType === IMAGE_VIEW) return "ImageMosaic";
       if (viewType === TABLE_VIEW) return "SelectDataTable";
-      if (viewType === TIMESERIES_VIEW) return "SelectTimeseriesView";
-
       // Default is TABLE_VIEW
       return "SelectDataTable";
     },
@@ -753,48 +710,10 @@ const DataExplorer = Vue.extend({
     isRemoteSensing(): boolean {
       return routeGetters.isMultiBandImage(this.$store);
     },
-    labelScoreName(): string {
-      return LOW_SHOT_SCORE_COLUMN_PREFIX + this.labelName;
-    },
-    training(): string[] {
-      return SELECT_COMPUTES.training(this);
-    },
-    isCreateModelPossible(): boolean {
-      return SELECT_COMPUTES.isCreateModelPossible(this);
-    },
-    /* Disable the Exclude filter button. */
-    isExcludeDisabled(): boolean {
-      return SELECT_COMPUTES.isExcludedDisabled(this);
-    },
-    isClone(): boolean {
-      return LABEL_COMPUTES.isClone(this);
-    },
-    labelOptions(): { value: string; text: string }[] {
-      return LABEL_COMPUTES.options(this);
-    },
-    labelSummary(): VariableSummary {
-      return LABEL_COMPUTES.labelSummary(this);
-    },
-    labelModalTitle(): string {
-      return LABEL_COMPUTES.labelModalTitle(this);
-    },
-    confidenceGetter(): Function {
-      if (!this.items?.length || this.labelName in this.items[0]) {
-        return () => {
-          return undefined;
-        };
-      }
-      return LABEL_METHODS.confidenceGetter(this);
-    },
-    isActiveSolutionSaved(): boolean {
-      return RESULT_COMPUTES.isActiveSolutionSaved(this);
-    },
-    hasWeight(): boolean {
-      return RESULT_COMPUTES.hasWeight(this);
-    },
-    produceRequestId(): string {
-      return PREDICTION_COMPUTES.produceRequestId(this);
-    },
+    ...selectComputes,
+    ...labelComputes,
+    ...resultComputes,
+    ...predictionComputes,
   },
 
   // Update either the summaries or explore data on user interaction.
@@ -883,20 +802,7 @@ const DataExplorer = Vue.extend({
       // init this is the basic fetches needed to get the information for the state
       await this.state.init();
     },
-    /* When the user request to fetch a different size of data. */
-    onDataSizeSubmit(dataSize: number) {
-      this.updateRoute({ dataSize });
-      this.state.fetchData();
-    },
-    onSetActive(actionName: string): void {
-      if (actionName === this.config.currentPane) return;
-      let activePane = "";
-      if (actionName !== "") {
-        activePane = this.config.actionList.find((a) => a.name === actionName)
-          .paneId;
-      }
-      this.config.currentPane = activePane;
-    },
+
     async onTileClick(data: EI.MAP.TileClickData) {
       // filter for area of interests
       const filter: Filter = {
@@ -954,14 +860,6 @@ const DataExplorer = Vue.extend({
       this.$router.push(entry).catch((err) => console.warn(err));
     },
 
-    resetHighlightsOrRow() {
-      if (this.isFilteringHighlights) {
-        clearHighlight(this.$router);
-      } else {
-        clearRowSelection(this.$router);
-      }
-    },
-
     preSelectTopVariables(number = 5): void {
       // if explore is already filled let's skip
       if (!isEmpty(this.explore)) return;
@@ -994,65 +892,18 @@ const DataExplorer = Vue.extend({
     onMapFinishedLoading() {
       this.dataLoading = false;
     },
-    toggleAction(actionName: ActionNames) {
-      GENERIC_METHODS.toggleAction(this)(actionName);
+    resetHighlightsOrRow() {
+      if (this.isFilteringHighlights) {
+        clearHighlight(this.$router);
+      } else {
+        clearRowSelection(this.$router);
+      }
     },
-    onModelCreation(solutionRequestMsg: SolutionRequestMsg) {
-      SELECT_METHODS.onModelCreation(this)(solutionRequestMsg);
-    },
-
-    onExcludeClick() {
-      SELECT_METHODS.onExcludeClick(this)();
-    },
-
-    onReincludeClick() {
-      SELECT_METHODS.onReincludeClick(this)();
-    },
-    async updateTask() {
-      LABEL_METHODS.updateTask(this)();
-    },
-    switchToLabelState() {
-      this.$bvModal.show(this.labelModalId);
-    },
-    onLabelSubmit() {
-      LABEL_METHODS.onLabelSubmit(this)();
-    },
-    onLabelAnnotationClicked(label: LowShotLabels) {
-      LABEL_METHODS.onAnnotationChanged(this)(label);
-    },
-    onLabelSelectAll() {
-      LABEL_METHODS.onSelectAll(this)();
-    },
-    onLabelExport() {
-      LABEL_METHODS.onExport(this)();
-    },
-    onLabelApply() {
-      LABEL_METHODS.onSearchSimilar(this)();
-    },
-    onLabelSaveClick() {
-      this.$bvModal.show("save-dataset-modal");
-    },
-    onSaveValid(saveName: string, retainUnlabeled: boolean) {
-      LABEL_METHODS.onSaveDataset(this)(saveName, retainUnlabeled);
-    },
-    onToolSelection(selection: EI.MAP.SelectionHighlight) {
-      LABEL_METHODS.onToolSelection(this)(selection);
-    },
-    async onSaveModel(args: EI.RESULT.SaveInfo) {
-      RESULT_METHODS.onSaveModel(this)(args);
-    },
-    async fetchSummarySolution(requestId: string) {
-      RESULT_METHODS.fetchSummarySolution(this)(requestId);
-    },
-    isFittedSolutionIdSavedAsModel(id: string): boolean {
-      return RESULT_METHODS.isFittedSolutionIdSavedAsModel(this)(id);
-    },
-    async onApplyModel(args: RouteArgs) {
-      RESULT_METHODS.onApplyModel(this)(args);
-    },
-    async fetchSummaryPrediction(requestId: string) {
-      return PREDICTION_METHODS.fetchSummaryPrediction(this)(requestId);
-    },
+    ...genericMethods,
+    ...selectMethods,
+    ...labelMethods,
+    ...resultMethods,
+    ...predictionMethods,
   },
 });
 export default DataExplorer;

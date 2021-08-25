@@ -57,7 +57,7 @@
 <script lang="ts">
 import Vue from "vue";
 import { Dictionary } from "vue-router/types/router";
-import { Action } from "../../util/dataExplorer";
+import { Action } from "../../util/explorer";
 import { getters as routeGetters } from "../../store/route/module";
 import { overlayRouteEntry } from "../../util/routes";
 
