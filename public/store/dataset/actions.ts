@@ -974,7 +974,12 @@ export const actions = {
         field: args.field,
         type: args.type,
       });
-      mutations.setVariables(context, response.data.variables as Variable[]);
+      mutations.setVariables(
+        context,
+        (response.data.variables as Variable[]).map((v) => {
+          return { ...v, datasetName: args.dataset };
+        })
+      );
     } catch (error) {
       mutations.updateVariableType(context, {
         ...args,
@@ -1082,26 +1087,26 @@ export const actions = {
             )
           );
         }
-
-        // Get the mode or default
-        const mode = args.varModes.has(variable.key)
-          ? args.varModes.get(variable.key)
-          : SummaryMode.Default;
-
-        // fetch summary
-        promises.push(
-          actions.fetchVariableSummary(context, {
-            dataset: args.dataset,
-            variable: variable.key,
-            filterParams: args.filterParams,
-            highlights: args.highlights,
-            include: args.include,
-            dataMode: args.dataMode,
-            mode: mode,
-            handleMutation: false,
-          })
-        );
       }
+
+      // Get the mode or default
+      const mode = args.varModes.has(variable.key)
+        ? args.varModes.get(variable.key)
+        : SummaryMode.Default;
+
+      // fetch summary
+      promises.push(
+        actions.fetchVariableSummary(context, {
+          dataset: args.dataset,
+          variable: variable.key,
+          filterParams: args.filterParams,
+          highlights: args.highlights,
+          include: args.include,
+          dataMode: args.dataMode,
+          mode: mode,
+          handleMutation: false,
+        })
+      );
     });
     const values = await Promise.all(promises);
     values.map((v) => {
