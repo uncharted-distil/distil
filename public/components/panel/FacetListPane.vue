@@ -98,7 +98,7 @@ import {
 } from "../../util/routes";
 import { Feature, Activity, SubActivity } from "../../util/userEvents";
 import { DISTIL_ROLES, isUnsupportedTargetVar } from "../../util/types";
-import { ExplorerStateNames } from "../../util/dataExplorer";
+import { ExplorerStateNames } from "../../util/explorer";
 import { EventList } from "../../util/events";
 
 export default Vue.extend({

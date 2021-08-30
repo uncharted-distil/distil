@@ -41,8 +41,8 @@ import "vue-select/dist/vue-select.css";
 
 // DEBUG: this is a mocked graph until we support actual graph data
 import "./assets/graphs/G1.gml";
-import { ExplorerStateNames } from "./util/dataExplorer";
-import DataExplorer from "./views/DataExplorer.vue";
+import { ExplorerStateNames } from "./util/explorer";
+import { DataExplorerRef } from "./util/componentTypes";
 Vue.component("v-select", vSelect);
 Vue.use(BootstrapVue);
 Vue.use(VueObserveVisibility);
@@ -59,7 +59,7 @@ export default Vue.extend({
   },
   methods: {
     onExplorerNav(state: ExplorerStateNames) {
-      const dataExplorer = this.$refs.view as InstanceType<typeof DataExplorer>;
+      const dataExplorer = (this.$refs.view as unknown) as DataExplorerRef;
       dataExplorer.changeStatesByName(state);
     },
   },

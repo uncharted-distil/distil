@@ -137,7 +137,7 @@ import {
   removeRowSelection,
 } from "../util/row";
 import { Tile } from "./DrillDown.vue";
-import { ExplorerStateNames } from "../util/dataExplorer";
+import { ExplorerStateNames } from "../util/explorer";
 const IMAGE_MAX_SIZE = 750; // Maximum size of an image in the drill-down in pixels.
 const IMAGE_MAX_ZOOM = 2.5; // We don't want an image to be too magnified to avoid blurriness.
 

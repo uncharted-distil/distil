@@ -61,7 +61,7 @@ import {
   TRAINING_VARS_INSTANCE_PAGE,
   TRAINING_VARS_INSTANCE_SEARCH,
 } from "../route/index";
-import { ExplorerStateNames } from "../../util/dataExplorer";
+import { ExplorerStateNames } from "../../util/explorer";
 
 export const getters = {
   getRoute(state: Route): Route {
