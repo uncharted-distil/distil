@@ -18,7 +18,7 @@
 import { BvModal } from "bootstrap-vue/src/components/modal";
 import { BvToast } from "bootstrap-vue/src/components/toast";
 import Vue from "vue";
-import VueRouter from "vue-router";
+import VueRouter, { Route } from "vue-router";
 import {
   Highlight,
   RowSelection,
@@ -27,7 +27,11 @@ import {
   VariableSummary,
 } from "../store/dataset";
 import { Solution } from "../store/requests";
-import ExplorerConfig, { ActionNames, ExplorerStateNames } from "./explorer";
+import ExplorerConfig, {
+  Action,
+  ActionNames,
+  ExplorerStateNames,
+} from "./explorer";
 import { RouteArgs } from "./routes";
 import { BaseState } from "./state/AppStateWrapper";
 
@@ -38,41 +42,67 @@ import { BaseState } from "./state/AppStateWrapper";
 // public/views/DataExplorer.vue
 export interface DataExplorerRef {
   // computes
+  activeVariables: Variable[];
+  activeViews: string[];
+  allVariables: Variable[];
+  availableActions: Action[];
+  baselineItems: TableRow[];
   dataset: string;
-  isClone: boolean | null;
+  explore: string[];
+  explorerRouteState: ExplorerStateNames;
+  fittedSolutionId: string;
+  geoVarExists: boolean;
   highlights: Highlight[];
+  inactiveMetaTypes: string[];
+  isClone: boolean | null;
   isFilteringHighlights: boolean;
   isFilteringSelection: boolean;
-  items: TableRow[];
-  target: Variable;
-  training: string[];
-  solution: Solution;
-  fittedSolutionId: string;
-  rowSelection: RowSelection;
-  variables: Variable[];
-  allVariables: Variable[];
-  summaries: VariableSummary[];
   isRemoteSensing: boolean;
+  isSelectState: boolean;
+  items: TableRow[];
+  numRows: number;
+  rowSelection: RowSelection;
+  secondaryVariables: Variable[];
+  solution: Solution;
+  summaries: VariableSummary[];
+  target: Variable;
+  totalNumRows: number;
+  training: string[];
+  variables: Variable[];
+  variablesPerActions: Record<string, Variable[]>;
+  variablesTypes: string[];
+  viewComponent: string;
+
   // data
-  labelName: string;
-  state: BaseState;
+  activeView: number;
+  config: ExplorerConfig;
+  dataLoading: boolean;
+  include: boolean;
   isBusy: boolean;
   labelModalId: string;
-  config: ExplorerConfig;
+  labelName: string;
+  metaTypes: string[];
+  state: BaseState;
+
   // methods
-  isFittedSolutionIdSavedAsModel: (id: string) => boolean;
-  updateRoute: (args: RouteArgs) => void;
   changeStatesByName: (name: ExplorerStateNames) => Promise<void>;
+  isFittedSolutionIdSavedAsModel: (id: string) => boolean;
+  preSelectTopVariables: (num?: number) => void;
   resetHighlightsOrRow: () => void;
-  updateTask: () => Promise<void>;
+  setConfig: (config: ExplorerConfig) => void;
+  setState: (state: BaseState) => void;
   toggleAction: (actionName: ActionNames) => void;
+  updateRoute: (args: RouteArgs) => void;
+  updateTask: () => Promise<void>;
   // globals
+  $bvModal: BvModal;
+  $bvToast: BvToast;
+  $nextTick(callback: (this: this) => void): void;
   $refs: {
     [key: string]: Vue | Element | Vue[] | Element[];
   };
+  $route: Route;
   $router: VueRouter;
-  $bvToast: BvToast;
-  $bvModal: BvModal;
 }
 
 // public/components/layout/ActionColumn.vue

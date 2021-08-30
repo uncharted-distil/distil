@@ -24,7 +24,7 @@ import {
 import { Variable } from "../../store/dataset";
 import { DataExplorerRef } from "../componentTypes";
 import { META_TYPES } from "../types";
-import { GENERIC_METHODS } from "./functions/generic";
+import { GENERIC_COMPUTES, GENERIC_METHODS } from "./functions/generic";
 import { LABEL_METHODS, LABEL_COMPUTES } from "./functions/label";
 import { RESULT_METHODS, RESULT_COMPUTES } from "./functions/result";
 import { SELECT_METHODS, SELECT_COMPUTES } from "./functions/select";
@@ -327,14 +327,29 @@ export const ACTION_MAP = new Map(
     return [a.name, a];
   })
 );
+// bind methods is used to bind the mixins to the data explorer
+// the methods and computes require being bound to the data explorer instance
+export const bindMethods = (
+  obj: Record<string, Function>,
+  self: DataExplorerRef
+): Record<string, any> => {
+  return Object.fromEntries(
+    Object.keys(obj).map((k) => [k, obj[k].bind(self)])
+  );
+};
 /**************MIXINS********************/
 /*This next portion of the file is dedicated to grouping computes/methods into state objects
  and will be used in the explorer component.
 The goal here is to move all of the code for the component out of the component file. 
-If this file gets too large we can move each state into their own folder. */
-
+ */
+// genericMethods are the methods used across each state
+// most of these methods are UI related
 export const genericMethods = GENERIC_METHODS;
+// genericComputes are the computes used across each state
+export const genericComputes = GENERIC_COMPUTES;
+// labelMethods are the methods used strictly in the label state
 export const labelMethods = LABEL_METHODS;
+// labelComputes are the computes used strictly in the label state
 export const labelComputes = LABEL_COMPUTES;
 export const resultMethods = RESULT_METHODS;
 export const resultComputes = RESULT_COMPUTES;

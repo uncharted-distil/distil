@@ -110,14 +110,6 @@
             <span v-if="!expanded">More</span>
             <span v-else>Less</span> Details...
           </b-button>
-          <b-button
-            v-if="isPrototype"
-            variant="outline-secondary"
-            class="ml-2"
-            @click="exploreDataset"
-          >
-            <i class="fa fa-stack-overflow" /> Explore Dataset
-          </b-button>
         </div>
       </div>
     </div>
@@ -144,11 +136,8 @@ import {
 import { getters as routeGetters } from "../store/route/module";
 import { Dataset, Variable } from "../store/dataset/index";
 import { actions as datasetActions } from "../store/dataset/module";
-import { DATA_EXPLORER_ROUTE, SELECT_TARGET_ROUTE } from "../store/route/index";
-import {
-  actions as appActions,
-  getters as appGetters,
-} from "../store/app/module";
+import { DATA_EXPLORER_ROUTE } from "../store/route/index";
+import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { EventList } from "../util/events";
 

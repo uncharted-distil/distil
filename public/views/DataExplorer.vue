@@ -335,79 +335,49 @@
 
 <script lang="ts">
 import Vue from "vue";
-import { capitalize, isEmpty } from "lodash";
+import { capitalize } from "lodash";
 
 // Components
 import ActionColumn from "../components/layout/ActionColumn.vue";
 import AddVariablePane from "../components/panel/AddVariablePane.vue";
+import CreateLabelingForm from "../components/labelingComponents/CreateLabelingForm.vue";
 import CreateSolutionsForm from "../components/CreateSolutionsForm.vue";
 import DataSize from "../components/buttons/DataSize.vue";
 import ErrorThresholdSlider from "../components/ErrorThresholdSlider.vue";
 import FacetListPane from "../components/panel/FacetListPane.vue";
-import LeftSidePanel from "../components/layout/LeftSidePanel.vue";
-import LayerSelection from "../components/LayerSelection.vue";
+import ForecastHorizon from "../components/ForecastHorizon.vue";
+import GeoPlot from "../components/GeoPlot.vue";
 import ImageMosaic from "../components/ImageMosaic.vue";
+import LabelHeaderButtons from "../components/labelingComponents/LabelHeaderButtons.vue";
+import LayerSelection from "../components/LayerSelection.vue";
+import LeftSidePanel from "../components/layout/LeftSidePanel.vue";
+import LegendWeight from "../components/LegendWeight.vue";
+import PredictionsDataUploader from "../components/PredictionsDataUploader.vue";
+import PredictionSummaries from "../components/PredictionSummaries.vue";
+import ResultFacets from "../components/ResultFacets.vue";
+import SaveDataset from "../components/labelingComponents/SaveDataset.vue";
+import SaveModal from "../components/SaveModal.vue";
 import SearchBar from "../components/layout/SearchBar.vue";
 import SelectDataTable from "../components/SelectDataTable.vue";
-import GeoPlot from "../components/GeoPlot.vue";
 import SelectGraphView from "../components/SelectGraphView.vue";
-import SaveDataset from "../components/labelingComponents/SaveDataset.vue";
 import SelectTimeseriesView from "../components/SelectTimeseriesView.vue";
 import StatusPanel from "../components/StatusPanel.vue";
 import StatusSidebar from "../components/StatusSidebar.vue";
-import ResultFacets from "../components/ResultFacets.vue";
-import LegendWeight from "../components/LegendWeight.vue";
-import SaveModal from "../components/SaveModal.vue";
-import PredictionsDataUploader from "../components/PredictionsDataUploader.vue";
-import PredictionSummaries from "../components/PredictionSummaries.vue";
-import CreateLabelingForm from "../components/labelingComponents/CreateLabelingForm.vue";
-import LabelHeaderButtons from "../components/labelingComponents/LabelHeaderButtons.vue";
-import ForecastHorizon from "../components/ForecastHorizon.vue";
 // Store
 import { viewActions, datasetActions } from "../store";
-import {
-  Highlight,
-  RowSelection,
-  TableColumn,
-  TableRow,
-  TimeSeries,
-  Variable,
-  VariableSummary,
-} from "../store/dataset/index";
+import { Variable } from "../store/dataset/index";
 import { DATA_EXPLORER_VAR_INSTANCE } from "../store/route/index";
 import { getters as routeGetters } from "../store/route/module";
 
 // Util
-import { Filter, INCLUDE_FILTER } from "../util/filters";
-import { overlayRouteEntry, RouteArgs } from "../util/routes";
-import { clearRowSelection, getNumIncludedRows } from "../util/row";
-import { spinnerHTML } from "../util/spinner";
+import { overlayRouteEntry } from "../util/routes";
+import { META_TYPES } from "../util/types";
+import { SelectViewState } from "../util/state/AppStateWrapper";
 import {
-  DISTIL_ROLES,
-  isGeoLocatedType,
-  isImageType,
-  isMultibandImageType,
-  META_TYPES,
-} from "../util/types";
-import {
-  GEO_VIEW,
-  GRAPH_VIEW,
-  IMAGE_VIEW,
-  TABLE_VIEW,
-  filterViews,
-} from "../util/view";
-import { Dictionary } from "vue-router/types/router";
-import { BaseState, SelectViewState } from "../util/state/AppStateWrapper";
-import { EI } from "../util/events";
-import ExplorerConfig, {
-  Action,
-  ActionNames,
-  ACTION_MAP,
-  ExplorerStateNames,
-  getConfigFromName,
-  getStateFromName,
+  bindMethods,
   SelectViewConfig,
   genericMethods,
+  genericComputes,
   labelMethods,
   labelComputes,
   resultMethods,
@@ -417,9 +387,8 @@ import ExplorerConfig, {
   predictionMethods,
   predictionComputes,
 } from "../util/explorer";
-import { sortVariablesByImportance, totalAreaCoverage } from "../util/data";
 import _ from "lodash";
-import { clearHighlight } from "../util/highlights";
+import { DataExplorerRef } from "../util/componentTypes";
 
 const DataExplorer = Vue.extend({
   name: "DataExplorer",
@@ -433,19 +402,19 @@ const DataExplorer = Vue.extend({
     ErrorThresholdSlider,
     FacetListPane,
     ForecastHorizon,
+    GeoPlot,
+    ImageMosaic,
     LabelHeaderButtons,
     LayerSelection,
     LeftSidePanel,
     LegendWeight,
-    ImageMosaic,
     PredictionsDataUploader,
     PredictionSummaries,
+    ResultFacets,
+    SaveDataset,
+    SaveModal,
     SearchBar,
     SelectDataTable,
-    GeoPlot,
-    ResultFacets,
-    SaveModal,
-    SaveDataset,
     SelectGraphView,
     SelectTimeseriesView,
     StatusPanel,
@@ -455,265 +424,16 @@ const DataExplorer = Vue.extend({
   data() {
     return {
       activeView: 0, // TABLE_VIEW
-      instanceName: DATA_EXPLORER_VAR_INSTANCE,
-      metaTypes: Object.keys(META_TYPES),
-      include: true,
-      state: new SelectViewState(),
-      config: new SelectViewConfig(),
-      labelName: "",
-      labelModalId: "label-input-form",
-      isBusy: false,
-      dataLoading: false,
+      config: new SelectViewConfig(), // this config controls what is displayed in the action bar
+      dataLoading: false, // this controls the spinners for the data view tabs (table, mosaic, geoplot)
+      include: true, // this controls the include exclude view for the select state
+      instanceName: DATA_EXPLORER_VAR_INSTANCE, // component instance name
+      isBusy: false, // controls spinners in label state when search similar or save is used
+      labelModalId: "label-input-form", // modal id
+      labelName: "", // labelName of the variable being annotated in the label view
+      metaTypes: Object.keys(META_TYPES), // all of the meta types categories
+      state: new SelectViewState(), // this state controls data flow
     };
-  },
-  computed: {
-    /* Actions displayed on the Action column */
-    activeActions(): Action[] {
-      return this.availableActions.map((action) => {
-        const count = this.variablesPerActions[action.paneId]?.length;
-        return count ? { ...action, count } : action;
-      });
-    },
-
-    /* Variables displayed on the Facet Panel */
-    activeVariables(): Variable[] {
-      return this.variablesPerActions[this.config.currentPane] ?? [];
-    },
-
-    activeViews(): string[] {
-      return filterViews(this.variables);
-    },
-
-    /* All variables, only used for lex as we need to parse the hidden variables from groupings */
-    allVariables(): Variable[] {
-      const variables = [...this.state.getLexBarVariables()];
-      return sortVariablesByImportance(variables);
-    },
-
-    /* Actions available based on the variables meta types */
-    availableActions(): Action[] {
-      // Remove the inactive MetaTypes
-      return this.config.actionList.filter(
-        (action) => !this.inactiveMetaTypes.includes(action.paneId)
-      );
-    },
-    targetName(): string {
-      return this.target?.key;
-    },
-    isMultiBandImage(): boolean {
-      return this.allVariables.some((v) => {
-        return isMultibandImageType(v.colType);
-      });
-    },
-    targetType(): string {
-      const target = this.target;
-      if (!target) {
-        return null;
-      }
-      const variables = this.variables;
-      return variables.find((v) => v.key === target.key)?.colType;
-    },
-    currentAction(): string {
-      return (
-        this.config.currentPane &&
-        this.config.actionList.find((a) => a.paneId === this.config.currentPane)
-          .name
-      );
-    },
-    dataset(): string {
-      return routeGetters.getRouteDataset(this.$store);
-    },
-    explore(): string[] {
-      return routeGetters.getExploreVariables(this.$store);
-    },
-
-    filters(): string {
-      return routeGetters.getRouteFilters(this.$store);
-    },
-
-    hasData(): boolean {
-      return this.state.hasData();
-    },
-    activePane(): string {
-      return this.config.currentPane;
-    },
-    hasNoSecondaryVariables(): boolean {
-      return isEmpty(this.secondaryVariables);
-    },
-    hasNoVariables(): boolean {
-      return isEmpty(this.activeVariables);
-    },
-    isTimeseries(): boolean {
-      return routeGetters.isTimeseries(this.$store);
-    },
-    highlights(): Highlight[] {
-      return _.cloneDeep(routeGetters.getDecodedHighlights(this.$store));
-    },
-    drillDownBaseline(): TableRow[] {
-      return this.state.getMapDrillDownBaseline(this.include);
-    },
-    drillDownFiltered(): TableRow[] {
-      return this.state.getMapDrillDownFiltered(this.include);
-    },
-    timeseries(): TimeSeries {
-      return this.state.getTimeseries();
-    },
-    routeHighlight(): string {
-      return routeGetters.getRouteHighlight(this.$store);
-    },
-
-    inactiveMetaTypes(): string[] {
-      // Go trough each meta type
-      return this.metaTypes.map((metaType) => {
-        // test if some variables types...
-        const typeNotInMetaTypes = !this.variablesTypes.some((t) =>
-          // ...is in that meta type
-          META_TYPES[metaType].includes(t)
-        );
-        if (typeNotInMetaTypes) return metaType;
-      });
-    },
-    fields(): Dictionary<TableColumn> {
-      return this.state.getFields(this.include);
-    },
-
-    isFilteringHighlights(): boolean {
-      return this.highlights && this.highlights.length > 0;
-    },
-
-    isFilteringSelection(): boolean {
-      return !!this.rowSelection;
-    },
-
-    numRows(): number {
-      return this.items.length;
-    },
-
-    rowSelection(): RowSelection {
-      return routeGetters.getDecodedRowSelection(this.$store);
-    },
-
-    selectionNumRows(): number {
-      return getNumIncludedRows(this.rowSelection);
-    },
-
-    spinnerHTML,
-
-    target(): Variable {
-      return this.state.getTargetVariable();
-    },
-
-    totalNumRows(): number {
-      return this.state.getTotalItems(this.include);
-    },
-
-    variables(): Variable[] {
-      const variables = this.state
-        .getVariables()
-        .filter((v) => v?.distilRole !== DISTIL_ROLES.Meta);
-      return sortVariablesByImportance(variables);
-    },
-
-    variablesPerActions() {
-      const variables = {};
-      this.availableActions.forEach((action) => {
-        variables[action.paneId] = action.variables(this);
-      });
-      return variables;
-    },
-
-    variablesTypes(): string[] {
-      return [...new Set(this.variables.map((v) => v.colType))] as string[];
-    },
-    // enables or disables coloring by facets
-    geoVarExists(): boolean {
-      const varSums = this.summaries;
-      return varSums.some((v) => {
-        return isGeoLocatedType(v.type);
-      });
-    },
-    imageVarExists(): boolean {
-      const varSums = this.allVariables;
-      return varSums.some((v) => {
-        return isImageType(v.colType);
-      });
-    },
-    isGeoView(): boolean {
-      return this.viewComponent === "GeoPlot";
-    },
-    viewComponent() {
-      const viewType = this.activeViews[this.activeView] as string;
-      if (viewType === GEO_VIEW) return "GeoPlot";
-      if (viewType === GRAPH_VIEW) return "SelectGraphView";
-      if (viewType === IMAGE_VIEW) return "ImageMosaic";
-      if (viewType === TABLE_VIEW) return "SelectDataTable";
-      // Default is TABLE_VIEW
-      return "SelectDataTable";
-    },
-    // used to enable certain UI components
-    isResultState(): boolean {
-      return ExplorerStateNames.RESULT_VIEW === this.explorerRouteState;
-    },
-    // used to enable certain UI components
-    isSelectState(): boolean {
-      return ExplorerStateNames.SELECT_VIEW === this.explorerRouteState;
-    },
-    // used to enable certain UI components
-    isPredictState(): boolean {
-      return ExplorerStateNames.PREDICTION_VIEW === this.explorerRouteState;
-    },
-    isLabelState(): boolean {
-      return ExplorerStateNames.LABEL_VIEW === this.explorerRouteState;
-    },
-    // basic table data used by all view components
-    items(): TableRow[] {
-      return this.state.getData(this.include);
-    },
-    // baselineMap is used to maintain index order for faster buffer changes
-    baselineMap(): Dictionary<number> {
-      const result = {};
-      const base = this.baselineItems ?? [];
-      base.forEach((item, i) => {
-        result[item.d3mIndex] = i;
-      });
-      return result;
-    },
-    // used for map is the baseline
-    baselineItems(): TableRow[] {
-      return this.state.getMapBaseline();
-    },
-    // returns all summaries
-    summaries(): VariableSummary[] {
-      return this.state.getAllVariableSummaries(this.include);
-    },
-    // available summaries, result summaries, prediction summaries
-    secondarySummaries(): VariableSummary[] {
-      return this.state.getSecondaryVariableSummaries(this.include);
-    },
-    // available variables, result variables, prediction variables
-    secondaryVariables(): Variable[] {
-      return this.state.getSecondaryVariables();
-    },
-    explorerRouteState(): ExplorerStateNames {
-      return routeGetters.getDataExplorerState(this.$store);
-    },
-    areaCoverage(): number {
-      return totalAreaCoverage(this.items, this.variables);
-    },
-    // toggles right side variable pane
-    isOutcomeToggled(): boolean {
-      const outcome = ACTION_MAP.get(ActionNames.OUTCOME_VARIABLES).paneId;
-      return routeGetters
-        .getToggledActions(this.$store)
-        .some((a) => a === outcome);
-    },
-    isRemoteSensing(): boolean {
-      return routeGetters.isMultiBandImage(this.$store);
-    },
-    ...selectComputes,
-    ...labelComputes,
-    ...resultComputes,
-    ...predictionComputes,
   },
 
   // Update either the summaries or explore data on user interaction.
@@ -754,14 +474,15 @@ const DataExplorer = Vue.extend({
       this.dataLoading = false;
     },
     async geoVarExists() {
+      const self = (this as unknown) as DataExplorerRef; // because the computes/methods are added in beforeCreate typescript does not work so we cast it to a type here
       if (
-        (!this.geoVarExists && this.summaries.some((s) => s.pending)) ||
-        this.geoVarExists === routeGetters.hasGeoData(this.$store)
+        (!self.geoVarExists && self.summaries.some((s) => s.pending)) ||
+        self.geoVarExists === routeGetters.hasGeoData(this.$store)
       ) {
         return;
       }
       const route = routeGetters.getRoute(this.$store);
-      const entry = overlayRouteEntry(route, { hasGeoData: this.geoVarExists });
+      const entry = overlayRouteEntry(route, { hasGeoData: self.geoVarExists });
       this.$router.push(entry).catch((err) => console.warn(err));
       this.dataLoading = true;
       await this.state.fetchMapBaseline();
@@ -769,141 +490,49 @@ const DataExplorer = Vue.extend({
       this.dataLoading = false;
     },
     targetName() {
-      datasetActions.fetchOutliers(this.$store, this.dataset);
+      const self = (this as unknown) as DataExplorerRef; // because the computes/methods are added in beforeCreate typescript does not work so we cast it to a type here
+      datasetActions.fetchOutliers(this.$store, self.dataset);
     },
   },
-
+  beforeCreate() {
+    const self = (this as unknown) as DataExplorerRef; // because the computes/methods are added in beforeCreate typescript does not work so we cast it to a type here
+    // computes / methods need to be binded to the instance
+    this.$options.computed = {
+      ...this.$options.computed, // any computes defined in the component
+      ...bindMethods(genericComputes, self), // generic computes used across all states
+      ...bindMethods(resultComputes, self), // computes used in result state
+      ...bindMethods(selectComputes, self), // computes used in select state
+      ...bindMethods(predictionComputes, self), // computes used in prediction state
+      ...bindMethods(labelComputes, self), // computes used in the label state
+    };
+    this.$options.methods = {
+      ...this.$options.methods, // any methods defined in the component
+      ...bindMethods(genericMethods, self), // generic computes used across all states
+      ...bindMethods(selectMethods, self), // computes used in result state
+      ...bindMethods(labelMethods, self), // computes used in select state
+      ...bindMethods(resultMethods, self), // computes used in prediction state
+      ...bindMethods(predictionMethods, self), // computes used in the label state
+    };
+  },
   async beforeMount() {
-    if (this.isSelectState) {
+    const self = (this as unknown) as DataExplorerRef; // because the computes/methods are added in beforeCreate typescript does not work so we cast it to a type here
+    if (self.isSelectState) {
       // First get the dataset informations
       await viewActions.fetchDataExplorerData(this.$store, [] as Variable[]);
       // Pre-select the top 5 variables by importance
-      this.preSelectTopVariables();
+      self.preSelectTopVariables();
       // Update the explore data
       await viewActions.updateDataExplorerData(this.$store);
     }
   },
-  mounted() {
-    this.changeStatesByName(this.explorerRouteState);
-    this.labelName = routeGetters.getRouteLabel(this.$store);
-  },
 
+  mounted() {
+    const self = (this as unknown) as DataExplorerRef; // because the computes/methods are added in beforeCreate typescript does not work so we cast it to a type here
+    self.changeStatesByName(self.explorerRouteState);
+    self.labelName = routeGetters.getRouteLabel(this.$store);
+  },
   methods: {
     capitalize,
-    async changeStatesByName(state: ExplorerStateNames) {
-      // reset state
-      this.state.resetState();
-      // reset config state
-      this.config.resetConfig(this);
-      // get the new state object
-      this.setState(getStateFromName(state));
-      // set the config used for action bar, could be used for other configs
-      this.setConfig(getConfigFromName(state));
-      // init this is the basic fetches needed to get the information for the state
-      await this.state.init();
-    },
-
-    async onTileClick(data: EI.MAP.TileClickData) {
-      // filter for area of interests
-      const filter: Filter = {
-        displayName: data.displayName,
-        key: data.key,
-        maxX: data.bounds[1][1],
-        maxY: data.bounds[0][0],
-        minX: data.bounds[0][1],
-        minY: data.bounds[1][0],
-        mode: INCLUDE_FILTER,
-        type: data.type,
-        set: "",
-      };
-      // fetch area of interests
-      this.state.fetchMapDrillDown(filter);
-    },
-    setState(state: BaseState) {
-      this.state = state;
-      if (this.explorerRouteState !== state.name) {
-        this.updateRoute({
-          dataExplorerState: state.name,
-          toggledActions: "[]",
-        } as RouteArgs);
-      }
-    },
-    setConfig(config: ExplorerConfig) {
-      this.config = config;
-      const toggledMap = new Map(
-        routeGetters.getToggledActions(this.$store).map((t) => {
-          return [t, true];
-        })
-      );
-      // the switch to the new config will trigger a render of new elements
-      // if the defaultActions is one of the new elements it will not exist in the dom yet
-      // so we toggle the default actions after the next DOM cycle
-      this.$nextTick(() => {
-        this.config.defaultAction.forEach((actionName) => {
-          const action = ACTION_MAP.get(actionName);
-          if (!toggledMap.has(action.paneId)) {
-            this.toggleAction(actionName);
-          }
-        });
-      });
-    },
-    setIncludedActive() {
-      this.include = true;
-    },
-
-    setExcludedActive() {
-      this.include = false;
-    },
-
-    updateRoute(args: RouteArgs) {
-      const entry = overlayRouteEntry(this.$route, args);
-      this.$router.push(entry).catch((err) => console.warn(err));
-    },
-
-    preSelectTopVariables(number = 5): void {
-      // if explore is already filled let's skip
-      if (!isEmpty(this.explore)) return;
-
-      // get the top 5 variables
-      const top5Variables = [...this.variables]
-        .slice(0, number)
-        .map((variable) => variable.key)
-        .join(",");
-
-      // Update the route with the top 5 variable as training
-      this.updateRoute({ explore: top5Variables });
-    },
-    onTabClick(view: string) {
-      // if the data size is not set to the max set it then fetch data
-      if (view === GEO_VIEW) {
-        this.dataLoading = true;
-        if (this.numRows !== this.totalNumRows) {
-          this.updateRoute({ dataSize: this.totalNumRows });
-          this.state.fetchData();
-        }
-      }
-    },
-    fetchTimeseries(args: EI.TIMESERIES.FetchTimeseriesEvent) {
-      this.state.fetchTimeseries(args);
-    },
-    fetchSummaries() {
-      this.state.fetchVariableSummaries();
-    },
-    onMapFinishedLoading() {
-      this.dataLoading = false;
-    },
-    resetHighlightsOrRow() {
-      if (this.isFilteringHighlights) {
-        clearHighlight(this.$router);
-      } else {
-        clearRowSelection(this.$router);
-      }
-    },
-    ...genericMethods,
-    ...selectMethods,
-    ...labelMethods,
-    ...resultMethods,
-    ...predictionMethods,
   },
 });
 export default DataExplorer;

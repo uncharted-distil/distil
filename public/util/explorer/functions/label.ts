@@ -34,15 +34,23 @@ import { ActionNames, ACTION_MAP, ExplorerStateNames } from "..";
  * LABEL_COMPUTES contains all of the computes for the label state in the data explorer
  **/
 export const LABEL_COMPUTES = {
-  // labelScoreName represents the back end key for the label variable
+  /**
+   * labelScoreName represents the back end key for the label variable
+   */
   labelScoreName: (): string => {
     const self = this as DataExplorerRef;
     return LOW_SHOT_SCORE_COLUMN_PREFIX + self.labelName;
   },
-  // isClone checks if the current dataset is a clone
-  // this is necessary for multiple labelling sessions
-  // if this dataset is still a clone the user needs to select the label variable they are annotating
-  // Note: when the labelled dataset is saved it is no longer a clone but an original
+  /**
+   * isClone checks if the current dataset is a clone
+   * this is necessary for multiple labelling sessions
+   * if this dataset is still a clone the user needs to select the label variable they are annotating
+   * Note: when the labelled dataset is saved it is no longer a clone but an original
+   * isClone checks if the current dataset is a clone
+   * this is necessary for multiple labelling sessions
+   * if this dataset is still a clone the user needs to select the label variable they are annotating
+   * Note: when the labelled dataset is saved it is no longer a clone but an original
+   */
   isClone: (): boolean | null => {
     const self = this as DataExplorerRef;
     if (!self) {
@@ -55,7 +63,9 @@ export const LABEL_COMPUTES = {
     }
     return dataset.clone === undefined ? false : dataset.clone;
   },
-  // options is displayed to the user when selecting a pre-existing variable to annotate
+  /**
+   * options is displayed to the user when selecting a pre-existing variable to annotate
+   */
   options: (): { value: string; text: string }[] => {
     const self = this as DataExplorerRef;
     return self?.variables
@@ -66,12 +76,16 @@ export const LABEL_COMPUTES = {
         return { value: v.colName, text: v.colName };
       });
   },
-  // modal title for label creation / selection
+  /**
+   * modal title for label creation / selection
+   */
   labelModalTitle: (): string => {
     const self = this as DataExplorerRef;
     return self?.isClone ? "Select Label Feature" : "Label Creation";
   },
-  // the label summary that is being annotated
+  /**
+   * the label summary that is being annotated
+   */
   labelSummary: (): VariableSummary => {
     const self = this as DataExplorerRef;
     const label = routeGetters.getRouteLabel(store);
@@ -82,7 +96,9 @@ export const LABEL_COMPUTES = {
 };
 
 export const LABEL_METHODS = {
-  // updateTask sets label variable as the target
+  /**
+   * updateTask sets label variable as the target
+   */
   updateTask: async (): Promise<void> => {
     const self = this as DataExplorerRef;
     const taskResponse = await datasetActions.fetchTask(store, {
@@ -112,8 +128,10 @@ export const LABEL_METHODS = {
     });
     return;
   },
-  // onLabelSubmit is called when the user has created a new label to annotate
-  // this starts the process of integrating the new variable into the dataset on the backend
+  /**
+   * onLabelSubmit is called when the user has created a new label to annotate
+   * this starts the process of integrating the new variable into the dataset on the backend
+   */
   onLabelSubmit: async (): Promise<void> => {
     const self = this as DataExplorerRef;
     if (
@@ -146,8 +164,10 @@ export const LABEL_METHODS = {
     // update task based on the current training data
     self.updateTask();
   },
-  // onAnnotationChanged is called when the user is annotating rows of the data as positive or negative
-  // this requires a refetch of data and variable summaries
+  /**
+   * onAnnotationChanged is called when the user is annotating rows of the data as positive or negative
+   * this requires a refetch of data and variable summaries
+   */
   onAnnotationChanged: async (label: LowShotLabels): Promise<void> => {
     const self = this as DataExplorerRef;
     const rowSelection = routeGetters.getDecodedRowSelection(store);
@@ -179,7 +199,9 @@ export const LABEL_METHODS = {
     }
     return;
   },
-  // onExport is called when the user wants to download the newly annotated dataset to csv
+  /**
+   * onExport is called when the user wants to download the newly annotated dataset to csv
+   */
   onExport: async (): Promise<void> => {
     const self = this as DataExplorerRef;
     const highlights = [
@@ -205,8 +227,10 @@ export const LABEL_METHODS = {
     downloadFile(file, self.dataset, ".csv");
     return;
   },
-  // onSearchSimilar calls the backend to start the image query process
-  // which ranks unlabelled images based on their similarities to the positive samples
+  /**
+   * onSearchSimilar calls the backend to start the image query process
+   * which ranks unlabelled images based on their similarities to the positive samples
+   */
   onSearchSimilar: async (): Promise<void> => {
     const self = this as DataExplorerRef;
     self.isBusy = true;
@@ -241,9 +265,11 @@ export const LABEL_METHODS = {
       self.toggleAction(ActionNames.OUTCOME_VARIABLES);
     }
   },
-  // onSaveDataset calls the backend and saves the dataset
-  // this removes the clone property for a dataset so if the user tries to label they
-  // will have to create a new label
+  /**
+   * onSaveDataset calls the backend and saves the dataset
+   * this removes the clone property for a dataset so if the user tries to label they
+   * will have to create a new label
+   */
   onSaveDataset: async (
     saveName: string,
     retainUnlabeled: boolean
@@ -304,14 +330,18 @@ export const LABEL_METHODS = {
     self.changeStatesByName(ExplorerStateNames.SELECT_VIEW);
     return;
   },
-  // onSelectAll selects all the items currently on the page
+  /**
+   * onSelectAll selects all the items currently on the page
+   */
   onSelectAll: (): void => {
     const self = this as DataExplorerRef;
     const dataView = (self.$refs.dataView as unknown) as DataView;
     dataView.selectAll();
   },
-  // onToolSelection is called after a map tool selection event
-  // this selects all rows inside the quad
+  /**
+   * onToolSelection is called after a map tool selection event
+   * this selects all rows inside the quad
+   */
   onToolSelection: async (
     selection: EI.MAP.SelectionHighlight
   ): Promise<void> => {
@@ -343,12 +373,16 @@ export const LABEL_METHODS = {
     const rowSelection = routeGetters.getDecodedRowSelection(store);
     bulkRowSelectionUpdate(router, selection.context, rowSelection, indices);
   },
-  // switchToLabelState displays the label modal
+  /**
+   * switchToLabelState displays the label modal
+   */
   switchToLabelState: (): void => {
     const self = this as DataExplorerRef;
     self.$bvModal.show(self.labelModalId);
   },
-  // onLabelSaveClick displays the save dataset modal
+  /**
+   * onLabelSaveClick displays the save dataset modal
+   */
   onLabelSaveClick: (): void => {
     const self = this as DataExplorerRef;
     self.$bvModal.show("save-dataset-modal");

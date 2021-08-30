@@ -19,8 +19,10 @@ import { Activity, Feature, SubActivity } from "../../userEvents";
  * SELECT_COMPUTES contains all of the computes for the select state in the data explorer
  **/
 export const SELECT_COMPUTES = {
-  // checks to see if the UI surrounding include/exclude table views is enabled
-  // this should only be true for the select state
+  /**
+   * checks to see if the UI surrounding include/exclude table views is enabled
+   * this should only be true for the select state
+   */
   isExcludeDisabled: (): boolean => {
     const self = this as DataExplorerRef;
     if (!self) {
@@ -28,12 +30,16 @@ export const SELECT_COMPUTES = {
     }
     return !self.isFilteringHighlights && !self.isFilteringSelection;
   },
-  // returns the variable keys that are currently selected as training features does not include target
+  /**
+   * returns the variable keys that are currently selected as training features does not include target
+   */
   training: (): string[] => {
     return routeGetters.getDecodedTrainingVariableNames(store);
   },
-  // returns true if a target variable is selected and at least 1 training feature has been selected
-  // this enables the create model button
+  /**
+   * returns true if a target variable is selected and at least 1 training feature has been selected
+   * this enables the create model button
+   */
   isCreateModelPossible: (): boolean => {
     const self = this as DataExplorerRef;
     if (!self) {
@@ -47,7 +53,9 @@ export const SELECT_COMPUTES = {
  * SELECT_METHODS contains the methods used in the select state in the data explorer
  */
 export const SELECT_METHODS = {
-  //onModelCreation starts the process for fitting a model
+  /**
+   * onModelCreation starts the process for fitting a model
+   */
   onModelCreation: (msg: SolutionRequestMsg): void => {
     const self = this as DataExplorerRef;
     msg.filters.variables = routeGetters
@@ -88,7 +96,9 @@ export const SELECT_METHODS = {
       });
     return;
   },
-  // onExludeClick create a filter from the highlights
+  /**
+   * onExludeClick create a filter from the highlights
+   */
   onExcludeClick: (): void => {
     const self = this as DataExplorerRef;
     // check is highlights exist
