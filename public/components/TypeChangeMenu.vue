@@ -72,9 +72,10 @@ import {
   isTimeSeriesType,
   isGeoLocatedType,
   GEOBOUNDS_TYPE,
+  MULTIBAND_IMAGE_TYPE,
 } from "../util/types";
 import { hasFilterInRoute } from "../util/filters";
-import { createRouteEntry, overlayRouteEntry } from "../util/routes";
+import { createRouteEntry } from "../util/routes";
 import {
   GROUPING_ROUTE,
   PREDICTION_ROUTE,
@@ -235,6 +236,9 @@ export default Vue.extend({
   methods: {
     groupingOptions() {
       const options = [];
+      if (this.type === MULTIBAND_IMAGE_TYPE) {
+        return options;
+      }
       if (this.isGrouping) {
         if (this.expand) {
           options.push({

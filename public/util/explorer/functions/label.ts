@@ -37,8 +37,8 @@ export const LABEL_COMPUTES = {
   /**
    * labelScoreName represents the back end key for the label variable
    */
-  labelScoreName: (): string => {
-    const self = this as DataExplorerRef;
+  labelScoreName(): string {
+    const self = (this as unknown) as DataExplorerRef;
     return LOW_SHOT_SCORE_COLUMN_PREFIX + self.labelName;
   },
   /**
@@ -51,8 +51,8 @@ export const LABEL_COMPUTES = {
    * if this dataset is still a clone the user needs to select the label variable they are annotating
    * Note: when the labelled dataset is saved it is no longer a clone but an original
    */
-  isClone: (): boolean | null => {
-    const self = this as DataExplorerRef;
+  isClone(): boolean | null {
+    const self = (this as unknown) as DataExplorerRef;
     if (!self) {
       return null;
     }
@@ -66,8 +66,8 @@ export const LABEL_COMPUTES = {
   /**
    * options is displayed to the user when selecting a pre-existing variable to annotate
    */
-  options: (): { value: string; text: string }[] => {
-    const self = this as DataExplorerRef;
+  options(): { value: string; text: string }[] {
+    const self = (this as unknown) as DataExplorerRef;
     return self?.variables
       .filter((v) => {
         return v.colType === CATEGORICAL_TYPE;
@@ -79,15 +79,15 @@ export const LABEL_COMPUTES = {
   /**
    * modal title for label creation / selection
    */
-  labelModalTitle: (): string => {
-    const self = this as DataExplorerRef;
+  labelModalTitle(): string {
+    const self = (this as unknown) as DataExplorerRef;
     return self?.isClone ? "Select Label Feature" : "Label Creation";
   },
   /**
    * the label summary that is being annotated
    */
-  labelSummary: (): VariableSummary => {
-    const self = this as DataExplorerRef;
+  labelSummary(): VariableSummary {
+    const self = (this as unknown) as DataExplorerRef;
     const label = routeGetters.getRouteLabel(store);
     return self?.summaries.find((s) => {
       return s.key === label;
@@ -99,8 +99,8 @@ export const LABEL_METHODS = {
   /**
    * updateTask sets label variable as the target
    */
-  updateTask: async (): Promise<void> => {
-    const self = this as DataExplorerRef;
+  async updateTask(): Promise<void> {
+    const self = (this as unknown) as DataExplorerRef;
     const taskResponse = await datasetActions.fetchTask(store, {
       dataset: self.dataset,
       targetName: self.labelName,
@@ -132,8 +132,8 @@ export const LABEL_METHODS = {
    * onLabelSubmit is called when the user has created a new label to annotate
    * this starts the process of integrating the new variable into the dataset on the backend
    */
-  onLabelSubmit: async (): Promise<void> => {
-    const self = this as DataExplorerRef;
+  async onLabelSubmit(): Promise<void> {
+    const self = (this as unknown) as DataExplorerRef;
     if (
       self.variables.some((v) => {
         return v.colName === self.labelName;
@@ -168,8 +168,8 @@ export const LABEL_METHODS = {
    * onAnnotationChanged is called when the user is annotating rows of the data as positive or negative
    * this requires a refetch of data and variable summaries
    */
-  onAnnotationChanged: async (label: LowShotLabels): Promise<void> => {
-    const self = this as DataExplorerRef;
+  async onAnnotationChanged(label: LowShotLabels): Promise<void> {
+    const self = (this as unknown) as DataExplorerRef;
     const rowSelection = routeGetters.getDecodedRowSelection(store);
     const innerData = new Map<number, unknown>();
     const updateData = rowSelection.d3mIndices.map((i) => {
@@ -202,8 +202,8 @@ export const LABEL_METHODS = {
   /**
    * onExport is called when the user wants to download the newly annotated dataset to csv
    */
-  onExport: async (): Promise<void> => {
-    const self = this as DataExplorerRef;
+  async onExport(): Promise<void> {
+    const self = (this as unknown) as DataExplorerRef;
     const highlights = [
       {
         context: LABEL_FEATURE_INSTANCE,
@@ -231,8 +231,8 @@ export const LABEL_METHODS = {
    * onSearchSimilar calls the backend to start the image query process
    * which ranks unlabelled images based on their similarities to the positive samples
    */
-  onSearchSimilar: async (): Promise<void> => {
-    const self = this as DataExplorerRef;
+  async onSearchSimilar(): Promise<void> {
+    const self = (this as unknown) as DataExplorerRef;
     self.isBusy = true;
     const res = (await requestActions.createQueryRequest(store, {
       datasetId: self.dataset,
@@ -270,11 +270,11 @@ export const LABEL_METHODS = {
    * this removes the clone property for a dataset so if the user tries to label they
    * will have to create a new label
    */
-  onSaveDataset: async (
+  async onSaveDataset(
     saveName: string,
     retainUnlabeled: boolean
-  ): Promise<void> => {
-    const self = this as DataExplorerRef;
+  ): Promise<void> {
+    const self = (this as unknown) as DataExplorerRef;
     self.isBusy = true;
     const labelScoreName = LOW_SHOT_SCORE_COLUMN_PREFIX + self.labelName;
     const labelRankName = LOW_SHOT_RANK_COLUMN_PREFIX + self.labelName;
@@ -333,8 +333,8 @@ export const LABEL_METHODS = {
   /**
    * onSelectAll selects all the items currently on the page
    */
-  onSelectAll: (): void => {
-    const self = this as DataExplorerRef;
+  onSelectAll(): void {
+    const self = (this as unknown) as DataExplorerRef;
     const dataView = (self.$refs.dataView as unknown) as DataView;
     dataView.selectAll();
   },
@@ -342,9 +342,7 @@ export const LABEL_METHODS = {
    * onToolSelection is called after a map tool selection event
    * this selects all rows inside the quad
    */
-  onToolSelection: async (
-    selection: EI.MAP.SelectionHighlight
-  ): Promise<void> => {
+  async onToolSelection(selection: EI.MAP.SelectionHighlight): Promise<void> {
     const filterParams = routeGetters.getDecodedSolutionRequestFilterParams(
       store
     );
@@ -376,15 +374,15 @@ export const LABEL_METHODS = {
   /**
    * switchToLabelState displays the label modal
    */
-  switchToLabelState: (): void => {
-    const self = this as DataExplorerRef;
+  switchToLabelState(): void {
+    const self = (this as unknown) as DataExplorerRef;
     self.$bvModal.show(self.labelModalId);
   },
   /**
    * onLabelSaveClick displays the save dataset modal
    */
-  onLabelSaveClick: (): void => {
-    const self = this as DataExplorerRef;
+  onLabelSaveClick(): void {
+    const self = (this as unknown) as DataExplorerRef;
     self.$bvModal.show("save-dataset-modal");
   },
 };
