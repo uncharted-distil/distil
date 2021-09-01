@@ -586,6 +586,11 @@ export function sameData(old: TableRow[], cur: TableRow[]): boolean {
   if (old.length !== cur.length) {
     return false;
   }
+  const oldNumOfProps = old[0] ? Object.keys(old[0]).length : 0;
+  const curNumOfProps = cur[0] ? Object.keys(cur[0]).length : 0;
+  if (oldNumOfProps != curNumOfProps) {
+    return false;
+  }
   for (let i = 0; i < old.length; ++i) {
     if (old[i][D3M_INDEX_FIELD] !== cur[i][D3M_INDEX_FIELD]) {
       return false;
