@@ -278,7 +278,7 @@
         />
       </div>
       <facet-list-pane
-        v-else-if="state.name === 'label'"
+        v-else-if="isLabelState"
         :variables="secondaryVariables"
         :enable-color-scales="geoVarExists"
         :include="include"
