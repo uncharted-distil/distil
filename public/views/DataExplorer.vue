@@ -110,8 +110,8 @@
         <label-header-buttons
           v-if="isLabelState"
           class="height-36"
-          @button-event="onLabelAnnotationClicked"
-          @select-all="onLabelSelectAll"
+          @button-event="onAnnotationChanged"
+          @select-all="onSelectAll"
         />
         <legend-weight v-if="hasWeight && isResultState" class="ml-5 mr-auto" />
       </div>
@@ -258,8 +258,8 @@
           :is-loading="isBusy"
           :low-shot-summary="labelSummary"
           :is-saving="isBusy"
-          @export="onLabelExport"
-          @apply="onLabelApply"
+          @export="onExport"
+          @apply="onSearchSimilar"
           @save="onLabelSaveClick"
         />
       </footer>
@@ -321,7 +321,7 @@
         <b-form-select
           id="label-select-field"
           v-model="labelName"
-          :options="labelOptions"
+          :options="options"
         />
       </b-form-group>
     </b-modal>

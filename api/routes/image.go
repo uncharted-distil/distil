@@ -24,13 +24,15 @@ import (
 	"path"
 	"strconv"
 
-	"goji.io/v3/pat"
-
 	"github.com/nfnt/resize"
 	"github.com/pkg/errors"
+	"github.com/uncharted-distil/distil-compute/metadata"
+	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil/api/env"
-	"github.com/uncharted-distil/distil/api/model"
+	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util"
+	"goji.io/v3/pat"
 )
 
 const (
@@ -38,7 +40,7 @@ const (
 )
 
 // ImageHandler provides a static file lookup route using simple directory mapping.
-func ImageHandler(ctor model.MetadataStorageCtor, config *env.Config) func(http.ResponseWriter, *http.Request) {
+func ImageHandler(ctor api.MetadataStorageCtor, config *env.Config) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// resources can either be local or remote
 		dataset := pat.Param(r, "dataset")
@@ -65,8 +67,19 @@ func ImageHandler(ctor model.MetadataStorageCtor, config *env.Config) func(http.
 		}
 
 		sourcePath := env.ResolvePath(res.Source, res.Folder)
-
-		data, err := ioutil.ReadFile(path.Join(sourcePath, imageFolder, file))
+		metaDisk, err := metadata.LoadMetadataFromOriginalSchema(path.Join(sourcePath, compute.D3MDataSchema), false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		// need to read the dataset doc to determine the path to the data resource
+		for _, dr := range metaDisk.DataResources {
+			if dr.IsCollection && dr.ResType == model.ResTypeImage {
+				sourcePath = model.GetResourcePathFromFolder(sourcePath, dr)
+				break
+			}
+		}
+		data, err := ioutil.ReadFile(path.Join(sourcePath, file))
 		if err != nil {
 			handleError(w, err)
 			return

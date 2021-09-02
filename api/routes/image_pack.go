@@ -151,11 +151,23 @@ func getImages(imagePackRequest *ImagePackRequest, threadID int, numThreads int,
 	}
 
 	sourcePath := env.ResolvePath(res.Source, res.Folder)
+	metaDisk, err := metadata.LoadMetadataFromOriginalSchema(path.Join(sourcePath, compute.D3MDataSchema), false)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	// need to read the dataset doc to determine the path to the data resource
+	for _, dr := range metaDisk.DataResources {
+		if dr.IsCollection && dr.ResType == model.ResTypeImage {
+			sourcePath = model.GetResourcePathFromFolder(sourcePath, dr)
+			break
+		}
+	}
 	// loop through image info
 	for i := threadID; i < len(imagePackRequest.ImageIDs); i += numThreads {
 		imageID := imagePackRequest.ImageIDs[i]
 
-		data, err := ioutil.ReadFile(path.Join(sourcePath, imageFolder, imageID))
+		data, err := ioutil.ReadFile(path.Join(sourcePath, imageID))
 		if err != nil {
 			handleThreadError(&errorIDs, &imageID, &err)
 			continue
