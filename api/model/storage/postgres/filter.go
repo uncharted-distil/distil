@@ -806,7 +806,7 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 	}
 
 	// get the list of variables that are include by our current filter state
-	filterVariables, err := s.metadata.FetchVariablesByName(dataset, filterParams.Variables, true, false, false)
+	filterVariables, err := s.metadata.FetchVariablesByName(dataset, filterParams.Variables, true, true, false)
 	if err != nil {
 		return nil, err
 	}

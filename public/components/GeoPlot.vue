@@ -105,6 +105,7 @@ import {
   VariableSummary,
   GeoBoundsGrouping,
   Variable,
+  DataMode,
 } from "../store/dataset/index";
 import { updateHighlight, highlightsExist } from "../util/highlights";
 import ImagePreview from "../components/ImagePreview.vue";
@@ -301,7 +302,10 @@ export default Vue.extend({
           return 0;
         };
       }
-      return colorByFacet(this.summaries.find(findKey));
+      const clusterKey = this.routeClustering
+        ? this.variables.find(findKey)?.grouping?.clusterCol ?? ""
+        : "";
+      return colorByFacet(this.summaries.find(findKey), clusterKey);
     },
     target(): string {
       return routeGetters.getRouteTargetVariable(this.$store);
@@ -314,6 +318,9 @@ export default Vue.extend({
     },
     showDrillDown(): boolean {
       return this.isImageDrilldown;
+    },
+    routeClustering(): boolean {
+      return routeGetters.getDataMode(this.$store) === DataMode.Cluster;
     },
     colorScale(): (t: number) => string {
       const colorScale = routeGetters.getColorScale(this.$store);

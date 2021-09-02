@@ -18,12 +18,12 @@
 <template>
   <b-button
     v-if="isToggle"
-    @click="onToggleClick"
     variant="outline-secondary"
     class="min-width-40"
     :class="toggleStyle"
+    @click="onToggleClick"
   >
-    <i class="fas fa-palette fa-sm"></i>
+    <i class="fas fa-palette fa-sm" />
   </b-button>
   <div
     v-else
@@ -43,7 +43,7 @@
             <i
               class="fas fa-times fa-sm white-color"
               @mousedown.stop="onDisableScale"
-            ></i>
+            />
             <div
               v-if="isSelected"
               class="selected-bar d-inline-flex ml-1"

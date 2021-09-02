@@ -301,7 +301,7 @@ export default Vue.extend({
     applyClusteringChange() {
       // fetch the var modes map
       const varModesMap = routeGetters.getDecodedVarModes(this.$store);
-
+      const clusterVars = new Set<string>();
       // find any grouped vars that are using this cluster data and update their
       // mode to cluster now that data is available
       datasetGetters
@@ -309,6 +309,7 @@ export default Vue.extend({
         .filter((v) => isClusterType(v.colType))
         .forEach((v) => {
           varModesMap.set(v.key, SummaryMode.Cluster);
+          clusterVars.add(v.grouping.clusterCol);
         });
 
       // find any image variables using this cluster data and update their mode
@@ -322,10 +323,12 @@ export default Vue.extend({
       // serialize the modes map into a string and add to the route
       // and update to know that the clustering has been applied.
       const varModesStr = varModesToString(varModesMap);
+      const trainStr = routeGetters.getExploreVariables(this.$store) + ",";
       const entry = overlayRouteEntry(this.$route, {
         varModes: varModesStr,
         dataMode: DataMode.Cluster,
         clustering: "1",
+        explore: trainStr.concat(Array.from(clusterVars).join(",")),
       });
       this.$router.push(entry).catch((err) => console.warn(err));
 
