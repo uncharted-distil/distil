@@ -23,8 +23,8 @@ export const SELECT_COMPUTES = {
    * checks to see if the UI surrounding include/exclude table views is enabled
    * this should only be true for the select state
    */
-  isExcludeDisabled: (): boolean => {
-    const self = this as DataExplorerRef;
+  isExcludeDisabled(): boolean {
+    const self = (this as unknown) as DataExplorerRef;
     if (!self) {
       return false;
     }
@@ -40,8 +40,8 @@ export const SELECT_COMPUTES = {
    * returns true if a target variable is selected and at least 1 training feature has been selected
    * this enables the create model button
    */
-  isCreateModelPossible: (): boolean => {
-    const self = this as DataExplorerRef;
+  isCreateModelPossible(): boolean {
+    const self = (this as unknown) as DataExplorerRef;
     if (!self) {
       return false;
     }
@@ -56,8 +56,8 @@ export const SELECT_METHODS = {
   /**
    * onModelCreation starts the process for fitting a model
    */
-  onModelCreation: (msg: SolutionRequestMsg): void => {
-    const self = this as DataExplorerRef;
+  onModelCreation(msg: SolutionRequestMsg): void {
+    const self = (this as unknown) as DataExplorerRef;
     msg.filters.variables = routeGetters
       .getRouteTrainingVariables(store)
       .split(",")
@@ -99,8 +99,8 @@ export const SELECT_METHODS = {
   /**
    * onExludeClick create a filter from the highlights
    */
-  onExcludeClick: (): void => {
-    const self = this as DataExplorerRef;
+  onExcludeClick(): void {
+    const self = (this as unknown) as DataExplorerRef;
     // check is highlights exist
     if (!self.isFilteringHighlights) {
       return;
@@ -125,8 +125,8 @@ export const SELECT_METHODS = {
     return;
   },
   // TODO: this needs to be removed
-  onReincludeClick: (): void => {
-    const self = this as DataExplorerRef;
+  onReincludeClick(): void {
+    const self = (this as unknown) as DataExplorerRef;
     if (!self.isFilteringHighlights) {
       return;
     }
