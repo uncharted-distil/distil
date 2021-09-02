@@ -634,14 +634,14 @@ export const GENERIC_COMPUTES = {
   /**
    * available summaries, result summaries, prediction summaries
    */
-  secondarySummaries: (): VariableSummary[] => {
+  secondarySummaries(): VariableSummary[] {
     const self = (this as unknown) as DataExplorerRef;
     return self?.state.getSecondaryVariableSummaries(self?.include);
   },
   /**
    * available variables, result variables, prediction variables
    */
-  secondaryVariables: (): Variable[] => {
+  secondaryVariables(): Variable[] {
     const self = (this as unknown) as DataExplorerRef;
     return self?.state.getSecondaryVariables();
   },
