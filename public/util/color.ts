@@ -71,9 +71,10 @@ function getColor(discreteScale: string[], idx: number): string {
 }
 // colorByFacet returns a function that is used to calculate the normalized color scale value for a given facet type
 export function colorByFacet(
-  variable: VariableSummary
+  variable: VariableSummary,
+  clusterKey = ""
 ): (item: TableRow, idx: number) => number {
-  let key = variable.key;
+  let key = clusterKey ? clusterKey : variable.key;
   // this is for result/prediction variables
   if (variable.key.includes(":")) {
     key = variable.key.split(":")[1];

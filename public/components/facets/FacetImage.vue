@@ -28,14 +28,21 @@
     <div slot="header-label" :class="headerClass">
       <i :class="getGroupIcon(summary) + ' facet-header-icon'" />
       <span>{{ summary.label.toUpperCase() }}</span>
-      <type-change-menu
-        v-if="facetEnableTypeChanges"
-        class="facet-header-dropdown"
-        :dataset="summary.dataset"
-        :field="summary.key"
-        :expand-collapse="expandCollapse"
-        @type-change="onTypeChange"
-      />
+      <div class="facet-header-dropdown d-flex align-items-center">
+        <color-scale-drop-down
+          v-if="geoEnabled && isClustering"
+          :variable-summary="summary"
+          is-facet-scale
+          class="mr-1"
+        />
+        <type-change-menu
+          v-if="facetEnableTypeChanges"
+          :dataset="summary.dataset"
+          :field="summary.key"
+          :expand-collapse="expandCollapse"
+          @type-change="onTypeChange"
+        />
+      </div>
     </div>
     <facet-template target="facet-terms-value" class="facet-content-container">
       <div slot="header" class="facet-image-preview-display">${metadata}</div>
@@ -72,10 +79,15 @@ import _ from "lodash";
 
 import "@uncharted.software/facets-core";
 import { FacetTermsData } from "@uncharted.software/facets-core/dist/types/facet-terms/FacetTerms";
-
+import { getters as routeGetters } from "../../store/route/module";
 import TypeChangeMenu from "../TypeChangeMenu.vue";
 import ImagePreview from "../ImagePreview.vue";
-import { Highlight, RowSelection, VariableSummary } from "../../store/dataset";
+import {
+  DataMode,
+  Highlight,
+  RowSelection,
+  VariableSummary,
+} from "../../store/dataset";
 import {
   getCategoricalChunkSize,
   getGroupIcon,
@@ -85,6 +97,7 @@ import {
   viewLessData,
   facetTypeChangeState,
 } from "../../util/facets";
+import ColorScaleDropDown from "../ColorScaleDropDown.vue";
 import { DISTIL_ROLES } from "../../util/types";
 import { EventList } from "../../util/events";
 export default Vue.extend({
@@ -93,6 +106,7 @@ export default Vue.extend({
   components: {
     TypeChangeMenu,
     ImagePreview,
+    ColorScaleDropDown,
   },
 
   directives: {
@@ -105,20 +119,21 @@ export default Vue.extend({
   },
 
   props: {
-    summary: Object as () => VariableSummary,
+    datasetName: { type: String as () => string, default: null },
     enabledTypeChanges: Array as () => string[],
+    enableHighlighting: Boolean as () => boolean,
+    expandCollapse: Function as () => Function,
+    geoEnabled: { type: Boolean as () => boolean, default: false },
+    highlights: Array as () => Highlight[],
     html: [
       String as () => string,
       Object as () => any,
       Function as () => Function,
     ],
-    expandCollapse: Function as () => Function,
-    highlights: Array as () => Highlight[],
-    enableHighlighting: Boolean as () => boolean,
+    include: { type: Boolean as () => boolean, default: true },
     instanceName: String as () => string,
     rowSelection: Object as () => RowSelection,
-    datasetName: { type: String as () => string, default: null },
-    include: { type: Boolean as () => boolean, default: true },
+    summary: Object as () => VariableSummary,
   },
 
   data() {
@@ -173,6 +188,9 @@ export default Vue.extend({
         {}
       );
       return highlightAsSelection;
+    },
+    isClustering(): boolean {
+      return routeGetters.getDataMode(this.$store) === DataMode.Cluster;
     },
     facetValueCount(): number {
       return this.hasBaseline ? this.summary.baseline.buckets.length : 0;
