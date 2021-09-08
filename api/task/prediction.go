@@ -135,19 +135,21 @@ func (p *PredictionTimeseriesDataset) CleanupTempFiles() {
 }
 
 // returns the index of the supplied variables that needs to be added to the data
-func findMissingColumns(variables []*model.Variable, headerNames []string) map[int]bool {
+func findMissingColumns(sourceHeaderNames []string, predictionHeaderNames []string) map[int]bool {
 	result := map[int]bool{}
-	headerMap := map[string]int{}
-	for i := range headerNames {
-		headerMap[headerNames[i]] = i
+	predVarMap := map[string]bool{}
+	for _, v := range predictionHeaderNames {
+		predVarMap[v] = true
 	}
-	for i := range variables {
-		if _, ok := headerMap[variables[i].Key]; !ok {
-			result[variables[i].Index] = true
+	for i, hn := range sourceHeaderNames {
+		if !predVarMap[hn] {
+			result[i] = true
 		}
 	}
 	return result
 }
+
+// CreateDataset creates a prediction dataset.
 func (p *predictionDataset) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*serialization.RawDataset, error) {
 	// need to do a bit of processing on the usual setup
 	ds, err := p.params.DatasetConstructor.CreateDataset(rootDataPath, datasetName, config)
@@ -528,19 +530,26 @@ func ImportPredictionDataset(params *PredictParams) (string, string, error) {
 	for i, f := range rawHeader {
 		// TODO: col index not necessarily the same as index and thats what needs checking
 		// We check both name and display name as the pre-ingested datasets are keyed of display name
-		if mainDR.Variables[i].Key != f && mainDR.Variables[i].HeaderName != f {
+		// only the first n fields need to match, with n being the number of fields in the source dataset
+		if i < len(mainDR.Variables) && mainDR.Variables[i].Key != f && mainDR.Variables[i].HeaderName != f {
 			return "", "", errors.Errorf("variables in new prediction file do not match variables in original dataset")
 		}
 	}
-	log.Infof("dataset fields match original dataset fields")
+	log.Infof("dataset fields compatible with original dataset fields")
+
+	// read the metadata from the created prediction dataset since it needs to be updated
+	datasetStorage := serialization.GetStorage(rawDataPath)
+	schemaPath = path.Join(datasetPath, compute.D3MDataSchema)
+	meta, err = datasetStorage.ReadMetadata(schemaPath)
+	if err != nil {
+		return "", "", errors.Wrap(err, "unable to read metadata")
+	}
 
 	// update the dataset doc to reflect original types
 	meta.ID = datasetName
 	meta.Name = datasetName
 	meta.StorageName = model.NormalizeDatasetID(datasetName)
 	meta.DatasetFolder = path.Base(datasetPath)
-	schemaPath = path.Join(datasetPath, compute.D3MDataSchema)
-	datasetStorage := serialization.GetStorage(rawDataPath)
 	variables := updateMetaDataTypes(params.SolutionStorage, params.MetaStorage, params.DataStorage, meta, params.FittedSolutionID, params.Dataset, meta.StorageName)
 	if err != nil {
 		return "", "", errors.Wrap(err, "unable to update metadata types")
@@ -554,6 +563,7 @@ func ImportPredictionDataset(params *PredictParams) (string, string, error) {
 	if err != nil {
 		return "", "", errors.Wrap(err, "unable to create classification")
 	}
+	params.Meta = meta
 	return datasetName, schemaPath, nil
 }
 
@@ -774,6 +784,7 @@ func augmentPredictionDataset(csvData [][]string, target *model.Variable,
 	addTarget := true
 	predictVariablesMap := make(map[int]int)
 	isTimeseries := model.IsTimeSeries(target.Type)
+	newPredictionFields := map[int]*model.Variable{}
 	// If the variable list for prediction set is empty (as is the case for tabular data) then we just use the
 	// header values as the list of variable names to build the map.
 	if len(predictionVariables) == 0 {
@@ -785,6 +796,12 @@ func augmentPredictionDataset(csvData [][]string, target *model.Variable,
 				if sourceVariableHeaderMap[varName].Key == target.Key {
 					addTarget = false
 				}
+			} else {
+				newFieldIndex := len(sourceVariables) + len(newPredictionFields)
+				log.Infof("new prediction field '%s' found and mapped to index %d", pv, newFieldIndex)
+				predictVariablesMap[i] = -1
+				newPredictionFields[i] = model.NewVariable(newFieldIndex, pv, pv, pv, pv, model.StringType,
+					model.StringType, "", []string{model.RoleAttribute}, model.VarDistilRoleData, nil, sourceVariables, true)
 			}
 		}
 	} else {
@@ -805,8 +822,9 @@ func augmentPredictionDataset(csvData [][]string, target *model.Variable,
 					}
 				}
 			} else {
-				log.Warnf("field '%s' not found in source dataset - column will be empty", predictVariable.Key)
+				log.Warnf("field '%s' not found in source dataset - column will be appended to the dataset", predictVariable.Key)
 				predictVariablesMap[i] = -1
+				newPredictionFields[i] = predictVariable
 			}
 			if predictVariable.Key == model.D3MIndexFieldName {
 				addIndex = false
@@ -821,6 +839,14 @@ func augmentPredictionDataset(csvData [][]string, target *model.Variable,
 		predictVariablesMap[len(csvData[0])] = target.Index
 	}
 
+	// add the new prediction fields
+	maxIndex := len(sourceVariables)
+	for _, v := range newPredictionFields {
+		v.Index = maxIndex
+		headerSource = append(headerSource, v.HeaderName)
+		maxIndex++
+	}
+
 	// read the rest of the data
 	log.Infof("rewriting prediction dataset to match source dataset structure")
 	count := 0
@@ -830,23 +856,28 @@ func augmentPredictionDataset(csvData [][]string, target *model.Variable,
 	if variable, ok := sourceVariableMap[strings.ToLower(model.D3MIndexFieldName)]; ok {
 		d3mFieldIndex = variable.Index
 	}
-	headerInfo := csvData[0]
-	missingColumns := findMissingColumns(predictionVariables, headerInfo)
+	missingColumns := findMissingColumns(headerSource, csvData[0])
 	outputData := [][]string{headerSource}
 	for _, line := range csvData[1:] {
 		offset := 0
 		// write the columns in the same order as the source dataset
-		output := make([]string, len(headerSource))
+		output := make([]string, maxIndex)
 		i := 0
 		for range predictVariablesMap {
 			sourceIndex := predictVariablesMap[i]
 			if sourceIndex >= 0 {
+				// need to handle the case where the field does not exist in source so needs to be appened
+				// the variable in newPredictionFields has the correct index to use
 				if _, ok := missingColumns[predictVariablesMap[i]]; !ok {
 					output[sourceIndex] = line[i-offset]
 				} else {
 					output[sourceIndex] = ""
 					offset++
 				}
+			} else {
+				// new var so append accordingly
+				newVar := newPredictionFields[i]
+				output[newVar.Index] = line[i-offset]
 			}
 			i++
 		}
