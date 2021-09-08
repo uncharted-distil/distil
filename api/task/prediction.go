@@ -135,19 +135,21 @@ func (p *PredictionTimeseriesDataset) CleanupTempFiles() {
 }
 
 // returns the index of the supplied variables that needs to be added to the data
-func findMissingColumns(variables []*model.Variable, headerNames []string) map[int]bool {
+func findMissingColumns(sourceHeaderNames []string, predictionHeaderNames []string) map[int]bool {
 	result := map[int]bool{}
-	headerMap := map[string]int{}
-	for i := range headerNames {
-		headerMap[headerNames[i]] = i
+	predVarMap := map[string]bool{}
+	for _, v := range predictionHeaderNames {
+		predVarMap[v] = true
 	}
-	for i := range variables {
-		if _, ok := headerMap[variables[i].HeaderName]; !ok {
-			result[variables[i].Index] = true
+	for i, hn := range sourceHeaderNames {
+		if !predVarMap[hn] {
+			result[i] = true
 		}
 	}
 	return result
 }
+
+// CreateDataset creates a prediction dataset.
 func (p *predictionDataset) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*serialization.RawDataset, error) {
 	// need to do a bit of processing on the usual setup
 	ds, err := p.params.DatasetConstructor.CreateDataset(rootDataPath, datasetName, config)
@@ -838,7 +840,7 @@ func augmentPredictionDataset(csvData [][]string, target *model.Variable,
 	}
 
 	// add the new prediction fields
-	maxIndex := len(headerSource)
+	maxIndex := len(sourceVariables)
 	for _, v := range newPredictionFields {
 		v.Index = maxIndex
 		headerSource = append(headerSource, v.HeaderName)
@@ -854,18 +856,16 @@ func augmentPredictionDataset(csvData [][]string, target *model.Variable,
 	if variable, ok := sourceVariableMap[strings.ToLower(model.D3MIndexFieldName)]; ok {
 		d3mFieldIndex = variable.Index
 	}
-	headerInfo := csvData[0]
-	missingColumns := findMissingColumns(predictionVariables, headerInfo)
+	missingColumns := findMissingColumns(headerSource, csvData[0])
 	outputData := [][]string{headerSource}
 	for _, line := range csvData[1:] {
 		offset := 0
 		// write the columns in the same order as the source dataset
-		output := make([]string, len(headerSource))
+		output := make([]string, maxIndex)
 		i := 0
 		for range predictVariablesMap {
 			sourceIndex := predictVariablesMap[i]
 			if sourceIndex >= 0 {
-				//TODO: check to see if this if gets hit or not. I suspect it does not!
 				// need to handle the case where the field does not exist in source so needs to be appened
 				// the variable in newPredictionFields has the correct index to use
 				if _, ok := missingColumns[predictVariablesMap[i]]; !ok {
