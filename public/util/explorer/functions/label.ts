@@ -142,15 +142,19 @@ export const LABEL_METHODS = {
       self.updateRoute({
         label: self.labelName,
       });
+      self.setBusyState(true, "Initializing Label View");
       await self.changeStatesByName(ExplorerStateNames.LABEL_VIEW);
+      self.setBusyState(false);
       return;
     }
+    self.setBusyState(true, "Cloning Dataset");
     const entry = await cloneDatasetUpdateRoute();
     // failed to clone
     if (entry === null) {
       return;
     }
     self.$router.push(entry).catch((err) => console.warn(err));
+    self.setBusyState(true, "Adding New Field");
     // add new field
     await datasetActions.addField<string>(store, {
       dataset: self.dataset,
@@ -159,8 +163,10 @@ export const LABEL_METHODS = {
       defaultValue: LowShotLabels.unlabeled,
       displayName: self.labelName,
     });
+    self.setBusyState(true, "Fetching Data");
     // fetch new dataset with the newly added field
     await self.changeStatesByName(ExplorerStateNames.LABEL_VIEW);
+    self.setBusyState(false, "Fetching Data");
     // update task based on the current training data
     self.updateTask();
   },
@@ -233,7 +239,7 @@ export const LABEL_METHODS = {
    */
   async onSearchSimilar(): Promise<void> {
     const self = (this as unknown) as DataExplorerRef;
-    self.isBusy = true;
+    self.setBusyState(true, "Searching for Similar Images");
     const res = (await requestActions.createQueryRequest(store, {
       datasetId: self.dataset,
       target: self.labelName,
@@ -264,6 +270,7 @@ export const LABEL_METHODS = {
     if (!open) {
       self.toggleAction(ActionNames.OUTCOME_VARIABLES);
     }
+    self.setBusyState(false);
   },
   /**
    * onSaveDataset calls the backend and saves the dataset

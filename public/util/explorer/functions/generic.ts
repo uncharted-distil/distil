@@ -96,6 +96,15 @@ export const GENERIC_METHODS = {
     await self.state.init();
   },
   /**
+   * setBusyState changes the data view from spinner if true to data view components
+   * busyState can be empty it defaults to 'Busy'
+   */
+  setBusyState(isBusy: boolean, busyState?: string): void {
+    const self = (this as unknown) as DataExplorerRef;
+    self.isBusy = isBusy;
+    self.busyState = busyState ? busyState : "Busy";
+  },
+  /**
    * onTileClick is the callback function for when a tile is clicked
    */
   async onTileClick(data: EI.MAP.TileClickData): Promise<void> {
