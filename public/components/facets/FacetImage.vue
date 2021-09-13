@@ -16,61 +16,68 @@
 -->
 
 <template>
-  <facet-terms
-    :data.prop="facetData"
-    action-buttons="0"
-    :selection.prop="selection"
-    :subselection.prop="subSelection"
-    :disabled.prop="!enableHighlighting"
-    class="facet-image"
-    @facet-element-updated="updateSelection"
-  >
-    <div slot="header-label" :class="headerClass">
-      <i :class="getGroupIcon(summary) + ' facet-header-icon'" />
-      <span>{{ summary.label.toUpperCase() }}</span>
-      <div class="facet-header-dropdown d-flex align-items-center">
-        <color-scale-drop-down
-          v-if="geoEnabled && isClustering"
-          :variable-summary="summary"
-          is-facet-scale
-          class="mr-1"
-        />
-        <type-change-menu
-          v-if="facetEnableTypeChanges"
-          :dataset="summary.dataset"
-          :field="summary.key"
-          :expand-collapse="expandCollapse"
-          @type-change="onTypeChange"
-        />
-      </div>
-    </div>
-    <facet-template target="facet-terms-value" class="facet-content-container">
-      <div slot="header" class="facet-image-preview-display">${metadata}</div>
-      <div slot="label" class="facet-image-label" title="${label} ${value}">
-        ${label} ${value}
-      </div>
-      <div slot="annotation" class="collapse-unused" />
-      <div slot="value" class="collapse-unused" />
-    </facet-template>
-    <div slot="footer" class="facet-footer-container">
-      <div v-if="facetDisplayMore" class="facet-footer-more">
-        <div class="facet-footer-more-section">
-          <div class="facet-footer-more-count">
-            <span v-if="facetMoreCount > 0">{{ facetMoreCount }} more</span>
-          </div>
-          <div class="facet-footer-more-controls">
-            <span v-if="hasLess" @click="viewLess"> show less</span>
-            <span v-if="hasMore" @click="viewMore"> show more</span>
-          </div>
+  <div>
+    <component :is="comp" v-html="cssStyle" />
+    <facet-terms
+      :id="id"
+      :data.prop="facetData"
+      action-buttons="0"
+      :selection.prop="selection"
+      :subselection.prop="subSelection"
+      :disabled.prop="!enableHighlighting"
+      class="facet-image"
+      @facet-element-updated="updateSelection"
+    >
+      <div slot="header-label" :class="headerClass">
+        <i :class="getGroupIcon(summary) + ' facet-header-icon'" />
+        <span>{{ summary.label.toUpperCase() }}</span>
+        <div class="facet-header-dropdown d-flex align-items-center">
+          <color-scale-drop-down
+            v-if="geoEnabled && isClustering"
+            :variable-summary="summary"
+            is-facet-scale
+            class="mr-1"
+          />
+          <type-change-menu
+            v-if="facetEnableTypeChanges"
+            :dataset="summary.dataset"
+            :field="summary.key"
+            :expand-collapse="expandCollapse"
+            @type-change="onTypeChange"
+          />
         </div>
       </div>
-      <div
-        v-if="displayFooter"
-        v-child="computeCustomHTML()"
-        class="facet-footer-custom-html"
-      />
-    </div>
-  </facet-terms>
+      <facet-template
+        target="facet-terms-value"
+        class="facet-content-container"
+      >
+        <div slot="header" class="facet-image-preview-display">${metadata}</div>
+        <div slot="label" class="facet-image-label" title="${label} ${value}">
+          ${label} ${value}
+        </div>
+        <div slot="annotation" class="collapse-unused" />
+        <div slot="value" class="collapse-unused" />
+      </facet-template>
+      <div slot="footer" class="facet-footer-container">
+        <div v-if="facetDisplayMore" class="facet-footer-more">
+          <div class="facet-footer-more-section">
+            <div class="facet-footer-more-count">
+              <span v-if="facetMoreCount > 0">{{ facetMoreCount }} more</span>
+            </div>
+            <div class="facet-footer-more-controls">
+              <span v-if="hasLess" @click="viewLess"> show less</span>
+              <span v-if="hasMore" @click="viewMore"> show more</span>
+            </div>
+          </div>
+        </div>
+        <div
+          v-if="displayFooter"
+          v-child="computeCustomHTML()"
+          class="facet-footer-custom-html"
+        />
+      </div>
+    </facet-terms>
+  </div>
 </template>
 
 <script lang="ts">
@@ -96,10 +103,12 @@ import {
   viewMoreData,
   viewLessData,
   facetTypeChangeState,
+  generateFacetDiscreteStyle,
 } from "../../util/facets";
 import ColorScaleDropDown from "../ColorScaleDropDown.vue";
 import { DISTIL_ROLES } from "../../util/types";
 import { EventList } from "../../util/events";
+import { ColorScaleNames } from "../../util/color";
 export default Vue.extend({
   name: "FacetImage",
 
@@ -144,6 +153,9 @@ export default Vue.extend({
   },
 
   computed: {
+    comp(): string {
+      return "style";
+    },
     facetData(): FacetTermsData {
       let values = [];
       if (hasBaseline(this.summary)) {
@@ -173,6 +185,27 @@ export default Vue.extend({
         this.max,
         this.include
       );
+    },
+    hasColorScale(): boolean {
+      return (
+        routeGetters.getColorScaleVariable(this.$store) === this.summary.key
+      );
+    },
+    id(): string {
+      return "_" + this.summary.key.replace(/([\/,:!?_])/g, "");
+    },
+    colorScale(): ColorScaleNames {
+      return routeGetters.getColorScale(this.$store);
+    },
+    cssStyle(): string {
+      return this.hasColorScale
+        ? generateFacetDiscreteStyle(
+            this.id,
+            "facet-terms-value-bar-0",
+            this.summary,
+            this.colorScale
+          )
+        : "";
     },
     selection(): {} {
       if (!this.enableHighlighting || !this.isHighlightedGroup()) {
