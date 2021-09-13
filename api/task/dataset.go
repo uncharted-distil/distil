@@ -470,6 +470,41 @@ func GetUniqueOutputFolder(dataset string, outputPath string) (string, error) {
 	return getUniqueString(dataset, dirs), nil
 }
 
+// DeleteDataset deletes a dataset from metadata and, if not a soft delete, from the database.
+func DeleteDataset(ds *api.Dataset, metaStorage api.MetadataStorage, dataStorage api.DataStorage, softDelete bool) error {
+	// delete meta
+	err := metaStorage.DeleteDataset(ds.ID, softDelete)
+	if err != nil {
+		return err
+	}
+
+	// delete the query cache associated wit this dataset if it exists
+	DeleteQueryCache(ds.ID)
+
+	if !softDelete {
+		// delete db tables
+		err = dataStorage.DeleteDataset(ds.StorageName)
+		if err != nil {
+			return err
+		}
+		// delete files
+		err = util.RemoveContents(env.ResolvePath(ds.Source, ds.Folder), true)
+		if err != nil {
+			return err
+		}
+
+		// remove prefeaturized disk dataset
+		if ds.LearningDataset != "" {
+			err = util.RemoveContents(ds.LearningDataset, true)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 func getUniqueString(base string, existing []string) string {
 	// create a unique name if the current name is already in use
 	existingMap := make(map[string]bool)

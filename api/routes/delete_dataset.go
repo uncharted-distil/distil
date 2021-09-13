@@ -19,10 +19,8 @@ import (
 	"net/http"
 
 	"github.com/uncharted-distil/distil/api/task"
-	"github.com/uncharted-distil/distil/api/util"
 
 	"github.com/pkg/errors"
-	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	log "github.com/unchartedsoftware/plog"
 	"goji.io/v3/pat"
@@ -50,7 +48,6 @@ func DeletingDatasetHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataS
 			handleError(w, err)
 			return
 		}
-		folder := env.ResolvePath(ds.Source, ds.Folder)
 
 		// figure out if delete is soft
 		softDelete := false
@@ -60,28 +57,10 @@ func DeletingDatasetHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataS
 		}
 
 		// delete meta
-		err = metaStorage.DeleteDataset(dataset, softDelete)
+		err = task.DeleteDataset(ds, metaStorage, dataStorage, softDelete)
 		if err != nil {
 			handleError(w, err)
 			return
-		}
-
-		// delete the query cache associated wit this dataset if it exists
-		task.DeleteQueryCache(dataset)
-
-		if !softDelete {
-			// delete db tables
-			err = dataStorage.DeleteDataset(ds.StorageName)
-			if err != nil {
-				handleError(w, err)
-				return
-			}
-			// delete files
-			err = util.RemoveContents(folder, true)
-			if err != nil {
-				handleError(w, err)
-				return
-			}
 		}
 
 		// send json
