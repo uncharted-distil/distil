@@ -76,6 +76,7 @@ export interface DataExplorerRef {
   // data
   activeView: number;
   config: ExplorerConfig;
+  busyState: string;
   dataLoading: boolean;
   include: boolean;
   isBusy: boolean;
@@ -94,6 +95,7 @@ export interface DataExplorerRef {
   toggleAction: (actionName: ActionNames) => void;
   updateRoute: (args: RouteArgs) => void;
   updateTask: () => Promise<void>;
+  setBusyState: (isBusy: boolean, busyState?: string) => void;
   // globals
   $bvModal: BvModal;
   $bvToast: BvToast;

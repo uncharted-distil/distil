@@ -91,7 +91,6 @@ import {
   facetTypeChangeState,
   generateFacetDiscreteStyle,
 } from "../../util/facets";
-import { DISTIL_ROLES } from "../../util/types";
 import { getters as routeGetters } from "../../store/route/module";
 import { ColorScaleNames } from "../../util/color";
 import { EventList } from "../../util/events";

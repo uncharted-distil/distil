@@ -47,222 +47,226 @@
         />
       </template>
     </left-side-panel>
-
     <main class="content">
-      <search-bar
-        :variables="allVariables"
-        :filters="filters"
-        :highlights="routeHighlight"
-        handle-updates
-      />
-
-      <!-- Tabs to switch views -->
-
-      <div class="d-flex flex-row align-items-end mt-2">
-        <div class="flex-grow-1 mr-2">
-          <b-tabs v-model="activeView" class="tab-container">
-            <b-tab
-              v-for="(view, index) in activeViews"
-              :key="index"
-              :active="view === activeViews[activeView]"
-              :title="capitalize(view)"
-              @click="onTabClick(view)"
-            >
-              <template v-slot:title>
-                <b-spinner v-if="dataLoading" small />
-              </template>
-            </b-tab>
-          </b-tabs>
-        </div>
-        <layer-selection
-          v-if="isMultiBandImage"
-          :has-image-attention="isResultState"
-          class="align-self-center mr-2"
-        />
-        <b-button
-          v-if="include && isSelectState"
-          class="select-data-action-exclude align-self-center"
-          variant="outline-secondary"
-          :disabled="isExcludeDisabled"
-          @click="onExcludeClick"
-        >
-          <i
-            class="fa fa-minus-circle pr-1"
-            :class="{
-              'exclude-highlight': isFilteringHighlights,
-              'exclude-selection': isFilteringSelection,
-            }"
-          />
-          Exclude
-        </b-button>
-        <b-button
-          v-if="!include && isSelectState"
-          variant="outline-secondary"
-          :disabled="!isFilteringSelection"
-          @click="onReincludeClick"
-        >
-          <i
-            class="fa fa-plus-circle pr-1"
-            :class="{ 'include-selection': isFilteringSelection }"
-          />
-          Reinclude
-        </b-button>
-        <label-header-buttons
-          v-if="isLabelState"
-          class="height-36"
-          @button-event="onAnnotationChanged"
-          @select-all="onSelectAll"
-        />
-        <legend-weight v-if="hasWeight && isResultState" class="ml-5 mr-auto" />
-      </div>
-      <section class="data-container">
-        <div v-if="!hasData" v-html="spinnerHTML" />
-        <component
-          :is="viewComponent"
-          ref="dataView"
-          :instance-name="instanceName"
-          :included-active="include"
-          :dataset="dataset"
-          :data-fields="fields"
-          :timeseries-info="timeseries"
-          :data-items="items"
-          :item-count="items.length"
-          :baseline-items="baselineItems"
-          :baseline-map="baselineMap"
-          :summaries="summaries"
-          :solution="solution"
-          :residual-extrema="residualExtrema"
-          :enable-selection-tool-event="isLabelState"
+      <loading-spinner v-show="isBusy" :state="busyState" />
+      <template v-show="!isBusy">
+        <search-bar
           :variables="allVariables"
-          :label-feature-name="labelName"
-          :label-score-name="labelName"
-          :area-of-interest-items="{
-            inner: drillDownBaseline,
-            outer: drillDownFiltered,
-          }"
-          :get-timeseries="state.getTimeseries"
-          @tile-clicked="onTileClick"
-          @selection-tool-event="onToolSelection"
-          @fetch-timeseries="fetchTimeseries"
-          @finished-loading="onMapFinishedLoading"
+          :filters="filters"
+          :highlights="routeHighlight"
+          handle-updates
         />
-      </section>
 
-      <footer
-        class="d-flex align-items-end d-flex justify-content-between mt-1 mb-0"
-      >
-        <div v-if="!isGeoView" class="flex-grow-1">
-          <data-size
-            :current-size="numRows"
-            :total="totalNumRows"
-            @submit="onDataSizeSubmit"
+        <!-- Tabs to switch views -->
+
+        <div class="d-flex flex-row align-items-end mt-2">
+          <div class="flex-grow-1 mr-2">
+            <b-tabs v-model="activeView" class="tab-container">
+              <b-tab
+                v-for="(view, index) in activeViews"
+                :key="index"
+                :active="view === activeViews[activeView]"
+                :title="capitalize(view)"
+                @click="onTabClick(view)"
+              >
+                <template v-slot:title>
+                  <b-spinner v-if="dataLoading" small />
+                </template>
+              </b-tab>
+            </b-tabs>
+          </div>
+          <layer-selection
+            v-if="isMultiBandImage"
+            :has-image-attention="isResultState"
+            class="align-self-center mr-2"
           />
-          <strong class="matching-color">matching</strong> samples of
-          {{ totalNumRows }} to model<template v-if="selectionNumRows > 0">
-            , {{ selectionNumRows }}
-            <strong class="selected-color">selected</strong>
-          </template>
-        </div>
-        <div v-else class="flex-grow-1">
-          <p class="m-0">
-            Selected Area Coverage:
-            <strong class="matching-color">
-              {{ areaCoverage }}km<sup>2</sup>
-            </strong>
-          </p>
-        </div>
-        <b-button-toolbar v-if="isSelectState">
-          <b-button-group class="ml-2 mt-1">
-            <b-button
-              variant="primary"
-              :disabled="include"
-              @click="setIncludedActive"
-            >
-              Included
-            </b-button>
-            <b-button
-              variant="secondary"
-              :disabled="!include"
-              @click="setExcludedActive"
-            >
-              Excluded
-            </b-button>
-          </b-button-group>
-        </b-button-toolbar>
-        <!-- RESULT AND PREDICTION VIEW COMPONENTS-->
-        <create-solutions-form
-          v-if="isSelectState"
-          ref="model-creation-form"
-          :aria-disabled="isCreateModelPossible"
-          class="ml-2"
-          @create-model="onModelCreation"
-        />
-        <predictions-data-uploader
-          :fitted-solution-id="fittedSolutionId"
-          :target="targetName"
-          :target-type="targetType"
-          @model-apply="onApplyModel"
-        />
-        <save-modal
-          ref="saveModel"
-          :solution-id="solutionId"
-          :fitted-solution-id="fittedSolutionId"
-          @save="onSaveModel"
-        />
-        <forecast-horizon
-          v-if="isTimeseries"
-          :dataset="dataset"
-          :fitted-solution-id="fittedSolutionId"
-          :target="targetName"
-          :target-type="targetType"
-          @model-apply="onApplyModel"
-        />
-        <template
-          v-if="isResultState && (isSingleSolution || isActiveSolutionSaved)"
-        >
           <b-button
+            v-if="include && isSelectState"
+            class="select-data-action-exclude align-self-center"
+            variant="outline-secondary"
+            :disabled="isExcludeDisabled"
+            @click="onExcludeClick"
+          >
+            <i
+              class="fa fa-minus-circle pr-1"
+              :class="{
+                'exclude-highlight': isFilteringHighlights,
+                'exclude-selection': isFilteringSelection,
+              }"
+            />
+            Exclude
+          </b-button>
+          <b-button
+            v-if="!include && isSelectState"
+            variant="outline-secondary"
+            :disabled="!isFilteringSelection"
+            @click="onReincludeClick"
+          >
+            <i
+              class="fa fa-plus-circle pr-1"
+              :class="{ 'include-selection': isFilteringSelection }"
+            />
+            Reinclude
+          </b-button>
+          <label-header-buttons
+            v-if="isLabelState"
+            class="height-36"
+            @button-event="onAnnotationChanged"
+            @select-all="onSelectAll"
+          />
+          <legend-weight
+            v-if="hasWeight && isResultState"
+            class="ml-5 mr-auto"
+          />
+        </div>
+        <section class="data-container">
+          <component
+            :is="viewComponent"
+            ref="dataView"
+            :instance-name="instanceName"
+            :included-active="include"
+            :dataset="dataset"
+            :data-fields="fields"
+            :timeseries-info="timeseries"
+            :data-items="items"
+            :item-count="items.length"
+            :baseline-items="baselineItems"
+            :baseline-map="baselineMap"
+            :summaries="summaries"
+            :solution="solution"
+            :residual-extrema="residualExtrema"
+            :enable-selection-tool-event="isLabelState"
+            :variables="allVariables"
+            :label-feature-name="labelName"
+            :label-score-name="labelName"
+            :area-of-interest-items="{
+              inner: drillDownBaseline,
+              outer: drillDownFiltered,
+            }"
+            :get-timeseries="state.getTimeseries"
+            @tile-clicked="onTileClick"
+            @selection-tool-event="onToolSelection"
+            @fetch-timeseries="fetchTimeseries"
+            @finished-loading="onMapFinishedLoading"
+          />
+        </section>
+
+        <footer
+          class="d-flex align-items-end d-flex justify-content-between mt-1 mb-0"
+        >
+          <div v-if="!isGeoView" class="flex-grow-1">
+            <data-size
+              :current-size="numRows"
+              :total="totalNumRows"
+              @submit="onDataSizeSubmit"
+            />
+            <strong class="matching-color">matching</strong> samples of
+            {{ totalNumRows }} to model<template v-if="selectionNumRows > 0">
+              , {{ selectionNumRows }}
+              <strong class="selected-color">selected</strong>
+            </template>
+          </div>
+          <div v-else class="flex-grow-1">
+            <p class="m-0">
+              Selected Area Coverage:
+              <strong class="matching-color">
+                {{ areaCoverage }}km<sup>2</sup>
+              </strong>
+            </p>
+          </div>
+          <b-button-toolbar v-if="isSelectState">
+            <b-button-group class="ml-2 mt-1">
+              <b-button
+                variant="primary"
+                :disabled="include"
+                @click="setIncludedActive"
+              >
+                Included
+              </b-button>
+              <b-button
+                variant="secondary"
+                :disabled="!include"
+                @click="setExcludedActive"
+              >
+                Excluded
+              </b-button>
+            </b-button-group>
+          </b-button-toolbar>
+          <!-- RESULT AND PREDICTION VIEW COMPONENTS-->
+          <create-solutions-form
+            v-if="isSelectState"
+            ref="model-creation-form"
+            :aria-disabled="isCreateModelPossible"
+            class="ml-2"
+            @create-model="onModelCreation"
+          />
+          <predictions-data-uploader
+            :fitted-solution-id="fittedSolutionId"
+            :target="targetName"
+            :target-type="targetType"
+            @model-apply="onApplyModel"
+          />
+          <save-modal
+            ref="saveModel"
+            :solution-id="solutionId"
+            :fitted-solution-id="fittedSolutionId"
+            @save="onSaveModel"
+          />
+          <forecast-horizon
             v-if="isTimeseries"
-            variant="success"
-            class="apply-button"
-            @click="$bvModal.show('forecast-horizon-modal')"
+            :dataset="dataset"
+            :fitted-solution-id="fittedSolutionId"
+            :target="targetName"
+            :target-type="targetType"
+            @model-apply="onApplyModel"
+          />
+          <template
+            v-if="isResultState && (isSingleSolution || isActiveSolutionSaved)"
           >
-            Forecast
-          </b-button>
+            <b-button
+              v-if="isTimeseries"
+              variant="success"
+              class="apply-button"
+              @click="$bvModal.show('forecast-horizon-modal')"
+            >
+              Forecast
+            </b-button>
+            <b-button
+              v-else
+              variant="success"
+              class="apply-button"
+              @click="$bvModal.show('predictions-data-upload-modal')"
+            >
+              Apply Model
+            </b-button>
+          </template>
           <b-button
-            v-else
+            v-else-if="isResultState"
             variant="success"
-            class="apply-button"
-            @click="$bvModal.show('predictions-data-upload-modal')"
+            class="save-button"
+            @click="$bvModal.show('save-model-modal')"
           >
-            Apply Model
+            <i class="fa fa-floppy-o" />
+            Save Model
           </b-button>
-        </template>
-        <b-button
-          v-else-if="isResultState"
-          variant="success"
-          class="save-button"
-          @click="$bvModal.show('save-model-modal')"
-        >
-          <i class="fa fa-floppy-o" />
-          Save Model
-        </b-button>
-        <b-button v-if="isPredictState" v-b-modal.save>
-          Create Dataset
-        </b-button>
-        <b-button v-if="isPredictState" v-b-modal.export variant="primary">
-          Export Predictions
-        </b-button>
-        <create-labeling-form
-          v-if="isLabelState"
-          class="d-flex justify-content-between h-100 align-items-center"
-          :is-loading="isBusy"
-          :low-shot-summary="labelSummary"
-          :is-saving="isBusy"
-          @export="onExport"
-          @apply="onSearchSimilar"
-          @save="onLabelSaveClick"
-        />
-      </footer>
+          <b-button v-if="isPredictState" v-b-modal.save>
+            Create Dataset
+          </b-button>
+          <b-button v-if="isPredictState" v-b-modal.export variant="primary">
+            Export Predictions
+          </b-button>
+          <create-labeling-form
+            v-if="isLabelState"
+            class="d-flex justify-content-between h-100 align-items-center"
+            :is-loading="isBusy"
+            :low-shot-summary="labelSummary"
+            :is-saving="isBusy"
+            @export="onExport"
+            @apply="onSearchSimilar"
+            @save="onLabelSaveClick"
+          />
+        </footer>
+      </template>
     </main>
     <left-side-panel
       v-if="isOutcomeToggled"
@@ -352,6 +356,7 @@ import LabelHeaderButtons from "../components/labelingComponents/LabelHeaderButt
 import LayerSelection from "../components/LayerSelection.vue";
 import LeftSidePanel from "../components/layout/LeftSidePanel.vue";
 import LegendWeight from "../components/LegendWeight.vue";
+import LoadingSpinner from "../components/LoadingSpinner.vue";
 import PredictionsDataUploader from "../components/PredictionsDataUploader.vue";
 import PredictionSummaries from "../components/PredictionSummaries.vue";
 import ResultFacets from "../components/ResultFacets.vue";
@@ -408,6 +413,7 @@ const DataExplorer = Vue.extend({
     LayerSelection,
     LeftSidePanel,
     LegendWeight,
+    LoadingSpinner,
     PredictionsDataUploader,
     PredictionSummaries,
     ResultFacets,
@@ -424,6 +430,7 @@ const DataExplorer = Vue.extend({
   data() {
     return {
       activeView: 0, // TABLE_VIEW
+      busyState: "Busy", // contains the info to display to the user when the UI is busy
       config: new SelectViewConfig(), // this config controls what is displayed in the action bar
       dataLoading: false, // this controls the spinners for the data view tabs (table, mosaic, geoplot)
       include: true, // this controls the include exclude view for the select state
