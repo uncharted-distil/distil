@@ -35,10 +35,6 @@ import (
 	"goji.io/v3/pat"
 )
 
-const (
-	imageFolder = "media"
-)
-
 // ImageHandler provides a static file lookup route using simple directory mapping.
 func ImageHandler(ctor api.MetadataStorageCtor, config *env.Config) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
