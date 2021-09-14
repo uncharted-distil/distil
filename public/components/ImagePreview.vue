@@ -232,10 +232,6 @@ export default Vue.extend({
     },
 
     dataset(): string {
-      const dataset = routeGetters.getRoutePredictionsDataset(this.$store);
-      if (dataset) {
-        return dataset;
-      }
       return this.datasetName ?? routeGetters.getRouteDataset(this.$store);
     },
 

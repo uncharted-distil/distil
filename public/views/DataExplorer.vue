@@ -42,6 +42,7 @@
           :include="include"
           :summaries="summaries"
           :enable-footer="isSelectState"
+          :dataset="dataset"
           @fetch-summaries="fetchSummaries"
           @type-change="fetchSummaries"
         />
@@ -288,6 +289,7 @@
         :include="include"
         :summaries="secondarySummaries"
         :enable-footer="isSelectState"
+        :dataset="dataset"
         @fetch-summaries="fetchSummaries"
       />
       <prediction-summaries
