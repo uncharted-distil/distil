@@ -369,7 +369,7 @@ import SelectTimeseriesView from "../components/SelectTimeseriesView.vue";
 import StatusPanel from "../components/StatusPanel.vue";
 import StatusSidebar from "../components/StatusSidebar.vue";
 // Store
-import { viewActions, datasetActions } from "../store";
+import { viewActions, datasetActions, datasetGetters } from "../store";
 import { Variable } from "../store/dataset/index";
 import { DATA_EXPLORER_VAR_INSTANCE } from "../store/route/index";
 import { getters as routeGetters } from "../store/route/module";
@@ -499,6 +499,13 @@ const DataExplorer = Vue.extend({
     targetName() {
       const self = (this as unknown) as DataExplorerRef; // because the computes/methods are added in beforeCreate typescript does not work so we cast it to a type here
       datasetActions.fetchOutliers(this.$store, self.dataset);
+      const metrics = routeGetters.getModelMetrics(this.$store);
+      if (metrics) {
+        const storedMetrics = datasetGetters.getModelingMetrics(this.$store);
+        if (!storedMetrics.some((m) => m.displayName === metrics[0])) {
+          self.updateRoute({ metrics: "" });
+        }
+      }
     },
   },
   beforeCreate() {
