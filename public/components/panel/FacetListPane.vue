@@ -44,7 +44,7 @@
       enable-type-change
       enable-type-filtering
       ignore-highlights
-      class="mh-100"
+      class="mh-var-list"
       :is-available-features="isSelectedView"
       :is-result-features="isResultView"
       :include="include"
@@ -514,3 +514,9 @@ export default Vue.extend({
   },
 });
 </script>
+
+<style scoped>
+.mh-var-list {
+  max-height: calc(100% - 30px);
+}
+</style>
