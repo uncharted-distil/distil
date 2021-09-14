@@ -158,6 +158,11 @@ var (
 			RocAucMacro: AllModelMetrics[RocAucMacro],
 			RocAucMicro: AllModelMetrics[RocAucMicro],
 		},
+		compute.SemiSupervisedTask: {
+			Accuracy:    AllModelMetrics[Accuracy],
+			F1Micro:     AllModelMetrics[F1Macro],
+			RocAucMicro: AllModelMetrics[RocAucMicro],
+		},
 		compute.ClassificationTask: {
 			Accuracy:    AllModelMetrics[Accuracy],
 			F1:          AllModelMetrics[F1],
