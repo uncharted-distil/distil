@@ -499,7 +499,6 @@ const DataExplorer = Vue.extend({
     targetName() {
       const self = (this as unknown) as DataExplorerRef; // because the computes/methods are added in beforeCreate typescript does not work so we cast it to a type here
       datasetActions.fetchOutliers(this.$store, self.dataset);
-      datasetActions.fetchModelingMetrics(this.$store, self.task);
     },
   },
   beforeCreate() {
