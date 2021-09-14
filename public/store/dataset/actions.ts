@@ -1714,10 +1714,10 @@ export const actions = {
     }
 
     try {
-      const repsonse = await axios.post<Metrics>(`distil/index-data/metrics`, {
+      const response = await axios.post<Metrics>(`distil/index-data/metrics`, {
         task: args.task,
       });
-      const metrics = repsonse.data.combinations;
+      const metrics = response.data.combinations;
       mutations.updateMetrics(context, metrics);
     } catch (error) {
       console.error(error);

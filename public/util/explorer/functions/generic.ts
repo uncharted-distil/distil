@@ -392,6 +392,12 @@ export const GENERIC_COMPUTES = {
     return self?.state.hasData();
   },
   /**
+   * task returns the task stored in route
+   */
+  task(): string {
+    return routeGetters.getRouteTask(store) ?? "";
+  },
+  /**
    * returns true if the secondaryVariables from state is empty
    */
   hasNoSecondaryVariables(): boolean {

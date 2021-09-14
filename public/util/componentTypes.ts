@@ -66,6 +66,7 @@ export interface DataExplorerRef {
   solution: Solution;
   summaries: VariableSummary[];
   target: Variable;
+  task: string;
   totalNumRows: number;
   training: string[];
   variables: Variable[];
