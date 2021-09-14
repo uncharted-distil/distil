@@ -66,6 +66,7 @@
             :should-clean-up="false"
             :should-fetch-image="false"
             :index="parseInt(data.index)"
+            :dataset-name="dataset"
             @cycle-images="onImageCycle"
           />
           <image-label
@@ -281,6 +282,7 @@ export default Vue.extend({
     },
     solution: { type: Object as () => Solution, default: null },
     getTimeseries: { type: Function, default: null }, // this is supplied for the sparklines
+    dataset: { type: String as () => string, default: "" },
   },
 
   data() {
@@ -296,10 +298,6 @@ export default Vue.extend({
   },
 
   computed: {
-    dataset(): string {
-      return routeGetters.getRouteDataset(this.$store);
-    },
-
     items(): TableRow[] {
       let items = this.dataItems;
       if (items === null) {

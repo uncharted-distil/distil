@@ -59,6 +59,7 @@
         searchedActiveVariables.length > numRowsPerPage
       "
       :summaries="activeSummaries"
+      :dataset-name="dataset"
       @search="onSearch"
       @type-change="onTypeChange"
     />
@@ -122,6 +123,7 @@ export default Vue.extend({
     include: { type: Boolean as () => boolean, default: true },
     enableFooter: { type: Boolean as () => boolean, default: false },
     isTargetPanel: { type: Boolean as () => boolean, default: false },
+    dataset: { type: String as () => string, default: "" },
   },
 
   data() {
@@ -192,9 +194,6 @@ export default Vue.extend({
             container.append(exploreButton, modelButtons);
             return container;
           };
-    },
-    dataset(): string {
-      return routeGetters.getRouteDataset(this.$store);
     },
     explore(): string[] {
       return routeGetters.getExploreVariables(this.$store);

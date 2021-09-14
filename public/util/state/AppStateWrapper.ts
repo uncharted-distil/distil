@@ -83,6 +83,7 @@ export interface BaseState {
   hasData(): boolean;
   // returns the total number of records in table
   getTotalItems(include?: boolean): number;
+  dataset(): string;
   /******Fetch Functions**********/
   init(): Promise<void>;
   fetchVariables(): Promise<unknown>;
@@ -95,6 +96,9 @@ export interface BaseState {
 
 export class SelectViewState implements BaseState {
   name = ExplorerStateNames.SELECT_VIEW;
+  dataset(): string {
+    return routeGetters.getRouteDataset(store);
+  }
   getTotalItems(include: boolean): number {
     return include
       ? datasetGetters.getIncludedTableDataNumRows(store)
@@ -230,6 +234,9 @@ export class SelectViewState implements BaseState {
 
 export class ResultViewState implements BaseState {
   name = ExplorerStateNames.RESULT_VIEW;
+  dataset(): string {
+    return routeGetters.getRouteDataset(store);
+  }
   getTotalItems(include?: boolean): number {
     return resultGetters.getIncludedResultTableDataCount(store);
   }
@@ -413,6 +420,9 @@ export class ResultViewState implements BaseState {
 
 export class PredictViewState implements BaseState {
   name = ExplorerStateNames.PREDICTION_VIEW;
+  dataset(): string {
+    return routeGetters.getRoutePredictionsDataset(store);
+  }
   getTotalItems(include?: boolean): number {
     return predictionGetters.getPredictionDataNumRows(store);
   }
@@ -601,6 +611,9 @@ export class PredictViewState implements BaseState {
 
 export class LabelViewState implements BaseState {
   name = ExplorerStateNames.LABEL_VIEW;
+  dataset(): string {
+    return routeGetters.getRouteDataset(store);
+  }
   getTotalItems(include: boolean): number {
     return datasetGetters.getIncludedTableDataNumRows(store);
   }

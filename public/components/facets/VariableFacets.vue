@@ -103,7 +103,7 @@
               :enable-highlighting="enableHighlighting"
               :ignore-highlights="ignoreHighlights"
               :instance-name="instanceName"
-              :dataset-name="datasetName"
+              :dataset-name="dataset"
               :geo-enabled="enableColorScales && geoVariableExists"
               :include="include"
               @facet-click="onFacetCategoryClick"

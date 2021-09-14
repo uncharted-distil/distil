@@ -370,7 +370,8 @@ export const GENERIC_COMPUTES = {
    * dataset name
    */
   dataset(): string {
-    return routeGetters.getRouteDataset(store);
+    const self = (this as unknown) as DataExplorerRef;
+    return self.state.dataset();
   },
   /**
    * returns the explore variables being displayed in table/mosaic/map
