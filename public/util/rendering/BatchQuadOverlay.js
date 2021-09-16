@@ -37,9 +37,10 @@ export default class BatchQuadOverlay extends Overlay {
    * Instantiates a new quadOverlay object.
    *
    * @param {object} options - The layer options.
-   * @param {Renderer} options.renderer - The layer renderer.
-   * @param {number} options.opacity - The layer opacity.
-   * @param {number} options.zIndex - The layer z-index.
+   * @param {Renderer=} options.renderer - The layer renderer.
+   * @param {number=} options.opacity - The layer opacity.
+   * @param {number=} options.zIndex - The layer z-index.
+   * @param {boolean=} options.hidden - Whether or not the overlay is visible.
    */
   constructor(options = {}) {
     super(options);

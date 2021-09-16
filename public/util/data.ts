@@ -790,7 +790,7 @@ export function totalAreaCoverage(
     return 0;
   }
   const coordinateColumn = coordinateColumns[0];
-  const coordinates = data[0][coordinateColumn].value;
+  const coordinates = data[0][coordinateColumn]?.value;
   if (!coordinates || coordinates.some((x) => x === undefined)) {
     return 0;
   }

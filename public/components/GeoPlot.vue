@@ -476,7 +476,10 @@ export default Vue.extend({
         return v.colType === MULTIBAND_IMAGE_TYPE;
       });
     },
-
+    coordinateColInDataFields(): boolean {
+      const keys = Object.keys(this.dataFields);
+      return keys.some((k) => k === this.coordinateColumn);
+    },
     // Return name of column containing geobounds associated with a multiband image
     coordinateColumn(): string {
       const coordinateColumns = datasetGetters
@@ -627,6 +630,13 @@ export default Vue.extend({
   watch: {
     dataItems() {
       this.onNewData();
+    },
+    coordinateColInDataFields() {
+      if (this.coordinateColInDataFields) {
+        this.overlay.show();
+        return;
+      }
+      this.overlay.hide();
     },
     rowSelection() {
       clearTimeout(this.debounceKey);
@@ -784,7 +794,9 @@ export default Vue.extend({
       this.map.add(this.tileRenderer);
       if (createOverlay) {
         // Quad layer
-        this.overlay = new BatchQuadOverlay();
+        this.overlay = new BatchQuadOverlay({
+          hidden: !this.coordinateColInDataFields,
+        });
         this.renderer = new BatchQuadOverlayRenderer();
         this.overlay.setRenderer(this.renderer);
         this.map.add(this.overlay);
