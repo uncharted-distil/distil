@@ -22,6 +22,7 @@
     :title="visibleTitle"
     :visible="visible"
     dialog-class="fit-content"
+    no-fade
     @hide="hide"
   >
     <main class="drill-down">

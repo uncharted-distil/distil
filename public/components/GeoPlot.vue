@@ -33,6 +33,7 @@
     <drill-down
       v-if="showDrillDown"
       :data-fields="dataFields"
+      :dataset="dataset"
       :image-type="imageType"
       :tiles="drillDownState.tiles"
       :center-tile="drillDownState.centerTile"
@@ -74,6 +75,7 @@
           :width="imageWidth"
           :height="imageHeight"
           :type="imageType"
+          :dataset-name="dataset"
         />
       </div>
     </b-toast>
@@ -232,6 +234,7 @@ export default Vue.extend({
       },
     },
     labelFeatureName: { type: String, default: "" },
+    dataset: { type: String as () => string, default: "" },
   },
 
   data() {
@@ -281,9 +284,6 @@ export default Vue.extend({
   },
 
   computed: {
-    dataset(): string {
-      return routeGetters.getRouteDataset(this.$store);
-    },
     imageType(): string {
       return MULTIBAND_IMAGE_TYPE;
     },

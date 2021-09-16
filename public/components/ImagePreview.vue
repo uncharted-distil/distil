@@ -58,7 +58,7 @@
       :items="[row]"
       :type="type"
       :url="imageUrl"
-      :visible="!!zoomImage"
+      :visible="zoomImage"
       :dataset-name="dataset"
       :index="index"
       @close="hideZoomImage"

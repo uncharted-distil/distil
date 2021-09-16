@@ -243,6 +243,7 @@ export default Vue.extend({
           variant: "danger",
           solid: true,
         });
+        return;
       }
       if (this.uploadStatus !== "error" && !response.complete) {
         const predictionDataset = getPredictionsById(

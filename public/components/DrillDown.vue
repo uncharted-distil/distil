@@ -39,6 +39,7 @@
               />
               <image-preview
                 class="image-preview"
+                :dataset-name="dataset"
                 :row="renderTiles[i][j].selected.item"
                 :image-url="renderTiles[i][j].selected.imageUrl"
                 :width="imageWidth"
@@ -46,9 +47,9 @@
                 :type="imageType"
                 :gray="renderTiles[i][j].selected.gray"
                 :overlapped-urls="renderTiles[i][j].overlapped"
-                :shouldFetchImage="false"
-                :shouldCleanUp="false"
-                :uniqueTrail="uniqueTrail"
+                :should-fetch-image="false"
+                :should-clean-up="false"
+                :unique-trail="uniqueTrail"
                 :summaries="summaries"
                 @click="onImageClick"
               />
@@ -141,6 +142,7 @@ export default Vue.extend({
     instanceName: { type: String as () => string, default: "" },
     summaries: { type: Array as () => VariableSummary[], default: () => [] },
     labelFeatureName: { type: String, default: "" },
+    dataset: { type: String as () => string, default: "" },
   },
 
   data() {
@@ -174,9 +176,6 @@ export default Vue.extend({
     },
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
-    },
-    dataset(): string {
-      return routeGetters.getRouteDataset(this.$store);
     },
     band(): string {
       return routeGetters.getBandCombinationId(this.$store);

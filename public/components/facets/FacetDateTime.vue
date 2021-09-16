@@ -17,7 +17,7 @@
 
 <template>
   <div>
-    <component v-bind:is="comp" v-html="cssStyle"></component>
+    <component v-bind:is="comp" v-html="cssStyle" />
     <facet-bars
       :id="id"
       :data.prop="facetData"
@@ -29,12 +29,11 @@
       <div slot="header-label" :class="headerClass" class="d-flex">
         <span>{{ summary.label.toUpperCase() }}</span>
         <importance-bars v-if="enableImportance" :importance="importance" />
-        <div></div>
         <div class="facet-header-dropdown d-flex align-items-center">
           <color-scale-drop-down
             v-if="geoEnabled"
-            :variableSummary="summary"
-            isFacetScale
+            :variable-summary="summary"
+            is-facet-scale
             class="mr-1"
           />
           <type-change-menu
@@ -47,7 +46,11 @@
         </div>
       </div>
 
-      <facet-template target="facet-bars-value" title="${tooltip}" />
+      <facet-template
+        v-if="facetData.values.length > 0"
+        target="facet-bars-value"
+        title="${tooltip}"
+      />
 
       <div slot="footer" class="facet-footer-container">
         <facet-plugin-zoom-bar
@@ -270,11 +273,11 @@ export default Vue.extend({
       const minIndex = facet.selection[0];
       const maxIndex = facet.selection[1];
 
-      const lowerBound = this.dateToNum(values[minIndex].label);
+      const lowerBound = parseInt(this.summary.baseline.buckets[minIndex].key);
       let upperBound;
 
       if (this.summary.baseline.buckets.length > maxIndex) {
-        upperBound = this.dateToNum(values[maxIndex].label);
+        upperBound = parseInt(this.summary.baseline.buckets[maxIndex].key);
       } else {
         const maxBasis = this.dateToNum(values[maxIndex - 1].label);
         const offset = maxBasis - this.dateToNum(values[maxIndex - 2].label);
