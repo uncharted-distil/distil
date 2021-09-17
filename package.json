@@ -24,7 +24,7 @@
     "@uncharted.software/facets-core": "^3.1.0",
     "@uncharted.software/facets-plugins": "^3.1.0",
     "@uncharted.software/lex": "^1.0.0",
-    "axios": "^0.21.1",
+    "axios": "^0.21.2",
     "bootstrap": ">=4.5.0 <5.0.0",
     "bootstrap-vue": "^2.15.0",
     "color": "^3.1.3",
