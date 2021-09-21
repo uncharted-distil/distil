@@ -25,7 +25,11 @@ import { Variable } from "../../store/dataset";
 import { DataExplorerRef } from "../componentTypes";
 import { META_TYPES } from "../types";
 import { GENERIC_COMPUTES, GENERIC_METHODS } from "./functions/generic";
-import { LABEL_METHODS, LABEL_COMPUTES } from "./functions/label";
+import {
+  LABEL_METHODS,
+  LABEL_COMPUTES,
+  LABEL_EVENT_HANDLERS,
+} from "./functions/label";
 import { RESULT_METHODS, RESULT_COMPUTES } from "./functions/result";
 import { SELECT_METHODS, SELECT_COMPUTES } from "./functions/select";
 import {
@@ -349,6 +353,8 @@ export const genericMethods = GENERIC_METHODS;
 export const genericComputes = GENERIC_COMPUTES;
 // labelMethods are the methods used strictly in the label state
 export const labelMethods = LABEL_METHODS;
+// labelEventHandlers are the methods with an event attached to it
+export const labelEventHandlers = LABEL_EVENT_HANDLERS;
 // labelComputes are the computes used strictly in the label state
 export const labelComputes = LABEL_COMPUTES;
 export const resultMethods = RESULT_METHODS;

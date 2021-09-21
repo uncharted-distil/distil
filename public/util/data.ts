@@ -841,6 +841,14 @@ export function sortVariablesByImportance(variables: Variable[]): Variable[] {
   });
   return variables;
 }
+export function multibandURLtoInfo(url: string) {
+  let split = url.split("_");
+  const id = split[0];
+  split = split[1].split("T");
+  const time = split[1];
+  const date = split[0];
+  return { id, time, date };
+}
 // remove variable from training
 export async function removeVariableFromTraining(
   group: Group,

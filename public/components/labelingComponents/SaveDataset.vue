@@ -148,13 +148,12 @@ export default Vue.extend({
 
     // save model
     async saveDataset() {
-      this.$emit(
-        EventList.DATASETS.SAVE_EVENT,
+      this.$eventBus.$emit(
+        EventList.LABEL.SAVE_EVENT,
         this.saveName,
         this.retainUnlabeled
       );
     },
-
     // ensure required fields are filled out
     validForm() {
       const valid = this.saveName.length > 0;

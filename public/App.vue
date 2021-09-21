@@ -26,6 +26,7 @@
 import Vue from "vue";
 import VueRouterSync from "vuex-router-sync";
 import VueObserveVisibility from "vue-observe-visibility";
+import EventBusPlugin from "./util/eventBus";
 import BootstrapVue from "bootstrap-vue";
 import NavBar from "./components/NavBar.vue";
 import store from "./store/store";
@@ -46,10 +47,10 @@ import { DataExplorerRef } from "./util/componentTypes";
 Vue.component("v-select", vSelect);
 Vue.use(BootstrapVue);
 Vue.use(VueObserveVisibility);
+Vue.use(EventBusPlugin);
 Vue.config.performance = true;
 // sync store and router
 VueRouterSync.sync(store, router, { moduleName: "routeModule" });
-
 // main app component
 export default Vue.extend({
   store: store,

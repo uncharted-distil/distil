@@ -62,11 +62,15 @@
             :type="imageField.type"
             :row="data.item"
             :image-url="data.item[imageField.key].value"
+            :field-key="imageField.key"
             :unique-trail="uniqueTrail"
             :should-clean-up="false"
             :should-fetch-image="false"
             :index="parseInt(data.index)"
+            :items="items"
             :dataset-name="dataset"
+            :date-column="dateColumn"
+            :label-feature-name="labelFeatureName"
             @cycle-images="onImageCycle"
           />
           <image-label
@@ -201,9 +205,9 @@ import {
   Field,
   getVarType,
   TIMESERIES_TYPE,
-  NUMERIC_TYPE,
   CATEGORICAL_TYPE,
   isNumericType,
+  DATE_TIME_TYPE,
 } from "../util/types";
 import {
   addRowSelection,
@@ -389,6 +393,10 @@ export default Vue.extend({
     },
     solutionId(): string {
       return this.solution?.solutionId;
+    },
+    dateColumn(): string {
+      const fields = Object.values(this.dataFields);
+      return fields.find((f) => f.type === DATE_TIME_TYPE)?.key;
     },
     isTargetTimeseries(): boolean {
       return (

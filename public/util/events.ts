@@ -121,6 +121,16 @@ export class EventList {
     NAV_EVENT: "nav-event",
     SWITCH_TO_LABELING_EVENT: "label",
   };
+  static readonly LABEL = {
+    ANNOTATION_EVENT: "annotation",
+    SELECT_ALL_EVENT: "select-all",
+    SAVE_EVENT: "label-save-dataset-event",
+    EXPORT_EVENT: "label-export-dataset-event",
+    APPLY_EVENT: "search-similar",
+  };
+  static readonly IMAGE_DRILL_DOWN = {
+    RESET_IMAGE_EVENT: "image-drill-down-reset-image",
+  };
   static readonly IMAGES = {
     // an event which changes the image drilldown image to one adjacent
     CYCLE_IMAGES: "cycle-images",

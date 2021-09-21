@@ -52,15 +52,16 @@
 
     <image-drilldown
       :enable-cycling="enableCycling"
-      :image-urls="overlappedUrls"
+      :field-key="fieldKey"
       :info="imageDrilldown"
-      :initial-position="imageDrilldownPosition"
-      :items="[row]"
+      :items="items"
       :type="type"
       :url="imageUrl"
       :visible="zoomImage"
       :dataset-name="dataset"
       :index="index"
+      :label-feature-name="labelFeatureName"
+      :date-column="dateColumn"
       @close="hideZoomImage"
       @cycle-images="onCycleImages"
     />
@@ -86,10 +87,13 @@ import {
 } from "../store/dataset/index";
 import { isRowSelected } from "../util/row";
 import { Dictionary } from "../util/dict";
-import { MULTIBAND_IMAGE_TYPE, IMAGE_TYPE } from "../util/types";
+import {
+  MULTIBAND_IMAGE_TYPE,
+  IMAGE_TYPE,
+  DATE_TIME_TYPE,
+} from "../util/types";
 import { COLOR_SCALES, colorByFacet } from "../util/color";
 import { EI, EventList } from "../util/events";
-import { Tile } from "./DrillDown.vue";
 
 export default Vue.extend({
   name: "ImagePreview",
@@ -99,24 +103,27 @@ export default Vue.extend({
   },
 
   props: {
-    row: { type: Object as () => TableRow, default: null as TableRow },
-    imageUrl: { type: String as () => string, default: null },
-    overlappedUrls: {
-      type: Array as () => Tile[],
-      default: () => [] as Tile[],
-    },
-    uniqueTrail: { type: String as () => string, default: "" },
-    type: { type: String as () => string, default: IMAGE_TYPE },
-    width: { type: Number as () => number, default: 64 },
-    height: { type: Number as () => number, default: 64 },
-    preventHiding: { type: Boolean as () => boolean, default: false },
+    datasetName: { type: String as () => string, default: null },
+    dateColumn: { type: String as () => string, default: "" },
+    enableCycling: { type: Boolean as () => boolean, default: false },
+    fieldKey: { type: String as () => string, default: "" },
     gray: { type: Number, default: 0 }, // support for graying images.
+    height: { type: Number as () => number, default: 64 },
+    imageUrl: { type: String as () => string, default: null },
+    index: { type: Number as () => number },
+    items: { type: Array as () => TableRow[] },
+    labelFeatureName: { type: String as () => string, default: "" },
+    preventHiding: { type: Boolean as () => boolean, default: false },
+    row: { type: Object as () => TableRow, default: null as TableRow },
     shouldCleanUp: { type: Boolean as () => boolean, default: true },
     shouldFetchImage: { type: Boolean as () => boolean, default: true },
-    datasetName: { type: String as () => string, default: null },
-    summaries: { type: Array as () => VariableSummary[], default: () => [] },
-    index: { type: Number as () => number },
-    enableCycling: { type: Boolean as () => boolean, default: false },
+    summaries: {
+      type: Array as () => VariableSummary[],
+      default: () => [] as VariableSummary[],
+    },
+    type: { type: String as () => string, default: IMAGE_TYPE },
+    uniqueTrail: { type: String as () => string, default: "" },
+    width: { type: Number as () => number, default: 64 },
   },
 
   data() {
@@ -170,15 +177,6 @@ export default Vue.extend({
         title: this.imageUrl,
       };
     },
-
-    imageDrilldownPosition(): number {
-      return this.overlappedUrls.length
-        ? this.overlappedUrls.findIndex((o) => {
-            return o.imageUrl === this.imageUrl;
-          })
-        : 0;
-    },
-
     files(): Dictionary<any> {
       return datasetGetters.getFiles(this.$store);
     },

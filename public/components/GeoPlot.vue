@@ -1226,7 +1226,7 @@ export default Vue.extend({
         return;
       }
       if (this.enableSelectionToolEvent) {
-        this.$emit(EventList.MAP.SELECTION_TOOL_EVENT, {
+        this.$eventBus.$emit(EventList.MAP.SELECTION_TOOL_EVENT, {
           context: this.instanceName,
           dataset: this.dataset,
           key: key,

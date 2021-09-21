@@ -16,7 +16,7 @@ import {
 } from "../../filters";
 import { cloneFilters } from "../../highlights";
 import { bulkRowSelectionUpdate, clearRowSelection } from "../../row";
-import { EI } from "../../events";
+import { EI, EventList } from "../../events";
 import { CATEGORICAL_TYPE } from "../../types";
 import {
   addOrderBy,
@@ -28,7 +28,7 @@ import {
 } from "../../data";
 import { LABEL_FEATURE_INSTANCE } from "../../../store/route";
 import router from "../../../router/router";
-import { ActionNames, ACTION_MAP, ExplorerStateNames } from "..";
+import { ActionNames, ACTION_MAP, ExplorerStateNames, labelComputes } from "..";
 
 /**
  * LABEL_COMPUTES contains all of the computes for the label state in the data explorer
@@ -170,11 +170,31 @@ export const LABEL_METHODS = {
     // update task based on the current training data
     self.updateTask();
   },
+
+  /**
+   * switchToLabelState displays the label modal
+   */
+  switchToLabelState(): void {
+    const self = (this as unknown) as DataExplorerRef;
+    self.$bvModal.show(self.labelModalId);
+  },
+  /**
+   * onLabelSaveClick displays the save dataset modal
+   */
+  onLabelSaveClick(): void {
+    const self = (this as unknown) as DataExplorerRef;
+    self.$bvModal.show("save-dataset-modal");
+  },
+};
+
+export const LABEL_EVENT_HANDLERS = {
   /**
    * onAnnotationChanged is called when the user is annotating rows of the data as positive or negative
    * this requires a refetch of data and variable summaries
    */
-  async onAnnotationChanged(label: LowShotLabels): Promise<void> {
+  [EventList.LABEL.ANNOTATION_EVENT]: async function (
+    label: LowShotLabels
+  ): Promise<void> {
     const self = (this as unknown) as DataExplorerRef;
     const rowSelection = routeGetters.getDecodedRowSelection(store);
     const innerData = new Map<number, unknown>();
@@ -206,78 +226,54 @@ export const LABEL_METHODS = {
     return;
   },
   /**
-   * onExport is called when the user wants to download the newly annotated dataset to csv
+   * onToolSelection is called after a map tool selection event
+   * this selects all rows inside the quad
    */
-  async onExport(): Promise<void> {
-    const self = (this as unknown) as DataExplorerRef;
-    const highlights = [
-      {
-        context: LABEL_FEATURE_INSTANCE,
-        dataset: self.dataset,
-        key: self.labelName,
-        value: LowShotLabels.unlabeled,
-      },
-    ]; // exclude unlabeled from data export
+  [EventList.MAP.SELECTION_TOOL_EVENT]: async function (
+    selection: EI.MAP.SelectionHighlight
+  ): Promise<void> {
     const filterParams = routeGetters.getDecodedSolutionRequestFilterParams(
       store
     );
-    const dataMode = routeGetters.getDataMode(store);
-    const file = await datasetActions.extractDataset(store, {
-      dataset: self.dataset,
-      filterParams,
-      highlights,
+    filterParams.size = datasetGetters.getIncludedTableDataNumRows(store);
+    // fetch data selected by map tool
+    const resp = await datasetActions.fetchTableData(store, {
+      dataset: selection.dataset,
+      highlights: [selection],
+      filterParams: filterParams,
+      dataMode: null,
       include: true,
-      mode: EXCLUDE_FILTER,
-      dataMode,
     });
-    downloadFile(file, self.dataset, ".csv");
-    return;
+    // find d3mIndex
+    const labelIndex = resp.columns.findIndex((c) => {
+      return c.key === D3M_INDEX_FIELD;
+    });
+    // if -1 then something failed
+    if (labelIndex === -1) {
+      return;
+    }
+    // map the values
+    const indices = resp.values.map((v) => {
+      return v[labelIndex].value.toString();
+    });
+    // update row selection
+    const rowSelection = routeGetters.getDecodedRowSelection(store);
+    bulkRowSelectionUpdate(router, selection.context, rowSelection, indices);
   },
   /**
-   * onSearchSimilar calls the backend to start the image query process
-   * which ranks unlabelled images based on their similarities to the positive samples
+   * onSelectAll selects all the items currently on the page
    */
-  async onSearchSimilar(): Promise<void> {
+  [EventList.LABEL.SELECT_ALL_EVENT]: function (): void {
     const self = (this as unknown) as DataExplorerRef;
-    self.setBusyState(true, "Searching for Similar Images");
-    const res = (await requestActions.createQueryRequest(store, {
-      datasetId: self.dataset,
-      target: self.labelName,
-      filters: emptyFilterParamsObject(),
-    })) as { success: boolean; error: string };
-    if (!res.success) {
-      self.$bvToast.toast(res.error, {
-        title: "Error",
-        autoHideDelay: 5000,
-        appendToast: true,
-        variant: "danger",
-        toaster: "b-toaster-bottom-right",
-      });
-    }
-    const labelScoreName = LOW_SHOT_SCORE_COLUMN_PREFIX + self.labelName;
-    addOrderBy(labelScoreName);
-    self.isBusy = false;
-    await self.state.fetchData();
-    self.state.fetchMapBaseline();
-    self.updateRoute({
-      annotationHasChanged: false,
-    });
-    const outcome = ACTION_MAP.get(ActionNames.OUTCOME_VARIABLES);
-    const open = routeGetters.getToggledActions(store).some((a) => {
-      return a === outcome.paneId;
-    });
-    // open the outcome variable pane to display the new confidence and ranking
-    if (!open) {
-      self.toggleAction(ActionNames.OUTCOME_VARIABLES);
-    }
-    self.setBusyState(false);
+    const dataView = (self.$refs.dataView as unknown) as DataView;
+    dataView.selectAll();
   },
   /**
    * onSaveDataset calls the backend and saves the dataset
    * this removes the clone property for a dataset so if the user tries to label they
    * will have to create a new label
    */
-  async onSaveDataset(
+  [EventList.LABEL.SAVE_EVENT]: async function (
     saveName: string,
     retainUnlabeled: boolean
   ): Promise<void> {
@@ -338,58 +334,70 @@ export const LABEL_METHODS = {
     return;
   },
   /**
-   * onSelectAll selects all the items currently on the page
+   * onExport is called when the user wants to download the newly annotated dataset to csv
    */
-  onSelectAll(): void {
+  [EventList.LABEL.EXPORT_EVENT]: async function (): Promise<void> {
     const self = (this as unknown) as DataExplorerRef;
-    const dataView = (self.$refs.dataView as unknown) as DataView;
-    dataView.selectAll();
-  },
-  /**
-   * onToolSelection is called after a map tool selection event
-   * this selects all rows inside the quad
-   */
-  async onToolSelection(selection: EI.MAP.SelectionHighlight): Promise<void> {
+    const highlights = [
+      {
+        context: LABEL_FEATURE_INSTANCE,
+        dataset: self.dataset,
+        key: self.labelName,
+        value: LowShotLabels.unlabeled,
+      },
+    ]; // exclude unlabeled from data export
     const filterParams = routeGetters.getDecodedSolutionRequestFilterParams(
       store
     );
-    filterParams.size = datasetGetters.getIncludedTableDataNumRows(store);
-    // fetch data selected by map tool
-    const resp = await datasetActions.fetchTableData(store, {
-      dataset: selection.dataset,
-      highlights: [selection],
-      filterParams: filterParams,
-      dataMode: null,
+    const dataMode = routeGetters.getDataMode(store);
+    const file = await datasetActions.extractDataset(store, {
+      dataset: self.dataset,
+      filterParams,
+      highlights,
       include: true,
+      mode: EXCLUDE_FILTER,
+      dataMode,
     });
-    // find d3mIndex
-    const labelIndex = resp.columns.findIndex((c) => {
-      return c.key === D3M_INDEX_FIELD;
-    });
-    // if -1 then something failed
-    if (labelIndex === -1) {
-      return;
+    downloadFile(file, self.dataset, ".csv");
+    return;
+  },
+  /**
+   * onSearchSimilar calls the backend to start the image query process
+   * which ranks unlabelled images based on their similarities to the positive samples
+   */
+  [EventList.LABEL.APPLY_EVENT]: async function (): Promise<void> {
+    const self = (this as unknown) as DataExplorerRef;
+    self.setBusyState(true, "Searching for Similar Images");
+    const res = (await requestActions.createQueryRequest(store, {
+      datasetId: self.dataset,
+      target: self.labelName,
+      filters: emptyFilterParamsObject(),
+    })) as { success: boolean; error: string };
+    if (!res.success) {
+      self.$bvToast.toast(res.error, {
+        title: "Error",
+        autoHideDelay: 5000,
+        appendToast: true,
+        variant: "danger",
+        toaster: "b-toaster-bottom-right",
+      });
     }
-    // map the values
-    const indices = resp.values.map((v) => {
-      return v[labelIndex].value.toString();
+    const labelScoreName = LOW_SHOT_SCORE_COLUMN_PREFIX + self.labelName;
+    addOrderBy(labelScoreName);
+    self.isBusy = false;
+    await self.state.fetchData();
+    self.state.fetchMapBaseline();
+    self.updateRoute({
+      annotationHasChanged: false,
     });
-    // update row selection
-    const rowSelection = routeGetters.getDecodedRowSelection(store);
-    bulkRowSelectionUpdate(router, selection.context, rowSelection, indices);
-  },
-  /**
-   * switchToLabelState displays the label modal
-   */
-  switchToLabelState(): void {
-    const self = (this as unknown) as DataExplorerRef;
-    self.$bvModal.show(self.labelModalId);
-  },
-  /**
-   * onLabelSaveClick displays the save dataset modal
-   */
-  onLabelSaveClick(): void {
-    const self = (this as unknown) as DataExplorerRef;
-    self.$bvModal.show("save-dataset-modal");
+    const outcome = ACTION_MAP.get(ActionNames.OUTCOME_VARIABLES);
+    const open = routeGetters.getToggledActions(store).some((a) => {
+      return a === outcome.paneId;
+    });
+    // open the outcome variable pane to display the new confidence and ranking
+    if (!open) {
+      self.toggleAction(ActionNames.OUTCOME_VARIABLES);
+    }
+    self.setBusyState(false);
   },
 };

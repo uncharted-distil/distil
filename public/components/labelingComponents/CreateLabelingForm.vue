@@ -17,7 +17,7 @@
 
 <template>
   <div class="form-container">
-    <div>
+    <div class="p-1">
       <b-button
         :disabled="isLoading || !minimumRequirementsMet"
         size="lg"
@@ -50,11 +50,8 @@ import { VariableSummary } from "../../store/dataset";
 import { Dictionary } from "../../util/dict";
 import { LowShotLabels } from "../../util/data";
 import { getters as routeGetters } from "../../store/route/module";
-const enum COMPONENT_EVENT {
-  EXPORT = "export",
-  SAVE = "save",
-  APPLY = "apply",
-}
+import { EventList } from "../../util/events";
+
 export default Vue.extend({
   name: "create-labeling-form",
   props: {
@@ -68,13 +65,13 @@ export default Vue.extend({
       return circleSpinnerHTML();
     },
     saveEvent(): string {
-      return COMPONENT_EVENT.SAVE;
+      return EventList.LABEL.SAVE_EVENT;
     },
     applyEvent(): string {
-      return COMPONENT_EVENT.APPLY;
+      return EventList.LABEL.APPLY_EVENT;
     },
     exportEvent(): string {
-      return COMPONENT_EVENT.EXPORT;
+      return EventList.LABEL.EXPORT_EVENT;
     },
     annotationHasChanged(): boolean {
       return routeGetters.getAnnotationHasChanged(this.$store);
@@ -100,8 +97,8 @@ export default Vue.extend({
     },
   },
   methods: {
-    onEvent(event: COMPONENT_EVENT) {
-      this.$emit(event);
+    onEvent(event: string) {
+      this.$eventBus.$emit(event);
     },
   },
 });

@@ -35,17 +35,6 @@
       @mouseover="setMouseDown(false)"
       @mousewheel="onScroll"
     />
-    <transition name="fade">
-      <div
-        v-if="mouseOnCanvas"
-        class="d-flex justify-content-center p-1 position-absolute"
-        :style="refreshStyle"
-      >
-        <b-button @click="resetIdentity" title="Reset the Image Position">
-          <i class="fa fa-refresh" aria-hidden="true" />
-        </b-button>
-      </div>
-    </transition>
   </div>
 </template>
 
@@ -95,6 +84,16 @@ export default Vue.extend({
   },
   mounted() {
     this.initImages();
+    this.$eventBus.$on(
+      EventList.IMAGE_DRILL_DOWN.RESET_IMAGE_EVENT,
+      this.resetIdentity
+    );
+  },
+  beforeDestroy() {
+    this.$eventBus.$off(
+      EventList.IMAGE_DRILL_DOWN.RESET_IMAGE_EVENT,
+      this.resetIdentity
+    );
   },
   methods: {
     resetIdentity() {
@@ -198,13 +197,6 @@ export default Vue.extend({
 </script>
 
 <style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.5s;
-}
-.fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
-  opacity: 0;
-}
 .selected {
   border: 2px solid #ff0067;
 }
