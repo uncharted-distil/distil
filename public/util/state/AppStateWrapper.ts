@@ -136,6 +136,9 @@ export class SelectViewState implements BaseState {
     await this.fetchVariables();
     await this.fetchMapBaseline();
     this.fetchVariableSummaries();
+    datasetActions.fetchMultiBandCombinations(store, {
+      dataset: routeGetters.getRouteDataset(store),
+    });
     return;
   }
   getSecondaryVariables(): Variable[] {
@@ -205,7 +208,9 @@ export class SelectViewState implements BaseState {
     return datasetGetters.getAllVariables(store);
   }
   fetchVariables(): Promise<unknown> {
-    return viewActions.fetchSelectTrainingData(store, false);
+    return datasetActions.fetchVariables(store, {
+      dataset: routeGetters.getRouteDataset(store),
+    });
   }
   fetchData(): Promise<unknown> {
     return viewActions.updateSelectTrainingData(store);
@@ -213,9 +218,7 @@ export class SelectViewState implements BaseState {
   fetchVariableSummaries(): Promise<unknown> {
     const fetchArgs = {
       dataset: routeGetters.getRouteDataset(store),
-      variables: sortVariablesByImportance(
-        this.getVariables().concat(this.getSecondaryVariables())
-      ),
+      variables: sortVariablesByImportance(this.getSecondaryVariables()),
       filterParams: routeGetters.getDecodedSolutionRequestFilterParams(store),
       highlights: routeGetters.getDecodedHighlights(store),
       dataMode: routeGetters.getDataMode(store),
@@ -292,8 +295,12 @@ export class ResultViewState implements BaseState {
         console.error("No available solutions");
       }
     }
+    datasetActions.fetchMultiBandCombinations(store, {
+      dataset: routeGetters.getRouteDataset(store),
+    });
     await this.fetchVariables();
     await this.fetchMapBaseline();
+
     return;
   }
   getSecondaryVariables(): Variable[] {
