@@ -87,11 +87,7 @@ import {
 } from "../store/dataset/index";
 import { isRowSelected } from "../util/row";
 import { Dictionary } from "../util/dict";
-import {
-  MULTIBAND_IMAGE_TYPE,
-  IMAGE_TYPE,
-  DATE_TIME_TYPE,
-} from "../util/types";
+import { MULTIBAND_IMAGE_TYPE, IMAGE_TYPE } from "../util/types";
 import { COLOR_SCALES, colorByFacet } from "../util/color";
 import { EI, EventList } from "../util/events";
 
@@ -141,7 +137,12 @@ export default Vue.extend({
 
   computed: {
     confidenceColor(): string {
-      if (!this.summaries.length || this.colorScaleByVar === "") {
+      if (
+        !this.summaries.length ||
+        !this.summaries.find((v) => {
+          return v.key === this.colorScaleByVar;
+        })
+      ) {
         return;
       }
       // index is not needed

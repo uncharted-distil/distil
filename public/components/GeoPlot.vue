@@ -1278,17 +1278,22 @@ export default Vue.extend({
       if (this.rowSelectionMap.has(item.d3mIndex)) {
         return SELECTION_RED;
       }
+      if (
+        item[this.targetField] &&
+        item[this.predictedField] &&
+        this.predictedField.split(":")[0] === this.colorScaleByVar
+      ) {
+        color =
+          item[this.targetField].value === item[this.predictedField].value
+            ? RESULT_GREEN // Correct: green.
+            : RESULT_RED; // Incorrect: red.
+        return color;
+      }
       if (this.coloringByVariable) {
         return this.colorScale(this.colorByVariable(item, idx));
       }
       if (item.isExcluded) {
         return GRAY;
-      }
-      if (item[this.targetField] && item[this.predictedField]) {
-        color =
-          item[this.targetField].value === item[this.predictedField].value
-            ? RESULT_GREEN // Correct: green.
-            : RESULT_RED; // Incorrect: red.
       }
 
       return color;
