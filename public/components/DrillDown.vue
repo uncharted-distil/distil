@@ -46,11 +46,14 @@
                 :height="imageHeight"
                 :type="imageType"
                 :gray="renderTiles[i][j].selected.gray"
-                :overlapped-urls="renderTiles[i][j].overlapped"
                 :should-fetch-image="false"
                 :should-clean-up="false"
                 :unique-trail="uniqueTrail"
+                :items="spatialOrderedList"
+                :index="renderTiles[i][j].selectedIndex"
                 :summaries="summaries"
+                :field-key="fieldKey"
+                enable-cycling
                 @click="onImageClick"
               />
               <overlap-selection
@@ -105,6 +108,7 @@ export interface Tile {
   gray: number;
 }
 interface RenderTile {
+  selectedIndex: number;
   selected: Tile;
   overlapped: Tile[];
 }
@@ -150,6 +154,7 @@ export default Vue.extend({
       renderTiles: [] as RenderTile[][],
       imagesToFetch: [] as string[],
       uniqueTrail: "drill-down",
+      spatialOrderedList: [] as TableRow[],
     };
   },
 
@@ -179,6 +184,12 @@ export default Vue.extend({
     },
     band(): string {
       return routeGetters.getBandCombinationId(this.$store);
+    },
+    fieldKey(): string {
+      const keys = Object.keys(this.tiles[0].item);
+      return keys.find(
+        (k) => this.tiles[0].item[k]?.value === this.tiles[0].imageUrl
+      );
     },
   },
 
@@ -241,8 +252,8 @@ export default Vue.extend({
         y: Math.floor((y - minY) / this.tileDims.height),
       };
     },
-    spatialSort(): RenderTile[][] {
-      const result = [];
+    initializeRenderTiles(): RenderTile[][] {
+      const result = [] as RenderTile[][];
       for (let i = 0; i < this.rows; ++i) {
         result.push([]);
         for (let j = 0; j < this.cols; ++j) {
@@ -250,13 +261,18 @@ export default Vue.extend({
             selected: {
               imageUrl: null,
               item: null,
-              coordinates: null,
+              info: null,
               gray: 0,
             },
             overlapped: [],
+            selectedIndex: 0,
           });
         }
       }
+      return result;
+    },
+    spatialSort(): RenderTile[][] {
+      const result = this.initializeRenderTiles();
       if (!this.tiles.length) {
         return result;
       }
@@ -280,8 +296,21 @@ export default Vue.extend({
         result[invertY][indices.x].overlapped.push(t);
         this.imagesToFetch.push(t.imageUrl);
       });
-      // normalize coordinates
+      this.createSpatialOrderedList(result);
       return result;
+    },
+    createSpatialOrderedList(renderTiles: RenderTile[][]) {
+      for (let y = 0; y < renderTiles.length; ++y) {
+        for (let x = 0; x < renderTiles[y].length; ++x) {
+          renderTiles[y][x].selectedIndex =
+            this.spatialOrderedList.length +
+            renderTiles[y][x].overlapped.length -
+            1;
+          for (let z = 0; z < renderTiles[y][x].overlapped.length; ++z) {
+            this.spatialOrderedList.push(renderTiles[y][x].overlapped[z].item);
+          }
+        }
+      }
     },
     onExitClicked() {
       this.$emit(EventList.BASIC.CLOSE_EVENT);

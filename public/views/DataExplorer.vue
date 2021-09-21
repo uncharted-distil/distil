@@ -109,12 +109,7 @@
             />
             Reinclude
           </b-button>
-          <label-header-buttons
-            v-if="isLabelState"
-            class="height-36"
-            @button-event="onAnnotationChanged"
-            @select-all="onSelectAll"
-          />
+          <label-header-buttons v-if="isLabelState" class="height-36" />
           <legend-weight
             v-if="hasWeight && isResultState"
             class="ml-5 mr-auto"
@@ -146,7 +141,6 @@
             }"
             :get-timeseries="state.getTimeseries"
             @tile-clicked="onTileClick"
-            @selection-tool-event="onToolSelection"
             @fetch-timeseries="fetchTimeseries"
             @finished-loading="onMapFinishedLoading"
           />
@@ -262,9 +256,6 @@
             :is-loading="isBusy"
             :low-shot-summary="labelSummary"
             :is-saving="isBusy"
-            @export="onExport"
-            @apply="onSearchSimilar"
-            @save="onLabelSaveClick"
           />
         </footer>
       </template>
@@ -331,11 +322,7 @@
         />
       </b-form-group>
     </b-modal>
-    <save-dataset
-      modal-id="save-dataset-modal"
-      :dataset-name="dataset"
-      @save="onSaveDataset"
-    />
+    <save-dataset modal-id="save-dataset-modal" :dataset-name="dataset" />
   </div>
 </template>
 
@@ -393,6 +380,7 @@ import {
   selectMethods,
   predictionMethods,
   predictionComputes,
+  labelEventHandlers,
 } from "../util/explorer";
 import _ from "lodash";
 import { DataExplorerRef } from "../util/componentTypes";
@@ -521,6 +509,7 @@ const DataExplorer = Vue.extend({
       ...bindMethods(predictionComputes, self), // computes used in prediction state
       ...bindMethods(labelComputes, self), // computes used in the label state
     };
+    // methods for each state need to be bound to the DataExplorer instance
     this.$options.methods = {
       ...this.$options.methods, // any methods defined in the component
       ...bindMethods(genericMethods, self), // generic computes used across all states
@@ -529,6 +518,19 @@ const DataExplorer = Vue.extend({
       ...bindMethods(resultMethods, self), // computes used in prediction state
       ...bindMethods(predictionMethods, self), // computes used in the label state
     };
+    // event handlers for each state
+    const eventKeys = Object.keys(labelEventHandlers);
+    const boundedEventHandlers = bindMethods(labelEventHandlers, self);
+    eventKeys.forEach((event) => {
+      this.$eventBus.$on(event, boundedEventHandlers[event]);
+    });
+  },
+  beforeDestroy() {
+    // event handlers for each state
+    const eventKeys = Object.keys(labelEventHandlers);
+    eventKeys.forEach((event) => {
+      this.$eventBus.$off(event);
+    });
   },
   async beforeMount() {
     const self = (this as unknown) as DataExplorerRef; // because the computes/methods are added in beforeCreate typescript does not work so we cast it to a type here

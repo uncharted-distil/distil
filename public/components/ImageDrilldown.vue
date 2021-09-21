@@ -26,29 +26,49 @@
     @hide="hide"
   >
     <main class="drill-down">
+      <header class="d-flex flex-row pb-1 justify-content-between w-100">
+        <ul v-if="hasDate" style="list-style-type: none" class="pr-3 pl-0">
+          <li>Date: {{ date }}</li>
+          <li>Time: {{ time }}</li>
+        </ul>
+        <layer-selection
+          v-if="isMultiBandImage"
+          class="pr-1 height-36"
+          :has-image-attention="hasImageAttention"
+        />
+        <label-header-buttons v-if="isLabelState" class="height-36" />
+      </header>
       <div class="d-flex justify-content-center align-items-center">
         <b-button
-          v-if="isCarousel || enableCycling"
-          :disabled="carouselPosition === 0 && !enableCycling"
-          @click="cycleFunc(-1)"
+          v-if="enableCycling"
+          :disabled="carouselPosition === 0"
+          @click="cycleImage(-1)"
         >
           <i class="fas fa-arrow-left" />
         </b-button>
-        <image-transformer
-          ref="transformer"
-          :selected="isSelected"
-          :width="width"
-          :height="height"
-          :img-srcs="imageSources"
-          :hidden="hidden"
-          @row-selection="onRowSelection"
-        />
+        <div class="position-relative">
+          <image-label
+            class="image-label pt-2 pl-2"
+            included-active
+            shorten-labels
+            align-horizontal
+            :item="items[carouselPosition]"
+            :label-feature-name="labelFeatureName"
+          />
+          <image-transformer
+            ref="transformer"
+            :selected="isSelected"
+            :width="width"
+            :height="height"
+            :img-srcs="imageSources"
+            :hidden="hidden"
+            @row-selection="onRowSelection"
+          />
+        </div>
         <b-button
-          v-if="isCarousel || enableCycling"
-          :disabled="
-            carouselPosition === imageUrls.length - 1 && !enableCycling
-          "
-          @click="cycleFunc(1)"
+          v-if="enableCycling"
+          :disabled="carouselPosition === items.length - 1"
+          @click="cycleImage(1)"
         >
           <i class="fas fa-arrow-right" />
         </b-button>
@@ -58,62 +78,39 @@
         ref="imageAttentionElem"
         class="filter-elem"
       />
-      <div class="row">
-        <div class="col-md-6">
-          <ul class="information">
-            <li v-if="bandName"><label>Image Layer:</label> {{ bandName }}</li>
-            <li v-if="latLongValue">
-              <label>Lat/Long:</label> {{ latLongValue }}
-            </li>
-            <li v-if="isResultScreen" class="d-flex justify-content-between">
-              <label> {{ toggleStateString }} image explanation: </label>
-              <div>
-                <input
-                  id="drill-down-filter-toggle"
-                  v-model="isFilteredToggled"
-                  class="form-check-input"
-                  type="checkbox"
-                  value=""
-                />
-              </div>
-            </li>
-          </ul>
+      <footer class="d-flex flex-row justify-content-between w-100">
+        <div>
+          <b-button
+            v-if="shouldImagesScale"
+            :disabled="disableUpscale"
+            class="height-36 mt-3"
+            @click="upscaleFetch"
+          >
+            <b-spinner v-if="fetchingUpscale" small />
+            Upscale Image
+          </b-button>
+          <b-button class="height-36 mt-3" @click="resetImage">
+            Reset View
+          </b-button>
         </div>
-        <div class="col-md-6">
-          <ul>
-            <li v-if="isMultiBandImage" class="information-brightness">
-              <b-input-group
-                prepend="0"
-                append="1.0"
-                class="mt-3 mb-1"
-                size="sm"
-              >
-                <b-form-input
-                  type="range"
-                  name="brightness"
-                  :min="brightnessMin"
-                  :max="brightnessMax"
-                  step="1"
-                  class="brightness-slider"
-                  @change="onBrightnessChanged"
-                />
-              </b-input-group>
-              <label class="brightness-label">
-                <i class="fa fa-adjust fa-rotate-180" aria-hidden="true" />
-                {{ brightnessValue }}
-              </label>
-              <b-button
-                v-if="shouldImagesScale"
-                :disabled="disableUpscale"
-                @click="upscaleFetch"
-              >
-                <b-spinner v-if="fetchingUpscale" small />
-                Upscale Image
-              </b-button>
-            </li>
-          </ul>
+        <div v-if="isMultiBandImage" class="information-brightness">
+          <b-input-group prepend="0" append="1.0" class="mt-3 mb-1" size="sm">
+            <b-form-input
+              type="range"
+              name="brightness"
+              :min="brightnessMin"
+              :max="brightnessMax"
+              step="1"
+              class="brightness-slider"
+              @change="onBrightnessChanged"
+            />
+          </b-input-group>
+          <label class="brightness-label">
+            <i class="fa fa-adjust fa-rotate-180" aria-hidden="true" />
+            {{ brightnessValue }}
+          </label>
         </div>
-      </div>
+      </footer>
     </main>
   </b-modal>
 </template>
@@ -130,14 +127,16 @@ import { getters as appGetters } from "../store/app/module";
 import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
 import { IMAGE_TYPE, MULTIBAND_IMAGE_TYPE } from "../util/types";
+import ImageLabel from "./ImageLabel.vue";
 import ImageTransformer from "./ImageTransformer.vue";
+import LabelHeaderButtons from "./labelingComponents/LabelHeaderButtons.vue";
+import LayerSelection from "./LayerSelection.vue";
 import { EventList, EI } from "../util/events";
 import {
   addRowSelection,
   isRowSelected,
   removeRowSelection,
 } from "../util/row";
-import { Tile } from "./DrillDown.vue";
 import { ExplorerStateNames } from "../util/explorer";
 const IMAGE_MAX_SIZE = 750; // Maximum size of an image in the drill-down in pixels.
 const IMAGE_MAX_ZOOM = 2.5; // We don't want an image to be too magnified to avoid blurriness.
@@ -162,26 +161,30 @@ export interface DrillDownInfo {
 export default Vue.extend({
   name: "ImageDrilldown",
   components: {
+    ImageLabel,
     ImageTransformer,
+    LayerSelection,
+    LabelHeaderButtons,
   },
   props: {
-    info: Object as () => DrillDownInfo,
-    type: { type: String, default: IMAGE_TYPE },
-    url: { type: String, default: null },
-    visible: Boolean,
-    imageUrls: { type: Array as () => Tile[], default: () => [] as Tile[] },
-    items: { type: Array as () => TableRow[], default: () => [] as TableRow[] },
-    initialPosition: { type: Number as () => number, default: 0 },
     datasetName: { type: String as () => string, default: null },
-    index: { type: Number as () => number },
+    dateColumn: { type: String as () => string, default: "" },
     enableCycling: { type: Boolean as () => boolean, default: false },
+    url: { type: String as () => string, default: null },
+    fieldKey: { type: String as () => string, default: "" },
+    index: { type: Number as () => number },
+    info: Object as () => DrillDownInfo,
+    items: { type: Array as () => TableRow[], default: () => [] as TableRow[] },
+    labelFeatureName: { type: String as () => string, default: "" },
+    type: { type: String, default: IMAGE_TYPE },
+    visible: Boolean,
   },
 
   data() {
     return {
       IMAGE_MAX_SIZE: IMAGE_MAX_SIZE,
       currentVal: 0.5,
-      carouselPosition: this.initialPosition,
+      carouselPosition: 0,
       currentBrightness: 0.5,
       brightnessMin: 0,
       brightnessMax: 100,
@@ -194,14 +197,25 @@ export default Vue.extend({
   },
 
   computed: {
+    hasDate(): boolean {
+      return this.dateColumn !== "";
+    },
     isSelected(): boolean {
-      const d3mIndex = this.imageUrls.length
-        ? this.imageUrls[this.carouselPosition]?.item.d3mIndex
-        : this.items[this.carouselPosition]?.d3mIndex;
+      const d3mIndex = this.items[this.carouselPosition]?.d3mIndex;
       return d3mIndex ? isRowSelected(this.rowSelection, d3mIndex) : false;
     },
     shouldImagesScale(): boolean {
       return appGetters.getShouldScaleImages(this.$store);
+    },
+    date(): string {
+      return new Date(
+        this.items[this.carouselPosition][this.dateColumn]?.value
+      ).toDateString();
+    },
+    time(): string {
+      return new Date(this.items[this.carouselPosition][this.dateColumn]?.value)
+        .toTimeString()
+        .split("(")[0];
     },
     bandName(): string {
       return datasetGetters
@@ -230,12 +244,9 @@ export default Vue.extend({
     files(): Dictionary<any> {
       return datasetGetters.getFiles(this.$store);
     },
-    isCarousel(): boolean {
-      return this.imageUrls.length > 0;
-    },
     selectedImageUrl(): string {
-      return this.imageUrls.length
-        ? this.imageUrls[this.carouselPosition].imageUrl
+      return this.items.length
+        ? this.items[this.carouselPosition][this.fieldKey]?.value
         : this.url;
     },
     image(): HTMLImageElement {
@@ -278,7 +289,7 @@ export default Vue.extend({
       return routeGetters.getImageAttention(this.$store);
     },
     visibleTitle(): string {
-      return this.info.title ?? this.selectedImageUrl ?? "Image Drilldown";
+      return this.selectedImageUrl ?? "Image Drilldown";
     },
     sliderVal(): string {
       return this.currentVal.toFixed(2);
@@ -298,11 +309,17 @@ export default Vue.extend({
     width(): number {
       return this.image?.width * this.ratio;
     },
-    cycleFunc(): (side: EI.IMAGES.Side) => void {
-      return this.enableCycling ? this.cycleImage : this.rotateSelection;
-    },
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
+    },
+    band(): string {
+      return routeGetters.getBandCombinationId(this.$store);
+    },
+    isLabelState(): boolean {
+      return (
+        routeGetters.getDataExplorerState(this.$store) ===
+        ExplorerStateNames.LABEL_VIEW
+      );
     },
   },
 
@@ -312,7 +329,7 @@ export default Vue.extend({
         this.disableUpscale = false;
         this.hidden = false;
         this.isFilteredToggled = this.hasImageAttention;
-        this.carouselPosition = this.initialPosition;
+        this.carouselPosition = this.index;
         this.requestImage({
           gainL: 1.0,
           gamma: 2.2,
@@ -324,13 +341,22 @@ export default Vue.extend({
         }
       }
     },
+    band() {
+      this.requestImage({
+        gainL: 1.0,
+        gamma: 2.2,
+        gain: 2.5,
+        scale: this.scale,
+      });
+    },
   },
 
   methods: {
+    resetImage() {
+      this.$eventBus.$emit(EventList.IMAGE_DRILL_DOWN.RESET_IMAGE_EVENT);
+    },
     onRowSelection() {
-      const d3mIndex = this.imageUrls.length
-        ? this.imageUrls[this.carouselPosition]?.item.d3mIndex
-        : this.items[this.carouselPosition]?.d3mIndex;
+      const d3mIndex = this.items[this.carouselPosition]?.d3mIndex;
       if (d3mIndex) {
         if (!isRowSelected(this.rowSelection, d3mIndex)) {
           addRowSelection(this.$router, "", this.rowSelection, d3mIndex);
@@ -340,10 +366,14 @@ export default Vue.extend({
       }
     },
     cycleImage(sideToCycleTo: EI.IMAGES.Side) {
-      this.$emit(EventList.IMAGES.CYCLE_IMAGES, {
-        side: sideToCycleTo,
-        index: this.index,
-      } as EI.IMAGES.CycleImage);
+      this.carouselPosition = Math.max(
+        0,
+        Math.min(this.carouselPosition + sideToCycleTo, this.items.length - 1)
+      );
+      this.requestImage();
+      if (this.hasImageAttention) {
+        this.requestFilter();
+      }
     },
     async upscaleFetch() {
       const MAX_GAINL = 2.0;
@@ -358,17 +388,6 @@ export default Vue.extend({
       });
       this.fetchingUpscale = false;
       this.disableUpscale = false;
-    },
-    rotateSelection(direction: number) {
-      this.scale = 0; // reset scale when fetching new images
-      this.carouselPosition = Math.min(
-        Math.max(0, this.carouselPosition + direction),
-        this.imageUrls.length - 1
-      );
-      this.requestImage();
-      if (this.hasImageAttention) {
-        this.requestFilter();
-      }
     },
     hide() {
       this.hidden = true;
@@ -410,7 +429,7 @@ export default Vue.extend({
         await datasetActions.fetchMultiBandImage(this.$store, {
           dataset: this.dataset,
           imageId: imageId(this.selectedImageUrl),
-          bandCombination: this.info.band,
+          bandCombination: this.band,
           isThumbnail: false,
           options: imageOptions,
         });
@@ -479,5 +498,8 @@ export default Vue.extend({
 }
 .brightness-slider {
   width: 70%;
+}
+.height-36 {
+  height: 36px;
 }
 </style>

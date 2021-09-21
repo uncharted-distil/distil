@@ -51,6 +51,7 @@
 <script lang="ts">
 import Vue from "vue";
 import { LowShotLabels } from "../../util/data";
+import { EventList } from "../../util/events";
 export default Vue.extend({
   name: "label-header-buttons",
   computed: {
@@ -66,10 +67,10 @@ export default Vue.extend({
   },
   methods: {
     onButtonClick(event: string) {
-      this.$emit("button-event", event);
+      this.$eventBus.$emit(EventList.LABEL.ANNOTATION_EVENT, event);
     },
     onSelectAll() {
-      this.$emit("select-all");
+      this.$eventBus.$emit(EventList.LABEL.SELECT_ALL_EVENT);
     },
   },
 });
