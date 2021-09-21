@@ -130,8 +130,8 @@
 
         <component
           :is="getFacetByType(summary.type)"
-          v-if="!isRoc"
           v-for="summary in correctnessSummaries"
+          v-if="!isRoc"
           :key="summary.key"
           :enable-importance="false"
           enable-highlighting

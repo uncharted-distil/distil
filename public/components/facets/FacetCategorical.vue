@@ -244,7 +244,6 @@ export default Vue.extend({
       return !!this.html;
     },
   },
-
   methods: {
     onTypeChange() {
       this.$emit(EventList.VARIABLES.TYPE_CHANGE);

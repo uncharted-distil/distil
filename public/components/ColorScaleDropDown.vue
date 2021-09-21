@@ -142,18 +142,31 @@ export default Vue.extend({
       return this.variableSummary?.baseline.extrema.max ?? 0;
     },
     toggleStyle(): string {
-      return this.selectedFacet === ""
+      return this.selectedFacet === this.variableSummary.key.split(":")[0]
         ? "selected-toggle d-flex align-items-center shadow-none"
         : "toggle d-flex align-items-center shadow-none";
     },
+  },
+  mounted() {
+    if (this.isToggle && this.selectedFacet.length === 0) {
+      const route = routeGetters.getRoute(this.$store);
+      const entry = overlayRouteEntry(route, {
+        colorScaleVariable: this.variableSummary.key.split(":")[0],
+      });
+      this.$router.push(entry).catch((err) => console.warn(err));
+    }
   },
   methods: {
     onColorChange(data: ColorScaleItem) {
       this.onScaleClick(data.name);
     },
     onToggleClick() {
+      const splitKey = this.variableSummary.key.split(":")[0];
       const route = routeGetters.getRoute(this.$store);
-      const entry = overlayRouteEntry(route, { colorScaleVariable: "" });
+      // we just pass in the resultUUID instead of the variable name for the green and red error colors
+      const entry = overlayRouteEntry(route, {
+        colorScaleVariable: this.selectedFacet !== splitKey ? splitKey : "",
+      });
       this.$router.push(entry).catch((err) => console.warn(err));
     },
     getDiscrete(colorScaleName: ColorScaleNames): string {
