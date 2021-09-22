@@ -21,7 +21,6 @@ import (
 	"math"
 	"net/http"
 	"path"
-	"strings"
 
 	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
@@ -265,7 +264,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 			return
 		}
 
-		if !isPublicPath(datasetPathRaw) {
+		if !env.IsPublicPath(datasetPathRaw) {
 			util.Delete(datasetPathRaw)
 		}
 		// marshal data and sent the response back
@@ -573,8 +572,4 @@ func syncPrefeaturizedDataset(datasetID string, updateDatasetID string, sourceLe
 	log.Infof("done syncing prefeaturized dataset '%s' on disk", datasetID)
 
 	return nil
-}
-
-func isPublicPath(filename string) bool {
-	return strings.HasPrefix(filename, env.GetPublicPath())
 }
