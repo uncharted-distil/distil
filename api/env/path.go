@@ -17,6 +17,7 @@ package env
 
 import (
 	"path"
+	"strings"
 
 	"github.com/uncharted-distil/distil-compute/metadata"
 	log "github.com/unchartedsoftware/plog"
@@ -152,6 +153,12 @@ func GetBatchPath() string {
 // GetPublicPath returns the batch path as initialized.
 func GetPublicPath() string {
 	return publicPath
+}
+
+// IsPublicPath indicates whether or not the supplied path is the current
+// public path.
+func IsPublicPath(filename string) bool {
+	return strings.HasPrefix(filename, GetPublicPath())
 }
 
 // ResolvePath returns an absolute path based on the dataset source.
