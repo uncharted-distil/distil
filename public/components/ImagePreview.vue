@@ -312,18 +312,6 @@ export default Vue.extend({
     },
   },
 
-  async beforeMount() {
-    // lazy fetch available band types
-    if (
-      this.type === MULTIBAND_IMAGE_TYPE &&
-      _.isEmpty(datasetGetters.getMultiBandCombinations(this.$store))
-    ) {
-      await datasetActions.fetchMultiBandCombinations(this.$store, {
-        dataset: this.dataset,
-      });
-    }
-  },
-
   destroyed() {
     this.cleanUp();
   },
