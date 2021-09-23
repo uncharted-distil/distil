@@ -1306,12 +1306,18 @@ export const actions = {
 
   async fetchImage(
     context: DatasetContext,
-    args: { dataset: string; url: string; isThumbnail?: boolean }
+    args: {
+      dataset: string;
+      url: string;
+      isThumbnail?: boolean;
+      scale?: number;
+    }
   ) {
     if (!validateArgs(args, ["dataset", "url"])) return;
     try {
+      const imgScale = args.scale ?? 0;
       const thumbnail = args.isThumbnail ? "true" : "false";
-      const urlRequest = `distil/image/${args.dataset}/${args.url}/${thumbnail}`;
+      const urlRequest = `distil/image/${args.dataset}/${args.url}/${thumbnail}/${imgScale}`;
       const response = await loadImage(urlRequest);
       mutations.updateFile(context, { url: args.url, file: response });
     } catch (error) {

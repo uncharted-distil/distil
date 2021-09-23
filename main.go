@@ -300,7 +300,7 @@ func main() {
 	registerRoutePost(mux, "/distil/delete-model/:model", routes.DeletingModelHandler(esExportedModelStorageCtor))
 
 	// static
-	registerRoute(mux, "/distil/image/:dataset/:file/:is-thumbnail", routes.ImageHandler(esMetadataStorageCtor, &config))
+	registerRoute(mux, "/distil/image/:dataset/:file/:is-thumbnail/:scale", routes.ImageHandler(esMetadataStorageCtor, &config))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 
 	// catch kill signals for graceful shutdown
