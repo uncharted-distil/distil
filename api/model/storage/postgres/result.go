@@ -211,7 +211,8 @@ func (s *Storage) PersistExplainedResult(dataset string, storageName string, res
 }
 
 // FetchResultDataset extracts the complete results and base table data.
-func (s *Storage) FetchResultDataset(dataset string, storageName string, predictionName string, features []string, resultURI string) ([][]string, error) {
+func (s *Storage) FetchResultDataset(dataset string, storageName string, predictionName string,
+	features []string, resultURI string, includeExplain bool) ([][]string, error) {
 	// base table can have geometry fields!
 	vars, err := s.metadata.FetchVariables(dataset, true, true, true)
 	if err != nil {
@@ -231,6 +232,9 @@ func (s *Storage) FetchResultDataset(dataset string, storageName string, predict
 		}
 	}
 	fields = append(fields, fmt.Sprintf("COALESCE(result.value) AS \"%s\"", predictionName))
+	if includeExplain {
+		fields = append(fields, fmt.Sprintf("COALESCE(result.explain_values) AS \"_explain_%s\"", predictionName))
+	}
 	sql := fmt.Sprintf(`
 		SELECT %s
 		FROM %s base
