@@ -335,9 +335,7 @@ func unnestStringJSON(raw interface{}) map[string]string {
 		case float64:
 			result[k] = fmt.Sprintf("%f", t)
 		case string:
-			{
-				result[k] = t
-			}
+			result[k] = t
 		}
 	}
 
