@@ -231,6 +231,7 @@ func (s *Storage) FetchResultDataset(dataset string, storageName string, predict
 		}
 	}
 	fields = append(fields, fmt.Sprintf("COALESCE(result.value) AS \"%s\"", predictionName))
+	fields = append(fields, fmt.Sprintf("COALESCE(result.explain_values) AS \"_explain_%s\"", predictionName))
 	sql := fmt.Sprintf(`
 		SELECT %s
 		FROM %s base

@@ -468,7 +468,7 @@ func (s *Storage) buildCorrectnessResultWhere(wheres []string, params []interfac
 				op = "!="
 			}
 			if op == "" {
-				return nil, nil, errors.New(fmt.Sprintf("Error correctness category is not within set [%s, %s]", IncorrectCategory, CorrectCategory))
+				return nil, nil, errors.Errorf("Error correctness category is not within set [%s, %s]", IncorrectCategory, CorrectCategory)
 			}
 			wheresFilter = append(wheresFilter, fmt.Sprintf("result.value %s data.\"%s\"", op, targetName))
 		}

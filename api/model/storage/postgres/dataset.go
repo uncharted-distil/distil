@@ -275,16 +275,45 @@ func (s *Storage) parseData(rows pgx.Rows) ([][]string, error) {
 				// parse columns
 				fields := rows.FieldDescriptions()
 				columns := make([]string, len(fields))
+				nestedAdjustment := 0
 				for i := 0; i < len(fields); i++ {
-					columns[i] = string(fields[i].Name)
+					switch columnValues[i].(type) {
+					case string:
+						columns[i+nestedAdjustment] = string(fields[i].Name)
+					default:
+						// handle nested data as separate columns
+						nested := unnestStringJSON(columnValues[i])
+						for k := range nested {
+							columns[i+nestedAdjustment] = fmt.Sprintf("%s_%s", fields[i].Name, k)
+							nestedAdjustment = nestedAdjustment + 1
+						}
+
+						// the nested column itself was already counted
+						nestedAdjustment = nestedAdjustment - 1
+					}
 				}
 				output = append(output, columns)
 			}
 
 			// read data
-			row := make([]string, len(columnValues))
+			row := make([]string, len(output[0]))
+			nestedAdjustment := 0
 			for i, cv := range columnValues {
-				row[i] = cv.(string)
+				switch t := cv.(type) {
+				case string:
+					row[i+nestedAdjustment] = t
+				default:
+					// assume a map[string]interface{} (explanations)
+					nested := unnestStringJSON(cv)
+					for _, v := range nested {
+						row[i+nestedAdjustment] = v
+						nestedAdjustment = nestedAdjustment + 1
+					}
+
+					// the nested column itself was already counted
+					nestedAdjustment = nestedAdjustment - 1
+				}
+
 			}
 
 			output = append(output, row)
@@ -296,6 +325,23 @@ func (s *Storage) parseData(rows pgx.Rows) ([][]string, error) {
 	}
 
 	return output, nil
+}
+
+func unnestStringJSON(raw interface{}) map[string]string {
+	cast := raw.(map[string]interface{})
+	result := map[string]string{}
+	for k, v := range cast {
+		switch t := v.(type) {
+		case float64:
+			result[k] = fmt.Sprintf("%f", t)
+		case string:
+			{
+				result[k] = t
+			}
+		}
+	}
+
+	return result
 }
 
 // FetchDataset extracts the complete raw data from the database.

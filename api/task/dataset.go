@@ -272,13 +272,22 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 		if variableMeta == nil {
 			variableMeta = varsSource[v]
 		}
+		if variableMeta == nil {
+			// assume explanaibility output and create a new variable for it
+			variableMeta = model.NewVariable(i, v, v, v, v, model.StringType, model.StringType,
+				"", []string{"attribute"}, model.VarDistilRoleData, nil, nil, true)
+		}
 		variableMeta.Index = i
 		variableMeta.SuggestedTypes = nil
 		varsNewDataset[i] = variableMeta
 
 		variableClassification := varsSource[v]
-		variableClassification.Index = i
-		varsClassification[i] = variableClassification
+		if variableClassification != nil {
+			variableClassification.Index = i
+			varsClassification[i] = variableClassification
+		} else {
+			varsClassification[i] = variableMeta
+		}
 	}
 	metaDisk.GetMainDataResource().Variables = varsNewDataset
 
