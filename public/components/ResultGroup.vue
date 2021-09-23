@@ -454,7 +454,7 @@ export default Vue.extend({
       return routeGetters.getRouteOpenSolutions(this.$store);
     },
     isRoc(): boolean {
-      return "ROC AUC" === this.scores[0]?.label;
+      return this.scores ? "ROC AUC" === this.scores[0]?.label : false;
     },
   },
   mounted() {

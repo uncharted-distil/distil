@@ -104,7 +104,11 @@
               :ignore-highlights="ignoreHighlights"
               :instance-name="instanceName"
               :dataset-name="dataset"
-              :geo-enabled="enableColorScales && geoVariableExists"
+              :geo-enabled="
+                enableColorScales &&
+                geoVariableExists &&
+                !disabledColorScales.get(summary.key)
+              "
               :include="include"
               @facet-click="onFacetCategoryClick"
               @type-change="onTypeChange"
@@ -124,7 +128,11 @@
               :ignore-highlights="ignoreHighlights"
               :instance-name="instanceName"
               :include="include"
-              :geo-enabled="enableColorScales && geoVariableExists"
+              :geo-enabled="
+                enableColorScales &&
+                geoVariableExists &&
+                !disabledColorScales.get(summary.key)
+              "
               @facet-click="onFacetClick"
               @range-change="onRangeChange"
               @type-change="onTypeChange"
@@ -143,7 +151,11 @@
               :ignore-highlights="ignoreHighlights"
               :instance-name="instanceName"
               :include="include"
-              :geo-enabled="enableColorScales && geoVariableExists"
+              :geo-enabled="
+                enableColorScales &&
+                geoVariableExists &&
+                !disabledColorScales.get(summary.key)
+              "
               @facet-click="onFacetCategoryClick"
               @type-change="onTypeChange"
             />
@@ -161,7 +173,11 @@
               :ignore-highlights="ignoreHighlights"
               :instance-name="instanceName"
               :include="include"
-              :geo-enabled="enableColorScales && geoVariableExists"
+              :geo-enabled="
+                enableColorScales &&
+                geoVariableExists &&
+                !disabledColorScales.get(summary.key)
+              "
               @numerical-click="onNumericalClick"
               @range-change="onRangeChange"
               @facet-click="onFacetClick"
@@ -257,6 +273,10 @@ export default Vue.extend({
   },
 
   props: {
+    disabledColorScales: {
+      type: Map,
+      default: () => new Map(),
+    }, // this prop is used with the hide / display feature for data explorer
     enableHighlighting: Boolean,
     enableSearch: Boolean,
     enableTitle: Boolean,
