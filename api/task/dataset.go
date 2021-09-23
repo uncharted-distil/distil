@@ -244,7 +244,7 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 	}
 
 	// extract the data from the database (result + base)
-	data, err := dataStorage.FetchResultDataset(predictionDataset, predictionDS.StorageName, targetName, featuresExpanded, resultURI)
+	data, err := dataStorage.FetchResultDataset(predictionDataset, predictionDS.StorageName, targetName, featuresExpanded, resultURI, true)
 	if err != nil {
 		return "", err
 	}
