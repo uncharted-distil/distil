@@ -218,6 +218,8 @@ github.com/uncharted-distil/distil-compute v0.0.0-20210915161427-ace77c82e531 h1
 github.com/uncharted-distil/distil-compute v0.0.0-20210915161427-ace77c82e531/go.mod h1:iFA7B2kb+WJfkzukdwfZJVY3o/ZFEjHPsA8k2N6I+B8=
 github.com/uncharted-distil/distil-image-upscale v0.0.0-20210223142454-e2adf2b3dbb6 h1:s0flWfQg2N219KLjBM4cpBKt5Bh9TC2yLhOYCSxUAoM=
 github.com/uncharted-distil/distil-image-upscale v0.0.0-20210223142454-e2adf2b3dbb6/go.mod h1:Xhb77n2q8yDvcVS3Mvw0XlpdNMiFsL+vOlvoe556ivc=
+github.com/uncharted-distil/distil-image-upscale v0.0.0-20210923132226-8eaee866ebdb h1:wDsXsrF8qM34nLeQ9xW+zbEdRNATk5sgOwuwCTrZmvY=
+github.com/uncharted-distil/distil-image-upscale v0.0.0-20210923132226-8eaee866ebdb/go.mod h1:Xhb77n2q8yDvcVS3Mvw0XlpdNMiFsL+vOlvoe556ivc=
 github.com/uncharted-distil/gdal v0.0.0-20200504224203-25f2e6a0dc2a h1:BPJrlnjdhxMBrJWiU4/Gl3PVdCUlY9JspWFTJ9UVO0Y=
 github.com/uncharted-distil/gdal v0.0.0-20200504224203-25f2e6a0dc2a/go.mod h1:L8AZAnu0MT3E5I3WPNTo5BZaT5b3q21TrX1U9R9+/9E=
 github.com/unchartedsoftware/plog v0.0.0-20170413154239-34d2bbd3c0a9/go.mod h1:PrytgQ5GjTc6Z5/pbL5vj1UhD716wDobDeimrd7lRKY=

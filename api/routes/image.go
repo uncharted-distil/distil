@@ -29,6 +29,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
+	c_util "github.com/uncharted-distil/distil-image-upscale/c_util"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util"
@@ -44,6 +45,11 @@ func ImageHandler(ctor api.MetadataStorageCtor, config *env.Config) func(http.Re
 
 		// check if a thumbnail is requested
 		isThumbnail, err := strconv.ParseBool(pat.Param(r, "is-thumbnail"))
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		scale, err := strconv.ParseInt(pat.Param(r, "scale"), 10, 32)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -97,7 +103,30 @@ func ImageHandler(ctor api.MetadataStorageCtor, config *env.Config) func(http.Re
 			}
 			data = imageBytes
 		}
-
+		if scale > 0 && config.ShouldScaleImages {
+			if scale > 3 {
+				// dont allow upscaling past factor of 6
+				scale = 3
+			}
+			img, _, err := image.Decode(bytes.NewReader(data))
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			dimensions := img.Bounds()
+			rgbaImg := image.NewRGBA(image.Rect(0, 0, dimensions.Max.X, dimensions.Max.Y))
+			draw.Draw(rgbaImg, image.Rect(0, 0, dimensions.Max.X, dimensions.Max.Y), img, img.Bounds().Min, draw.Src)
+			// multiple passes for increasing scale dramatically
+			for i := 0; i < int(scale); i++ {
+				rgbaImg = c_util.UpscaleImage(rgbaImg, c_util.GetModelType(config.ModelType))
+				imageBytes, err := util.ImageToJPEG(rgbaImg)
+				if err != nil {
+					handleError(w, err)
+					return
+				}
+				data = imageBytes
+			}
+		}
 		_, err = w.Write(data)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "failed to write image resource bytes"))

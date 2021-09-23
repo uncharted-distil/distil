@@ -437,6 +437,7 @@ export default Vue.extend({
         await datasetActions.fetchImage(this.$store, {
           dataset: this.dataset,
           url: this.selectedImageUrl,
+          scale: imageOptions.scale,
         });
       }
     },
