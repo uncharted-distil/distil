@@ -58,6 +58,7 @@
         searchedActiveVariables &&
         searchedActiveVariables.length > numRowsPerPage
       "
+      :disabled-color-scales="disabledColorScales"
       :summaries="activeSummaries"
       :dataset-name="dataset"
       @search="onSearch"
@@ -158,6 +159,18 @@ export default Vue.extend({
         ExplorerStateNames.SELECT_VIEW
       );
     },
+    disabledColorScales(): Map<string, boolean> {
+      const result = new Map();
+      // if footer is disabled there is no hide/display feature
+      if (!this.enableFooter) {
+        return result;
+      }
+      // check if the variable is in the state of "display"
+      this.variables.forEach((v) => {
+        result.set(v.key, !this.isExplore(v.key));
+      });
+      return result;
+    },
     isResultView(): boolean {
       return (
         routeGetters.getDataExplorerState(this.$store) ===
@@ -221,7 +234,9 @@ export default Vue.extend({
     searchedActiveVariables(): Variable[] {
       return searchVariables(this.activeVariables, this.search);
     },
-
+    colorScaleVar(): string {
+      return routeGetters.getColorScaleVariable(this.$store);
+    },
     activeSummaries(): VariableSummary[] {
       const searchedMap = new Map(
         this.searchedActiveVariables.map((v, idx) => {
@@ -506,6 +521,9 @@ export default Vue.extend({
       const args = {} as RouteArgs;
       if (this.isExplore(variable)) {
         args.explore = this.explore.filter((v) => v !== variable).join(",");
+        if (variable === this.colorScaleVar) {
+          args.colorScaleVariable = "";
+        }
       } else {
         args.explore = this.explore.concat([variable]).join(",");
       }
