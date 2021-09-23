@@ -32,6 +32,7 @@ export SUMMARY_ENABLED=false # no duke summarization on ingest
 export FEATURIZATION_ENABLED=true # featurize remote sensing imagery on ingest
 export CLUSTERING_KMEANS=true # 'true' if kmeans should be used for clustering 'false' if we should use hdbscan
 export TILE_REQUEST_URL=https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}.png
+export INGEST_SAMPLE_ROW_LIMIT=200000
 # export MAX_TRAINING_ROWS=500
 # export MAX_TEST_ROWS=500
 
