@@ -75,7 +75,6 @@ import { JoinPair } from "../util/data";
 import { getters as routeGetters } from "../store/route/module";
 import { Variable } from "../store/dataset/index";
 import { AccuracyData, UnitTypes } from "../util/data";
-import vueSlider from "vue-slider-component";
 import { DATE_TIME_TYPE, isGeoLocatedType, isNumericType } from "../util/types";
 import { overlayRouteEntry } from "../util/routes";
 enum TimeUnits {
@@ -91,9 +90,6 @@ enum DistanceUnits {
 
 export default Vue.extend({
   name: "JoinAccuracyModal",
-  components: {
-    vueSlider,
-  },
   data() {
     return {
       accuracyData: [] as AccuracyData[],
