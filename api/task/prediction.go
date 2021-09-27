@@ -139,10 +139,10 @@ func findMissingColumns(sourceHeaderNames []string, predictionHeaderNames []stri
 	result := map[int]bool{}
 	predVarMap := map[string]bool{}
 	for _, v := range predictionHeaderNames {
-		predVarMap[v] = true
+		predVarMap[strings.ToLower(v)] = true
 	}
 	for i, hn := range sourceHeaderNames {
-		if !predVarMap[hn] {
+		if !predVarMap[strings.ToLower(hn)] {
 			result[i] = true
 		}
 	}
@@ -802,6 +802,9 @@ func augmentPredictionDataset(csvData [][]string, target *model.Variable,
 				predictVariablesMap[i] = -1
 				newPredictionFields[i] = model.NewVariable(newFieldIndex, pv, pv, pv, pv, model.StringType,
 					model.StringType, "", []string{model.RoleAttribute}, model.VarDistilRoleData, nil, sourceVariables, true)
+			}
+			if pv == model.D3MIndexFieldName {
+				addIndex = false
 			}
 		}
 	} else {
