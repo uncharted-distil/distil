@@ -124,6 +124,7 @@ export class EventList {
   static readonly LABEL = {
     ANNOTATION_EVENT: "annotation",
     SELECT_ALL_EVENT: "select-all",
+    OPEN_SAVE_MODAL_EVENT: "label-open-save-modal-event",
     SAVE_EVENT: "label-save-dataset-event",
     EXPORT_EVENT: "label-export-dataset-event",
     APPLY_EVENT: "search-similar",
