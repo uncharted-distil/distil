@@ -219,7 +219,7 @@ func preparePrefilteringDataset(outputFolder string, sourceDataset *api.Dataset,
 	}
 
 	// update it
-	err = dsDisk.UpdateOnDisk(sourceDataset, data, false)
+	err = dsDisk.UpdateOnDisk(sourceDataset, data, false, true)
 	if err != nil {
 		return nil, err
 	}

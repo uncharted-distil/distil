@@ -377,7 +377,7 @@ func joinPrefeaturized(dataStorage api.DataStorage, metaStorage api.MetadataStor
 	}
 
 	// update the base dataset with the changes and write the updated data to disk
-	err = diskDataset.UpdateRawData(sourceVarMap, prefeaturizedUpdates, false)
+	err = diskDataset.UpdateRawData(sourceVarMap, prefeaturizedUpdates, false, true)
 	if err != nil {
 		return "", nil, err
 	}
