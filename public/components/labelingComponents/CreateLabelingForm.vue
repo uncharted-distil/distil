@@ -65,7 +65,7 @@ export default Vue.extend({
       return circleSpinnerHTML();
     },
     saveEvent(): string {
-      return EventList.LABEL.SAVE_EVENT;
+      return EventList.LABEL.OPEN_SAVE_MODAL_EVENT;
     },
     applyEvent(): string {
       return EventList.LABEL.APPLY_EVENT;

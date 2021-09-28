@@ -269,6 +269,13 @@ export const LABEL_EVENT_HANDLERS = {
     dataView.selectAll();
   },
   /**
+   * open-save-modal-event handler opens the modal that allows the user to save the label dataset
+   */
+  [EventList.LABEL.OPEN_SAVE_MODAL_EVENT]: function (): void {
+    const self = (this as unknown) as DataExplorerRef;
+    self.$bvModal.show("save-dataset-modal");
+  },
+  /**
    * onSaveDataset calls the backend and saves the dataset
    * this removes the clone property for a dataset so if the user tries to label they
    * will have to create a new label

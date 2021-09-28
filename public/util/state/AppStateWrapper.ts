@@ -592,6 +592,9 @@ export class PredictViewState implements BaseState {
         });
         router.push(entry).catch((err) => console.warn(err));
       }
+      datasetActions.fetchMultiBandCombinations(store, {
+        dataset: routeGetters.getRouteDataset(store),
+      });
     }
     await viewActions.fetchPredictionsData(store);
     datasetActions.fetchClusters(store, { dataset });
@@ -713,6 +716,9 @@ export class LabelViewState implements BaseState {
   async init(): Promise<void> {
     await this.fetchData();
     await this.fetchMapBaseline();
+    datasetActions.fetchMultiBandCombinations(store, {
+      dataset: routeGetters.getRouteDataset(store),
+    });
     return;
   }
   fetchVariables(): Promise<unknown> {
