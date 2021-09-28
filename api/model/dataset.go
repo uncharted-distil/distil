@@ -140,14 +140,14 @@ func UpdateDiskDataset(ds *Dataset, data [][]string) error {
 	if err != nil {
 		return err
 	}
-	return dsDisk.UpdateOnDisk(ds, data, false)
+	return dsDisk.UpdateOnDisk(ds, data, false, true)
 }
 
 // UpdateOnDisk updates a disk dataset to have the new and updated data.
-func (d *DiskDataset) UpdateOnDisk(ds *Dataset, data [][]string, updateImmutable bool) error {
+func (d *DiskDataset) UpdateOnDisk(ds *Dataset, data [][]string, updateImmutable bool, filterNotFound bool) error {
 	// use the header row to determine the variables to update
 	varMap := MapVariables(ds.Variables, func(variable *model.Variable) string { return variable.HeaderName })
-	err := d.UpdateRawData(varMap, data, updateImmutable)
+	err := d.UpdateRawData(varMap, data, updateImmutable, filterNotFound)
 	if err != nil {
 		return err
 	}
@@ -161,7 +161,7 @@ func (d *DiskDataset) UpdateOnDisk(ds *Dataset, data [][]string, updateImmutable
 }
 
 // UpdateRawData updates the data in a disk dataset but does not save it.
-func (d *DiskDataset) UpdateRawData(varMap map[string]*model.Variable, data [][]string, updateImmutable bool) error {
+func (d *DiskDataset) UpdateRawData(varMap map[string]*model.Variable, data [][]string, updateImmutable bool, filterNotFound bool) error {
 	d3mIndexIndex := -1
 	updates := map[string]map[string]string{}
 	headerMap := map[string]int{}
@@ -196,7 +196,7 @@ func (d *DiskDataset) UpdateRawData(varMap map[string]*model.Variable, data [][]
 		}
 	}
 
-	err := d.Update(updates, true)
+	err := d.Update(updates, filterNotFound)
 	if err != nil {
 		return err
 	}

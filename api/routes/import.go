@@ -21,6 +21,7 @@ import (
 	"math"
 	"net/http"
 	"path"
+	"strings"
 
 	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
@@ -135,11 +136,11 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 					} else if originalLearningDataset != "" {
 						ingestSteps.SkipFeaturization = true
 						sourceLearningDataset = originalLearningDataset
-						updateDatasetID = joinedDataset["id"].(string)
+						updateDatasetID = strings.Join([]string{originalDataset["id"].(string), joinedDataset["id"].(string)}, "-")
 					} else if joinedLearningDataset != "" {
 						ingestSteps.SkipFeaturization = true
 						sourceLearningDataset = joinedLearningDataset
-						updateDatasetID = originalDataset["id"].(string)
+						updateDatasetID = strings.Join([]string{originalDataset["id"].(string), joinedDataset["id"].(string)}, "-")
 					}
 
 					// combine the origin and joined dateset into an array of structs
@@ -532,32 +533,33 @@ func syncPrefeaturizedDataset(datasetID string, updateDatasetID string, sourceLe
 	if err != nil {
 		return err
 	}
-
-	dsUpdate, err := metaStorage.FetchDataset(updateDatasetID, true, true, true)
-	if err != nil {
-		return err
-	}
-
+	// this is the join folder created before this ingest task
+	dsUpdateLearningFolder := env.ResolvePath(metadata.Augmented, updateDatasetID)
 	// TODO: CHECK UNIQUENESS!!!!
 	joinedLearningDataset := task.CreateFeaturizedDatasetID(datasetID)
 	joinedLearningDataset = env.ResolvePath(ds.Source, joinedLearningDataset)
-
+	// copy prefeaturized data from the original source to the joined folder
 	dsDisk, err := task.CopyDiskDataset(sourceLearningDataset, joinedLearningDataset, ds.ID, ds.StorageName)
 	if err != nil {
 		return err
 	}
 	log.Infof("copied prefeaturized data to '%s'", joinedLearningDataset)
-
+	// load the recently copied prefeaturized dataset from the original to join as the join's FeaturizedDataset
+	dsDisk.FeaturizedDataset, err = api.LoadDiskDatasetFromFolder(joinedLearningDataset)
+	if err != nil {
+		return err
+	}
 	// sync the dataset on disk
 	// read the unfeaturized dataset from disk
-	dsDiskUpdate, err := api.LoadDiskDatasetFromFolder(dsUpdate.GetLearningFolder())
+	dsDiskUpdate, err := api.LoadDiskDatasetFromFolder(dsUpdateLearningFolder)
 	if err != nil {
 		return err
 	}
 
 	// update the featurized dataset using the unfeaturized data
-	log.Infof("updating dataset on disk using data from '%s'", dsUpdate.GetLearningFolder())
-	err = dsDisk.UpdateOnDisk(ds, dsDiskUpdate.Dataset.Data, true)
+	log.Infof("updating dataset on disk using data from '%s'", dsUpdateLearningFolder)
+	// do not filter dataset by updates
+	err = dsDisk.UpdateOnDisk(ds, dsDiskUpdate.Dataset.Data, true, false)
 	if err != nil {
 		return err
 	}
