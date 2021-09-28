@@ -564,7 +564,9 @@ func (s *Storage) buildResultQueryFilters(dataset string, storageName string, re
 		return wheresCombined, params, nil
 	}
 
-	for _, filterSet := range filterParams.Highlights {
+	filtersComplete := append(filterParams.Highlights, filterParams.Filters...)
+
+	for _, filterSet := range filtersComplete {
 		// pull filters generated against the result facet out for special handling
 		filters, err := splitFilters(filterSet)
 		if err != nil {
