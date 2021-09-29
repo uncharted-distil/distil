@@ -11,6 +11,7 @@ require (
 	github.com/google/go-cmp v0.5.2 // indirect
 	github.com/gorilla/websocket v1.4.2
 	github.com/h2non/filetype v1.0.12
+	github.com/hashicorp/golang-lru v0.5.4
 	github.com/jackc/pgconn v1.6.1
 	github.com/jackc/pgproto3/v2 v2.0.2
 	github.com/jackc/pgtype v1.4.0

@@ -32,6 +32,7 @@ import (
 	"github.com/uncharted-distil/distil/api/env"
 	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/util"
+	"github.com/uncharted-distil/distil/api/util/imagery"
 )
 
 const (
@@ -528,7 +529,7 @@ func copyAndSplitMultiBandImage(imageFilename string, imageType string, outputFo
 		files = append(files, targetImageFilename)
 	} else {
 		// multiband so need to split it into separate files
-		files, err = util.SplitMultiBandImage(dataset, outputFolder, eurosatBandMapping)
+		files, err = imagery.SplitMultiBandImage(dataset, outputFolder, eurosatBandMapping)
 		if err != nil {
 			return nil, err
 		}

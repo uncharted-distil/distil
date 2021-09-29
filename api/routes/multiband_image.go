@@ -30,7 +30,7 @@ import (
 	c_util "github.com/uncharted-distil/distil-image-upscale/c_util"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
-	"github.com/uncharted-distil/distil/api/util"
+	"github.com/uncharted-distil/distil/api/util/imagery"
 	"goji.io/v3/pat"
 )
 
@@ -56,7 +56,7 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, dataCtor api.DataStorag
 			handleError(w, err)
 			return
 		}
-		imageScale := util.ImageScale{}
+		imageScale := imagery.ImageScale{}
 		// get metadata client
 		storage, err := ctor()
 		if err != nil {
@@ -88,7 +88,7 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, dataCtor api.DataStorag
 				break
 			}
 		}
-		options := util.Options{Gain: 2.5, Gamma: 2.2, GainL: 1.0, Scale: 0} // default options for color correction
+		options := imagery.Options{Gain: 2.5, Gamma: 2.2, GainL: 1.0, Scale: 0} // default options for color correction
 		if paramOption != "" {
 			err := json.Unmarshal([]byte(paramOption), &options)
 			if err != nil {
@@ -97,7 +97,7 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, dataCtor api.DataStorag
 			}
 		}
 		if isThumbnail {
-			imageScale = util.ImageScale{Width: ThumbnailDimensions, Height: ThumbnailDimensions}
+			imageScale = imagery.ImageScale{Width: ThumbnailDimensions, Height: ThumbnailDimensions}
 			// if thumbnail scale should be 0
 			options.Scale = 0
 		}
@@ -109,7 +109,7 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, dataCtor api.DataStorag
 			return
 		}
 
-		img, err := util.ImageFromCombination(sourcePath, bandMapping[imageID], bandCombo, imageScale, options)
+		img, err := imagery.ImageFromCombination(sourcePath, bandMapping[imageID], bandCombo, imageScale, options)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -124,7 +124,7 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, dataCtor api.DataStorag
 				img = c_util.UpscaleImage(img, c_util.GetModelType(config.ModelType))
 			}
 		}
-		imageBytes, err := util.ImageToJPEG(img)
+		imageBytes, err := imagery.ImageToJPEG(img)
 		if err != nil {
 			handleError(w, err)
 			return

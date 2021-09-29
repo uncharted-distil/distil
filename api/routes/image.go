@@ -32,7 +32,7 @@ import (
 	c_util "github.com/uncharted-distil/distil-image-upscale/c_util"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
-	"github.com/uncharted-distil/distil/api/util"
+	"github.com/uncharted-distil/distil/api/util/imagery"
 	"goji.io/v3/pat"
 )
 
@@ -96,7 +96,7 @@ func ImageHandler(ctor api.MetadataStorageCtor, config *env.Config) func(http.Re
 			img = resize.Thumbnail(ThumbnailDimensions, ThumbnailDimensions, img, resize.Lanczos3)
 			rgbaImg := image.NewRGBA(image.Rect(0, 0, ThumbnailDimensions, ThumbnailDimensions))
 			draw.Draw(rgbaImg, image.Rect(0, 0, ThumbnailDimensions, ThumbnailDimensions), img, img.Bounds().Min, draw.Src)
-			imageBytes, err := util.ImageToJPEG(rgbaImg)
+			imageBytes, err := imagery.ImageToJPEG(rgbaImg)
 			if err != nil {
 				handleError(w, err)
 				return
@@ -119,7 +119,7 @@ func ImageHandler(ctor api.MetadataStorageCtor, config *env.Config) func(http.Re
 			// multiple passes for increasing scale dramatically
 			for i := 0; i < int(scale); i++ {
 				rgbaImg = c_util.UpscaleImage(rgbaImg, c_util.GetModelType(config.ModelType))
-				imageBytes, err := util.ImageToJPEG(rgbaImg)
+				imageBytes, err := imagery.ImageToJPEG(rgbaImg)
 				if err != nil {
 					handleError(w, err)
 					return

@@ -13,7 +13,7 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package util
+package imagery
 
 import (
 	"image"
@@ -38,13 +38,13 @@ func TestImageFromCombination(t *testing.T) {
 		"b11": "S2A_MSIL2A_20171121T112351_79_21_B11.tif",
 		"b12": "S2A_MSIL2A_20171121T112351_79_21_B12.tif",
 	}
-	composedImage, err := ImageFromCombination("test/bigearthnet", bandMap, NaturalColors, ImageScale{})
+	composedImage, err := ImageFromCombination("../test/bigearthnet", bandMap, NaturalColors, ImageScale{})
 	assert.NoError(t, err)
 	assert.NotNil(t, composedImage)
 	assert.True(t, len(composedImage.Pix) > 0)
 
 	// compare to gold standard image
-	testImage, err := LoadPNGImage("test/4_3_2.png")
+	testImage, err := LoadPNGImage("../test/4_3_2.png")
 	if err != nil {
 		log.Error(err)
 	}
@@ -54,16 +54,16 @@ func TestImageFromCombination(t *testing.T) {
 func TestImageFromBandsTrueColor(t *testing.T) {
 	// Test basic loading - all image sources are the same size.
 	composedImage, err := ImageFromBands([]string{
-		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B04.tif",
-		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B03.tif",
-		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B02.tif",
+		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B04.tif",
+		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B03.tif",
+		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B02.tif",
 	}, nil, nil, ImageScale{})
 	assert.NoError(t, err)
 	assert.NotNil(t, composedImage)
 	assert.True(t, len(composedImage.Pix) > 0)
 
 	// compare to gold standard image
-	testImage, err := LoadPNGImage("test/4_3_2.png")
+	testImage, err := LoadPNGImage("../test/4_3_2.png")
 	if err != nil {
 		log.Error(err)
 	}
@@ -74,16 +74,16 @@ func TestImageFromBandsResize(t *testing.T) {
 	// Tests loading data from sources that are 3 different sizes in terms
 	// of pixels.
 	composedImage, err := ImageFromBands([]string{
-		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B12.tif",
-		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B08.tif",
-		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B04.tif",
+		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B12.tif",
+		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B08.tif",
+		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B04.tif",
 	}, nil, nil, ImageScale{})
 	assert.NoError(t, err)
 	assert.NotNil(t, composedImage)
 	assert.True(t, len(composedImage.Pix) > 0)
 
 	// compare to gold standard image
-	testImage, err := LoadPNGImage("test/12_8_4.png")
+	testImage, err := LoadPNGImage("../test/12_8_4.png")
 	if err != nil {
 		log.Error(err)
 	}
@@ -94,15 +94,15 @@ func TestImageFromRamp(t *testing.T) {
 	// Tests loading data from sources that are 3 different sizes in terms
 	// of pixels.
 	composedImage, err := ImageFromBands([]string{
-		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B08.tif",
-		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B11.tif",
+		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B08.tif",
+		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B11.tif",
 	}, BlueYellowBrownRamp, NormalizingTransform, ImageScale{})
 	assert.NoError(t, err)
 	assert.NotNil(t, composedImage)
 	assert.True(t, len(composedImage.Pix) > 0)
 
 	// compare to gold standard image
-	testImage, err := LoadPNGImage("test/8_11_ramp.png")
+	testImage, err := LoadPNGImage("../test/8_11_ramp.png")
 	if err != nil {
 		log.Error(err)
 	}
@@ -113,15 +113,15 @@ func TestImageFromRampClamped(t *testing.T) {
 	// Tests loading data from sources that are 3 different sizes in terms
 	// of pixels.
 	composedImage, err := ImageFromBands([]string{
-		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B08.tif",
-		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B04.tif",
+		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B08.tif",
+		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B04.tif",
 	}, RedYellowGreenRamp, ClampedNormalizingTransform, ImageScale{})
 	assert.NoError(t, err)
 	assert.NotNil(t, composedImage)
 	assert.True(t, len(composedImage.Pix) > 0)
 
 	// compare to gold standard image
-	testImage, err := LoadPNGImage("test/8_4_ramp.png")
+	testImage, err := LoadPNGImage("../test/8_4_ramp.png")
 	if err != nil {
 		log.Error(err)
 	}
@@ -132,16 +132,16 @@ func TestImageFromBandsMissing(t *testing.T) {
 	// Tests handling the case where one of the bands contains bad data.  The missing
 	// band will be mapped to grey.
 	composedImage, err := ImageFromBands([]string{
-		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B12.tif",
-		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B08.tif",
-		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B04.tif",
+		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B12.tif",
+		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B08.tif",
+		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B04.tif",
 	}, nil, nil, ImageScale{})
 	assert.NoError(t, err)
 	assert.NotNil(t, composedImage)
 	assert.True(t, len(composedImage.Pix) > 0)
 
 	// compare to gold standard image
-	testImage, err := LoadPNGImage("test/12_8_4.png")
+	testImage, err := LoadPNGImage("../test/12_8_4.png")
 	if err != nil {
 		log.Error(err)
 	}
@@ -154,9 +154,9 @@ func TestSaveAndLoadPng(t *testing.T) {
 
 	// create a 4x4 image with incrementing pixels values.
 	image := generateTestImage(4, 4)
-	assert.NoError(t, SavePNGImage(image, "test/test.png"))
+	assert.NoError(t, SavePNGImage(image, "../test/test.png"))
 
-	resultImage, err := LoadPNGImage("test/test.png")
+	resultImage, err := LoadPNGImage("../test/test.png")
 	assert.NoError(t, err)
 	assert.Equal(t, image, resultImage)
 }

@@ -16,13 +16,14 @@
 package routes
 
 import (
-	"github.com/pkg/errors"
-	api "github.com/uncharted-distil/distil/api/model"
-	"github.com/uncharted-distil/distil/api/util"
-	"goji.io/v3/pat"
 	"net/http"
 	"net/url"
 	"strconv"
+
+	"github.com/pkg/errors"
+	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/util/imagery"
+	"goji.io/v3/pat"
 )
 
 const (
@@ -74,9 +75,9 @@ func ImageAttentionHandler(solutionCtor api.SolutionStorageCtor, metaCtor api.Me
 			return
 		}
 		for _, v := range data {
-			scaledMatrix := util.ScaleConfidenceMatrix(ThumbnailDimensions, ThumbnailDimensions, &v.GradCAM)
-			filter := util.ConfidenceMatrixToImage(scaledMatrix, util.GetColorScale(colorScale), uint8(opacity))
-			imageBytes, err := util.ImageToPNG(filter)
+			scaledMatrix := imagery.ScaleConfidenceMatrix(ThumbnailDimensions, ThumbnailDimensions, &v.GradCAM)
+			filter := imagery.ConfidenceMatrixToImage(scaledMatrix, imagery.GetColorScale(colorScale), uint8(opacity))
+			imageBytes, err := imagery.ImageToPNG(filter)
 			if err != nil {
 				handleError(w, err)
 				return

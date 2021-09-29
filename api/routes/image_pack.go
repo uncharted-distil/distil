@@ -31,7 +31,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
-	"github.com/uncharted-distil/distil/api/util"
+	"github.com/uncharted-distil/distil/api/util/imagery"
 	log "github.com/unchartedsoftware/plog"
 )
 
@@ -180,7 +180,7 @@ func getImages(imagePackRequest *ImagePackRequest, threadID int, numThreads int,
 		img = resize.Thumbnail(ThumbnailDimensions, ThumbnailDimensions, img, resize.Lanczos3)
 		rgbaImg := image.NewRGBA(image.Rect(0, 0, ThumbnailDimensions, ThumbnailDimensions))
 		draw.Draw(rgbaImg, image.Rect(0, 0, ThumbnailDimensions, ThumbnailDimensions), img, img.Bounds().Min, draw.Src)
-		imageBytes, err := util.ImageToJPEG(rgbaImg)
+		imageBytes, err := imagery.ImageToJPEG(rgbaImg)
 		if err != nil {
 			handleThreadError(&errorIDs, &imageID, &err)
 			continue
@@ -224,9 +224,9 @@ func getMultiBandImages(multiBandPackRequest *ImagePackRequest, threadID int, nu
 			break
 		}
 	}
-	options := util.Options{Gain: 2.5, Gamma: 2.2, GainL: 1.0, Scale: 0} // default options for color correction
+	options := imagery.Options{Gain: 2.5, Gamma: 2.2, GainL: 1.0, Scale: 0} // default options for color correction
 
-	imageScale := util.ImageScale{Width: ThumbnailDimensions, Height: ThumbnailDimensions}
+	imageScale := imagery.ImageScale{Width: ThumbnailDimensions, Height: ThumbnailDimensions}
 
 	// get the image file names
 	imageIDs := []string{}
@@ -245,13 +245,13 @@ func getMultiBandImages(multiBandPackRequest *ImagePackRequest, threadID int, nu
 	for i := threadID; i < len(multiBandPackRequest.ImageIDs); i += numThreads {
 		imageID := multiBandPackRequest.ImageIDs[i]
 
-		img, err := util.ImageFromCombination(sourcePath, bandMapping[imageID], multiBandPackRequest.Band, imageScale, options)
+		img, err := imagery.ImageFromCombination(sourcePath, bandMapping[imageID], multiBandPackRequest.Band, imageScale, options)
 		if err != nil {
 			handleThreadError(&errorIDs, &imageID, &err)
 			continue
 		}
 
-		imageBytes, err := util.ImageToJPEG(img)
+		imageBytes, err := imagery.ImageToJPEG(img)
 		if err != nil {
 			handleThreadError(&errorIDs, &imageID, &err)
 			continue

@@ -25,12 +25,13 @@ import (
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util"
+	"github.com/uncharted-distil/distil/api/util/imagery"
 )
 
 // MultiBandCombinationDesc provides a band combination ID and display name.
 type MultiBandCombinationDesc struct {
-	ID          util.BandCombinationID `json:"id"`
-	DisplayName string                 `json:"displayName"`
+	ID          imagery.BandCombinationID `json:"id"`
+	DisplayName string                    `json:"displayName"`
 }
 
 // ModelMetricDesc provides a scoring ID, display name, and description.
@@ -83,9 +84,9 @@ func IndexDataHandler(ctor api.MetadataStorageCtor) func(http.ResponseWriter, *h
 }
 
 func getBandCombinations() *Combinations {
-	combinationsList := make([]interface{}, len(util.SentinelBandCombinations))
+	combinationsList := make([]interface{}, len(imagery.SentinelBandCombinations))
 	idx := 0
-	for _, value := range util.SentinelBandCombinations {
+	for _, value := range imagery.SentinelBandCombinations {
 		combinationsList[idx] = &MultiBandCombinationDesc{value.ID, value.DisplayName}
 		idx++
 	}

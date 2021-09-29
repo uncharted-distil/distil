@@ -13,7 +13,7 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package util
+package imagery
 
 import (
 	"bytes"
@@ -28,8 +28,10 @@ import (
 	"path"
 	"strings"
 
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/nfnt/resize"
 	"github.com/pkg/errors"
+	"github.com/uncharted-distil/distil/api/env"
 	"github.com/uncharted-distil/gdal"
 	log "github.com/unchartedsoftware/plog"
 )
@@ -86,6 +88,10 @@ const (
 
 	// NSMI identifies a band mapping that display Normalized Soil Moisture Index mapped using an RGB ramp.
 	NSMI = "nsmi"
+)
+
+var (
+	cache *lru.Cache
 )
 
 // BandCombinationID uniquely identifies a band combination
@@ -145,16 +151,21 @@ func init() {
 	}
 }
 
-// ImageFromCombination takes a base datsaet directory, fileID and a band combination label and
+// Initialize sets up the necessary structures for imagery processing.
+func Initialize(config *env.Config) {
+	cache, _ = lru.New(config.MultiBandImageCacheSize)
+}
+
+// ImageFromCombination takes a base dataset directory, fileID and a band combination label and
 // returns a composed image.  NOTE: Currently a bit hardcoded for sentinel-2 data.
 func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, bandCombo string, imageScale ImageScale, options ...Options) (*image.RGBA, error) {
 	// attempt to get the folder file type for the supplied dataset dir from the cache, if
 	// not do the look up
-	bandCombination := BandCombinationID(bandCombo)
+	bandCombination := strings.ToLower(string(BandCombinationID(bandCombo)))
 
 	// map the band files to the inputs
 	filePaths := []string{}
-	if bandCombo, ok := SentinelBandCombinations[strings.ToLower(string(bandCombination))]; ok {
+	if bandCombo, ok := SentinelBandCombinations[bandCombination]; ok {
 		for _, bandLabel := range bandCombo.Mapping {
 			filePaths = append(filePaths, path.Join(datasetDir, bandFileMapping[bandLabel]))
 		}

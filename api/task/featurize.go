@@ -29,6 +29,7 @@ import (
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/util"
+	"github.com/uncharted-distil/distil/api/util/imagery"
 	"github.com/uncharted-distil/distil/api/util/json"
 )
 
@@ -287,7 +288,7 @@ func createGeoboundsField(datasetID string, storageName string, coordinateField 
 	updates := map[string]string{}
 	for _, row := range coordinateData.Values {
 		d3mIndexString := fmt.Sprintf("%.0f", row[d3mIndexIndex].Value.(float64))
-		updates[d3mIndexString] = util.CreatePolygonFromCoordinates(row[coordinateFieldIndex].Value.([]float64))
+		updates[d3mIndexString] = imagery.CreatePolygonFromCoordinates(row[coordinateFieldIndex].Value.([]float64))
 	}
 
 	// update the field data
