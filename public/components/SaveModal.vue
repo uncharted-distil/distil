@@ -197,9 +197,15 @@ export default Vue.extend({
         description: this.saveDescription,
       } as EI.RESULT.SaveInfo);
     },
-    showSuccessModel() {
+    showSuccessModal() {
       this.isSaving = false;
       this.$bvModal.show("save-success-modal");
+    },
+    hideSuccessModal() {
+      this.$bvModal.hide("save-success-modal");
+    },
+    hideSaveForm() {
+      this.$bvModal.hide(this.modalId);
     },
     // ensure required fields are filled out
     validForm() {

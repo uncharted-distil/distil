@@ -147,6 +147,7 @@ import {
 } from "../util/rendering/coordinates";
 import { isGeoLocatedType } from "../util/types";
 import { EventList } from "../util/events";
+import { ExplorerStateNames } from "../util/explorer";
 
 const SINGLE_FIELD = 1;
 const SPLIT_FIELD = 2;
@@ -437,10 +438,21 @@ export default Vue.extend({
         })
       );
     },
-
+    isResultState(): boolean {
+      return (
+        routeGetters.getDataExplorerState(this.$store) ===
+        ExplorerStateNames.RESULT_VIEW
+      );
+    },
+    isPredictState(): boolean {
+      return (
+        routeGetters.getDataExplorerState(this.$store) ===
+        ExplorerStateNames.PREDICTION_VIEW
+      );
+    },
     predictedField(): string {
       const predictions = requestGetters.getActivePredictions(this.$store);
-      if (predictions) {
+      if (predictions && this.isPredictState) {
         return predictions.predictedKey;
       }
 
