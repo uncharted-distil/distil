@@ -87,7 +87,10 @@ export const RESULT_METHODS = {
    */
   async onApplyModel(args: RouteArgs): Promise<void> {
     const self = (this as unknown) as DataExplorerRef;
+    const modal = (self.$refs.saveModel as unknown) as SaveModalRef;
     self.updateRoute(args);
+    modal.hideSuccessModal();
+    modal.hideSaveForm();
     await self.changeStatesByName(ExplorerStateNames.PREDICTION_VIEW);
   },
   /**
@@ -126,7 +129,7 @@ export const RESULT_METHODS = {
       // should probably change UI based on error
       if (!err) {
         const modal = (self.$refs.saveModel as unknown) as SaveModalRef;
-        modal.showSuccessModel();
+        modal.showSuccessModal();
       }
     } catch (err) {
       console.warn(err);
