@@ -39,6 +39,7 @@
 </template>
 
 <script lang="ts">
+import _ from "lodash";
 import Vue from "vue";
 import { EventList } from "../util/events";
 export default Vue.extend({
@@ -110,28 +111,12 @@ export default Vue.extend({
       if (!this.imgSrcs.length) {
         return;
       }
-      const promises = [];
-      this.imgSrcs.forEach((img, i) => {
-        if (!img.complete) {
-          promises.push(
-            new Promise((res, rej) => {
-              this.imgSrcs[i].onload = () => {
-                res(true);
-              };
-              this.imgSrcs[i].onerror = () => {
-                rej();
-              };
-            })
-          );
-          return;
-        }
-        this.draw();
-      });
-      // await until all images are loaded
-      Promise.all(promises).then(() => {
-        this.$nextTick(() => {
+      this.imgSrcs.forEach((img) => {
+        const image = new Image();
+        image.onload = () => {
           this.draw();
-        });
+        };
+        image.src = img.src;
       });
     },
     draw() {

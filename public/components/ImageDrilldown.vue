@@ -193,6 +193,9 @@ export default Vue.extend({
       disableUpscale: false,
       fetchingUpscale: false,
       scale: 0,
+      imgHeight: 0,
+      imgWidth: 0,
+      uniqueTrail: "image-drilldown",
     };
   },
 
@@ -251,8 +254,8 @@ export default Vue.extend({
     },
     image(): HTMLImageElement {
       return (
-        this.files[this.selectedImageUrl] ??
-        this.files[imageId(this.selectedImageUrl)] ??
+        this.files[this.uniqueId] ??
+        this.files[imageId(this.selectedImageUrl) + "/" + this.uniqueTrail] ??
         null
       );
     },
@@ -299,15 +302,15 @@ export default Vue.extend({
     },
     ratio(): number {
       return Math.min(
-        IMAGE_MAX_SIZE / Math.max(this.image?.height, this.image?.width),
+        IMAGE_MAX_SIZE / Math.max(this.imgHeight, this.imgWidth),
         IMAGE_MAX_ZOOM
       );
     },
     height(): number {
-      return this.image?.height * this.ratio;
+      return this.imgHeight * this.ratio;
     },
     width(): number {
-      return this.image?.width * this.ratio;
+      return this.imgWidth * this.ratio;
     },
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
@@ -320,6 +323,9 @@ export default Vue.extend({
         routeGetters.getDataExplorerState(this.$store) ===
         ExplorerStateNames.LABEL_VIEW
       );
+    },
+    uniqueId(): string {
+      return this.selectedImageUrl + "-" + this.uniqueTrail;
     },
   },
 
@@ -370,7 +376,12 @@ export default Vue.extend({
         0,
         Math.min(this.carouselPosition + sideToCycleTo, this.items.length - 1)
       );
-      this.requestImage();
+      this.requestImage({
+        gainL: 1.0,
+        gamma: 2.2,
+        gain: 2.5,
+        scale: this.scale,
+      });
       if (this.hasImageAttention) {
         this.requestFilter();
       }
@@ -405,10 +416,7 @@ export default Vue.extend({
     cleanUp() {
       if (this.isMultiBandImage) {
         this.scale = 0;
-        datasetMutations.removeFile(
-          this.$store,
-          imageId(this.selectedImageUrl)
-        );
+        datasetMutations.removeFile(this.$store, imageId(this.uniqueId));
       }
     },
     async requestFilter() {
@@ -432,6 +440,7 @@ export default Vue.extend({
           bandCombination: this.band,
           isThumbnail: false,
           options: imageOptions,
+          uniqueTrail: this.uniqueTrail,
         });
       } else {
         await datasetActions.fetchImage(this.$store, {
@@ -440,6 +449,9 @@ export default Vue.extend({
           scale: imageOptions.scale,
         });
       }
+      // save as data so when we fetch next image we retain the UI size
+      this.imgHeight = this.image?.height;
+      this.imgWidth = this.image?.width;
     },
   },
 });
