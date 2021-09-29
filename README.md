@@ -84,7 +84,7 @@ distil-auto-ml:
 Pull docker images via [Docker Compose](https://docs.docker.com/compose/):
 
 ```bash
-docker-compose pull
+./update_services.sh
 ```
 
 #### Running the app:
