@@ -162,6 +162,16 @@ func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, 
 	// attempt to get the folder file type for the supplied dataset dir from the cache, if
 	// not do the look up
 	bandCombination := strings.ToLower(string(BandCombinationID(bandCombo)))
+	cacheKey := fmt.Sprintf("%s-%s", datasetDir, bandCombination)
+
+	if cache != nil {
+		if cache.Contains(cacheKey) {
+			cached, ok := cache.Get(cacheKey)
+			if ok {
+				return cached.(*image.RGBA), nil
+			}
+		}
+	}
 
 	// map the band files to the inputs
 	filePaths := []string{}
@@ -169,7 +179,16 @@ func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, 
 		for _, bandLabel := range bandCombo.Mapping {
 			filePaths = append(filePaths, path.Join(datasetDir, bandFileMapping[bandLabel]))
 		}
-		return ImageFromBands(filePaths, bandCombo.Ramp, bandCombo.Transform, imageScale, options...)
+
+		image, err := ImageFromBands(filePaths, bandCombo.Ramp, bandCombo.Transform, imageScale, options...)
+		if err != nil {
+			return nil, err
+		}
+		if cache != nil {
+			cache.Add(cacheKey, image)
+		}
+
+		return image, nil
 	}
 
 	return nil, errors.Errorf("unhandled band combination %s", bandCombination)
