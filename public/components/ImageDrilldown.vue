@@ -254,7 +254,7 @@ export default Vue.extend({
     },
     image(): HTMLImageElement {
       return (
-        this.files[this.selectedImageUrl + "/" + this.uniqueTrail] ??
+        this.files[this.uniqueId] ??
         this.files[imageId(this.selectedImageUrl) + "/" + this.uniqueTrail] ??
         null
       );
@@ -323,6 +323,9 @@ export default Vue.extend({
         routeGetters.getDataExplorerState(this.$store) ===
         ExplorerStateNames.LABEL_VIEW
       );
+    },
+    uniqueId(): string {
+      return this.selectedImageUrl + "-" + this.uniqueTrail;
     },
   },
 
@@ -413,10 +416,7 @@ export default Vue.extend({
     cleanUp() {
       if (this.isMultiBandImage) {
         this.scale = 0;
-        datasetMutations.removeFile(
-          this.$store,
-          imageId(this.selectedImageUrl)
-        );
+        datasetMutations.removeFile(this.$store, imageId(this.uniqueId));
       }
     },
     async requestFilter() {
