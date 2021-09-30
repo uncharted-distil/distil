@@ -86,14 +86,14 @@ export const GENERIC_METHODS = {
     const self = (this as unknown) as DataExplorerRef;
     // reset state
     self.state.resetState();
-    // reset config state
-    self.config.resetConfig(self);
     // get the new state object
     self.setState(getStateFromName(state));
-    // set the config used for action bar, could be used for other configs
-    self.setConfig(getConfigFromName(state));
     // init this is the basic fetches needed to get the information for the state
     await self.state.init();
+    // reset config state
+    self.config.resetConfig(self);
+    // set the config used for action bar, could be used for other configs
+    self.setConfig(getConfigFromName(state));
   },
   /**
    * setBusyState changes the data view from spinner if true to data view components

@@ -481,10 +481,6 @@ const DataExplorer = Vue.extend({
       const route = routeGetters.getRoute(this.$store);
       const entry = overlayRouteEntry(route, { hasGeoData: self.geoVarExists });
       this.$router.push(entry).catch((err) => console.warn(err));
-      this.dataLoading = true;
-      await this.state.fetchMapBaseline();
-      await this.state.fetchData();
-      this.dataLoading = false;
     },
     targetName() {
       const self = (this as unknown) as DataExplorerRef; // because the computes/methods are added in beforeCreate typescript does not work so we cast it to a type here

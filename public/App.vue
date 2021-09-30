@@ -59,9 +59,9 @@ export default Vue.extend({
     NavBar,
   },
   methods: {
-    onExplorerNav(state: ExplorerStateNames) {
+    async onExplorerNav(state: ExplorerStateNames) {
       const dataExplorer = (this.$refs.view as unknown) as DataExplorerRef;
-      dataExplorer.changeStatesByName(state);
+      await dataExplorer.changeStatesByName(state);
     },
   },
   beforeMount() {

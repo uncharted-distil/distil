@@ -135,8 +135,9 @@ export class SelectViewState implements BaseState {
   async init(): Promise<void> {
     await this.fetchVariables();
     await this.fetchMapBaseline();
-    this.fetchVariableSummaries();
-    datasetActions.fetchMultiBandCombinations(store, {
+    // await this.fetchVariableSummaries();
+    await this.fetchData();
+    await datasetActions.fetchMultiBandCombinations(store, {
       dataset: routeGetters.getRouteDataset(store),
     });
     return;
@@ -218,7 +219,7 @@ export class SelectViewState implements BaseState {
   fetchVariableSummaries(): Promise<unknown> {
     const fetchArgs = {
       dataset: routeGetters.getRouteDataset(store),
-      variables: sortVariablesByImportance(this.getSecondaryVariables()),
+      variables: sortVariablesByImportance(this.getVariables()),
       filterParams: routeGetters.getDecodedSolutionRequestFilterParams(store),
       highlights: routeGetters.getDecodedHighlights(store),
       dataMode: routeGetters.getDataMode(store),
@@ -280,6 +281,7 @@ export class ResultViewState implements BaseState {
         target: routeGetters.getRouteTargetVariable(store),
       });
       const solutions = requestGetters.getSolutions(store);
+
       if (solutions && solutions.length) {
         // dont mutate store array
         const sorted = [...solutions].sort((a, b) => {
