@@ -348,6 +348,10 @@ export default Vue.extend({
       }
     },
     band() {
+      // only fetch new image if image drill down is visible
+      if (!this.visible) {
+        return;
+      }
       this.requestImage({
         gainL: 1.0,
         gamma: 2.2,
