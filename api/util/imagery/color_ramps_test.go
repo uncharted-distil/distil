@@ -13,7 +13,7 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package util
+package imagery
 
 import (
 	"image/color"
@@ -32,7 +32,7 @@ func TestRamp(t *testing.T) {
 	image := RampToImage(5, ramp)
 
 	// compare to gold standard image
-	testImage, err := LoadPNGImage("test/ramp_image.png")
+	testImage, err := LoadPNGImage("../test/ramp_image.png")
 	if err != nil {
 		log.Error(err)
 	}

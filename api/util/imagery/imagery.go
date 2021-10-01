@@ -13,7 +13,7 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package util
+package imagery
 
 import (
 	"bytes"
@@ -26,10 +26,13 @@ import (
 	"math"
 	"os"
 	"path"
+	"sort"
 	"strings"
 
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/nfnt/resize"
 	"github.com/pkg/errors"
+	"github.com/uncharted-distil/distil/api/env"
 	"github.com/uncharted-distil/gdal"
 	log "github.com/unchartedsoftware/plog"
 )
@@ -86,6 +89,10 @@ const (
 
 	// NSMI identifies a band mapping that display Normalized Soil Moisture Index mapped using an RGB ramp.
 	NSMI = "nsmi"
+)
+
+var (
+	cache *lru.Cache
 )
 
 // BandCombinationID uniquely identifies a band combination
@@ -145,20 +152,54 @@ func init() {
 	}
 }
 
-// ImageFromCombination takes a base datsaet directory, fileID and a band combination label and
+// Initialize sets up the necessary structures for imagery processing.
+func Initialize(config *env.Config) {
+	log.Infof("initializing imagery utils...")
+	cache, _ = lru.New(config.MultiBandImageCacheSize)
+	log.Infof("imagery utils initialized")
+}
+
+// ImageFromCombination takes a base dataset directory, fileID and a band combination label and
 // returns a composed image.  NOTE: Currently a bit hardcoded for sentinel-2 data.
 func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, bandCombo string, imageScale ImageScale, options ...Options) (*image.RGBA, error) {
 	// attempt to get the folder file type for the supplied dataset dir from the cache, if
 	// not do the look up
-	bandCombination := BandCombinationID(bandCombo)
+	bandCombination := strings.ToLower(string(BandCombinationID(bandCombo)))
+	cacheKey := fmt.Sprintf("%s-%s", datasetDir, bandCombination)
+
+	if cache != nil {
+		// need a constant ordering for the band mapping to prevent incorrect cache lookups
+		bandsMapped := []string{}
+		for bk, bf := range bandFileMapping {
+			bandsMapped = append(bandsMapped, fmt.Sprintf("%s:%s", bk, bf))
+		}
+		sort.Strings(bandsMapped)
+		cacheKey = fmt.Sprintf("%s-%v", cacheKey, bandsMapped)
+
+		if cache.Contains(cacheKey) {
+			cached, ok := cache.Get(cacheKey)
+			if ok {
+				return cached.(*image.RGBA), nil
+			}
+		}
+	}
 
 	// map the band files to the inputs
 	filePaths := []string{}
-	if bandCombo, ok := SentinelBandCombinations[strings.ToLower(string(bandCombination))]; ok {
+	if bandCombo, ok := SentinelBandCombinations[bandCombination]; ok {
 		for _, bandLabel := range bandCombo.Mapping {
 			filePaths = append(filePaths, path.Join(datasetDir, bandFileMapping[bandLabel]))
 		}
-		return ImageFromBands(filePaths, bandCombo.Ramp, bandCombo.Transform, imageScale, options...)
+
+		image, err := ImageFromBands(filePaths, bandCombo.Ramp, bandCombo.Transform, imageScale, options...)
+		if err != nil {
+			return nil, err
+		}
+		if cache != nil {
+			cache.Add(cacheKey, image)
+		}
+
+		return image, nil
 	}
 
 	return nil, errors.Errorf("unhandled band combination %s", bandCombination)

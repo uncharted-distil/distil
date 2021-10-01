@@ -62,6 +62,8 @@ type Config struct {
 	MinTrainingRows            int     `env:"MIN_TRAINING_ROWS" envDefault:"100"`
 	MinTestRows                int     `env:"MIN_TEST_ROWS" envDefault:"100"`
 	ModelType                  int     `env:"MODEL_TYPE" envDefault:"1"` // 0 is NOISE_CANCEL x2, 1 is GAN x4
+	MultiBandImageCacheEnabled bool    `env:"MULTI_BAND_IMAGE_CACHE_ENABLED" envDefault:"true"`
+	MultiBandImageCacheSize    int     `env:"MULTI_BAND_IMAGE_CACHE_SIZE" envDefault:"200"`
 	OutlierDetectionEnabled    bool    `env:"OUTLIER_DETECTION_ENABLED" envDefault:"true"`
 	PipelineCacheEnabled       bool    `env:"PIPELINE_CACHE_ENABLED" envDefault:"true"`
 	PipelineCacheFilename      string  `env:"PIPELINE_CACHE_FILENAME" envDefault:"cache.bin"`
