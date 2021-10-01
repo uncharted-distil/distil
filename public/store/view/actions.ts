@@ -720,9 +720,8 @@ export const actions = {
     const solutionID = routeGetters.getRouteSolutionId(store);
 
     // fetch new state
-    await fetchVariables(context, {
-      dataset: dataset,
-    });
+    await datasetActions.fetchVariables(store, { dataset });
+
     await modelActions.fetchModels(store); // Fetch saved models.
 
     // These are long running processes we won't wait on
