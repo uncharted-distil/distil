@@ -46,6 +46,7 @@ import (
 	"github.com/uncharted-distil/distil/api/service"
 	"github.com/uncharted-distil/distil/api/task"
 	"github.com/uncharted-distil/distil/api/util"
+	"github.com/uncharted-distil/distil/api/util/imagery"
 	"github.com/uncharted-distil/distil/api/ws"
 )
 
@@ -121,6 +122,10 @@ func main() {
 
 	createOutputFolders(&config)
 	util.InitializeDeleteBuffer(config.DeleteBufferTime)
+
+	if config.MultiBandImageCacheEnabled {
+		imagery.Initialize(&config)
+	}
 
 	// initialize the pipeline cache and
 	pipelineCacheFilename := path.Join(env.GetTmpPath(), config.PipelineCacheFilename)

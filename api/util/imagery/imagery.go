@@ -26,6 +26,7 @@ import (
 	"math"
 	"os"
 	"path"
+	"sort"
 	"strings"
 
 	lru "github.com/hashicorp/golang-lru"
@@ -153,7 +154,9 @@ func init() {
 
 // Initialize sets up the necessary structures for imagery processing.
 func Initialize(config *env.Config) {
+	log.Infof("initializing imagery utils...")
 	cache, _ = lru.New(config.MultiBandImageCacheSize)
+	log.Infof("imagery utils initialized")
 }
 
 // ImageFromCombination takes a base dataset directory, fileID and a band combination label and
@@ -165,6 +168,14 @@ func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, 
 	cacheKey := fmt.Sprintf("%s-%s", datasetDir, bandCombination)
 
 	if cache != nil {
+		// need a constant ordering for the band mapping to prevent incorrect cache lookups
+		bandsMapped := []string{}
+		for bk, bf := range bandFileMapping {
+			bandsMapped = append(bandsMapped, fmt.Sprintf("%s:%s", bk, bf))
+		}
+		sort.Strings(bandsMapped)
+		cacheKey = fmt.Sprintf("%s-%v", cacheKey, bandsMapped)
+
 		if cache.Contains(cacheKey) {
 			cached, ok := cache.Get(cacheKey)
 			if ok {
