@@ -30,6 +30,7 @@ import (
 	"strings"
 
 	lru "github.com/hashicorp/golang-lru"
+	"github.com/mitchellh/hashstructure"
 	"github.com/nfnt/resize"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil/api/env"
@@ -159,13 +160,31 @@ func Initialize(config *env.Config) {
 	log.Infof("imagery utils initialized")
 }
 
+// ImageCacheKey stores the fields used to generate an image hash key.
+type ImageCacheKey struct {
+	DatasetDir      string
+	BandCombination string
+	ImageScale      *ImageScale
+	Options         []Options
+	BandsMapped     []string
+}
+
 // ImageFromCombination takes a base dataset directory, fileID and a band combination label and
 // returns a composed image.  NOTE: Currently a bit hardcoded for sentinel-2 data.
 func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, bandCombo string, imageScale ImageScale, options ...Options) (*image.RGBA, error) {
 	// attempt to get the folder file type for the supplied dataset dir from the cache, if
 	// not do the look up
 	bandCombination := strings.ToLower(string(BandCombinationID(bandCombo)))
-	cacheKey := fmt.Sprintf("%s-%s", datasetDir, bandCombination)
+
+	keyStruct := ImageCacheKey{
+		DatasetDir:      datasetDir,
+		BandCombination: bandCombination,
+		ImageScale:      &imageScale,
+		Options:         options,
+	}
+
+	var cacheKey uint64
+	var err error
 
 	if cache != nil {
 		// need a constant ordering for the band mapping to prevent incorrect cache lookups
@@ -174,7 +193,11 @@ func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, 
 			bandsMapped = append(bandsMapped, fmt.Sprintf("%s:%s", bk, bf))
 		}
 		sort.Strings(bandsMapped)
-		cacheKey = fmt.Sprintf("%s-%v", cacheKey, bandsMapped)
+		keyStruct.BandsMapped = bandsMapped
+		cacheKey, err = hashstructure.Hash(keyStruct, nil)
+		if err != nil {
+			return nil, err
+		}
 
 		if cache.Contains(cacheKey) {
 			cached, ok := cache.Get(cacheKey)
