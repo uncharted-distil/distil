@@ -66,7 +66,7 @@
             :unique-trail="uniqueTrail"
             :should-clean-up="false"
             :should-fetch-image="false"
-            :index="parseInt(data.index)"
+            :index="imageIndex(data.index)"
             :items="items"
             :dataset-name="dataset"
             :date-column="dateColumn"
@@ -482,6 +482,9 @@ export default Vue.extend({
         `image-preview-${cycleInfo.index + cycleInfo.side}`
       ]?.[0] as InstanceType<typeof ImagePreview>;
       imagePreview?.showZoomedImage();
+    },
+    imageIndex(idx: number): number {
+      return idx + (this.currentPage - 1) * this.perPage; // -1 because current page starts at 1
     },
     debounceImageFetch() {
       debounceFetchImagePack({
