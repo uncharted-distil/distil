@@ -102,6 +102,7 @@ import { Feature, Activity, SubActivity } from "../../util/userEvents";
 import { DISTIL_ROLES, isUnsupportedTargetVar } from "../../util/types";
 import { ExplorerStateNames } from "../../util/explorer";
 import { EventList } from "../../util/events";
+import { requestActions, requestGetters } from "../../store";
 
 export default Vue.extend({
   name: "FacetListPane",
@@ -467,9 +468,12 @@ export default Vue.extend({
         subActivity: SubActivity.PROBLEM_SPECIFICATION,
         details: { target },
       });
-
+      // fetch existing solutions
+      await requestActions.fetchSolutions(this.$store, {
+        dataset: this.dataset,
+        target,
+      });
       this.updateRoute(args);
-
       datasetActions.fetchVariableRankings(this.$store, {
         dataset: this.dataset,
         target,

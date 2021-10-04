@@ -135,11 +135,21 @@ export class SelectViewState implements BaseState {
   async init(): Promise<void> {
     await this.fetchVariables();
     await this.fetchMapBaseline();
-    // await this.fetchVariableSummaries();
     await this.fetchData();
+    const dataset = routeGetters.getRouteDataset(store);
+    const target = routeGetters.getRouteTargetVariable(store);
     await datasetActions.fetchMultiBandCombinations(store, {
-      dataset: routeGetters.getRouteDataset(store),
+      dataset,
     });
+    // if there is a target variable
+    if (target) {
+      // fetch result solutions this is used for the nav bar
+      // if a solution exists users can move to the result state without fitting
+      await requestActions.fetchSolutions(store, {
+        dataset,
+        target,
+      });
+    }
     return;
   }
   getSecondaryVariables(): Variable[] {
@@ -274,10 +284,12 @@ export class ResultViewState implements BaseState {
     return routeGetters.getTargetVariable(store);
   }
   async init(): Promise<void> {
+    const dataset = routeGetters.getRouteDataset(store);
+
     // check if solutionId is not null if not find recent solution and make it the target solutionId
     if (!routeGetters.getRouteSolutionId(store)) {
       await requestActions.fetchSolutions(store, {
-        dataset: routeGetters.getRouteDataset(store),
+        dataset,
         target: routeGetters.getRouteTargetVariable(store),
       });
       const solutions = requestGetters.getSolutions(store);
@@ -298,11 +310,10 @@ export class ResultViewState implements BaseState {
       }
     }
     datasetActions.fetchMultiBandCombinations(store, {
-      dataset: routeGetters.getRouteDataset(store),
+      dataset,
     });
     await this.fetchVariables();
     await this.fetchMapBaseline();
-
     return;
   }
   getSecondaryVariables(): Variable[] {
@@ -594,10 +605,10 @@ export class PredictViewState implements BaseState {
         });
         router.push(entry).catch((err) => console.warn(err));
       }
-      datasetActions.fetchMultiBandCombinations(store, {
-        dataset: routeGetters.getRouteDataset(store),
-      });
     }
+    datasetActions.fetchMultiBandCombinations(store, {
+      dataset: routeGetters.getRouteDataset(store),
+    });
     await viewActions.fetchPredictionsData(store);
     datasetActions.fetchClusters(store, { dataset });
     datasetActions.fetchOutliers(store, dataset);

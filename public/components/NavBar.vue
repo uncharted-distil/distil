@@ -55,30 +55,6 @@
         </template>
 
         <!-- If no appropriate model exist, select a dataset: will start New Model workflow. -->
-        <template v-else-if="hasDataset && !isActive(DATA_EXPLORER_ROUTE)">
-          <b-nav-item
-            :active="isActive(SELECT_TARGET_ROUTE)"
-            @click="onSelectTarget"
-          >
-            <i class="fa fa-dot-circle-o nav-icon" /> New Model: Select Target
-          </b-nav-item>
-
-          <b-nav-item
-            :active="isActive(SELECT_TRAINING_ROUTE)"
-            :disabled="hasNoDatasetAndTarget"
-            @click="onSelectData"
-          >
-            <i class="fa fa-sign-in nav-icon" /> Select Model Features
-          </b-nav-item>
-
-          <b-nav-item
-            :active="isActive(RESULTS_ROUTE)"
-            :disabled="hasNoDatasetAndTarget"
-            @click="onResults"
-          >
-            <i class="fa fa-check-circle nav-icon" /> Check Models
-          </b-nav-item>
-        </template>
         <template v-else-if="isActive(DATA_EXPLORER_ROUTE)">
           <b-nav-item
             :active="explorerSelectState"
@@ -88,14 +64,14 @@
           </b-nav-item>
           <b-nav-item
             :active="explorerResultState"
-            :disabled="hasNoDatasetAndTarget"
+            :disabled="!haveSolutions"
             @click="explorerNav('result')"
           >
             <i class="fa fa-check-circle nav-icon" /> Check Models
           </b-nav-item>
           <b-nav-item
             :active="explorerPredictionState"
-            :disabled="hasNoDatasetAndTarget"
+            :disabled="!havePredictions"
             @click="explorerNav('prediction')"
           >
             <i class="fa fa-line-chart nav-icon" /> View Predictions
@@ -131,10 +107,7 @@ import {
   gotoSelectData,
   gotoSelectTarget,
 } from "../util/nav";
-import {
-  actions as appActions,
-  getters as appGetters,
-} from "../store/app/module";
+import { appGetters, requestGetters } from "../store";
 import { getters as routeGetters } from "../store/route/module";
 import {
   APPLY_MODEL_ROUTE,
@@ -218,15 +191,17 @@ export default Vue.extend({
     hasDataset(): boolean {
       return !!this.dataset;
     },
-
     helpURL(): string {
       return appGetters.getHelpURL(this.$store);
     },
-
-    hasNoDatasetAndTarget(): boolean {
-      return !(!!this.dataset && !!this.target);
+    haveSolutions(): boolean {
+      return requestGetters.getRelevantSolutions(this.$store).length > 0;
     },
-
+    havePredictions(): boolean {
+      return requestGetters.getRelevantSolutions(this.$store).some((p) => {
+        return p.hasPredictions;
+      });
+    },
     version(): string {
       return appGetters.getAllSystemVersions(this.$store);
     },
