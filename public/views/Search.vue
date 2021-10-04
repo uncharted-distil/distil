@@ -424,6 +424,13 @@ export default Vue.extend({
     },
 
     onUploadFinish(err, response) {
+      datasetActions.fetchDataset(this.$store, {
+        dataset: response.dataset,
+      });
+      datasetActions.searchDatasets(
+        this.$store,
+        routeGetters.getRouteTerms(this.$store)
+      );
       this.uploadStatus = err ? "error" : "success";
       this.importResponse = response;
     },
