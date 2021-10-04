@@ -634,6 +634,13 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 // PersistAndDispatch persists the solution request and dispatches it.
 func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionStorage api.SolutionStorage, metaStorage api.MetadataStorage, dataStorage api.DataStorage) error {
 
+	// fetch the dataset variables
+	variables, err := metaStorage.FetchVariables(s.Dataset, true, true, false)
+	if err != nil {
+		return err
+	}
+	variablesMap := api.MapVariables(variables, func(v *model.Variable) string { return v.Key })
+
 	// NOTE: D3M index field is needed in the persisted data.
 	d3mIndexIncluded := false
 	for _, v := range s.Filters.Variables {
@@ -644,12 +651,6 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 	if !d3mIndexIncluded {
 		s.Filters.Variables = append(s.Filters.Variables, model.D3MIndexFieldName)
-	}
-
-	// fetch the dataset variables
-	variables, err := metaStorage.FetchVariables(s.Dataset, true, true, false)
-	if err != nil {
-		return err
 	}
 
 	// remove any generated / grouped features from our var list
@@ -811,10 +812,13 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 
 	// store the request features - note that we are storing the original request filters, not the expanded
 	// list that was generated
+	// also note that augmented features should not be included
 	for _, v := range s.Filters.Variables {
 		var typ string
 		// ignore the index field
 		if v == model.D3MIndexFieldName {
+			continue
+		} else if variablesMap[v].DistilRole == model.VarDistilRoleAugmented {
 			continue
 		}
 
