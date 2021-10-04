@@ -38,7 +38,7 @@
                 :should-clean-up="false"
                 :should-fetch-image="false"
                 :summaries="summaries"
-                :index="idx"
+                :index="imageIndex(idx)"
                 :items="dataItems"
                 @click="onImageClick"
                 @shift-click="onImageShiftClick"
@@ -211,6 +211,9 @@ export default Vue.extend({
         `image-preview-${cycleInfo.index + cycleInfo.side}`
       ]?.[0] as InstanceType<typeof ImagePreview>;
       imagePreview?.showZoomedImage();
+    },
+    imageIndex(idx: number): number {
+      return idx + (this.currentPage - 1) * this.perPage; // -1 because current page starts at 1
     },
     selectAll() {
       bulkRowSelectionUpdate(
