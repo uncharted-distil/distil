@@ -224,7 +224,6 @@ func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, 
 		for _, bandLabel := range bandCombo.Mapping {
 			filePaths = append(filePaths, path.Join(datasetDir, bandFileMapping[bandLabel]))
 		}
-<<<<<<< Updated upstream:api/util/imagery/imagery.go
 
 		imageRamp := bandCombo.Ramp
 
@@ -232,7 +231,7 @@ func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, 
 			imageRamp = GetColorRamp(ramp)
 		}
 
-		image, err := ImageFromBands(filePaths, imageRamp, bandCombo.Transform, imageScale, options...)
+		image, err := ImageFromBands(filePaths, imageRamp, bandCombo.Transform, imageScale, bandCombo.AdvancedColorModel, options...)		
 		if err != nil {
 			return nil, err
 		}
@@ -241,9 +240,6 @@ func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, 
 		}
 
 		return image, nil
-=======
-		return ImageFromBands(filePaths, bandCombo.Ramp, bandCombo.Transform, imageScale, bandCombo.AdvancedColorModel, options...)
->>>>>>> Stashed changes:api/util/imagery.go
 	}
 
 	return nil, errors.Errorf("unhandled band combination %s", bandCombination)

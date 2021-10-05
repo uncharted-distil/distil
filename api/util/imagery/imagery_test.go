@@ -38,7 +38,7 @@ func TestImageFromCombination(t *testing.T) {
 		"b11": "S2A_MSIL2A_20171121T112351_79_21_B11.tif",
 		"b12": "S2A_MSIL2A_20171121T112351_79_21_B12.tif",
 	}
-	composedImage, err := ImageFromCombination("test/bigearthnet", bandMap, NaturalColors2, ImageScale{})
+	composedImage, err := ImageFromCombination("../test/bigearthnet", bandMap, NaturalColors2, ImageScale{})
 	assert.NoError(t, err)
 	assert.NotNil(t, composedImage)
 	assert.True(t, len(composedImage.Pix) > 0)
@@ -54,17 +54,10 @@ func TestImageFromCombination(t *testing.T) {
 func TestImageFromBandsTrueColor(t *testing.T) {
 	// Test basic loading - all image sources are the same size.
 	composedImage, err := ImageFromBands([]string{
-<<<<<<< Updated upstream:api/util/imagery/imagery_test.go
 		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B04.tif",
 		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B03.tif",
 		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B02.tif",
-	}, nil, nil, ImageScale{})
-=======
-		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B04.tif",
-		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B03.tif",
-		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B02.tif",
 	}, nil, nil, ImageScale{}, true)
->>>>>>> Stashed changes:api/util/imagery_test.go
 	assert.NoError(t, err)
 	assert.NotNil(t, composedImage)
 	assert.True(t, len(composedImage.Pix) > 0)
@@ -81,17 +74,10 @@ func TestImageFromBandsResize(t *testing.T) {
 	// Tests loading data from sources that are 3 different sizes in terms
 	// of pixels.
 	composedImage, err := ImageFromBands([]string{
-<<<<<<< Updated upstream:api/util/imagery/imagery_test.go
 		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B12.tif",
 		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B08.tif",
 		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B04.tif",
-	}, nil, nil, ImageScale{})
-=======
-		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B12.tif",
-		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B08.tif",
-		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B04.tif",
 	}, nil, nil, ImageScale{}, true)
->>>>>>> Stashed changes:api/util/imagery_test.go
 	assert.NoError(t, err)
 	assert.NotNil(t, composedImage)
 	assert.True(t, len(composedImage.Pix) > 0)
@@ -108,15 +94,9 @@ func TestImageFromRamp(t *testing.T) {
 	// Tests loading data from sources that are 3 different sizes in terms
 	// of pixels.
 	composedImage, err := ImageFromBands([]string{
-<<<<<<< Updated upstream:api/util/imagery/imagery_test.go
 		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B08.tif",
 		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B11.tif",
-	}, BlueYellowBrownRamp, NormalizingTransform, ImageScale{})
-=======
-		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B08.tif",
-		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B11.tif",
 	}, BlueYellowBrownRamp, NormalizingTransform, ImageScale{}, true)
->>>>>>> Stashed changes:api/util/imagery_test.go
 	assert.NoError(t, err)
 	assert.NotNil(t, composedImage)
 	assert.True(t, len(composedImage.Pix) > 0)
@@ -133,15 +113,9 @@ func TestImageFromRampClamped(t *testing.T) {
 	// Tests loading data from sources that are 3 different sizes in terms
 	// of pixels.
 	composedImage, err := ImageFromBands([]string{
-<<<<<<< Updated upstream:api/util/imagery/imagery_test.go
 		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B08.tif",
 		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B04.tif",
-	}, RedYellowGreenRamp, ClampedNormalizingTransform, ImageScale{})
-=======
-		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B08.tif",
-		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B04.tif",
 	}, RedYellowGreenRamp, ClampedNormalizingTransform, ImageScale{}, true)
->>>>>>> Stashed changes:api/util/imagery_test.go
 	assert.NoError(t, err)
 	assert.NotNil(t, composedImage)
 	assert.True(t, len(composedImage.Pix) > 0)
@@ -158,17 +132,10 @@ func TestImageFromBandsMissing(t *testing.T) {
 	// Tests handling the case where one of the bands contains bad data.  The missing
 	// band will be mapped to grey.
 	composedImage, err := ImageFromBands([]string{
-<<<<<<< Updated upstream:api/util/imagery/imagery_test.go
 		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B12.tif",
 		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B08.tif",
 		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B04.tif",
-	}, nil, nil, ImageScale{})
-=======
-		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B12.tif",
-		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B08.tif",
-		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B04.tif",
 	}, nil, nil, ImageScale{}, true)
->>>>>>> Stashed changes:api/util/imagery_test.go
 	assert.NoError(t, err)
 	assert.NotNil(t, composedImage)
 	assert.True(t, len(composedImage.Pix) > 0)
