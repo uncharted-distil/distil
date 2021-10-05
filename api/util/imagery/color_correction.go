@@ -22,7 +22,7 @@ type Options struct {
 	Gain  float64 `json:"gain"`
 	Gamma float64 `json:"gamma"`
 	GainL float64 `json:"gainL"`
-	Scale int     `json:"scale"`
+	Scale bool    `json:"scale"`
 }
 
 // ConvertS2ToRgb bands: [b02, b03, b04], Options gain amount, gamma correction amount, gainL light gain

@@ -82,7 +82,7 @@
         <div>
           <b-button
             v-if="shouldImagesScale"
-            :disabled="disableUpscale"
+            :disabled="disableUpscale || scale"
             class="height-36 mt-3"
             @click="upscaleFetch"
           >
@@ -192,7 +192,7 @@ export default Vue.extend({
       hidden: false,
       disableUpscale: false,
       fetchingUpscale: false,
-      scale: 0,
+      scale: false,
       imgHeight: 0,
       imgWidth: 0,
       uniqueTrail: "image-drilldown",
@@ -380,6 +380,7 @@ export default Vue.extend({
         0,
         Math.min(this.carouselPosition + sideToCycleTo, this.items.length - 1)
       );
+      this.scale = false; // reset scale
       this.requestImage({
         gainL: 1.0,
         gamma: 2.2,
@@ -394,7 +395,7 @@ export default Vue.extend({
       const MAX_GAINL = 2.0;
       this.disableUpscale = true;
       this.fetchingUpscale = true;
-      this.scale += 1;
+      this.scale = true;
       await this.requestImage({
         gainL: this.currentBrightness * MAX_GAINL,
         gamma: 2.2,
@@ -419,7 +420,7 @@ export default Vue.extend({
 
     cleanUp() {
       if (this.isMultiBandImage) {
-        this.scale = 0;
+        this.scale = false;
         datasetMutations.removeFile(this.$store, imageId(this.uniqueId));
       }
     },
@@ -435,7 +436,7 @@ export default Vue.extend({
       gamma: number;
       gain: number;
       gainL: number;
-      scale: number;
+      scale: boolean;
     }) {
       if (this.isMultiBandImage) {
         await datasetActions.fetchMultiBandImage(this.$store, {
