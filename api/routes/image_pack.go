@@ -224,7 +224,7 @@ func getMultiBandImages(multiBandPackRequest *ImagePackRequest, threadID int, nu
 			break
 		}
 	}
-	options := imagery.Options{Gain: 2.5, Gamma: 2.2, GainL: 1.0, Scale: 0} // default options for color correction
+	options := imagery.Options{Gain: 2.5, Gamma: 2.2, GainL: 1.0, Scale: false} // default options for color correction
 
 	imageScale := imagery.ImageScale{Width: ThumbnailDimensions, Height: ThumbnailDimensions}
 

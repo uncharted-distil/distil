@@ -1310,12 +1310,12 @@ export const actions = {
       dataset: string;
       url: string;
       isThumbnail?: boolean;
-      scale?: number;
+      scale?: boolean;
     }
   ) {
     if (!validateArgs(args, ["dataset", "url"])) return;
     try {
-      const imgScale = args.scale ?? 0;
+      const imgScale = args.scale ?? false;
       const thumbnail = args.isThumbnail ? "true" : "false";
       const urlRequest = `distil/image/${args.dataset}/${args.url}/${thumbnail}/${imgScale}`;
       const response = await loadImage(urlRequest);
@@ -1369,7 +1369,7 @@ export const actions = {
       bandCombination: string;
       isThumbnail: boolean;
       uniqueTrail?: string;
-      options?: { gamma: number; gain: number; gainL: number };
+      options?: { gamma: number; gain: number; gainL: number; scale: boolean };
     }
   ) {
     if (!validateArgs(args, ["dataset", "imageId", "bandCombination"])) {

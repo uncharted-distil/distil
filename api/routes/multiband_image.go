@@ -88,7 +88,7 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, dataCtor api.DataStorag
 				break
 			}
 		}
-		options := imagery.Options{Gain: 2.5, Gamma: 2.2, GainL: 1.0, Scale: 0} // default options for color correction
+		options := imagery.Options{Gain: 2.5, Gamma: 2.2, GainL: 1.0, Scale: false} // default options for color correction
 		if paramOption != "" {
 			err := json.Unmarshal([]byte(paramOption), &options)
 			if err != nil {
@@ -99,7 +99,7 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, dataCtor api.DataStorag
 		if isThumbnail {
 			imageScale = imagery.ImageScale{Width: ThumbnailDimensions, Height: ThumbnailDimensions}
 			// if thumbnail scale should be 0
-			options.Scale = 0
+			options.Scale = false
 		}
 
 		// need to get the band -> filename from the data
@@ -114,15 +114,8 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, dataCtor api.DataStorag
 			handleError(w, err)
 			return
 		}
-		if options.Scale > 0 && config.ShouldScaleImages {
-			if options.Scale > 3 {
-				// dont allow upscaling past factor of 6
-				options.Scale = 3
-			}
-			// multiple passes for increasing scale dramatically
-			for i := 0; i < options.Scale; i++ {
-				img = c_util.UpscaleImage(img, c_util.GetModelType(config.ModelType))
-			}
+		if options.Scale && config.ShouldScaleImages {
+			img = c_util.UpscaleImage(img, c_util.GetModelType(config.ModelType))
 		}
 		imageBytes, err := imagery.ImageToJPEG(img)
 		if err != nil {
