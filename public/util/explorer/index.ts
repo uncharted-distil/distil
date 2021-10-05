@@ -128,6 +128,7 @@ export class ResultViewConfig implements ExplorerConfig {
       ActionNames.LOCATION_VARIABLES,
       ActionNames.IMAGE_VARIABLES,
       ActionNames.UNKNOWN_VARIABLES,
+      ActionNames.COMPUTED_VARIABLES,
       ActionNames.TARGET_VARIABLE,
       ActionNames.OUTCOME_VARIABLES,
     ];
@@ -151,6 +152,7 @@ export class PredictViewConfig implements ExplorerConfig {
       ActionNames.LOCATION_VARIABLES,
       ActionNames.IMAGE_VARIABLES,
       ActionNames.UNKNOWN_VARIABLES,
+      ActionNames.COMPUTED_VARIABLES,
       ActionNames.TARGET_VARIABLE,
       ActionNames.OUTCOME_VARIABLES,
     ];
