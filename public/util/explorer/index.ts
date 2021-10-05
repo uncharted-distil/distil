@@ -23,7 +23,7 @@ import {
 } from "../state/AppStateWrapper";
 import { Variable } from "../../store/dataset";
 import { DataExplorerRef } from "../componentTypes";
-import { META_TYPES } from "../types";
+import { DISTIL_ROLES, META_TYPES } from "../types";
 import { GENERIC_COMPUTES, GENERIC_METHODS } from "./functions/generic";
 import {
   LABEL_METHODS,
@@ -36,6 +36,7 @@ import {
   PREDICTION_COMPUTES,
   PREDICTION_METHODS,
 } from "./functions/prediction";
+import { setFilterModes } from "../highlights";
 export interface Action {
   name: string;
   icon: string;
@@ -103,6 +104,7 @@ export class SelectViewConfig implements ExplorerConfig {
       ActionNames.LOCATION_VARIABLES,
       ActionNames.IMAGE_VARIABLES,
       ActionNames.UNKNOWN_VARIABLES,
+      ActionNames.COMPUTED_VARIABLES,
       ActionNames.TARGET_VARIABLE,
       ActionNames.TRAINING_VARIABLE,
     ];
@@ -172,6 +174,7 @@ export class LabelViewConfig implements ExplorerConfig {
       ActionNames.LOCATION_VARIABLES,
       ActionNames.IMAGE_VARIABLES,
       ActionNames.UNKNOWN_VARIABLES,
+      ActionNames.COMPUTED_VARIABLES,
       ActionNames.TARGET_VARIABLE,
       ActionNames.TRAINING_VARIABLE,
       ActionNames.OUTCOME_VARIABLES,
@@ -200,6 +203,7 @@ export enum ActionNames {
   TRAINING_VARIABLE = "Training Variables",
   OUTCOME_VARIABLES = "Outcome Variables",
   MODEL_VARIABLES = "Model Variables",
+  COMPUTED_VARIABLES = "Computed Variables",
 }
 
 export const ACTIONS = [
@@ -290,6 +294,34 @@ export const ACTIONS = [
     },
   },
   {
+    name: ActionNames.COMPUTED_VARIABLES,
+    icon: "fas fa-microchip",
+    paneId: "computed",
+    variables: function (self: DataExplorerRef) {
+      // unique variable list
+      const variables = Array.from(
+        new Set([
+          ...self.state.getSecondaryVariables(),
+          ...self.state.getVariables(),
+        ])
+      );
+      // find meta data which is the variables being applied to grouping variables
+      const meta = new Map(
+        variables
+          .filter((v) => v.distilRole === DISTIL_ROLES.Meta)
+          .map((v) => [v.colName, true])
+      );
+      // find all grouping variables that the above meta map applies to
+      const result = variables.filter((v) => {
+        return v.grouping && meta.has(v.grouping.clusterCol);
+      });
+      // add all the augmented variables
+      return result.concat(
+        variables.filter((v) => v.distilRole === DISTIL_ROLES.Augmented)
+      );
+    },
+  },
+  {
     name: ActionNames.TARGET_VARIABLE,
     icon: "fa fa-crosshairs",
     paneId: "target",
@@ -299,7 +331,7 @@ export const ACTIONS = [
   },
   {
     name: ActionNames.TRAINING_VARIABLE,
-    icon: "fa fa-asterisk",
+    icon: "fas fa-dumbbell",
     paneId: "training",
     variables: function (self: DataExplorerRef) {
       return self.variables.filter((variable) =>
