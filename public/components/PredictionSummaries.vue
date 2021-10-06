@@ -62,18 +62,25 @@
     </b-button>
 
     <b-modal id="save" title="Create Dataset" @ok="createDataset">
-      <div class="check-message-container d-flex justify-content-around">
-        <i class="fa fa-file-text-o fa-3x" aria-hidden="true"></i>
-        <div>
+      <form ref="createDatasetForm">
+        <b-form-group
+          label="Model Name"
+          label-for="model-name-input"
+          invalid-feedback="Model Name is Required"
+        >
           <b-form-input
+            id="model-name-input"
             v-model="newDatasetName"
             placeholder="Enter dataset name to use for new dataset"
+            :state="datasetNameState"
           />
+        </b-form-group>
+        <b-form-group>
           <b-form-checkbox v-model="includeAllFeatures" class="pt-2">
             Include data not used in model
           </b-form-checkbox>
-        </div>
-      </div>
+        </b-form-group>
+      </form>
     </b-modal>
 
     <b-button
@@ -167,6 +174,7 @@ export default Vue.extend({
       includeAllFeatures: false,
       selectedFormat: "",
       formats: ["csv", "geojson"],
+      datasetNameState: null,
     };
   },
 
@@ -418,7 +426,14 @@ export default Vue.extend({
       hiddenElement.click();
     },
 
-    async createDataset() {
+    async createDataset(bvModalEvt) {
+      if (!this.newDatasetName) {
+        bvModalEvt.preventDefault();
+        this.datasetNameState = false;
+        return;
+      }
+      this.datasetNameState = true;
+
       const err = await predictionActions.createDataset(this.$store, {
         produceRequestId: this.produceRequestId,
         newDatasetName: this.newDatasetName,
