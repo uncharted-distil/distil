@@ -20,7 +20,7 @@
     <div v-if="enableSearch" class="py-1 mb-3">
       <b-input-group>
         <b-form-input v-model="search" size="sm" placeholder="Search" />
-        <b-input-group-append>
+        <b-input-group-append v-if="doesSearchBoxHaveContent">
           <b-button size="sm" @click="clearSearch">
             <b-icon-x />
           </b-button>
@@ -417,6 +417,10 @@ export default Vue.extend({
 
     pagination(): boolean {
       return this.facetCount > this.numFacetPerPage;
+    },
+
+    doesSearchBoxHaveContent(): boolean {
+      return typeof this.search === "string" && this.search.length > 0;
     },
   },
 
