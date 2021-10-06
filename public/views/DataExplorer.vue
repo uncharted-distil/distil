@@ -244,7 +244,7 @@
             <i class="fa fa-floppy-o" />
             Save Model
           </b-button>
-          <b-button v-if="isPredictState" v-b-modal.save>
+          <b-button v-if="isPredictState" v-b-modal.save class="mr-1">
             Create Dataset
           </b-button>
           <b-button v-if="isPredictState" v-b-modal.export variant="primary">
