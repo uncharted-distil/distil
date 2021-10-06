@@ -62,7 +62,7 @@ const HIGHLIGHT = "highlight";
   ever want even more complex filter relations, we can extend these options.
 */
 const distilRelationOptions = [
-  [HIGHLIGHT, "☀", false],
+  [HIGHLIGHT, "=", false],
   [EXCLUDE_FILTER, "≠", true],
 ].map((o) => new ValueStateValue(o[0], {}, { displayKey: o[1], hidden: o[2] }));
 
