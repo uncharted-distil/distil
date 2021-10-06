@@ -18,6 +18,7 @@
 import _ from "lodash";
 import {
   CATEGORICAL_SUMMARY,
+  Highlight,
   NUMERICAL_SUMMARY,
   RowSelection,
   VariableSummary,
@@ -370,15 +371,29 @@ export function generateFacetLinearStyle(
   facetId: string,
   partId: string,
   variableSummary: VariableSummary,
-  colorScaleName: ColorScaleNames
+  colorScaleName: ColorScaleNames,
+  highlight: Highlight
 ): string {
   let result = "";
+  let start = 0;
+  let end = variableSummary.baseline.buckets.length - 1;
+  if (highlight) {
+    const bucketMap = new Map(
+      variableSummary.baseline.buckets.map((b, idx) => {
+        return [Number(b.key), idx];
+      })
+    );
+    start = bucketMap.get(highlight.value.from);
+    // the datetime buckets have an issue with the end bucket
+    if (bucketMap.has(highlight.value.to)) {
+      end = bucketMap.get(highlight.value.to) - 1;
+    }
+  }
   const colorScale = COLOR_SCALES.get(colorScaleName);
-  const end = variableSummary.baseline.buckets.length - 1;
   variableSummary.baseline.buckets.forEach((_, idx) => {
     const idSelector = idx.toString().split("").join(" ");
     result += `#${facetId} #\\3${idSelector}::part(${partId}){background-color:${colorScale(
-      idx / end
+      (idx - start) / (end - start)
     )}}`;
   });
   return result;

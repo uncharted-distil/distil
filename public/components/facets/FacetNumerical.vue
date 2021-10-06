@@ -155,12 +155,14 @@ export default Vue.extend({
       return routeGetters.getColorScale(this.$store);
     },
     cssStyle(): string {
+      const highlight = this.highlights.find((h) => h.key === this.summary.key);
       return this.hasColorScale
         ? generateFacetLinearStyle(
             this.id,
             "facet-bars-value-bar-0",
             this.summary,
-            this.colorScale
+            this.colorScale,
+            highlight
           )
         : "";
     },

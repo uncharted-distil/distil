@@ -148,6 +148,7 @@ import {
 import { isGeoLocatedType } from "../util/types";
 import { EventList } from "../util/events";
 import { ExplorerStateNames } from "../util/explorer";
+import { Filter } from "../util/filters";
 
 const SINGLE_FIELD = 1;
 const SPLIT_FIELD = 2;
@@ -303,10 +304,11 @@ export default Vue.extend({
           return 0;
         };
       }
+      const highlight = this.highlights.find(findKey);
       const clusterKey = this.routeClustering
         ? this.variables.find(findKey)?.grouping?.clusterCol ?? ""
         : "";
-      return colorByFacet(this.summaries.find(findKey), clusterKey);
+      return colorByFacet(this.summaries.find(findKey), highlight, clusterKey);
     },
     target(): string {
       return routeGetters.getRouteTargetVariable(this.$store);
@@ -467,6 +469,9 @@ export default Vue.extend({
     highlights(): Highlight[] {
       return routeGetters.getDecodedHighlights(this.$store);
     },
+    filters(): Filter[] {
+      return routeGetters.getDecodedFilters(this.$store);
+    },
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
     },
@@ -490,7 +495,19 @@ export default Vue.extend({
     },
     coordinateColInDataFields(): boolean {
       const keys = Object.keys(this.dataFields);
-      return keys.some((k) => k === this.coordinateColumn);
+      if (this.coordinateColumn) {
+        return keys.some((k) => k === this.coordinateColumn);
+      }
+      if (this.fieldSpecs.length) {
+        return (
+          keys.filter(
+            (k) =>
+              k === this.fieldSpecs[0].latField ||
+              k === this.fieldSpecs[0].lngField
+          ).length > 0
+        );
+      }
+      return false;
     },
     // Return name of column containing geobounds associated with a multiband image
     coordinateColumn(): string {

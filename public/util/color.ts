@@ -15,7 +15,7 @@
  *    limitations under the License.
  */
 
-import { VariableSummary } from "../store/dataset";
+import { Highlight, VariableSummary } from "../store/dataset";
 import { DATE_TIME_TYPE, isCategoricalType } from "./types";
 import { TableRow } from "../store/dataset/index";
 import {
@@ -25,6 +25,7 @@ import {
   interpolateTurbo,
   interpolateViridis,
 } from "d3-scale-chromatic";
+import { Filter } from "./filters";
 
 // ColorScaleNames is an enum that contains all the supported color scale names. Can be used to access COLOR_SCALES functions
 export enum ColorScaleNames {
@@ -72,6 +73,7 @@ function getColor(discreteScale: string[], idx: number): string {
 // colorByFacet returns a function that is used to calculate the normalized color scale value for a given facet type
 export function colorByFacet(
   variable: VariableSummary,
+  highlight?: Highlight,
   clusterKey = ""
 ): (item: TableRow, idx: number) => number {
   let key = clusterKey ? clusterKey : variable.key;
@@ -89,24 +91,36 @@ export function colorByFacet(
       return keyMap.get(item[key]?.value ?? item[variable.key]?.value);
     };
   } else if (variable.varType === DATE_TIME_TYPE) {
-    const diff = variable.baseline.extrema.max - variable.baseline.extrema.min;
+    const min = highlight
+      ? highlight.value.from
+      : variable.baseline.extrema.min;
+    // the way the buckets are created makes the max value in the ds appear to be at the 90% mark instead of 100
+    const max = Math.min(
+      highlight ? highlight.value.to : variable.baseline.extrema.max,
+      variable.baseline.extrema.max
+    );
+    const diff = max - min;
     return (item: TableRow, idx: number) => {
       if (diff === 0) {
         return 0;
       }
-      return (
-        (new Date(item[key].value).getTime() / 1000 -
-          variable.baseline.extrema.min) /
-        diff
-      );
+      return (new Date(item[key].value).getTime() / 1000 - min) / diff;
     };
   }
   // assume range
   else {
-    const diff = variable.baseline.extrema.max - variable.baseline.extrema.min;
+    const min = highlight
+      ? highlight.value.from
+      : variable.baseline.extrema.min;
+    // the way the buckets are created makes the max value in the ds appear to be at the 90% mark instead of 100
+    const max = Math.min(
+      highlight ? highlight.value.to : variable.baseline.extrema.max,
+      variable.baseline.extrema.max
+    );
+    const diff = max - min;
     return (item: TableRow) => {
       const itemValue = item[key]?.value ?? 0;
-      return (itemValue - variable.baseline.extrema.min) / diff;
+      return (itemValue - min) / diff;
     };
   }
 }

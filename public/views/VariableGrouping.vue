@@ -53,7 +53,6 @@
         <h5 class="header-title">
           Configure
           <span v-if="isTimeseries">Time Series</span>
-          <span v-else-if="isLabeling">Labeling</span>
           <span v-else>Geocoordinate</span>
         </h5>
       </b-col>
@@ -68,14 +67,6 @@
           Select a <strong>time</strong> column, a <strong>value</strong> column
           and if available, optionally add one or more
           <strong>series id</strong> column(s) to create multiple timeseries.
-        </template>
-        <template v-if="isLabeling">
-          To create labels for your data please annotate images with the
-          following criteria: if an image is your label give it a
-          <strong>positive</strong> annotation, if the image is not your label
-          give it a <strong>negative</strong> annotation. For the best results
-          make sure to include <strong>positive</strong> and
-          <strong>negative</strong> annotations.
         </template>
         <template v-else>
           If your data contains geocoordinate data (<strong
