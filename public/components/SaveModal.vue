@@ -47,10 +47,10 @@
         </b-form-group>
       </form>
       <template v-slot:modal-footer>
-        <b-button variant="secondary" @click="resetModal"> cancel </b-button>
+        <b-button variant="secondary" @click="resetModal"> Cancel </b-button>
         <b-button variant="primary" @click="handleSaveOk" :disabled="isSaving">
           <b-spinner v-if="isSaving" small />
-          <span v-else>ok</span>
+          <span v-else>OK</span>
         </b-button>
       </template>
     </b-modal>
