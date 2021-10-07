@@ -1,6 +1,7 @@
 import { DataExplorerRef, SaveModalRef } from "../../componentTypes";
 import {
   appActions,
+  modelActions,
   requestGetters,
   resultGetters,
   viewActions,
@@ -14,6 +15,7 @@ import { Extrema, TaskTypes } from "../../../store/dataset";
 import { RouteArgs } from "../../routes";
 import { isFittedSolutionIdSavedAsModel } from "../../models";
 import { EI } from "../../events";
+import { ModalPlugin } from "bootstrap-vue";
 
 /**
  * RESULT_COMPUTES contains all of the computes for the result state in the data explorer
@@ -89,7 +91,6 @@ export const RESULT_METHODS = {
     const self = (this as unknown) as DataExplorerRef;
     const modal = (self.$refs.saveModel as unknown) as SaveModalRef;
     self.updateRoute(args);
-    modal.hideSuccessModal();
     modal.hideSaveForm();
     await self.changeStatesByName(ExplorerStateNames.PREDICTION_VIEW);
   },
@@ -119,7 +120,7 @@ export const RESULT_METHODS = {
         fittedSolution: args.fittedSolution,
       },
     });
-
+    const modal = (self.$refs.saveModel as unknown) as SaveModalRef;
     try {
       const err = await appActions.saveModel(store, {
         fittedSolutionId: self.fittedSolutionId,
@@ -128,10 +129,12 @@ export const RESULT_METHODS = {
       });
       // should probably change UI based on error
       if (!err) {
-        const modal = (self.$refs.saveModel as unknown) as SaveModalRef;
-        modal.showSuccessModal();
+        await modelActions.fetchModels(store);
+        modal.isSaving = false;
+        modal.hideSaveForm();
       }
     } catch (err) {
+      modal.isSaving = false;
       console.warn(err);
     }
     return;

@@ -102,7 +102,7 @@ import { Feature, Activity, SubActivity } from "../../util/userEvents";
 import { DISTIL_ROLES, isUnsupportedTargetVar } from "../../util/types";
 import { ExplorerStateNames } from "../../util/explorer";
 import { EventList } from "../../util/events";
-import { requestActions, requestGetters } from "../../store";
+import { requestActions } from "../../store";
 
 export default Vue.extend({
   name: "FacetListPane",
