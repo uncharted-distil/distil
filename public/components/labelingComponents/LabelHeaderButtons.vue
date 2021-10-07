@@ -17,9 +17,13 @@
 
 <template>
   <div>
-    <b-button title="Select all items on page" @click="onSelectAll"
-      >Select All</b-button
+    <b-button
+      v-if="!disableSelectAll"
+      title="Select all items on page"
+      @click="onSelectAll"
     >
+      Select All
+    </b-button>
     <b-button
       title="Annotate selected items to positive"
       @click="onButtonClick(positive)"
@@ -38,13 +42,14 @@
         <i class="fa fa-circle fa-stack-1x" />
         <i class="fa fa-minus-circle red fa-stack-1x" />
       </span>
-      Negative</b-button
-    >
+      Negative
+    </b-button>
     <b-button
       title="Annotate select items to negative"
       @click="onButtonClick(unlabeled)"
-      >Unlabeled</b-button
     >
+      Unlabeled
+    </b-button>
   </div>
 </template>
 
@@ -54,6 +59,10 @@ import { LowShotLabels } from "../../util/data";
 import { EventList } from "../../util/events";
 export default Vue.extend({
   name: "label-header-buttons",
+  props: {
+    localEmit: { type: Function, default: null },
+    disableSelectAll: { type: Boolean as () => boolean, default: false },
+  },
   computed: {
     negative(): string {
       return LowShotLabels.negative;
@@ -67,6 +76,11 @@ export default Vue.extend({
   },
   methods: {
     onButtonClick(event: string) {
+      // if another component requires a local emit
+      if (this.localEmit) {
+        this.localEmit(event);
+        return;
+      }
       this.$eventBus.$emit(EventList.LABEL.ANNOTATION_EVENT, event);
     },
     onSelectAll() {
