@@ -18,7 +18,14 @@
 <template>
   <div class="d-flex flex-column align-items-stretch h-100 w-100">
     <div v-if="enableSearch" class="py-1 mb-3">
-      <b-form-input v-model="search" size="sm" placeholder="Search" />
+      <b-input-group>
+        <b-form-input v-model="search" size="sm" placeholder="Search" />
+        <b-input-group-append v-if="doesSearchBoxHaveContent">
+          <b-button size="sm" @click="clearSearch">
+            <b-icon-x />
+          </b-button>
+        </b-input-group-append>
+      </b-input-group>
     </div>
     <!-- TODO: this should be passed in as title HTML -->
     <div v-if="enableTitle" class="py-1">
@@ -256,6 +263,7 @@ import {
   UPDATE_FOR_KEY,
 } from "../../util/highlights";
 import { EventList } from "../../util/events";
+import { BIconX } from "bootstrap-vue";
 import Vue from "vue";
 
 export default Vue.extend({
@@ -270,6 +278,7 @@ export default Vue.extend({
     FacetNumerical,
     FacetLoading,
     FacetError,
+    BIconX,
   },
 
   props: {
@@ -408,6 +417,10 @@ export default Vue.extend({
 
     pagination(): boolean {
       return this.facetCount > this.numFacetPerPage;
+    },
+
+    doesSearchBoxHaveContent(): boolean {
+      return typeof this.search === "string" && this.search.length > 0;
     },
   },
 
@@ -600,6 +613,10 @@ export default Vue.extend({
 
     isImage(type: string): boolean {
       return isImageType(type);
+    },
+
+    clearSearch(): void {
+      this.search = "";
     },
   },
 });
