@@ -62,18 +62,25 @@
     </b-button>
 
     <b-modal id="save" title="Create Dataset" @ok="createDataset">
-      <div class="check-message-container d-flex justify-content-around">
-        <i class="fa fa-file-text-o fa-3x" aria-hidden="true"></i>
-        <div>
+      <form ref="createDatasetForm">
+        <b-form-group
+          label="Model Name"
+          label-for="model-name-input"
+          invalid-feedback="Model Name is Required"
+        >
           <b-form-input
+            id="model-name-input"
             v-model="newDatasetName"
             placeholder="Enter dataset name to use for new dataset"
+            :state="datasetModelNameState"
           />
+        </b-form-group>
+        <b-form-group>
           <b-form-checkbox v-model="includeAllFeatures" class="pt-2">
             Include data not used in model
           </b-form-checkbox>
-        </div>
-      </div>
+        </b-form-group>
+      </form>
     </b-modal>
 
     <b-button
@@ -86,14 +93,22 @@
     </b-button>
 
     <b-modal id="export" title="Export" @ok="savePredictions">
-      <div class="check-message-container d-flex justify-content-around">
-        <i class="fa fa-file-text-o fa-3x" aria-hidden="true"></i>
-        <div>
+      <form ref="exportPredictionsForm">
+        <b-form-group
+          label="Export File Name"
+          label-for="export-name-input"
+          invalid-feedback="File Name is Required"
+        >
           <b-form-input
+            id="export-name-input"
             v-model="saveFileName"
             placeholder="Enter name to save as"
-          ></b-form-input>
+            :state="datasetExportNameState"
+          />
+        </b-form-group>
+        <b-form-group label="Export File Type" label-for="export-type-input">
           <b-form-select
+            id="export-type-input"
             v-model="selectedFormat"
             name="model-scoring"
             size="sm"
@@ -106,8 +121,8 @@
               {{ format }}
             </b-form-select-option>
           </b-form-select>
-        </div>
-      </div>
+        </b-form-group>
+      </form>
     </b-modal>
   </div>
 </template>
@@ -165,8 +180,10 @@ export default Vue.extend({
       saveFileName: "",
       newDatasetName: "",
       includeAllFeatures: false,
-      selectedFormat: "",
+      selectedFormat: "csv",
       formats: ["csv", "geojson"],
+      datasetModelNameState: null,
+      datasetExportNameState: null,
     };
   },
 
@@ -390,7 +407,14 @@ export default Vue.extend({
       ).dataset;
     },
 
-    async savePredictions() {
+    async savePredictions(bvModalEvt) {
+      if (!this.saveFileName) {
+        bvModalEvt.preventDefault();
+        this.datasetExportNameState = false;
+        return;
+      }
+      this.datasetExportNameState = true;
+
       let dataStr = await predictionActions.fetchExportData(this.$store, {
         produceRequestId: this.produceRequestId,
         format: this.selectedFormat,
@@ -418,7 +442,14 @@ export default Vue.extend({
       hiddenElement.click();
     },
 
-    async createDataset() {
+    async createDataset(bvModalEvt) {
+      if (!this.newDatasetName) {
+        bvModalEvt.preventDefault();
+        this.datasetModelNameState = false;
+        return;
+      }
+      this.datasetModelNameState = true;
+
       const err = await predictionActions.createDataset(this.$store, {
         produceRequestId: this.produceRequestId,
         newDatasetName: this.newDatasetName,
