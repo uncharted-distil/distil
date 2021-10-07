@@ -445,3 +445,18 @@ func GetUniqueFolder(folder string) string {
 
 	return currentFilename
 }
+
+// IsInDirectory indicates whether or not the supplied path is in a directory.
+func IsInDirectory(directory string, filename string) bool {
+	return strings.HasPrefix(filename, directory)
+}
+
+// Move moves a file or directory from source to destination.
+func Move(sourcePath string, destinationPath string) error {
+	err := os.Rename(sourcePath, destinationPath)
+	if err != nil {
+		return errors.Wrapf(err, "unable to move path from '%s' to '%s'", sourcePath, destinationPath)
+	}
+
+	return nil
+}

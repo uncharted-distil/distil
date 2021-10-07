@@ -81,7 +81,8 @@ type Config struct {
 	RankingOutputPath          string  `env:"RANKING_OUTPUT_PATH" envDefault:"importance.json"`
 	RemoteSensingGPUBatchSize  int     `env:"REMOTE_SENSING_GPU_BATCH_SIZE" envDefault:"32"`
 	RemoteSensingNumJobs       int     `env:"REMOTE_SENSING_NUM_JOBS" envDefault:"-1"` // -1 sets num jobs = num cpus
-	ShouldScaleImages          bool    `env:"SHOULD_SCALE_IMAGES" envDefault:"false"`  // enables and disables image scaling
+	ResourceSubFolder          string  `env:"RESOURCE_SUBFOLDER" envDefault:"resources"`
+	ShouldScaleImages          bool    `env:"SHOULD_SCALE_IMAGES" envDefault:"false"` // enables and disables image scaling
 	SkipPreprocessing          bool    `env:"SKIP_PREPROCESSING" envDefault:"false"`
 	SolutionComputeEndpoint    string  `env:"SOLUTION_COMPUTE_ENDPOINT" envDefault:"localhost:50051"`
 	SolutionComputePullTimeout int     `env:"SOLUTION_COMPUTE_PULL_TIMEOUT" envDefault:"60"`

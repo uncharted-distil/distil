@@ -250,6 +250,12 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		if !isSampling {
 			ingestConfig.SampleRowLimit = math.MaxInt32 // Maximum int value.
 		}
+
+		err = moveResources(ingestParams.GetSchemaDocPath())
+		if err != nil {
+			handleError(w, err)
+			return
+		}
 		log.Infof("Ingesting dataset '%s'", ingestParams.Path)
 		ingestResult, err := task.IngestDataset(ingestParams, ingestConfig, ingestSteps)
 		if err != nil {
@@ -265,7 +271,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 			return
 		}
 
-		if !env.IsPublicPath(datasetPathRaw) {
+		if !util.IsInDirectory(env.GetPublicPath(), datasetPathRaw) {
 			util.Delete(datasetPathRaw)
 		}
 		// marshal data and sent the response back
@@ -573,5 +579,30 @@ func syncPrefeaturizedDataset(datasetID string, updateDatasetID string, sourceLe
 
 	log.Infof("done syncing prefeaturized dataset '%s' on disk", datasetID)
 
+	return nil
+}
+
+func moveResources(schemaDoc string) error {
+	// read the dataset from disk
+	dsDisk, err := api.LoadDiskDatasetFromFolder(schemaDoc)
+	if err != nil {
+		return nil
+	}
+
+	// any resources not in the resource folder should be moved there
+	mainDR := dsDisk.Dataset.Metadata.GetMainDataResource()
+	for _, dr := range dsDisk.Dataset.Metadata.DataResources {
+		// main data resource should stay in the dataset folder
+		if dr != mainDR {
+			// move the resource over to the resource folder
+			if !util.IsInDirectory(env.GetResourcePath(), dr.ResPath) {
+				destinationPath := strings.Replace(dr.ResPath, env.GetPublicPath(), env.GetResourcePath(), 1)
+				err = util.Move(dr.ResPath, destinationPath)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
 	return nil
 }
