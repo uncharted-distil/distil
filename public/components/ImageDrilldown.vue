@@ -102,6 +102,7 @@
               :max="brightnessMax"
               step="1"
               class="brightness-slider"
+              v-model="sliderPosition"
               @change="onBrightnessChanged"
             />
           </b-input-group>
@@ -183,11 +184,11 @@ export default Vue.extend({
   data() {
     return {
       IMAGE_MAX_SIZE: IMAGE_MAX_SIZE,
-      currentVal: 0.5,
       carouselPosition: 0,
       currentBrightness: 0.5,
       brightnessMin: 0,
       brightnessMax: 100,
+      sliderPosition: 50,
       isFilteredToggled: true,
       hidden: false,
       disableUpscale: false,
@@ -294,9 +295,6 @@ export default Vue.extend({
     visibleTitle(): string {
       return this.selectedImageUrl ?? "Image Drilldown";
     },
-    sliderVal(): string {
-      return this.currentVal.toFixed(2);
-    },
     solutionId(): string {
       return routeGetters.getRouteSolutionId(this.$store);
     },
@@ -375,12 +373,17 @@ export default Vue.extend({
         removeRowSelection(this.$router, "", this.rowSelection, d3mIndex);
       }
     },
+    resetDrillDownData() {
+      this.scale = false; // reset scale
+      this.currentBrightness = 0.5; // reset brightness
+      this.sliderPosition = 50; // reset slider position
+    },
     cycleImage(sideToCycleTo: EI.IMAGES.Side) {
       this.carouselPosition = Math.max(
         0,
         Math.min(this.carouselPosition + sideToCycleTo, this.items.length - 1)
       );
-      this.scale = false; // reset scale
+      this.resetDrillDownData();
       this.requestImage({
         gainL: 1.0,
         gamma: 2.2,

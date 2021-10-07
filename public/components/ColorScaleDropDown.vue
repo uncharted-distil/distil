@@ -27,11 +27,12 @@
   </b-button>
   <div
     v-else
-    class="d-flex justify-content-space align-items-center btn-outline-secondary"
+    class="d-flex justify-content-space align-items-center btn-outline-secondary rounded"
   >
-    <i v-if="!isSelected" class="fas fa-palette fa-sm" />
+    <i v-if="!isSelected" class="fas fa-palette fa-sm pl-1" />
     <d-drop-down
-      class="p-0 pl-1 pr-1 shadow-none"
+      ref="drop-down"
+      class="p-0 pl-1 pr-1 shadow-none cursor-pointer"
       :options="colorScales"
       :value="selectedColorScale"
       label="name"

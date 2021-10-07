@@ -16,66 +16,43 @@
 -->
 
 <template>
-  <div>
-    <!-- Modal to save the model. -->
-    <b-modal :id="modalId" :title="title" @close="resetModal">
-      <!-- show form to save model if unsaved -->
-      <form ref="saveModelForm" @submit.stop.prevent="saveModel">
-        <b-form-group
-          :label="subjectNameLabel"
-          label-for="model-name-input"
-          :invalid-feedback="invalidFeedback"
+  <!-- Modal to save the model. -->
+  <b-modal :id="modalId" :title="title" @close="resetModal">
+    <!-- show form to save model if unsaved -->
+    <form ref="saveModelForm" @submit.stop.prevent="saveModel">
+      <b-form-group
+        :label="subjectNameLabel"
+        label-for="model-name-input"
+        :invalid-feedback="invalidFeedback"
+        :state="saveNameState"
+      >
+        <b-form-input
+          id="model-name-input"
+          v-model="saveName"
           :state="saveNameState"
-        >
-          <b-form-input
-            id="model-name-input"
-            v-model="saveName"
-            :state="saveNameState"
-            required
-          />
-        </b-form-group>
-        <b-form-group
-          :label="subjectDescriptionLabel"
-          label-for="model-desc-input"
+          required
+        />
+      </b-form-group>
+      <b-form-group
+        :label="subjectDescriptionLabel"
+        label-for="model-desc-input"
+        :state="saveDescriptionState"
+      >
+        <b-form-input
+          id="model-desc-input"
+          v-model="saveDescription"
           :state="saveDescriptionState"
-        >
-          <b-form-input
-            id="model-desc-input"
-            v-model="saveDescription"
-            :state="saveDescriptionState"
-          />
-        </b-form-group>
-      </form>
-      <template v-slot:modal-footer>
-        <b-button variant="secondary" @click="resetModal"> cancel </b-button>
-        <b-button variant="primary" @click="handleSaveOk" :disabled="isSaving">
-          <b-spinner v-if="isSaving" small />
-          <span v-else>ok</span>
-        </b-button>
-      </template>
-    </b-modal>
-
-    <!-- Modal to offer to apply the model once saved. -->
-    <b-modal
-      id="save-success-modal"
-      :title-html="successTitle"
-      header-class="success-modal-header"
-    >
-      <p>
-        The {{ subject }} {{ saveName.toUpperCase() }} will now be available on
-        the start page for re-use. To use it now on new data, click
-        <b>{{ actionName }}</b> or <b>Go Back to Start Page</b> to work on
-        something else.
-      </p>
-
-      <template v-slot:modal-footer>
-        <b-button variant="secondary" @click="back()">
-          Go Back to Start Page
-        </b-button>
-        <b-button variant="primary" @click="apply()">{{ actionName }}</b-button>
-      </template>
-    </b-modal>
-  </div>
+        />
+      </b-form-group>
+    </form>
+    <template v-slot:modal-footer>
+      <b-button variant="secondary" @click="resetModal"> cancel </b-button>
+      <b-button variant="primary" @click="handleSaveOk" :disabled="isSaving">
+        <b-spinner v-if="isSaving" small />
+        <span v-else>ok</span>
+      </b-button>
+    </template>
+  </b-modal>
 </template>
 
 <script lang="ts">
@@ -197,13 +174,6 @@ export default Vue.extend({
         description: this.saveDescription,
       } as EI.RESULT.SaveInfo);
     },
-    showSuccessModal() {
-      this.isSaving = false;
-      this.$bvModal.show("save-success-modal");
-    },
-    hideSuccessModal() {
-      this.$bvModal.hide("save-success-modal");
-    },
     hideSaveForm() {
       this.$bvModal.hide(this.modalId);
     },
@@ -218,10 +188,6 @@ export default Vue.extend({
 </script>
 
 <style scoped>
-.success-modal-header {
-  background: #d5ecdb;
-}
-
 .header-icon {
   color: #35a54c;
   margin-right: 5px;

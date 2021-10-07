@@ -120,9 +120,8 @@ export interface CreateSolutionsFormRef extends Vue {
 }
 // public/components/SaveModal.vue
 export interface SaveModalRef extends Vue {
-  showSuccessModal: () => void;
-  hideSuccessModal: () => void;
   hideSaveForm: () => void;
+  isSaving: boolean;
 }
 // public/components/SelectDataTable.vue && public/components/ImageMosaic.vue
 export interface DataView extends Vue {

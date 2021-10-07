@@ -28,7 +28,11 @@ import {
   getters as vGetters,
   mutations as vMutations,
 } from "./view/module";
-
+import {
+  actions as mActions,
+  getters as mGetters,
+  mutations as mMutations,
+} from "./model/module";
 /**
  * Dataset Store Module Exports
  */
@@ -70,3 +74,10 @@ export const requestMutations = reqMutations;
 export const appGetters = aGetters;
 export const appActions = aActions;
 export const appMutations = aMutations;
+
+/**
+ * Model Store Module Exports
+ */
+export const modelGetters = mGetters;
+export const modelActions = mActions;
+export const modelMutations = mMutations;
