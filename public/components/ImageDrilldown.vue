@@ -36,7 +36,12 @@
           class="pr-1 height-36"
           :has-image-attention="hasImageAttention"
         />
-        <label-header-buttons v-if="isLabelState" class="height-36" />
+        <label-header-buttons
+          v-if="isLabelState && hasD3mIndex"
+          disable-select-all
+          class="height-36"
+          :local-emit="onAnnotation"
+        />
       </header>
       <div class="d-flex justify-content-center align-items-center">
         <b-button
@@ -292,6 +297,12 @@ export default Vue.extend({
     hasImageAttention(): boolean {
       return routeGetters.getImageAttention(this.$store);
     },
+    d3mIndex(): number {
+      return this.items[this.carouselPosition]?.d3mIndex;
+    },
+    hasD3mIndex(): boolean {
+      return !!this.d3mIndex;
+    },
     visibleTitle(): string {
       return this.selectedImageUrl ?? "Image Drilldown";
     },
@@ -360,6 +371,14 @@ export default Vue.extend({
   },
 
   methods: {
+    onAnnotation(event: string) {
+      // add to selection if not added already
+      if (!isRowSelected(this.rowSelection, this.d3mIndex)) {
+        addRowSelection(this.$router, "", this.rowSelection, this.d3mIndex);
+      }
+      // emit a global event of the annotation
+      this.$eventBus.$emit(EventList.LABEL.ANNOTATION_EVENT, event);
+    },
     resetImage() {
       this.$eventBus.$emit(EventList.IMAGE_DRILL_DOWN.RESET_IMAGE_EVENT);
     },
