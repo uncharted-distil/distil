@@ -583,26 +583,45 @@ func syncPrefeaturizedDataset(datasetID string, updateDatasetID string, sourceLe
 }
 
 func moveResources(schemaDoc string) error {
+	log.Infof("checking to see if any data resources in the dataset found at '%s' need to be moved to the resource folder", schemaDoc)
 	// read the dataset from disk
-	dsDisk, err := api.LoadDiskDatasetFromFolder(schemaDoc)
+	dsFolder := path.Dir(schemaDoc)
+	dsDisk, err := api.LoadDiskDatasetFromFolder(dsFolder)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	// any resources not in the resource folder should be moved there
 	mainDR := dsDisk.Dataset.Metadata.GetMainDataResource()
+	updated := false
 	for _, dr := range dsDisk.Dataset.Metadata.DataResources {
 		// main data resource should stay in the dataset folder
 		if dr != mainDR {
 			// move the resource over to the resource folder
 			if !util.IsInDirectory(env.GetResourcePath(), dr.ResPath) {
-				destinationPath := strings.Replace(dr.ResPath, env.GetPublicPath(), env.GetResourcePath(), 1)
+				destinationPath := strings.Replace(dr.ResPath, path.Dir(dsFolder), env.GetResourcePath(), 1)
+				log.Infof("moving data resource from '%s' to '%s'", dr.ResPath, destinationPath)
 				err = util.Move(dr.ResPath, destinationPath)
 				if err != nil {
 					return err
 				}
+
+				log.Infof("updating data resource to point to new resource path")
+				dr.ResPath = destinationPath
+				updated = true
 			}
 		}
 	}
+
+	if updated {
+		log.Infof("updating metadata on disk to point to the right resource path")
+		err = dsDisk.SaveMetadata()
+		if err != nil {
+			return err
+		}
+	}
+
+	log.Infof("all data resources now located in the proper folders")
+
 	return nil
 }

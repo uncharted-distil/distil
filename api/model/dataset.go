@@ -235,6 +235,26 @@ func (d *DiskDataset) SaveDataset() error {
 	return nil
 }
 
+// SaveMetadata saves a dataset metadata to disk.
+func (d *DiskDataset) SaveMetadata() error {
+	err := serialization.WriteMetadata(d.schemaPath, d.Dataset.Metadata)
+	if err != nil {
+		return err
+	}
+
+	// Check the schema path here to figure out if this featurized dataset is just a reference to
+	// the baseline datset.  The featurized dataset has the same ID as the baseline, so that comparison
+	// is not sufficient in this case.
+	if d.FeaturizedDataset != nil && d.schemaPath != d.FeaturizedDataset.schemaPath {
+		err = d.FeaturizedDataset.SaveMetadata()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // AddField adds a field to the dataset.
 func (d *DiskDataset) AddField(variable *model.Variable) error {
 	err := d.Dataset.AddField(variable)

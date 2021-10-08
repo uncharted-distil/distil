@@ -453,7 +453,13 @@ func IsInDirectory(directory string, filename string) bool {
 
 // Move moves a file or directory from source to destination.
 func Move(sourcePath string, destinationPath string) error {
-	err := os.Rename(sourcePath, destinationPath)
+	destDirectory := path.Dir(destinationPath)
+	err := os.MkdirAll(destDirectory, os.ModePerm)
+	if err != nil {
+		return errors.Wrapf(err, "unable to create destination directory '%s'", destDirectory)
+	}
+
+	err = os.Rename(sourcePath, destinationPath)
 	if err != nil {
 		return errors.Wrapf(err, "unable to move path from '%s' to '%s'", sourcePath, destinationPath)
 	}
