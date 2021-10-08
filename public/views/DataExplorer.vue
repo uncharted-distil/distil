@@ -172,15 +172,13 @@
           <b-button-toolbar v-if="isSelectState">
             <b-button-group class="ml-2 mt-1">
               <b-button
-                variant="primary"
-                :disabled="include"
+                :variant="include ? 'primary' : 'secondary'"
                 @click="setIncludedActive"
               >
                 Included
               </b-button>
               <b-button
-                variant="secondary"
-                :disabled="!include"
+                :variant="!include ? 'primary' : 'secondary'"
                 @click="setExcludedActive"
               >
                 Excluded
