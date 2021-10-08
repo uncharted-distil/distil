@@ -142,8 +142,8 @@ var (
 func init() {
 	// initialize the band combination structures - needs to be done in init so that referenced color ramps are built
 	SentinelBandCombinations = map[string]*BandCombination{
-		NaturalColors1:          {NaturalColors, "Natural Colors", []string{"b04", "b03", "b02"}, nil, nil, false},
-        NaturalColors2:         {NaturalColors2, "Natural Colors 2", []string{"b04", "b03", "b02"}, nil, nil, true},
+		NaturalColors1:         {NaturalColors1, "Natural Colors", []string{"b04", "b03", "b02"}, nil, nil, false},
+		NaturalColors2:         {NaturalColors2, "Natural Colors 2", []string{"b04", "b03", "b02"}, nil, nil, true},
 		FalseColorInfrared:     {FalseColorInfrared, "False Color Infrared", []string{"b08", "b04", "b03"}, nil, nil, false},
 		FalseColorUrban:        {FalseColorUrban, "False Color Urban", []string{"b12", "b11", "b04"}, nil, nil, false},
 		Agriculture:            {Agriculture, "Agriculture", []string{"b11", "b08", "b02"}, nil, nil, false},
@@ -158,7 +158,7 @@ func init() {
 		NDWI:                   {NDWI, "Normalized Difference Water Index", []string{"b03", "b08"}, BlueYellowBrownRamp, NormalizingTransform, false},
 		NSMI:                   {NSMI, "Normalized Soil Moisture Index", []string{"b11", "b12"}, BlueYellowBrownRamp, NormalizingTransform, false},
 		MNDWI:                  {MNDWI, "Modified Normalized Difference Water Index", []string{"b03", "b11"}, BlueYellowBrownRamp, NormalizingTransform, false},
-		RSWIR:                  {RSWIR, "Red and Shortwave Infrared", []string{"b04", "b11"}, BlueYellowBrownRamp, NormalizingTransform, false},		
+		RSWIR:                  {RSWIR, "Red and Shortwave Infrared", []string{"b04", "b11"}, BlueYellowBrownRamp, NormalizingTransform, false},
 	}
 }
 
@@ -231,7 +231,7 @@ func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, 
 			imageRamp = GetColorRamp(ramp)
 		}
 
-		image, err := ImageFromBands(filePaths, imageRamp, bandCombo.Transform, imageScale, bandCombo.AdvancedColorModel, options...)		
+		image, err := ImageFromBands(filePaths, imageRamp, bandCombo.Transform, imageScale, bandCombo.AdvancedColorModel, options...)
 		if err != nil {
 			return nil, err
 		}

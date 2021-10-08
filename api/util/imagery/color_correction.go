@@ -17,6 +17,8 @@ package imagery
 
 import "math"
 
+const basicGainLScale = 2.5
+
 // Options for ConvertS2ToRgb
 type Options struct {
 	Gain  float64 `json:"gain"`
@@ -29,7 +31,12 @@ type Options struct {
 // default options: gain=2.5, gamma=2.2, gainL=1.0
 func ConvertS2ToRgb(bands [3]float64, advancedColorModel bool, options ...Options) [3]float64 {
 	if !advancedColorModel {
-		return clamp([3]float64{bands[0] * 2.5, bands[1] * 2.5, bands[2] * 2.5})
+		// GainL comes in on a scale from 0 to 2.
+		gainScale := 1.0
+		if len(options) > 0 {
+			gainScale = options[0].GainL * basicGainLScale
+		}
+		return clamp([3]float64{bands[0] * gainScale, bands[1] * gainScale, bands[2] * gainScale})
 	}
 
 	t := [3][3]float64{{0.268, 0.362, 0.371},

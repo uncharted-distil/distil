@@ -705,7 +705,7 @@ export const getters = {
 
   getBandCombinationId(state: Route): BandID {
     const bandCombo = state.query.bandCombinationId;
-    return _.isEmpty(bandCombo) ? BandID.NATURAL_COLORS : <BandID>bandCombo;
+    return _.isEmpty(bandCombo) ? BandID.NATURAL_COLORS_1 : <BandID>bandCombo;
   },
 
   getModelTimeLimit(state: Route): number {
