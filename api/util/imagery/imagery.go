@@ -90,6 +90,12 @@ const (
 
 	// NSMI identifies a band mapping that display Normalized Soil Moisture Index mapped using an RGB ramp.
 	NSMI = "nsmi"
+
+	// MNDWI identifies a band mapping that displays Modified Normalized Difference Moisture Index mapped using an RGB ramp
+	MNDWI = "mndwi"
+
+	// RSWIR identifies a band mapping that displays Red and Shortwave Infrared mapped using an RGB ramp
+	RSWIR = "rswir"
 )
 
 var (
@@ -150,6 +156,8 @@ func init() {
 		NDMI:                   {NDMI, "Normalized Difference Moisture Index ", []string{"b08", "b11"}, BlueYellowBrownRamp, NormalizingTransform},
 		NDWI:                   {NDWI, "Normalized Difference Water Index", []string{"b03", "b08"}, BlueYellowBrownRamp, NormalizingTransform},
 		NSMI:                   {NSMI, "Normalized Soil Moisture Index", []string{"b11", "b12"}, BlueYellowBrownRamp, NormalizingTransform},
+		MNDWI:                  {MNDWI, "Modified Normalized Difference Water Index", []string{"b03", "b11"}, BlueYellowBrownRamp, NormalizingTransform},
+		RSWIR:                  {RSWIR, "Red and Shortwave Infrared", []string{"b04", "b11"}, BlueYellowBrownRamp, NormalizingTransform},
 	}
 }
 
