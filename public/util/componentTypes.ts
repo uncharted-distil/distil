@@ -83,6 +83,7 @@ export interface DataExplorerRef {
   isBusy: boolean;
   labelModalId: string;
   labelName: string;
+  labelNameState: boolean;
   metaTypes: string[];
   state: BaseState;
 

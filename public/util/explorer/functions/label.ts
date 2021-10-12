@@ -132,8 +132,15 @@ export const LABEL_METHODS = {
    * onLabelSubmit is called when the user has created a new label to annotate
    * this starts the process of integrating the new variable into the dataset on the backend
    */
-  async onLabelSubmit(): Promise<void> {
+  async onLabelSubmit(bvModalEvt): Promise<void> {
     const self = (this as unknown) as DataExplorerRef;
+    if (!self.labelName) {
+      bvModalEvt.preventDefault();
+      self.labelNameState = false;
+      return;
+    }
+    self.labelNameState = true;
+
     if (
       self.variables.some((v) => {
         return v.colName === self.labelName;

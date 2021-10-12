@@ -300,6 +300,7 @@
         label="Label name:"
         label-for="label-input-field"
         description="Enter the name of label."
+        invalid-feedback="Label Name is Required"
       >
         <b-form-input
           id="label-input-field"
@@ -307,6 +308,7 @@
           type="text"
           required
           :placeholder="labelName"
+          :state="labelNameState"
         />
       </b-form-group>
       <b-form-group
@@ -428,6 +430,7 @@ const DataExplorer = Vue.extend({
       isBusy: false, // controls spinners in label state when search similar or save is used
       labelModalId: "label-input-form", // modal id
       labelName: "", // labelName of the variable being annotated in the label view
+      labelNameState: null,
       metaTypes: Object.keys(META_TYPES), // all of the meta types categories
       state: new SelectViewState(), // this state controls data flow
     };
