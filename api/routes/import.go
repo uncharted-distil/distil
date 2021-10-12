@@ -599,7 +599,9 @@ func moveResources(schemaDoc string) error {
 		if dr != mainDR {
 			// move the resource over to the resource folder
 			if !util.IsInDirectory(env.GetResourcePath(), dr.ResPath) {
-				destinationPath := strings.Replace(dr.ResPath, path.Dir(dsFolder), env.GetResourcePath(), 1)
+				destinationPathFull := strings.Replace(dr.ResPath, path.Dir(dsFolder), env.GetResourcePath(), 1)
+				destinationPath := util.GetUniqueFolder(path.Dir(destinationPathFull))
+				destinationPath = path.Join(destinationPath, path.Base(destinationPathFull))
 				log.Infof("moving data resource from '%s' to '%s'", dr.ResPath, destinationPath)
 				err = util.Move(dr.ResPath, destinationPath)
 				if err != nil {
