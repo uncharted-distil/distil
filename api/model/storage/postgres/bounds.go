@@ -431,8 +431,10 @@ func getGeoBoundsBuckets(xExtrema *api.Extrema, yExtrema *api.Extrema,
 	// build a list of bounds representing the buckets
 	xInterval := xExtrema.GetBucketInterval(xNumBuckets)
 	yInterval := yExtrema.GetBucketInterval(yNumBuckets)
-
 	buckets := []*geometryBucket{}
+	if xInterval == 0 || yInterval == 0 {
+		return buckets
+	} 
 	xLeft := xExtrema.Min
 	xRight := xLeft + xInterval
 	for xCount := 0; xLeft <= xExtrema.Max; xLeft, xRight = xLeft+xInterval, xRight+xInterval {
