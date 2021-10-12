@@ -17,7 +17,6 @@ package env
 
 import (
 	"path"
-	"strings"
 
 	"github.com/uncharted-distil/distil-compute/metadata"
 	log "github.com/unchartedsoftware/plog"
@@ -38,6 +37,7 @@ var (
 	augmentedPath = ""
 	batchPath     = ""
 	publicPath    = ""
+	resourcePath  = ""
 
 	initialized = false
 	isTask      = false
@@ -64,6 +64,7 @@ func Initialize(config *Config) error {
 	augmentedPath = path.Join(config.D3MOutputDir, config.AugmentedSubFolder)
 	batchPath = path.Join(config.D3MOutputDir, config.BatchSubFolder)
 	publicPath = path.Join(config.D3MOutputDir, config.PublicSubFolder)
+	resourcePath = path.Join(config.D3MOutputDir, config.ResourceSubFolder)
 
 	log.Infof("using '%s' as seed path", seedPath)
 	log.Infof("using '%s' as seed sub path", seedSubPath)
@@ -72,6 +73,7 @@ func Initialize(config *Config) error {
 	log.Infof("using '%s' as augmented path", augmentedPath)
 	log.Infof("using '%s' as batch path", batchPath)
 	log.Infof("using '%s' as public path", publicPath)
+	log.Infof("using '%s' as resource path", resourcePath)
 
 	initialized = true
 
@@ -150,15 +152,14 @@ func GetBatchPath() string {
 	return batchPath
 }
 
-// GetPublicPath returns the batch path as initialized.
+// GetPublicPath returns the public path as initialized.
 func GetPublicPath() string {
 	return publicPath
 }
 
-// IsPublicPath indicates whether or not the supplied path is the current
-// public path.
-func IsPublicPath(filename string) bool {
-	return strings.HasPrefix(filename, GetPublicPath())
+// GetResourcePath returns the resource path as initialized.
+func GetResourcePath() string {
+	return resourcePath
 }
 
 // ResolvePath returns an absolute path based on the dataset source.

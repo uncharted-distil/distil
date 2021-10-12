@@ -134,7 +134,8 @@ type IngestParams struct {
 	DefinitiveTypes map[string]*model.Variable
 }
 
-func (i *IngestParams) getSchemaDocPath() string {
+// GetSchemaDocPath returns the schema path to use when ingesting.
+func (i *IngestParams) GetSchemaDocPath() string {
 	if i.Path != "" {
 		return path.Join(i.Path, compute.D3MDataSchema)
 	}
@@ -154,7 +155,7 @@ func IngestDataset(params *IngestParams, config *IngestTaskConfig, steps *Ingest
 		return nil, errors.Wrap(err, "unable to initialize data storage")
 	}
 
-	originalSchemaFile := params.getSchemaDocPath()
+	originalSchemaFile := params.GetSchemaDocPath()
 	latestSchemaOutput := originalSchemaFile
 
 	output, err := Merge(latestSchemaOutput, params.ID, config)

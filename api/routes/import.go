@@ -250,6 +250,12 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		if !isSampling {
 			ingestConfig.SampleRowLimit = math.MaxInt32 // Maximum int value.
 		}
+
+		err = moveResources(ingestParams.GetSchemaDocPath())
+		if err != nil {
+			handleError(w, err)
+			return
+		}
 		log.Infof("Ingesting dataset '%s'", ingestParams.Path)
 		ingestResult, err := task.IngestDataset(ingestParams, ingestConfig, ingestSteps)
 		if err != nil {
@@ -265,7 +271,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 			return
 		}
 
-		if !env.IsPublicPath(datasetPathRaw) {
+		if !util.IsInDirectory(env.GetPublicPath(), datasetPathRaw) {
 			util.Delete(datasetPathRaw)
 		}
 		// marshal data and sent the response back
@@ -572,6 +578,52 @@ func syncPrefeaturizedDataset(datasetID string, updateDatasetID string, sourceLe
 	}
 
 	log.Infof("done syncing prefeaturized dataset '%s' on disk", datasetID)
+
+	return nil
+}
+
+func moveResources(schemaDoc string) error {
+	log.Infof("checking to see if any data resources in the dataset found at '%s' need to be moved to the resource folder", schemaDoc)
+	// read the dataset from disk
+	dsFolder := path.Dir(schemaDoc)
+	dsDisk, err := api.LoadDiskDatasetFromFolder(dsFolder)
+	if err != nil {
+		return err
+	}
+
+	// any resources not in the resource folder should be moved there
+	mainDR := dsDisk.Dataset.Metadata.GetMainDataResource()
+	updated := false
+	for _, dr := range dsDisk.Dataset.Metadata.DataResources {
+		// main data resource should stay in the dataset folder
+		if dr != mainDR {
+			// move the resource over to the resource folder
+			if !util.IsInDirectory(env.GetResourcePath(), dr.ResPath) {
+				destinationPathFull := strings.Replace(dr.ResPath, path.Dir(dsFolder), env.GetResourcePath(), 1)
+				destinationPath := util.GetUniqueFolder(path.Dir(destinationPathFull))
+				destinationPath = path.Join(destinationPath, path.Base(destinationPathFull))
+				log.Infof("moving data resource from '%s' to '%s'", dr.ResPath, destinationPath)
+				err = util.Move(dr.ResPath, destinationPath)
+				if err != nil {
+					return err
+				}
+
+				log.Infof("updating data resource to point to new resource path")
+				dr.ResPath = destinationPath
+				updated = true
+			}
+		}
+	}
+
+	if updated {
+		log.Infof("updating metadata on disk to point to the right resource path")
+		err = dsDisk.SaveMetadata()
+		if err != nil {
+			return err
+		}
+	}
+
+	log.Infof("all data resources now located in the proper folders")
 
 	return nil
 }

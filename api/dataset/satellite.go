@@ -349,7 +349,7 @@ func (s *Satellite) GetDefinitiveTypes() []*model.Variable {
 
 // CleanupTempFiles does nothing since this creates no temp files.
 func (s *Satellite) CleanupTempFiles() {
-	if !env.IsPublicPath(s.ExtractedFilePath) {
+	if !util.IsInDirectory(env.GetPublicPath(), s.ExtractedFilePath) {
 		util.Delete(s.ExtractedFilePath)
 	}
 }

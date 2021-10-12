@@ -336,6 +336,12 @@ func createOutputFolders(config *env.Config) {
 		log.Error(errors.Wrap(err, "failed to created public folder"))
 	}
 
+	// create the resource data folder
+	resourcePath := env.GetResourcePath()
+	if err := os.MkdirAll(resourcePath, os.ModePerm); err != nil {
+		log.Error(errors.Wrap(err, "failed to created resource folder"))
+	}
+
 	// create the public data folder
 	batchPath := env.GetBatchPath()
 	if err := os.MkdirAll(batchPath, os.ModePerm); err != nil {
