@@ -654,7 +654,7 @@ export function lexQueryToFiltersAndHighlight(
   variables: Variable[]
 ): { filters: Filter[]; highlights: Highlight[] } {
   const filters = [] as Filter[];
-  const highlights = [] as Highlight[];
+  let highlights = [] as Highlight[];
 
   lexQuery[0].forEach((lq) => {
     if (lq.relation.key !== HIGHLIGHT) {
@@ -722,10 +722,14 @@ export function lexQueryToFiltersAndHighlight(
           highlight.value.from = dateToNum(lq[`min_${i}`]);
           highlight.value.to = dateToNum(lq[`max_${i}`]);
           highlight.value.type = DATETIME_FILTER;
+          // only 1 range highlight per variable
+          highlights = highlights.filter((h) => h.key !== variable.key);
         } else if (isNumericType(type)) {
           highlight.value.from = parseFloat(lq[`min_${i}`].key);
           highlight.value.to = parseFloat(lq[`max_${i}`].key);
           highlight.value.type = NUMERICAL_FILTER;
+          // only 1 range highlight per variable
+          highlights = highlights.filter((h) => h.key !== variable.key);
         } else {
           const values: string[] = [];
           for (i = 0; i < lq.field.meta.count; ++i) {
