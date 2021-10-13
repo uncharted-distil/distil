@@ -39,6 +39,7 @@
             :instance-name="topFacetName"
             :rows-per-page="numRowsPerPage"
             :summaries="topVariableSummaries"
+            @type-change="onTypeChange"
           />
         </div>
         <div class="h-50">
@@ -50,6 +51,7 @@
             :instance-name="bottomFacetName"
             :rows-per-page="numRowsPerPage"
             :summaries="bottomVariableSummaries"
+            @type-change="onTypeChange"
           />
         </div>
       </div>
@@ -127,6 +129,7 @@ import { actions as viewActions } from "../store/view/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getVariableSummaries, swapJoinView } from "../util/join";
+import { datasetActions } from "../store";
 
 export default Vue.extend({
   name: "join-datasets",
@@ -328,6 +331,12 @@ export default Vue.extend({
   },
 
   methods: {
+    async onTypeChange() {
+      await datasetActions.fetchJoinDatasetsVariables(this.$store, {
+        datasets: [this.topDataset, this.bottomDataset],
+      });
+      await viewActions.updateJoinDatasetsData(this.$store);
+    },
     onTopColumnClicked(column) {
       const route = {
         // clear top and bottom column
