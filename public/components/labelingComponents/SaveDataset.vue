@@ -76,6 +76,8 @@
 <script lang="ts">
 import Vue from "vue";
 import { SEARCH_ROUTE, SELECT_TARGET_ROUTE } from "../../store/route";
+import { getters as routeGetters } from "../../store/route/module";
+import { datasetGetters } from "../../store";
 import { createRouteEntry } from "../../util/routes";
 import router from "../../router/router";
 import { EventList } from "../../util/events";
@@ -156,9 +158,25 @@ export default Vue.extend({
     },
     // ensure required fields are filled out
     validForm() {
-      const valid = this.saveName.length > 0;
-      this.saveNameState = valid;
-      return valid;
+      this.saveNameState = this.saveName.length > 0;
+
+      const itemsList = datasetGetters.getIncludedTableDataItems(this.$store);
+      const targetKey = routeGetters.getRouteLabel(this.$store);
+      const hasLabeledItems = itemsList.some(
+        (item) => item[targetKey]?.value !== "unlabeled"
+      );
+
+      if (!hasLabeledItems && !this.retainUnlabeled) {
+        this.$bvToast.toast("No items labeled", {
+          title: "Error",
+          autoHideDelay: 5000,
+          appendToast: true,
+          variant: "danger",
+          toaster: "b-toaster-bottom-right",
+        });
+        return false;
+      }
+      return this.saveNameState;
     },
     onShow() {
       this.saveName = this.datasetName;
