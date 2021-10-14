@@ -78,6 +78,7 @@ import Vue from "vue";
 import { SEARCH_ROUTE, SELECT_TARGET_ROUTE } from "../../store/route";
 import { getters as routeGetters } from "../../store/route/module";
 import { datasetGetters } from "../../store";
+import { VariableSummary } from "../../store/dataset";
 import { createRouteEntry } from "../../util/routes";
 import router from "../../router/router";
 import { EventList } from "../../util/events";
@@ -87,6 +88,7 @@ export default Vue.extend({
   props: {
     datasetName: String as () => string,
     modalId: { type: String as () => string, default: "save-model-modal" },
+    summaries: Array as () => VariableSummary[],
   },
 
   data() {
@@ -160,13 +162,16 @@ export default Vue.extend({
     validForm() {
       this.saveNameState = this.saveName.length > 0;
 
-      const itemsList = datasetGetters.getIncludedTableDataItems(this.$store);
       const targetKey = routeGetters.getRouteLabel(this.$store);
-      const hasLabeledItems = itemsList.some(
-        (item) => item[targetKey]?.value !== "unlabeled"
-      );
+      const { buckets } = this.summaries.find(
+        (summary) => summary.key === targetKey
+      ).baseline;
 
-      if (!hasLabeledItems && !this.retainUnlabeled) {
+      if (
+        buckets.length === 1 &&
+        buckets[0].key === "unlabeled" &&
+        !this.retainUnlabeled
+      ) {
         this.$bvToast.toast("No items labeled", {
           title: "Error",
           autoHideDelay: 5000,

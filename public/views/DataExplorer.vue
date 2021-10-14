@@ -324,7 +324,11 @@
         />
       </b-form-group>
     </b-modal>
-    <save-dataset modal-id="save-dataset-modal" :dataset-name="dataset" />
+    <save-dataset
+      modal-id="save-dataset-modal"
+      :dataset-name="dataset"
+      :summaries="summaries"
+    />
   </div>
 </template>
 
