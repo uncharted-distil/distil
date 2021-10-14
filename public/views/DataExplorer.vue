@@ -50,8 +50,9 @@
     </left-side-panel>
     <main class="content">
       <loading-spinner v-show="isBusy" :state="busyState" />
-      <template v-show="!isBusy">
+      <template>
         <search-bar
+          v-show="!isBusy"
           :variables="allVariables"
           :filters="filters"
           :highlights="routeHighlight"
@@ -60,7 +61,7 @@
 
         <!-- Tabs to switch views -->
 
-        <div class="d-flex flex-row align-items-end mt-2">
+        <div v-if="!isBusy" class="d-flex flex-row align-items-end mt-2">
           <div class="flex-grow-1 mr-2">
             <b-tabs v-model="activeView" class="tab-container">
               <b-tab
@@ -115,7 +116,7 @@
             class="ml-5 mr-auto"
           />
         </div>
-        <section class="data-container">
+        <section v-show="!isBusy" class="data-container">
           <component
             :is="viewComponent"
             ref="dataView"
@@ -147,6 +148,7 @@
         </section>
 
         <footer
+          v-if="!isBusy"
           class="d-flex align-items-end d-flex justify-content-between mt-1 mb-0"
         >
           <div v-if="!isGeoView" class="flex-grow-1">
