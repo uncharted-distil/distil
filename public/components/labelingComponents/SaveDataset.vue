@@ -76,6 +76,9 @@
 <script lang="ts">
 import Vue from "vue";
 import { SEARCH_ROUTE, SELECT_TARGET_ROUTE } from "../../store/route";
+import { getters as routeGetters } from "../../store/route/module";
+import { datasetGetters } from "../../store";
+import { VariableSummary } from "../../store/dataset";
 import { createRouteEntry } from "../../util/routes";
 import router from "../../router/router";
 import { EventList } from "../../util/events";
@@ -85,6 +88,7 @@ export default Vue.extend({
   props: {
     datasetName: String as () => string,
     modalId: { type: String as () => string, default: "save-model-modal" },
+    summaries: Array as () => VariableSummary[],
   },
 
   data() {
@@ -156,9 +160,28 @@ export default Vue.extend({
     },
     // ensure required fields are filled out
     validForm() {
-      const valid = this.saveName.length > 0;
-      this.saveNameState = valid;
-      return valid;
+      this.saveNameState = this.saveName.length > 0;
+
+      const targetKey = routeGetters.getRouteLabel(this.$store);
+      const { buckets } = this.summaries.find(
+        (summary) => summary.key === targetKey
+      ).baseline;
+
+      if (
+        buckets.length === 1 &&
+        buckets[0].key === "unlabeled" &&
+        !this.retainUnlabeled
+      ) {
+        this.$bvToast.toast("No items labeled", {
+          title: "Error",
+          autoHideDelay: 5000,
+          appendToast: true,
+          variant: "danger",
+          toaster: "b-toaster-bottom-right",
+        });
+        return false;
+      }
+      return this.saveNameState;
     },
     onShow() {
       this.saveName = this.datasetName;

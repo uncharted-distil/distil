@@ -50,8 +50,9 @@
     </left-side-panel>
     <main class="content">
       <loading-spinner v-show="isBusy" :state="busyState" />
-      <template v-show="!isBusy">
+      <template>
         <search-bar
+          v-show="!isBusy"
           :variables="allVariables"
           :filters="filters"
           :highlights="routeHighlight"
@@ -60,7 +61,7 @@
 
         <!-- Tabs to switch views -->
 
-        <div class="d-flex flex-row align-items-end mt-2">
+        <div v-if="!isBusy" class="d-flex flex-row align-items-end mt-2">
           <div class="flex-grow-1 mr-2">
             <b-tabs v-model="activeView" class="tab-container">
               <b-tab
@@ -115,7 +116,7 @@
             class="ml-5 mr-auto"
           />
         </div>
-        <section class="data-container">
+        <section v-show="!isBusy" class="data-container">
           <component
             :is="viewComponent"
             ref="dataView"
@@ -147,6 +148,7 @@
         </section>
 
         <footer
+          v-if="!isBusy"
           class="d-flex align-items-end d-flex justify-content-between mt-1 mb-0"
         >
           <div v-if="!isGeoView" class="flex-grow-1">
@@ -299,6 +301,7 @@
         label="Label name:"
         label-for="label-input-field"
         description="Enter the name of label."
+        invalid-feedback="Label Name is Required"
       >
         <b-form-input
           id="label-input-field"
@@ -306,6 +309,7 @@
           type="text"
           required
           :placeholder="labelName"
+          :state="labelNameState"
         />
       </b-form-group>
       <b-form-group
@@ -321,7 +325,11 @@
         />
       </b-form-group>
     </b-modal>
-    <save-dataset modal-id="save-dataset-modal" :dataset-name="dataset" />
+    <save-dataset
+      modal-id="save-dataset-modal"
+      :dataset-name="dataset"
+      :summaries="summaries"
+    />
   </div>
 </template>
 
@@ -427,6 +435,7 @@ const DataExplorer = Vue.extend({
       isBusy: false, // controls spinners in label state when search similar or save is used
       labelModalId: "label-input-form", // modal id
       labelName: "", // labelName of the variable being annotated in the label view
+      labelNameState: null,
       metaTypes: Object.keys(META_TYPES), // all of the meta types categories
       state: new SelectViewState(), // this state controls data flow
     };
