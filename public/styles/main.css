@@ -225,3 +225,7 @@ body {
 .selected-color {
   color: var(--red);
 }
+
+.exclude-button.btn-primary {
+  background-color: var(--black);
+}
