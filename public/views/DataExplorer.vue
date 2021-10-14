@@ -178,6 +178,7 @@
                 Included
               </b-button>
               <b-button
+                class="exclude-button"
                 :variant="!include ? 'primary' : 'secondary'"
                 @click="setExcludedActive"
               >
