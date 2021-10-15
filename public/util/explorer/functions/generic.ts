@@ -149,6 +149,7 @@ export const GENERIC_METHODS = {
         return [t, true];
       })
     );
+    self.bindEventHandlers(self.config.eventHandlers);
     // the switch to the new config will trigger a render of new elements
     // if the defaultActions is one of the new elements it will not exist in the dom yet
     // so we toggle the default actions after the next DOM cycle

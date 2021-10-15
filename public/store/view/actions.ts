@@ -29,6 +29,7 @@ import { Dictionary } from "../../util/dict";
 import { Filter, FilterParams, invertFilter } from "../../util/filters";
 import { getPredictionsById } from "../../util/predictions";
 import { filterBadRequests } from "../../util/solutions";
+import { DISTIL_ROLES } from "../../util/types";
 import {
   DataMode,
   Highlight,
@@ -725,8 +726,7 @@ export const actions = {
     await modelActions.fetchModels(store); // Fetch saved models.
 
     // These are long running processes we won't wait on
-    fetchClusters(context, { dataset });
-    fetchOutliers(context, { dataset });
+    datasetActions.fetchClusters(store, { dataset });
 
     await Promise.all([
       fetchSolutionVariableRankings(context, { solutionID: solutionID }),
@@ -799,9 +799,17 @@ export const actions = {
   },
   updateResultsSummaries(context: ViewContext) {
     const dataset = routeGetters.getRouteDataset(store);
-    const trainingVariables = requestGetters.getActiveSolutionTrainingVariables(
-      store
-    );
+    const trainingVariables = requestGetters
+      .getActiveSolutionTrainingVariables(store)
+      .concat(
+        datasetGetters
+          .getVariables(store)
+          .filter(
+            (variable) =>
+              variable.distilRole === DISTIL_ROLES.Augmented &&
+              variable.key === "_outlier"
+          )
+      );
     const highlights = routeGetters.getDecodedHighlights(store);
     const dataMode = context.getters.getDataMode;
     const varModes: Map<string, SummaryMode> = routeGetters.getDecodedVarModes(
@@ -1041,8 +1049,8 @@ export const actions = {
       produceRequestId
     ).dataset;
 
-    // fetch variales for that dataset
-    await fetchVariables(context, {
+    // fetch variables for that dataset
+    await datasetActions.fetchVariables(store, {
       dataset: inferenceDataset,
     });
     return actions.updatePredictions(context, { isInit: true });

@@ -21,7 +21,7 @@ import {
   ResultViewState,
   SelectViewState,
 } from "../state/AppStateWrapper";
-import { Variable } from "../../store/dataset";
+import { DataMode, Variable } from "../../store/dataset";
 import { DataExplorerRef } from "../componentTypes";
 import { DISTIL_ROLES, META_TYPES } from "../types";
 import { GENERIC_COMPUTES, GENERIC_METHODS } from "./functions/generic";
@@ -30,13 +30,24 @@ import {
   LABEL_COMPUTES,
   LABEL_EVENT_HANDLERS,
 } from "./functions/label";
-import { RESULT_METHODS, RESULT_COMPUTES } from "./functions/result";
-import { SELECT_METHODS, SELECT_COMPUTES } from "./functions/select";
+import {
+  RESULT_METHODS,
+  RESULT_COMPUTES,
+  RESULT_EVENT_HANDLERS,
+} from "./functions/result";
+import {
+  SELECT_METHODS,
+  SELECT_COMPUTES,
+  SELECT_EVENT_HANDLERS,
+} from "./functions/select";
 import {
   PREDICTION_COMPUTES,
+  PREDICTION_EVENT_HANDLERS,
   PREDICTION_METHODS,
 } from "./functions/prediction";
-import { setFilterModes } from "../highlights";
+import { getters as routeGetters } from "../../store/route/module";
+import store from "../../store/store";
+import { Dictionary } from "vue-router/types/router";
 export interface Action {
   name: string;
   icon: string;
@@ -53,6 +64,7 @@ export default interface ExplorerConfig {
   defaultAction: ActionNames[];
   currentPane: string;
   resetConfig: (self: DataExplorerRef) => void;
+  eventHandlers: Dictionary<Function>;
 }
 
 // DataExplorer possible state, used in route
@@ -113,10 +125,12 @@ export class SelectViewConfig implements ExplorerConfig {
     });
   }
   resetConfig(self: DataExplorerRef) {
-    return;
+    self.removeEventHandlers(this.eventHandlers);
   }
   currentPane = ACTION_MAP.get(ActionNames.ALL_VARIABLES).paneId;
   defaultAction = [];
+  // These events handlers get binded when the state becomes active and will be removed when the state is left
+  eventHandlers = SELECT_EVENT_HANDLERS;
 }
 export class ResultViewConfig implements ExplorerConfig {
   get actionList(): Action[] {
@@ -137,10 +151,12 @@ export class ResultViewConfig implements ExplorerConfig {
     });
   }
   resetConfig(self: DataExplorerRef) {
-    return;
+    self.removeEventHandlers(this.eventHandlers);
   }
   currentPane = ACTION_MAP.get(ActionNames.MODEL_VARIABLES).paneId;
   defaultAction = [ActionNames.OUTCOME_VARIABLES];
+  // These events handlers get binded when the state becomes active and will be removed when the state is left
+  eventHandlers = RESULT_EVENT_HANDLERS;
 }
 export class PredictViewConfig implements ExplorerConfig {
   get actionList(): Action[] {
@@ -161,10 +177,11 @@ export class PredictViewConfig implements ExplorerConfig {
     });
   }
   resetConfig(self: DataExplorerRef) {
-    return;
+    self.removeEventHandlers(this.eventHandlers);
   }
   currentPane = ACTION_MAP.get(ActionNames.MODEL_VARIABLES).paneId;
   defaultAction = [ActionNames.OUTCOME_VARIABLES];
+  eventHandlers = PREDICTION_EVENT_HANDLERS;
 }
 export class LabelViewConfig implements ExplorerConfig {
   get actionList(): Action[] {
@@ -187,9 +204,12 @@ export class LabelViewConfig implements ExplorerConfig {
   }
   resetConfig(self: DataExplorerRef) {
     self.labelName = "";
+    self.removeEventHandlers(this.eventHandlers);
   }
   currentPane = ACTION_MAP.get(ActionNames.ALL_VARIABLES).paneId;
   defaultAction = [];
+  // These events handlers get binded when the state becomes active and will be removed when the state is left
+  eventHandlers = LABEL_EVENT_HANDLERS;
 }
 export enum ActionNames {
   CREATE_NEW_VARIABLE = "Create New Variable",
@@ -307,16 +327,13 @@ export const ACTIONS = [
           ...self.state.getVariables(),
         ])
       );
-      // find meta data which is the variables being applied to grouping variables
-      const meta = new Map(
-        variables
-          .filter((v) => v.distilRole === DISTIL_ROLES.Meta)
-          .map((v) => [v.colName, true])
-      );
-      // find all grouping variables that the above meta map applies to
-      const result = variables.filter((v) => {
-        return v.grouping && meta.has(v.grouping.clusterCol);
-      });
+      const isCluster = routeGetters.getDataMode(store) === DataMode.Cluster;
+      // if clustering is enabled find variable with a clusterColumn
+      const result = isCluster
+        ? variables.filter((v) => {
+            return !!v.grouping?.clusterCol;
+          })
+        : [];
       // add all the augmented variables
       return result.concat(
         variables.filter((v) => v.distilRole === DISTIL_ROLES.Augmented)

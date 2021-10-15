@@ -1,12 +1,18 @@
 import { CreateSolutionsFormRef, DataExplorerRef } from "../../componentTypes";
 import { isEmpty, isNil } from "lodash";
-import { appActions, datasetActions, requestActions } from "../../../store";
+import {
+  appActions,
+  datasetActions,
+  datasetGetters,
+  requestActions,
+  viewActions,
+} from "../../../store";
 import { getters as routeGetters } from "../../../store/route/module";
 import store from "../../../store/store";
 import { SolutionRequestMsg } from "../../../store/requests/actions";
 import { Solution } from "../../../store/requests";
-import { DataMode } from "../../../store/dataset";
-import { varModesToString } from "../../routes";
+import { DataMode, SummaryMode } from "../../../store/dataset";
+import { overlayRouteEntry, varModesToString } from "../../routes";
 import { ExplorerStateNames } from "..";
 import { createFiltersFromHighlights } from "../../highlights";
 import {
@@ -15,6 +21,10 @@ import {
   INCLUDE_FILTER,
 } from "../../filters";
 import { Activity, Feature, SubActivity } from "../../userEvents";
+import { EventList } from "../../events";
+import { IMAGE_TYPE, isClusterType } from "../../types";
+import { $enum } from "ts-enum-util";
+
 /**
  * SELECT_COMPUTES contains all of the computes for the select state in the data explorer
  **/
@@ -146,6 +156,90 @@ export const SELECT_METHODS = {
       subActivity: SubActivity.DATA_TRANSFORMATION,
       details: { filter: filter },
     });
+    return;
+  },
+};
+
+export const SELECT_EVENT_HANDLERS = {
+  /**
+   * This function handles the apply cluster event
+   * It updates the variable with a cluster column
+   * then updates the variable summary with the new cluster datamode
+   */
+  [EventList.VARIABLES.APPLY_CLUSTER_EVENT]: function () {
+    const self = (this as unknown) as DataExplorerRef;
+    // fetch the var modes map
+    const varModesMap = routeGetters.getDecodedVarModes(store);
+    const clusterVars = new Set<string>();
+    // find any grouped vars that are using this cluster data and update their
+    // mode to cluster now that data is available
+    datasetGetters
+      .getGroupings(store)
+      .filter((v) => isClusterType(v.colType))
+      .forEach((v) => {
+        varModesMap.set(v.key, SummaryMode.Cluster);
+        clusterVars.add(v.grouping.clusterCol);
+      });
+
+    // find any image variables using this cluster data and update their mode
+    datasetGetters
+      .getVariables(store)
+      .filter((v) => v.colType === IMAGE_TYPE)
+      .forEach((v) => {
+        varModesMap.set(v.key, SummaryMode.Cluster);
+      });
+
+    // serialize the modes map into a string and add to the route
+    // and update to know that the clustering has been applied.
+    const varModesStr = varModesToString(varModesMap);
+    const entry = overlayRouteEntry(self.$route, {
+      varModes: varModesStr,
+      dataMode: DataMode.Cluster,
+      clustering: "1",
+    });
+    self.$router.push(entry).catch((err) => console.warn(err));
+
+    // update variables
+    // pull the updated dataset, vars, and summaries
+    const filterParams = routeGetters.getDecodedSolutionRequestFilterParams(
+      store
+    );
+    const highlights = routeGetters.getDecodedHighlights(store);
+    for (const [k, v] of varModesMap) {
+      datasetActions.fetchVariableSummary(store, {
+        dataset: self.dataset,
+        variable: k,
+        highlights: highlights,
+        filterParams: filterParams,
+        include: true,
+        dataMode: DataMode.Cluster,
+        mode: $enum(SummaryMode).asValueOrDefault(v, SummaryMode.Default),
+        handleMutation: true,
+      });
+    }
+
+    return;
+  },
+  /**
+   * This handles outlier events for the select state
+   * All it does is apply the outlier to the ds
+   * then update the variables / variable summaries
+   * **/
+  [EventList.VARIABLES.APPLY_OUTLIER_EVENT]: async function () {
+    const self = (this as unknown) as DataExplorerRef;
+    const dataset = self.dataset;
+    const success = await datasetActions.applyOutliers(store, dataset);
+    if (!success) return;
+
+    // Update the variables, which should now include the outlier variable.
+    await datasetActions.fetchVariables(store, {
+      dataset,
+    });
+    await viewActions.updateVariableSummaries(store);
+
+    // Update the route to know that the outlier has been applied.
+    const entry = overlayRouteEntry(self.$route, { outlier: "1" });
+    self.$router.push(entry).catch((err) => console.warn(err));
     return;
   },
 };

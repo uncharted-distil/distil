@@ -81,6 +81,7 @@ import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { overlayRouteEntry, varModesToString } from "../util/routes";
 import { IMAGE_TYPE, isClusterType } from "../util/types";
 import { $enum } from "ts-enum-util";
+import { EventList } from "../util/events";
 
 const STATUS_USER_EVENT = new Map<DatasetPendingRequestType, Feature>([
   [DatasetPendingRequestType.VARIABLE_RANKING, Feature.RANK_FEATURES],
@@ -96,17 +97,19 @@ export default Vue.extend({
   components: {
     StatusPanelJoin,
   },
-
+  props: {
+    dataset: {
+      type: String as () => string,
+      default: "",
+    },
+  },
   mounted: function () {
     if (routeGetters.getRouteIsClusterGenerated(this.$store)) {
-      this.applyClusteringChange();
+      this.$eventBus.$emit(EventList.VARIABLES.APPLY_CLUSTER_EVENT);
     }
   },
 
   computed: {
-    dataset(): string {
-      return routeGetters.getRouteDataset(this.$store);
-    },
     statusPanelState(): StatusPanelState {
       return appGetters.getStatusPanelState(this.$store);
     },
@@ -234,10 +237,13 @@ export default Vue.extend({
           this.applyGeocodingChange();
           break;
         case DatasetPendingRequestType.OUTLIER:
-          this.applyOutlierChange();
+          this.$eventBus.$emit(EventList.VARIABLES.APPLY_OUTLIER_EVENT);
+          this.clearData();
+          this.close();
           break;
         case DatasetPendingRequestType.CLUSTERING:
-          this.applyClusteringChange();
+          this.$eventBus.$emit(EventList.VARIABLES.APPLY_CLUSTER_EVENT);
+          this.clearData();
           break;
         default:
       }
@@ -274,84 +280,6 @@ export default Vue.extend({
         .then(() => {
           this.clearData();
         });
-    },
-
-    async applyOutlierChange() {
-      this.clearData();
-      const success = await datasetActions.applyOutliers(
-        this.$store,
-        this.dataset
-      );
-      if (!success) return;
-
-      // Update the variables, which should now include the outlier variable.
-      await datasetActions.fetchVariables(this.$store, {
-        dataset: this.dataset,
-      });
-      await viewActions.updateVariableSummaries(this.$store);
-
-      // Update the route to know that the outlier has been applied.
-      const entry = overlayRouteEntry(this.$route, { outlier: "1" });
-      this.$router.push(entry).catch((err) => console.warn(err));
-
-      this.close();
-    },
-
-    // Applies clustering changes and refetches update variable summaries
-    applyClusteringChange() {
-      // fetch the var modes map
-      const varModesMap = routeGetters.getDecodedVarModes(this.$store);
-      const clusterVars = new Set<string>();
-      // find any grouped vars that are using this cluster data and update their
-      // mode to cluster now that data is available
-      datasetGetters
-        .getGroupings(this.$store)
-        .filter((v) => isClusterType(v.colType))
-        .forEach((v) => {
-          varModesMap.set(v.key, SummaryMode.Cluster);
-          clusterVars.add(v.grouping.clusterCol);
-        });
-
-      // find any image variables using this cluster data and update their mode
-      datasetGetters
-        .getVariables(this.$store)
-        .filter((v) => v.colType === IMAGE_TYPE)
-        .forEach((v) => {
-          varModesMap.set(v.key, SummaryMode.Cluster);
-        });
-
-      // serialize the modes map into a string and add to the route
-      // and update to know that the clustering has been applied.
-      const varModesStr = varModesToString(varModesMap);
-      const trainStr = routeGetters.getExploreVariables(this.$store) + ",";
-      const entry = overlayRouteEntry(this.$route, {
-        varModes: varModesStr,
-        dataMode: DataMode.Cluster,
-        clustering: "1",
-        explore: trainStr.concat(Array.from(clusterVars).join(",")),
-      });
-      this.$router.push(entry).catch((err) => console.warn(err));
-
-      // update variables
-      // pull the updated dataset, vars, and summaries
-      const filterParams = routeGetters.getDecodedSolutionRequestFilterParams(
-        this.$store
-      );
-      const highlights = routeGetters.getDecodedHighlights(this.$store);
-      for (const [k, v] of varModesMap) {
-        datasetActions.fetchVariableSummary(this.$store, {
-          dataset: this.dataset,
-          variable: k,
-          highlights: highlights,
-          filterParams: filterParams,
-          include: true,
-          dataMode: DataMode.Cluster,
-          mode: $enum(SummaryMode).asValueOrDefault(v, SummaryMode.Default),
-          handleMutation: true,
-        });
-      }
-
-      this.clearData();
     },
   },
 });
