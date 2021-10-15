@@ -314,6 +314,9 @@ export class ResultViewState implements BaseState {
     });
     await this.fetchVariables();
     await this.fetchMapBaseline();
+    if (routeGetters.isOutlierApplied(store)) {
+      await datasetActions.applyOutliers(store, dataset);
+    }
     return;
   }
   getSecondaryVariables(): Variable[] {
@@ -372,7 +375,17 @@ export class ResultViewState implements BaseState {
     return viewActions.updateResultAreaOfInterest(store, filter);
   }
   getVariables(): Variable[] {
-    return requestGetters.getActiveSolutionTrainingVariables(store);
+    return requestGetters
+      .getActiveSolutionTrainingVariables(store)
+      .concat(
+        datasetGetters
+          .getVariables(store)
+          .filter(
+            (variable) =>
+              variable.distilRole === DISTIL_ROLES.Augmented &&
+              variable.key === "_outlier"
+          )
+      );
   }
   getData(): TableRow[] {
     return resultGetters.getIncludedResultTableDataItems(store) ?? [];
@@ -611,7 +624,6 @@ export class PredictViewState implements BaseState {
     });
     await viewActions.fetchPredictionsData(store);
     datasetActions.fetchClusters(store, { dataset });
-    datasetActions.fetchOutliers(store, dataset);
     viewActions.updateBaselinePredictions(store);
   }
   fetchVariables(): Promise<unknown> {

@@ -289,7 +289,7 @@
       />
     </left-side-panel>
     <status-sidebar />
-    <status-panel />
+    <status-panel :dataset="dataset" />
     <b-modal :id="labelModalId" @ok="onLabelSubmit">
       <template #modal-header>
         {{ labelModalTitle }}
@@ -384,6 +384,7 @@ import {
 } from "../util/explorer";
 import _ from "lodash";
 import { DataExplorerRef } from "../util/componentTypes";
+import { Dictionary } from "vue-router/types/router";
 
 const DataExplorer = Vue.extend({
   name: "DataExplorer",
@@ -514,19 +515,9 @@ const DataExplorer = Vue.extend({
       ...bindMethods(resultMethods, self), // computes used in prediction state
       ...bindMethods(predictionMethods, self), // computes used in the label state
     };
-    // event handlers for each state
-    const eventKeys = Object.keys(labelEventHandlers);
-    const boundedEventHandlers = bindMethods(labelEventHandlers, self);
-    eventKeys.forEach((event) => {
-      this.$eventBus.$on(event, boundedEventHandlers[event]);
-    });
   },
   beforeDestroy() {
-    // event handlers for each state
-    const eventKeys = Object.keys(labelEventHandlers);
-    eventKeys.forEach((event) => {
-      this.$eventBus.$off(event);
-    });
+    this.removeEventHandlers(this.config.eventHandlers);
   },
   async beforeMount() {
     const self = (this as unknown) as DataExplorerRef; // because the computes/methods are added in beforeCreate typescript does not work so we cast it to a type here
@@ -547,6 +538,26 @@ const DataExplorer = Vue.extend({
   },
   methods: {
     capitalize,
+    bindEventHandlers(eventHandlers: Record<string, Function>) {
+      const self = (this as unknown) as DataExplorerRef; // because the computes/methods are added in beforeCreate typescript does not work so we cast it to a type here
+      // get event names the functions are listening for
+      const eventKeys = Object.keys(eventHandlers);
+      // bind the function to the instance of this component
+      const boundedEventHandlers = bindMethods(eventHandlers, self);
+      // apply them to the global event bus
+      eventKeys.forEach((event) => {
+        this.$eventBus.$on(event, boundedEventHandlers[event]);
+      });
+      return;
+    },
+    removeEventHandlers(eventHandlers: Record<string, Function>) {
+      // get list of events being listened to
+      const eventKeys = Object.keys(eventHandlers);
+      // remove all listeners for these events
+      eventKeys.forEach((event) => {
+        this.$eventBus.$off(event);
+      });
+    },
   },
 });
 export default DataExplorer;

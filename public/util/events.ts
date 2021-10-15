@@ -60,6 +60,10 @@ export class EventList {
     SEARCH_EVENT: "search",
   };
   static readonly VARIABLES = {
+    // event is fired when outlier needs to be applied to ds
+    APPLY_OUTLIER_EVENT: "apply-outlier-event",
+    // event is fired when cluster needs to be applied to grouped variable
+    APPLY_CLUSTER_EVENT: "apply-cluster-event",
     // fetch variable rankings
     FETCH_RANK_EVENT: "fetch-variable-rankings",
     // occurs when a variable is removed or added to the training set

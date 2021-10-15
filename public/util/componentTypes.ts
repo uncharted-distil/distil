@@ -87,9 +87,11 @@ export interface DataExplorerRef {
   state: BaseState;
 
   // methods
+  bindEventHandlers: (eventHandlers: Record<string, Function>) => void;
   changeStatesByName: (name: ExplorerStateNames) => Promise<void>;
   isFittedSolutionIdSavedAsModel: (id: string) => boolean;
   preSelectTopVariables: (num?: number) => void;
+  removeEventHandlers: (eventHandlers: Record<string, Function>) => void;
   resetHighlightsOrRow: () => void;
   setConfig: (config: ExplorerConfig) => void;
   setState: (state: BaseState) => void;
