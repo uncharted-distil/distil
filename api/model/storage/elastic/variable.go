@@ -218,6 +218,10 @@ func (s *Storage) parseVariables(searchHit *elastic.SearchHit, includeIndex bool
 		if !includeSystemData && variable.DistilRole == model.VarDistilRoleSystemData {
 			continue
 		}
+		// systemData and padding is virtually the same thing, the only difference being fitting will require it
+		if !includeSystemData && variable.DistilRole == model.VarDistilRolePadding {
+			continue
+		}
 		if variable != nil {
 			variables = append(variables, variable)
 		}

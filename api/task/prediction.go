@@ -458,6 +458,7 @@ func updatePredictionAlignment(updates *alignmentUpdates, dataset *api.Dataset, 
 
 		// update data storage with the added variables
 		for _, addVariable := range updates.adds {
+			addVariable.DistilRole = model.VarDistilRolePadding
 			err := dataStorage.AddVariable(dataset.ID, dataset.StorageName, addVariable.Key, addVariable.Type, "")
 			if err != nil {
 				return err
@@ -839,7 +840,15 @@ func augmentPredictionDataset(csvData [][]string, target *model.Variable,
 
 	// add target if it isnt part of prediction dataset
 	if addTarget && !isTimeseries {
-		predictVariablesMap[len(csvData[0])] = target.Index
+		// some how the index from source to es can be off?
+		// so find the source variable and use it instead
+		index := target.Index
+		for _, v := range sourceVariables {
+			if v.Key == target.Key {
+				index = v.Index
+			}
+		}
+		predictVariablesMap[len(csvData[0])] = index
 	}
 
 	// add the new prediction fields
