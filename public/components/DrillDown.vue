@@ -17,7 +17,7 @@
 
 <template>
   <div class="drill-down-container">
-    <div>
+    <div class="d-flex flex-column">
       <div class="toolbar">
         <div class="title">{{ title }}</div>
         <b-button class="exit-button" @click="onExitClicked">
@@ -170,7 +170,7 @@ export default Vue.extend({
       };
     },
     gridColStyle(): string {
-      return `grid-template-columns: repeat(${this.cols}, ${this.imageWidth}px); grid-template-rows: repeat(${this.rows}, ${this.imageHeight}px);padding:5px;`;
+      return `grid-template-columns: repeat(${this.cols}, 1fr); grid-template-rows: repeat(${this.rows}, 1fr);padding:5px;`;
     },
     title(): string {
       return `coordinates [${this.bounds[0][1].toFixed(
