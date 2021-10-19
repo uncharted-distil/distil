@@ -1211,9 +1211,8 @@ export function getTableDataFields(data: TableData): Dictionary<TableColumn> {
         let description: string = null;
         let label: string = null;
         if (isPredictedCol(col.key)) {
-          variable = requestGetters.getActiveSolutionTargetVariable(store); // always a single value
-          label = variable.colDisplayName;
-          description = `Model predicted value for ${variable.key}`;
+          label = routeGetters.getRouteTargetVariable(store);
+          description = `Model predicted value for ${label}`;
 
           // if we actually have defined confidence values, then let's add confidence to the table
           if (data.values[0][ind]?.confidence !== null) {
@@ -1222,7 +1221,7 @@ export function getTableDataFields(data: TableData): Dictionary<TableColumn> {
               key: "confidence",
               type: "numeric",
               weight: null,
-              headerTitle: `Prediction confidence ${variable.key}`,
+              headerTitle: `Prediction confidence ${label}`,
               sortable: true,
             };
           }
