@@ -25,8 +25,8 @@ export const mutations = {
   },
 
   // replace the list of filtered models (a subset of the full saved model list)
-  setFilteredModels(state: ModelState, models: Model[]) {
-    if (!models) return;
-    state.filteredModelIds = models.map((m) => m.fittedSolutionId);
+  setFilteredModels(state: ModelState, models: Model[] | null) {
+    const nullCheckedModels = models ?? [];
+    state.filteredModelIds = nullCheckedModels.map((m) => m.fittedSolutionId);
   },
 };
