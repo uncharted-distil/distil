@@ -133,10 +133,11 @@ export class SelectViewState implements BaseState {
     return routeGetters.getTargetVariable(store);
   }
   async init(): Promise<void> {
+    const dataset = routeGetters.getRouteDataset(store);
+    await datasetActions.fetchDataset(store, { dataset });
     await this.fetchVariables();
     await this.fetchMapBaseline();
     await this.fetchData();
-    const dataset = routeGetters.getRouteDataset(store);
     const target = routeGetters.getRouteTargetVariable(store);
     await datasetActions.fetchMultiBandCombinations(store, {
       dataset,
