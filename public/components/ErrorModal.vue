@@ -17,7 +17,7 @@
 
 <template>
   <div>
-    <b-modal v-model="show" cancel-disabled hide-header hide-footer>
+    <b-modal v-model="show" cancel-disabled hide-header hide-footer size="lg">
       <div class="row justify-content-center">
         <i class="fa fa-exclamation-triangle fa-3x fail-icon"></i>
         <div>
