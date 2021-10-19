@@ -33,6 +33,7 @@ import (
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/task"
+	"github.com/uncharted-distil/distil/api/task/importer"
 	"github.com/uncharted-distil/distil/api/util"
 	"github.com/uncharted-distil/distil/api/util/json"
 )
@@ -45,173 +46,43 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		datasetIDSource := pat.Param(r, "datasetID")
 		sourceParsed := metadata.DatasetSource(pat.Param(r, "source"))
 		provenance := pat.Param(r, "provenance")
-		isSampling := true          // Flag to sample imported dataset
-		sourceLearningDataset := "" // prefeaturized dataset folder
-
-		// updateDatasetID is the ID of the dataset to use to sync a prefeaturized
-		// dataset. Note that it will be one of two datasets joined, whichever is NOT
-		// prefeaturized. This is used instead of using the joined dataset because we do
-		// NOT want to sync the data that is already prefeaturized!
-		updateDatasetID := ""
-		datasetPathRaw := ""
-
-		ingestSteps := &task.IngestSteps{
-			ClassificationOverwrite: false,
-			VerifyMetadata:          true,
-			FallbackMerged:          true,
-			CheckMatch:              true,
-			SkipFeaturization:       false,
-		}
-		ingestParams := &task.IngestParams{
-			Source:   sourceParsed,
-			DataCtor: dataCtor,
-			MetaCtor: esMetaCtor,
-			ID:       datasetIDSource,
-			Type:     api.DatasetTypeModelling,
-		}
+		isSampling := true // Flag to sample imported dataset
 		datasetDescription := ""
-		if (ingestParams.Source == metadata.Augmented || ingestParams.Source == metadata.Public) && provenance == "local" {
-			// parse POST params
-			params, err := getPostParameters(r)
-			if err != nil {
-				handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
-				return
-			}
-
-			if params == nil {
-				missingParamErr(w, "parameters")
-				return
-			}
-
-			// Check if we want to sample the dataset
-			if params["nosample"] != nil {
-				isSampling = false
-			}
-
-			// one of path or joined dataset is needed
-			if params["joinedDataset"] == nil && params["path"] == nil {
-				missingParamErr(w, "path or joinedDataset")
-				return
-			}
-			if params["description"] != nil {
-				datasetDescription = params["description"].(string)
-			}
-			var originalDataset map[string]interface{}
-			var joinedDataset map[string]interface{}
-			leftCols := []string{}
-			rightCols := []string{}
-			if params["joinedDataset"] != nil {
-				if params["originalDataset"] == nil {
-					missingParamErr(w, "originalDataset")
-					return
-				}
-
-				// set the origin information
-				var okOriginal, okJoined bool
-				originalDataset, okOriginal = params["originalDataset"].(map[string]interface{})
-				joinedDataset, okJoined = params["joinedDataset"].(map[string]interface{})
-				if okOriginal && okJoined {
-					var leftOk bool
-					var rightOk bool
-
-					// Parse out the left and right join column lists.  This is necessary because we need patch up
-					// the group references if one of them was a right join column (which gets removed)
-					leftCols, leftOk = json.StringArray(params, "leftCols")
-					if !leftOk {
-						missingParamErr(w, "leftCols")
-						return
-					}
-					rightCols, rightOk = json.StringArray(params, "rightCols")
-					if !rightOk {
-						missingParamErr(w, "rightCols")
-						return
-					}
-
-					// make sure only one of the datasets has a prefeaturized version
-					originalLearningDataset := originalDataset["learningDataset"].(string)
-					joinedLearningDataset := joinedDataset["learningDataset"].(string)
-					if originalLearningDataset != "" && joinedLearningDataset != "" {
-						handleError(w, errors.Errorf("joining datasets that both have learning datasets is not supported"))
-						return
-					} else if originalLearningDataset != "" {
-						ingestSteps.SkipFeaturization = true
-						sourceLearningDataset = originalLearningDataset
-						updateDatasetID = strings.Join([]string{originalDataset["id"].(string), joinedDataset["id"].(string)}, "-")
-					} else if joinedLearningDataset != "" {
-						ingestSteps.SkipFeaturization = true
-						sourceLearningDataset = joinedLearningDataset
-						updateDatasetID = strings.Join([]string{originalDataset["id"].(string), joinedDataset["id"].(string)}, "-")
-					}
-
-					// combine the origin and joined dateset into an array of structs
-					origins, err := getOriginsFromMaps(originalDataset, joinedDataset)
-					if err != nil {
-						handleError(w, errors.Wrap(err, "unable to marshal dataset origins from JSON to struct"))
-						return
-					}
-					ingestParams.Origins = origins
-				}
-			}
-
-			if params["path"] != nil {
-				datasetPathRaw = params["path"].(string)
-				log.Infof("Creating dataset '%s' from '%s'", ingestParams.ID, datasetPathRaw)
-				creationResult, err := createDataset(datasetPathRaw, ingestParams.ID, config)
-				if err != nil {
-					handleError(w, errors.Wrap(err, "unable to create raw dataset"))
-					return
-				}
-				ingestParams.ID = creationResult.name
-				ingestParams.Path = creationResult.path
-				ingestParams.RawGroupings = creationResult.groups
-				ingestParams.IndexFields = creationResult.indexFields
-				ingestSteps.VerifyMetadata = false
-
-				if originalDataset != nil {
-					// if no groups were created, copy them from the passed in datasets
-					if len(ingestParams.RawGroupings) == 0 {
-						log.Infof("copying groupings from source datasets")
-						groups, err := getDatasetGroups(originalDataset)
-						if err != nil {
-							handleError(w, errors.Wrap(err, "unable to get original dataset groups"))
-							return
-						}
-						groupsJoin, err := getDatasetGroups(joinedDataset)
-						if err != nil {
-							handleError(w, errors.Wrap(err, "unable to get joining dataset groups"))
-							return
-						}
-						ingestParams.RawGroupings = combineDatasetGroupings(groups, groupsJoin)
-
-						// final step - on join we drop the right column, which may be referred to by a group
-						// we replace any refs to the right col with a ref to the left col
-						nameUpdates := make([]nameUpdate, len(rightCols))
-						for rightIdx, rightVar := range rightCols {
-							nameUpdates[rightIdx] = nameUpdate{old: rightVar, new: leftCols[rightIdx]}
-						}
-						ingestParams.RawGroupings = remapDatasetGroups(nameUpdates, ingestParams.RawGroupings)
-					}
-
-					// set the definitive types based on the currently stored metadata
-					metaStore, err := esMetaCtor()
-					if err != nil {
-						handleError(w, errors.Wrap(err, "unable to create metadata storage"))
-						return
-					}
-					definitiveVars := append(getVariablesDefault(originalDataset["id"].(string), metaStore), getVariablesDefault(joinedDataset["id"].(string), metaStore)...)
-					ingestParams.DefinitiveTypes = api.MapVariables(definitiveVars, func(variable *model.Variable) string { return variable.Key })
-				} else {
-					ingestParams.DefinitiveTypes = api.MapVariables(creationResult.definitiveVars, func(variable *model.Variable) string { return variable.Key })
-				}
-				log.Infof("Created dataset '%s' from local source '%s'", ingestParams.ID, ingestParams.Path)
-			}
+		// parse POST params
+		params, err := getPostParameters(r)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
+			return
 		}
 
-		// If the source is Public, the dataset has been imported in the augmented folder,
-		// from now on, the ES and database ingestion are done from the augmented folder files.
-		if ingestParams.Source == metadata.Public {
-			ingestParams.Source = metadata.Augmented
+		if params == nil {
+			missingParamErr(w, "parameters")
+			return
 		}
+
+		esMetaStorage, err := esMetaCtor()
+		if err != nil {
+			handleError(w, errors.Wrap(err, "Unable to initialize metadata storage connection"))
+			return
+		}
+
+		imp := getImporter(params, esMetaStorage)
+		err = imp.Initialize(params)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "Unable to initialize import"))
+			return
+		}
+
+		ingestSteps, ingestParams, err := imp.PrepareImport()
+		if err != nil {
+			handleError(w, errors.Wrap(err, "Unable to prepare import"))
+			return
+		}
+		ingestParams.Source = sourceParsed
+		ingestParams.DataCtor = dataCtor
+		ingestParams.MetaCtor = esMetaCtor
+		ingestParams.ID = datasetIDSource
+		ingestParams.Type = api.DatasetTypeModelling
 
 		meta, err := createMetadataStorageForSource(ingestParams.Source, provenance, datamartCtors, fileMetaCtor, esMetaCtor)
 		if err != nil {
@@ -219,10 +90,6 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 			return
 		}
 
-		// import the dataset to the local filesystem.
-		if ingestParams.Path == "" {
-			ingestParams.Path = env.ResolvePath(ingestParams.Source, ingestParams.ID)
-		}
 		log.Infof("Importing dataset '%s' from '%s'", ingestParams.ID, ingestParams.Path)
 		dsPath, err := meta.ImportDataset(ingestParams.ID, ingestParams.Path)
 		if err != nil {
@@ -263,17 +130,12 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 			return
 		}
 
-		// if there is a source learning dataset, then sync it properly with the newly imported dataset
-		// this will occur when the import is of a joined dataset
-		err = syncPrefeaturizedDataset(ingestResult.DatasetID, updateDatasetID, sourceLearningDataset, esMetaCtor)
+		err = imp.CleanupImport(ingestResult)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		if !util.IsInDirectory(env.GetPublicPath(), datasetPathRaw) {
-			util.Delete(datasetPathRaw)
-		}
 		// marshal data and sent the response back
 		err = handleJSON(w, map[string]interface{}{
 			"dataset":  ingestResult.DatasetID,
@@ -520,6 +382,14 @@ func getVariablesDefault(datasetID string, metaStorage api.MetadataStorage) []*m
 	}
 
 	return ds.Variables
+}
+
+func getImporter(params map[string]interface{}, esMetaStorage api.MetadataStorage) importer.Importer {
+	if params["joinedDataset"] != nil {
+		return importer.NewJoined(esMetaStorage)
+	}
+
+	return importer.NewLocal()
 }
 
 func syncPrefeaturizedDataset(datasetID string, updateDatasetID string, sourceLearningDataset string, metaCtor api.MetadataStorageCtor) error {
