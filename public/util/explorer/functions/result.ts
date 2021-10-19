@@ -5,7 +5,6 @@ import {
   datasetGetters,
   modelActions,
   requestGetters,
-  resultActions,
   resultGetters,
   viewActions,
 } from "../../../store";
@@ -23,9 +22,7 @@ import {
 import { overlayRouteEntry, RouteArgs, varModesToString } from "../../routes";
 import { isFittedSolutionIdSavedAsModel } from "../../models";
 import { EI, EventList } from "../../events";
-import { ModalPlugin } from "bootstrap-vue";
 import { IMAGE_TYPE, isClusterType } from "../../types";
-import { $enum } from "ts-enum-util";
 
 /**
  * RESULT_COMPUTES contains all of the computes for the result state in the data explorer
