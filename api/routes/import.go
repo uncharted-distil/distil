@@ -173,7 +173,7 @@ func createMetadataStorageForSource(datasetSource metadata.DatasetSource, proven
 
 func getImporter(params map[string]interface{}, esMetaStorage api.MetadataStorage, config *env.Config) importer.Importer {
 	if params["joinedDataset"] != nil {
-		return importer.NewJoined(esMetaStorage)
+		return importer.NewJoined(esMetaStorage, config)
 	}
 
 	return importer.NewLocal(config)

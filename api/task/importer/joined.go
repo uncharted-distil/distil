@@ -34,9 +34,10 @@ type Joined struct {
 }
 
 // NewJoined creates a new importer for joined datasets.
-func NewJoined(meta api.MetadataStorage) Importer {
+func NewJoined(meta api.MetadataStorage, config *env.Config) Importer {
 	return &Joined{
-		meta: meta,
+		meta:   meta,
+		config: config,
 	}
 }
 
@@ -89,6 +90,8 @@ func (j *Joined) Initialize(params map[string]interface{}, ingestParams *task.In
 	if !ok {
 		return errors.Errorf("unable to parse right cols")
 	}
+
+	j.datasetID = ingestParams.ID
 
 	return nil
 }
@@ -170,7 +173,7 @@ func (j *Joined) PrepareImport() (*task.IngestSteps, *task.IngestParams, error) 
 	ingestParams.DefinitiveTypes = api.MapVariables(definitiveVars, func(variable *model.Variable) string { return variable.Key })
 
 	log.Infof("Created dataset '%s' from local source '%s'", ingestParams.ID, ingestParams.Path)
-	return nil, nil, nil
+	return ingestSteps, ingestParams, nil
 }
 
 // Import imports the dataset using the dataset importer.
