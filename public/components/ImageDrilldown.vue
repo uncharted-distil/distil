@@ -474,6 +474,7 @@ export default Vue.extend({
           dataset: this.dataset,
           url: this.selectedImageUrl,
           scale: imageOptions.scale,
+          uniqueTrail: this.uniqueTrail,
         });
       }
       // save as data so when we fetch next image we retain the UI size
