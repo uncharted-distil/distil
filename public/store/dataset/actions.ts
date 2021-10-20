@@ -1311,6 +1311,7 @@ export const actions = {
       url: string;
       isThumbnail?: boolean;
       scale?: boolean;
+      uniqueTrail?: string;
     }
   ) {
     if (!validateArgs(args, ["dataset", "url"])) return;
@@ -1319,7 +1320,10 @@ export const actions = {
       const thumbnail = args.isThumbnail ? "true" : "false";
       const urlRequest = `distil/image/${args.dataset}/${args.url}/${thumbnail}/${imgScale}`;
       const response = await loadImage(urlRequest);
-      mutations.updateFile(context, { url: args.url, file: response });
+      const url = args.uniqueTrail
+        ? args.url + `-${args.uniqueTrail}`
+        : args.url;
+      mutations.updateFile(context, { url, file: response });
     } catch (error) {
       console.error(error);
     }
