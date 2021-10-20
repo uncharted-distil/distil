@@ -106,7 +106,7 @@ function getOutlierVariableName(): string {
   const remoteSensingVariable = groupingVariables.find((gv) =>
     isMultibandImageType(gv.colType)
   );
-
+  const imageVariable = variables.filter((v) => v.colType === IMAGE_TYPE);
   /*
     The variable name to be sent, is, in order of availability:
       - a remote-sensing variable first,
@@ -116,6 +116,7 @@ function getOutlierVariableName(): string {
   return (
     remoteSensingVariable?.grouping.idCol ??
     groupingVariables[0]?.grouping.idCol ??
+    imageVariable[0]?.key ??
     target.key
   );
 }
