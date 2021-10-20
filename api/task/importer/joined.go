@@ -18,7 +18,6 @@ import (
 // Joined can be used to import datasets that have been joined.
 type Joined struct {
 	sourcePath            string
-	extractedPath         string
 	datasetID             string
 	datasetDescription    string
 	config                *env.Config
@@ -42,7 +41,7 @@ func NewJoined(meta api.MetadataStorage) Importer {
 }
 
 // Initialize sets up the importer.
-func (j *Joined) Initialize(params map[string]interface{}) error {
+func (j *Joined) Initialize(params map[string]interface{}, ingestParams *task.IngestParams) error {
 	if params == nil {
 		return errors.Errorf("no parameters specified")
 	}
@@ -265,16 +264,6 @@ func combineDatasetGroupings(groupingsFirst []map[string]interface{}, groupingsS
 	}
 
 	return combined
-}
-
-func getVariablesDefault(datasetID string, metaStorage api.MetadataStorage) []*model.Variable {
-	ds, err := metaStorage.FetchDataset(datasetID, true, true, true)
-	if err != nil {
-		log.Infof("unable to fetch variables so defaulting to empty list")
-		return []*model.Variable{}
-	}
-
-	return ds.Variables
 }
 
 func syncPrefeaturizedDataset(datasetID string, updateDatasetID string, sourceLearningDataset string, metaStorage api.MetadataStorage) error {
