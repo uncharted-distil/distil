@@ -624,8 +624,10 @@ export class PredictViewState implements BaseState {
       dataset: routeGetters.getRouteDataset(store),
     });
     await viewActions.fetchPredictionsData(store);
-    datasetActions.fetchClusters(store, { dataset });
-    viewActions.updateBaselinePredictions(store);
+    const predDataset = requestGetters.getActivePredictions(store).dataset;
+    await datasetActions.fetchClusters(store, { dataset: predDataset });
+    await datasetActions.fetchOutliers(store, predDataset);
+    await viewActions.updateBaselinePredictions(store);
   }
   fetchVariables(): Promise<unknown> {
     const dataset = routeGetters.getRouteDataset(store);

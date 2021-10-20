@@ -78,7 +78,7 @@ export const PREDICTION_EVENT_HANDLERS = {
     });
     self.$router.push(entry).catch((err) => console.warn(err));
     // fetch the new summaries with the clustering applied
-    viewActions.updateResultsSummaries(store);
+    viewActions.updatePredictionTrainingSummaries(store);
     return;
   },
   /**
