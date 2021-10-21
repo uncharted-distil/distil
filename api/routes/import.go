@@ -69,7 +69,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 			Type:     api.DatasetTypeModelling,
 		}
 
-		imp := getImporter(params, esMetaStorage, config)
+		imp := getImporter(provenance, params, esMetaStorage, config)
 		err = imp.Initialize(params, ingestParamsOriginal)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "Unable to initialize import"))
@@ -171,7 +171,11 @@ func createMetadataStorageForSource(datasetSource metadata.DatasetSource, proven
 	return nil, fmt.Errorf("unrecognized source `%v`", datasetSource)
 }
 
-func getImporter(params map[string]interface{}, esMetaStorage api.MetadataStorage, config *env.Config) importer.Importer {
+func getImporter(provenance string, params map[string]interface{}, esMetaStorage api.MetadataStorage, config *env.Config) importer.Importer {
+	if provenance != "local" {
+		return importer.NewDatamart()
+	}
+
 	if params["joinedDataset"] != nil {
 		return importer.NewJoined(esMetaStorage, config)
 	}

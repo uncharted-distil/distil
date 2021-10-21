@@ -87,7 +87,7 @@ func (l *Local) PrepareImport() (*task.IngestSteps, *task.IngestParams, error) {
 	return ingestSteps, ingestParams, nil
 }
 
-// Import imports the dataset using the dataset importer.
+// Import imports the dataset using the local importer.
 func (l *Local) Import() error {
 	return nil
 }
