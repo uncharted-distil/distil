@@ -106,7 +106,7 @@ function getOutlierVariableName(): string {
   const remoteSensingVariable = groupingVariables.find((gv) =>
     isMultibandImageType(gv.colType)
   );
-
+  const imageVariable = variables.filter((v) => v.colType === IMAGE_TYPE);
   /*
     The variable name to be sent, is, in order of availability:
       - a remote-sensing variable first,
@@ -116,6 +116,7 @@ function getOutlierVariableName(): string {
   return (
     remoteSensingVariable?.grouping.idCol ??
     groupingVariables[0]?.grouping.idCol ??
+    imageVariable[0]?.key ??
     target.key
   );
 }
@@ -1311,6 +1312,7 @@ export const actions = {
       url: string;
       isThumbnail?: boolean;
       scale?: boolean;
+      uniqueTrail?: string;
     }
   ) {
     if (!validateArgs(args, ["dataset", "url"])) return;
@@ -1319,7 +1321,10 @@ export const actions = {
       const thumbnail = args.isThumbnail ? "true" : "false";
       const urlRequest = `distil/image/${args.dataset}/${args.url}/${thumbnail}/${imgScale}`;
       const response = await loadImage(urlRequest);
-      mutations.updateFile(context, { url: args.url, file: response });
+      const url = args.uniqueTrail
+        ? args.url + `-${args.uniqueTrail}`
+        : args.url;
+      mutations.updateFile(context, { url, file: response });
     } catch (error) {
       console.error(error);
     }

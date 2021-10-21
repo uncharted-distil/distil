@@ -252,7 +252,7 @@ export default Vue.extend({
     },
 
     filteredModels(): Model[] {
-      const models = modelGetters.getModels(this.$store);
+      const models = modelGetters.getFilteredModels(this.$store);
 
       // Only display the models using dataset that the search bar has found.
       return models.filter((model) =>

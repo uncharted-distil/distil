@@ -247,15 +247,17 @@ func IngestDataset(params *IngestParams, config *IngestTaskConfig, steps *Ingest
 
 	// featurize dataset for downstream efficiencies
 	if config.FeaturizationEnabled && !steps.SkipFeaturization && canFeaturize(datasetID, metaStorage) {
-		_, featurizedDatasetPath, err := FeaturizeDataset(originalSchemaFile, latestSchemaOutput, datasetID, metaStorage, config)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to featurize dataset")
-		}
-		log.Infof("finished featurizing the dataset")
 		ingestedDataset, err := metaStorage.FetchDataset(datasetID, true, true, false)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to load metadata")
 		}
+		_, featurizedDatasetPath, err := FeaturizeDataset(originalSchemaFile, latestSchemaOutput, datasetID, metaStorage, config)
+		if err != nil {
+			// if the featurize step fails hard delete the dataset
+			DeleteDataset(ingestedDataset, metaStorage, dataStorage, false)
+			return nil, errors.Wrap(err, "unable to featurize dataset")
+		}
+		log.Infof("finished featurizing the dataset")
 		ingestedDataset.LearningDataset = featurizedDatasetPath
 		err = metaStorage.UpdateDataset(ingestedDataset)
 		if err != nil {

@@ -547,6 +547,7 @@ export const actions = {
         // log any error
         if (!_.isEmpty(response.error)) {
           console.error(response.error);
+          reject(new Error(response.error));
         }
 
         // handle request / solution progress
