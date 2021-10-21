@@ -254,7 +254,7 @@ func IngestDataset(params *IngestParams, config *IngestTaskConfig, steps *Ingest
 		_, featurizedDatasetPath, err := FeaturizeDataset(originalSchemaFile, latestSchemaOutput, datasetID, metaStorage, config)
 		if err != nil {
 			// if the featurize step fails hard delete the dataset
-			DeleteDataset(ingestedDataset, metaStorage, dataStorage, false)
+			_ = DeleteDataset(ingestedDataset, metaStorage, dataStorage, false)
 			return nil, errors.Wrap(err, "unable to featurize dataset")
 		}
 		log.Infof("finished featurizing the dataset")
