@@ -126,6 +126,16 @@ func createTableDataset(datasetPath string, datasetName string) (task.DatasetCon
 }
 
 func createDataset(datasetPath string, datasetName string, config *env.Config) (*creationResult, error) {
+	if util.IsArchiveFile(datasetPath) {
+		// expand the archive
+		expandedInfo, err := dataset.ExpandZipDataset(datasetPath, datasetName)
+		if err != nil {
+			return nil, err
+		}
+
+		datasetPath = expandedInfo.ExtractedFilePath
+	}
+
 	// create the dataset constructors for downstream processing
 	var ds task.DatasetConstructor
 	var err error
