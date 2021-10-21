@@ -348,7 +348,7 @@ export default Vue.extend({
         route.joinColumnA = column.key;
         const suggestVars = this.variableSuggestions(
           column.type,
-          this.bottomVariableSummaries
+          this.bottomDatasetFields
         );
         if (!this.bottomColumn) {
           route.joinColumnSuggestions = suggestVars;
@@ -357,7 +357,7 @@ export default Vue.extend({
         if (this.bottomColumn) {
           const suggestVars = this.variableSuggestions(
             this.bottomColumn.type,
-            this.topVariableSummaries
+            this.topDatasetFields
           );
           route.baseColumnSuggestions = suggestVars;
         }
@@ -376,7 +376,7 @@ export default Vue.extend({
       if (column) {
         suggestVars = this.variableSuggestions(
           column.type,
-          this.topVariableSummaries
+          this.topDatasetFields
         );
         route.joinColumnB = column.key;
         if (!this.topColumn) {
@@ -386,7 +386,7 @@ export default Vue.extend({
         if (this.topColumn) {
           const suggestVars = this.variableSuggestions(
             this.topColumn.type,
-            this.bottomVariableSummaries
+            this.bottomDatasetFields
           );
           route.joinColumnSuggestions = suggestVars;
         }
@@ -394,13 +394,16 @@ export default Vue.extend({
       const entry = overlayRouteEntry(this.$route, route);
       this.$router.push(entry).catch((err) => console.warn(err));
     },
-    variableSuggestions(type: string, variables: VariableSummary[]): string[] {
+    variableSuggestions(
+      type: string,
+      dataFields: Dictionary<TableColumn>
+    ): string[] {
       const result = [];
-      variables.forEach((v) => {
-        if (v.type === type) {
-          result.push(v.key);
+      for (const value in dataFields) {
+        if (dataFields[value].type === type) {
+          result.push(dataFields[value].key);
         }
-      });
+      }
       return result;
     },
     swapDatasets() {
