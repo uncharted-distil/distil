@@ -325,6 +325,18 @@
         />
       </b-form-group>
     </b-modal>
+    <b-modal
+      :id="unsaveModalId"
+      @ok="onConfirmRouteSave(nextRoute)"
+      @cancel="onCancelRouteSave(nextRoute)"
+      ok-variant="danger"
+      ok-title="Delete Cloned Dataset"
+    >
+      <template #modal-header> Unsaved dataset </template>
+      <template>
+        Current dataset is unsaved, are you sure you want to continue?
+      </template>
+    </b-modal>
     <save-dataset
       modal-id="save-dataset-modal"
       :dataset-name="dataset"
@@ -435,10 +447,12 @@ const DataExplorer = Vue.extend({
       instanceName: DATA_EXPLORER_VAR_INSTANCE, // component instance name
       isBusy: false, // controls spinners in label state when search similar or save is used
       labelModalId: "label-input-form", // modal id
+      unsaveModalId: "unsaved-modal",
       labelName: "", // labelName of the variable being annotated in the label view
       labelNameState: null,
       metaTypes: Object.keys(META_TYPES), // all of the meta types categories
-      state: new SelectViewState(), // this state controls data flow
+      state: new SelectViewState(), // this state controls data flow,
+      nextRoute: null,
     };
   },
 
@@ -502,6 +516,26 @@ const DataExplorer = Vue.extend({
         }
       }
     },
+  },
+
+  async beforeRouteLeave(to, from, next) {
+    // react to route changes...
+    // don't forget to call next()
+    const self = (this as unknown) as DataExplorerRef;
+    this.nextRoute = next;
+
+    if (self.isClone) {
+      const isDatasetSaved = await self.isCurrentDatasetSaved();
+
+      if (!isDatasetSaved) {
+        // show dialog
+        self.$bvModal.show(this.unsaveModalId);
+      } else {
+        next();
+      }
+    } else {
+      next();
+    }
   },
   beforeCreate() {
     const self = (this as unknown) as DataExplorerRef; // because the computes/methods are added in beforeCreate typescript does not work so we cast it to a type here
