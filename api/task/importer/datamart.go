@@ -33,7 +33,7 @@ func (d *Datamart) PrepareImport() (*task.IngestSteps, *task.IngestParams, error
 		FallbackMerged:          true,
 		CheckMatch:              true,
 		SkipFeaturization:       false,
-	}, &task.IngestParams{Path: env.ResolvePath(d.source, d.datasetID)}, nil
+	}, &task.IngestParams{Path: env.ResolvePath(d.source, d.datasetID), Source: d.source}, nil
 }
 
 // Import imports the dataset using the datamart importer..

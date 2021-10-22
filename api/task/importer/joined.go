@@ -136,6 +136,7 @@ func (j *Joined) PrepareImport() (*task.IngestSteps, *task.IngestParams, error) 
 		Path:         creationResult.path,
 		RawGroupings: creationResult.groups,
 		IndexFields:  creationResult.indexFields,
+		Source:       metadata.Augmented,
 	}
 	ingestSteps.VerifyMetadata = false
 

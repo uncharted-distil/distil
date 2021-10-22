@@ -82,10 +82,6 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 			return
 		}
 
-		if sourceParsed == metadata.Public {
-			sourceParsed = metadata.Augmented
-		}
-		ingestParams.Source = sourceParsed
 		ingestParams.DataCtor = dataCtor
 		ingestParams.MetaCtor = esMetaCtor
 		ingestParams.ID = datasetIDSource
