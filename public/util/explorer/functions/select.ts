@@ -15,11 +15,7 @@ import { DataMode, SummaryMode } from "../../../store/dataset";
 import { overlayRouteEntry, varModesToString } from "../../routes";
 import { ExplorerStateNames } from "..";
 import { createFiltersFromHighlights } from "../../highlights";
-import {
-  addFilterToRoute,
-  EXCLUDE_FILTER,
-  INCLUDE_FILTER,
-} from "../../filters";
+import { addFilterToRoute, EXCLUDE_FILTER } from "../../filters";
 import { Activity, Feature, SubActivity } from "../../userEvents";
 import { EventList } from "../../events";
 import { IMAGE_TYPE, isClusterType } from "../../types";
@@ -128,30 +124,6 @@ export const SELECT_METHODS = {
 
     appActions.logUserEvent(store, {
       feature: Feature.FILTER_DATA,
-      activity: Activity.DATA_PREPARATION,
-      subActivity: SubActivity.DATA_TRANSFORMATION,
-      details: { filter: filter },
-    });
-    return;
-  },
-  // TODO: this needs to be removed
-  onReincludeClick(): void {
-    const self = (this as unknown) as DataExplorerRef;
-    if (!self.isFilteringHighlights) {
-      return;
-    }
-    const filter = createFiltersFromHighlights(self.highlights, INCLUDE_FILTER);
-
-    addFilterToRoute(self.$router, filter);
-    self.resetHighlightsOrRow();
-
-    datasetActions.fetchVariableRankings(store, {
-      dataset: self.dataset,
-      target: self.target.key,
-    });
-
-    appActions.logUserEvent(store, {
-      feature: Feature.UNFILTER_DATA,
       activity: Activity.DATA_PREPARATION,
       subActivity: SubActivity.DATA_TRANSFORMATION,
       details: { filter: filter },

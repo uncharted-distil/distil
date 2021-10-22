@@ -98,18 +98,6 @@
             />
             Exclude
           </b-button>
-          <b-button
-            v-if="!include && isSelectState"
-            variant="outline-secondary"
-            :disabled="!isFilteringSelection"
-            @click="onReincludeClick"
-          >
-            <i
-              class="fa fa-plus-circle pr-1"
-              :class="{ 'include-selection': isFilteringSelection }"
-            />
-            Reinclude
-          </b-button>
           <label-header-buttons v-if="isLabelState" class="height-36" />
           <legend-weight
             v-if="hasWeight && isResultState"
