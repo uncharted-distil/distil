@@ -18,10 +18,9 @@ import (
 
 // Local can be used to import datasets from the local filesystem.
 type Local struct {
-	sourcePath         string
-	datasetID          string
-	datasetDescription string
-	config             *env.Config
+	sourcePath string
+	datasetID  string
+	config     *env.Config
 }
 
 // NewLocal creates an importer for local datasets.
@@ -39,10 +38,6 @@ func (l *Local) Initialize(params map[string]interface{}, ingestParams *task.Ing
 
 	if params["path"] == nil {
 		return errors.Errorf("missing 'path' parameter")
-	}
-
-	if params["description"] != nil {
-		l.datasetDescription = params["description"].(string)
 	}
 
 	l.sourcePath = params["path"].(string)

@@ -19,7 +19,6 @@ import (
 type Joined struct {
 	sourcePath            string
 	datasetID             string
-	datasetDescription    string
 	config                *env.Config
 	joinedDataset         map[string]interface{}
 	originalDataset       map[string]interface{}
@@ -56,10 +55,6 @@ func (j *Joined) Initialize(params map[string]interface{}, ingestParams *task.In
 
 	if params["originalDataset"] == nil {
 		return errors.Errorf("missing 'originalDataset' parameter")
-	}
-
-	if params["description"] != nil {
-		j.datasetDescription = params["description"].(string)
 	}
 
 	j.sourcePath = params["path"].(string)

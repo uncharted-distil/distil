@@ -42,7 +42,6 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		datasetIDSource := pat.Param(r, "datasetID")
 		sourceParsed := metadata.DatasetSource(pat.Param(r, "source"))
 		provenance := pat.Param(r, "provenance")
-		datasetDescription := ""
 		// parse POST params
 		params, err := getPostParameters(r)
 		if err != nil {
@@ -99,13 +98,13 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 			return
 		}
 		// update dataset description
-		if datasetDescription != "" {
+		if params["description"] != nil {
 			ds, err := api.LoadDiskDatasetFromFolder(dsPath)
 			if err != nil {
 				handleError(w, err)
 				return
 			}
-			ds.Dataset.Metadata.Description = datasetDescription
+			ds.Dataset.Metadata.Description = params["description"].(string)
 			err = ds.SaveDataset()
 			if err != nil {
 				handleError(w, err)
