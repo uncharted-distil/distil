@@ -22,7 +22,6 @@ type Local struct {
 	datasetID          string
 	datasetDescription string
 	config             *env.Config
-	sample             bool
 }
 
 // NewLocal creates an importer for local datasets.
@@ -40,12 +39,6 @@ func (l *Local) Initialize(params map[string]interface{}, ingestParams *task.Ing
 
 	if params["path"] == nil {
 		return errors.Errorf("missing 'path' parameter")
-	}
-
-	// Check if we want to sample the dataset
-	l.sample = true
-	if params["nosample"] != nil {
-		l.sample = false
 	}
 
 	if params["description"] != nil {
@@ -85,11 +78,6 @@ func (l *Local) PrepareImport() (*task.IngestSteps, *task.IngestParams, error) {
 	log.Infof("Created dataset '%s' from local source '%s'", ingestParams.ID, ingestParams.Path)
 
 	return ingestSteps, ingestParams, nil
-}
-
-// Import imports the dataset using the local importer.
-func (l *Local) Import() error {
-	return nil
 }
 
 // CleanupImport removes temporary files and structures created during the import.

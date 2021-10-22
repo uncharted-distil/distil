@@ -36,11 +36,6 @@ func (d *Datamart) PrepareImport() (*task.IngestSteps, *task.IngestParams, error
 	}, &task.IngestParams{Path: env.ResolvePath(d.source, d.datasetID), Source: d.source}, nil
 }
 
-// Import imports the dataset using the datamart importer..
-func (d *Datamart) Import() error {
-	return nil
-}
-
 // CleanupImport removes temporary files and structures created during the import.
 func (d *Datamart) CleanupImport(ingestResult *task.IngestResult) error {
 	return nil

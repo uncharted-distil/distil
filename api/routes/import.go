@@ -42,7 +42,6 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		datasetIDSource := pat.Param(r, "datasetID")
 		sourceParsed := metadata.DatasetSource(pat.Param(r, "source"))
 		provenance := pat.Param(r, "provenance")
-		isSampling := true // Flag to sample imported dataset
 		datasetDescription := ""
 		// parse POST params
 		params, err := getPostParameters(r)
@@ -117,7 +116,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		ingestConfig := task.NewConfig(*config)
 
 		// Check if the imported dataset should be sampled
-		if !isSampling {
+		if params["nosample"] != nil {
 			ingestConfig.SampleRowLimit = math.MaxInt32 // Maximum int value.
 		}
 

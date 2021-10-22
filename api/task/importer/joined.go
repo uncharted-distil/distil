@@ -21,7 +21,6 @@ type Joined struct {
 	datasetID             string
 	datasetDescription    string
 	config                *env.Config
-	sample                bool
 	joinedDataset         map[string]interface{}
 	originalDataset       map[string]interface{}
 	leftCols              []string
@@ -57,12 +56,6 @@ func (j *Joined) Initialize(params map[string]interface{}, ingestParams *task.In
 
 	if params["originalDataset"] == nil {
 		return errors.Errorf("missing 'originalDataset' parameter")
-	}
-
-	// Check if we want to sample the dataset
-	j.sample = true
-	if params["nosample"] != nil {
-		j.sample = false
 	}
 
 	if params["description"] != nil {
@@ -175,11 +168,6 @@ func (j *Joined) PrepareImport() (*task.IngestSteps, *task.IngestParams, error) 
 
 	log.Infof("Created dataset '%s' from local source '%s'", ingestParams.ID, ingestParams.Path)
 	return ingestSteps, ingestParams, nil
-}
-
-// Import imports the dataset using the dataset importer.
-func (j *Joined) Import() error {
-	return nil
 }
 
 // CleanupImport removes temporary files and structures created during the import.
