@@ -141,6 +141,7 @@ export interface Dataset {
   storageName?: string;
   clone?: boolean;
   type: string;
+  immutable: boolean;
 }
 
 export interface JoinSuggestion {

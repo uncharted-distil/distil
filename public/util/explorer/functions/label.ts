@@ -29,6 +29,7 @@ import {
 import { LABEL_FEATURE_INSTANCE } from "../../../store/route";
 import router from "../../../router/router";
 import { ActionNames, ACTION_MAP, ExplorerStateNames, labelComputes } from "..";
+import { NavigationGuardNext } from "vue-router";
 
 /**
  * LABEL_COMPUTES contains all of the computes for the label state in the data explorer
@@ -176,6 +177,36 @@ export const LABEL_METHODS = {
     self.setBusyState(false, "Fetching Data");
     // update task based on the current training data
     self.updateTask();
+  },
+
+  /**
+   * used by b-model in DataExplorer when the user confirms navigation away from a cloned dataset
+   */
+  onConfirmRouteSave(nextRoute: NavigationGuardNext | null): void {
+    const self = (this as unknown) as DataExplorerRef;
+
+    // delete dataset
+    const terms = routeGetters.getRouteTerms(store);
+    datasetActions.deleteDataset(store, {
+      dataset: self.dataset,
+      terms: terms,
+    });
+
+    // switch route back to search after delete
+    if (nextRoute) {
+      nextRoute();
+    } else {
+      self.$router.push("/search");
+    }
+  },
+
+  /**
+   * used by b-model in DataExplorer when the user declines navigation away from a cloned dataset
+   */
+  onCancelRouteSave(nextRoute: NavigationGuardNext | null): void {
+    if (nextRoute) {
+      nextRoute(false);
+    }
   },
 
   /**

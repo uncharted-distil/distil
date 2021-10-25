@@ -756,6 +756,8 @@ export class LabelViewState implements BaseState {
     });
   }
   async fetchData(): Promise<unknown> {
+    const dataset = routeGetters.getRouteDataset(store);
+    await datasetActions.fetchDataset(store, { dataset });
     await this.fetchVariables();
     await viewActions.updateLabelData(store);
     return;
