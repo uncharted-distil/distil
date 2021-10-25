@@ -77,6 +77,7 @@ import { Variable } from "../store/dataset/index";
 import { AccuracyData, UnitTypes } from "../util/data";
 import { DATE_TIME_TYPE, isGeoLocatedType, isNumericType } from "../util/types";
 import { overlayRouteEntry } from "../util/routes";
+import { datasetGetters } from "../store";
 enum TimeUnits {
   Hours = "Hours",
   Days = "Days",
@@ -110,9 +111,9 @@ export default Vue.extend({
         return [];
       }
       const ds = this.joinDatasets[0];
-      return routeGetters.getJoinDatasetsVariables(this.$store).filter((v) => {
-        return v.datasetName === ds;
-      });
+      return datasetGetters
+        .getVariables(this.$store)
+        .filter((v) => v.datasetName === ds);
     },
   },
   mounted() {
@@ -176,9 +177,15 @@ export default Vue.extend({
     },
     getUnitTypes(joinPair: JoinPair<string>): UnitTypes {
       const key = joinPair.first;
-      const variable = this.variables.find((v) => {
+      let variable = this.variables.find((v) => {
         return v.key === key;
       });
+      // find grouping if variable is undefined
+      if (!variable) {
+        variable = this.variables.find((v) =>
+          v.grouping?.hidden?.some((h) => h === key)
+        );
+      }
       if (isGeoLocatedType(variable.colType)) {
         return UnitTypes.Distance;
       }

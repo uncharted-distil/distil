@@ -129,7 +129,6 @@ import { actions as viewActions } from "../store/view/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getVariableSummaries, swapJoinView } from "../util/join";
-import { datasetActions } from "../store";
 import { EventList } from "../util/events";
 
 export default Vue.extend({
