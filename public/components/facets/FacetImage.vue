@@ -43,6 +43,7 @@
             :dataset="summary.dataset"
             :field="summary.key"
             :expand-collapse="expandCollapse"
+            :type-change-event="typeChangeEvent"
             @type-change="onTypeChange"
           />
         </div>
@@ -143,6 +144,7 @@ export default Vue.extend({
     instanceName: String as () => string,
     rowSelection: Object as () => RowSelection,
     summary: Object as () => VariableSummary,
+    typeChangeEvent: { type: String as () => string, default: "" },
   },
 
   data() {

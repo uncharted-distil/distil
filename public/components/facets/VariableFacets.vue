@@ -93,6 +93,7 @@
               :include="include"
               :html="html"
               :expanded="expandGeoAndTimeseriesFacets"
+              :type-change-event="typeChangeEvent"
               @histogram-numerical-click="onNumericalClick"
               @histogram-range-change="onRangeChange"
               @type-change="onTypeChange"
@@ -117,6 +118,7 @@
                 !disabledColorScales.get(summary.key)
               "
               :include="include"
+              :type-change-event="typeChangeEvent"
               @facet-click="onFacetCategoryClick"
               @type-change="onTypeChange"
             />
@@ -140,6 +142,7 @@
                 geoVariableExists &&
                 !disabledColorScales.get(summary.key)
               "
+              :type-change-event="typeChangeEvent"
               @facet-click="onFacetClick"
               @range-change="onRangeChange"
               @type-change="onTypeChange"
@@ -163,6 +166,7 @@
                 geoVariableExists &&
                 !disabledColorScales.get(summary.key)
               "
+              :type-change-event="typeChangeEvent"
               @facet-click="onFacetCategoryClick"
               @type-change="onTypeChange"
             />
@@ -185,6 +189,7 @@
                 geoVariableExists &&
                 !disabledColorScales.get(summary.key)
               "
+              :type-change-event="typeChangeEvent"
               @numerical-click="onNumericalClick"
               @range-change="onRangeChange"
               @facet-click="onFacetClick"
@@ -309,6 +314,7 @@ export default Vue.extend({
     rowsPerPage: { type: Number, default: 0 },
     datasetName: { type: String as () => string, default: null },
     include: { type: Boolean as () => boolean, default: true },
+    typeChangeEvent: { type: String as () => string, default: "" },
   },
 
   data() {

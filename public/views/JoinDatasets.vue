@@ -35,11 +35,11 @@
             enable-search
             enable-type-change
             enable-highlighting
-            :datasetName="topDataset"
+            :dataset-name="topDataset"
             :instance-name="topFacetName"
             :rows-per-page="numRowsPerPage"
             :summaries="topVariableSummaries"
-            @type-change="onTypeChange"
+            :type-change-event="OnTypeChangeEvent"
           />
         </div>
         <div class="h-50">
@@ -47,11 +47,11 @@
             enable-search
             enable-type-change
             enable-highlighting
-            :datasetName="bottomDataset"
+            :dataset-name="bottomDataset"
             :instance-name="bottomFacetName"
             :rows-per-page="numRowsPerPage"
             :summaries="bottomVariableSummaries"
-            @type-change="onTypeChange"
+            :type-change-event="OnTypeChangeEvent"
           />
         </div>
       </div>
@@ -62,8 +62,8 @@
             :dataset="topDataset"
             :items="topDatasetItems"
             :fields="topDatasetFields"
-            :numRows="topDatasetNumRows"
-            :hasData="topDatasetHasData"
+            :num-rows="topDatasetNumRows"
+            :has-data="topDatasetHasData"
             :selected-column="topColumn"
             :other-selected-column="bottomColumn"
             instance-name="join-dataset-top"
@@ -76,8 +76,8 @@
             :dataset="bottomDataset"
             :items="bottomDatasetItems"
             :fields="bottomDatasetFields"
-            :numRows="bottomDatasetNumRows"
-            :hasData="bottomDatasetHasData"
+            :num-rows="bottomDatasetNumRows"
+            :has-data="bottomDatasetHasData"
             :selected-column="bottomColumn"
             :other-selected-column="topColumn"
             instance-name="join-dataset-bottom"
@@ -130,6 +130,7 @@ import { getters as routeGetters } from "../store/route/module";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getVariableSummaries, swapJoinView } from "../util/join";
 import { datasetActions } from "../store";
+import { EventList } from "../util/events";
 
 export default Vue.extend({
   name: "join-datasets",
@@ -310,6 +311,9 @@ export default Vue.extend({
     bottomDatasetHasData(): boolean {
       return !!this.bottomDatasetTableData;
     },
+    OnTypeChangeEvent(): string {
+      return EventList.JOIN.JOIN_TYPE_CHANGE;
+    },
   },
 
   watch: {
@@ -323,18 +327,19 @@ export default Vue.extend({
 
   beforeMount() {
     viewActions.fetchJoinDatasetsData(this.$store);
+    // listen for type change event
+    this.$eventBus.$on(this.OnTypeChangeEvent, this.onTypeChange);
   },
 
   beforeDestroy() {
     // Entering join view mutates variables and variable sumaries data. Clear them when exiting
     viewActions.clearJoinDatasetsData(this.$store);
+    // remove type change event listener
+    this.$eventBus.$off(this.OnTypeChangeEvent);
   },
 
   methods: {
     async onTypeChange() {
-      await datasetActions.fetchJoinDatasetsVariables(this.$store, {
-        datasets: [this.topDataset, this.bottomDataset],
-      });
       await viewActions.updateJoinDatasetsData(this.$store);
     },
     onTopColumnClicked(column) {

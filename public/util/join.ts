@@ -88,7 +88,7 @@ export function getVariableSummaries(
   context,
   dataset?: string
 ): VariableSummary[] {
-  let variables = routeGetters.getJoinDatasetsVariables(context);
+  let variables = datasetGetters.getVariables(store);
   if (dataset) {
     variables = variables.filter((v) => {
       return v.datasetName === dataset;

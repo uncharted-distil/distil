@@ -28,6 +28,7 @@
         :field="target"
         :expandCollapse="expandCollapse"
         :expand="expand"
+        :type-change-event="typeChangeEvent"
         @type-change="onTypeChange"
       />
     </div>
@@ -162,6 +163,7 @@ export default Vue.extend({
       Object as () => any,
       Function as () => Function,
     ],
+    typeChangeEvent: { type: String as () => string, default: "" },
   },
 
   data() {
