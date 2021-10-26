@@ -105,6 +105,8 @@ export class EventList {
     FAILURE_EVENT: "failure",
     // remove pair from join
     REMOVE_EVENT: "remove-from-join",
+    // when variable type has been changed in the join view
+    JOIN_TYPE_CHANGE: "join-type-change",
   };
   /***********LEXBAR EVENTS***********/
   static readonly LEXBAR = {

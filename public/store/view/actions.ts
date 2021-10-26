@@ -367,7 +367,7 @@ export const actions = {
     const varModes = context.getters.getDecodedVarModes;
     const datasetIDA = datasetIDs[0];
     const datasetIDB = datasetIDs[1];
-
+    const variables = datasetGetters.getVariables(store);
     // fetch new state
     const datasetA = _.find(datasets, (d) => {
       return d.id === datasetIDA;
@@ -375,27 +375,11 @@ export const actions = {
     const datasetB = _.find(datasets, (d) => {
       return d.id === datasetIDB;
     });
-    const groupingA = datasetA.variables.reduce((a, v) => {
-      const hiddenVars = v.grouping?.hidden as string[];
-      if (hiddenVars) {
-        a = a.concat(hiddenVars);
-      }
-      return a;
-    }, []);
-    const groupingB = datasetB.variables.reduce((a, v) => {
-      const hiddenVars = v.grouping?.hidden as string[];
-      if (hiddenVars) {
-        a = a.concat(hiddenVars);
-      }
-      return a;
-    }, []);
 
     return Promise.all([
       datasetActions.fetchIncludedVariableSummaries(store, {
         dataset: datasetA.id,
-        variables: datasetA.variables.filter(
-          (v) => groupingA.indexOf(v.key) < 0
-        ),
+        variables: variables.filter((v) => v.datasetName === datasetA.id),
         filterParams: filterParams[datasetA.id],
         highlights: highlights[datasetA.id],
         dataMode: dataMode,
@@ -403,9 +387,7 @@ export const actions = {
       }),
       datasetActions.fetchIncludedVariableSummaries(store, {
         dataset: datasetB.id,
-        variables: datasetB.variables.filter(
-          (v) => groupingB.indexOf(v.key) < 0
-        ),
+        variables: variables.filter((v) => v.datasetName === datasetB.id),
         filterParams: filterParams[datasetB.id],
         highlights: highlights[datasetB.id],
         dataMode: dataMode,

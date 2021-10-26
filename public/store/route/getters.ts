@@ -62,6 +62,8 @@ import {
   TRAINING_VARS_INSTANCE_SEARCH,
 } from "../route/index";
 import { ExplorerStateNames } from "../../util/explorer";
+import { datasetGetters } from "..";
+import store from "../store";
 
 export const getters = {
   getRoute(state: Route): Route {
@@ -116,6 +118,7 @@ export const getters = {
     if (datasetIDs.length !== 2) {
       return [];
     }
+    const variables = datasetGetters.getVariables(store);
     const datasets = getters.getDatasets;
     const datasetA = _.find(datasets, (d) => {
       return d.id === datasetIDs[0];
@@ -123,20 +126,18 @@ export const getters = {
     const datasetB = _.find(datasets, (d) => {
       return d.id === datasetIDs[1];
     });
-    let variables = [];
+    let result = [] as Variable[];
     if (datasetA) {
-      datasetA.variables.forEach((v) => {
-        v.datasetName = datasetIDs[0];
-      });
-      variables = variables.concat(datasetA.variables);
+      result = variables.concat(
+        variables.filter((v) => v.datasetName === datasetA.id)
+      );
     }
     if (datasetB) {
-      datasetB.variables.forEach((v) => {
-        v.datasetName = datasetIDs[1];
-      });
-      variables = variables.concat(datasetB.variables);
+      result = variables.concat(
+        variables.filter((v) => v.datasetName === datasetB.id)
+      );
     }
-    return variables;
+    return result;
   },
   getAnnotationHasChanged(state: Route) {
     const hasChanged =

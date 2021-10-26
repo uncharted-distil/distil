@@ -124,8 +124,9 @@ export const mutations = {
   },
 
   setVariables(state: DatasetState, variables: Variable[]) {
-    const oldVariables = new Map();
-
+    const oldVariables = new Map<string, Variable>();
+    // the dataset to update
+    const dataset = variables.length ? variables[0].datasetName : "";
     state.variables.forEach((variable) => {
       const { datasetName, key } = variable;
       oldVariables.set(`${datasetName}:${key}`, variable);
@@ -144,7 +145,12 @@ export const mutations = {
       }
       return variable;
     });
-    state.variables = newVariables;
+    // there are instances where we have variables from multiple datasets
+    // the join view it is important to keep those variables
+    const otherDatasetVariables = Array.from(oldVariables.values()).filter(
+      (v) => v.datasetName !== dataset
+    );
+    state.variables = newVariables.concat(otherDatasetVariables);
   },
 
   updateVariableType(

@@ -43,6 +43,7 @@
             :dataset="summary.dataset"
             :field="summary.key"
             :expand-collapse="expandCollapse"
+            :type-change-event="typeChangeEvent"
             @type-change="onTypeChange"
           />
         </div>
@@ -130,6 +131,7 @@ export default Vue.extend({
     geoEnabled: { type: Boolean as () => boolean, default: false },
     colorScaleToggle: { type: Boolean as () => boolean, default: false },
     include: { type: Boolean as () => boolean, default: true },
+    typeChangeEvent: { type: String as () => string, default: "" },
   },
 
   data() {

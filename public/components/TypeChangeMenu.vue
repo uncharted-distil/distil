@@ -108,6 +108,7 @@ export default Vue.extend({
     field: { type: String, default: null },
     expandCollapse: Function as () => Function,
     expand: { type: Boolean, default: false },
+    typeChangeEvent: { type: String as () => string, default: "" },
   },
 
   data() {
@@ -378,6 +379,11 @@ export default Vue.extend({
             return datasetActions.fetchClusters(this.$store, {
               dataset: this.dataset,
             });
+          }
+          // if event is specified emit globally
+          if (this.typeChangeEvent.length) {
+            this.$eventBus.$emit(this.typeChangeEvent);
+            return null;
           }
           this.$emit(EventList.VARIABLES.TYPE_CHANGE);
           return null;
