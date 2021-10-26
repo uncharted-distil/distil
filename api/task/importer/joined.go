@@ -24,8 +24,6 @@ type Joined struct {
 	originalDataset       map[string]interface{}
 	leftCols              []string
 	rightCols             []string
-	leftVars              []*model.Variable
-	rightVars             []*model.Variable
 	sourceLearningDataset string
 	updateDatasetID       string
 	meta                  api.MetadataStorage
@@ -158,7 +156,10 @@ func (j *Joined) PrepareImport() (*task.IngestSteps, *task.IngestParams, error) 
 	}
 
 	// set the definitive types based on the currently stored metadata
-	definitiveVars := append(j.leftVars, j.rightVars...)
+	definitiveVars := append(
+		getVariablesDefault(j.originalDataset["id"].(string), j.meta),
+		getVariablesDefault(j.joinedDataset["id"].(string), j.meta)...,
+	)
 	ingestParams.DefinitiveTypes = api.MapVariables(definitiveVars, func(variable *model.Variable) string { return variable.Key })
 
 	log.Infof("Created dataset '%s' from local source '%s'", ingestParams.ID, ingestParams.Path)
@@ -306,6 +307,16 @@ func syncPrefeaturizedDataset(datasetID string, updateDatasetID string, sourceLe
 	log.Infof("done syncing prefeaturized dataset '%s' on disk", datasetID)
 
 	return nil
+}
+
+func getVariablesDefault(datasetID string, metaStorage api.MetadataStorage) []*model.Variable {
+	ds, err := metaStorage.FetchDataset(datasetID, true, true, true)
+	if err != nil {
+		log.Infof("unable to fetch variables so defaulting to empty list")
+		return []*model.Variable{}
+	}
+
+	return ds.Variables
 }
 
 type nameUpdate struct {

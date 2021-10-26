@@ -165,7 +165,7 @@ func IngestDataset(params *IngestParams, config *IngestTaskConfig, steps *Ingest
 	latestSchemaOutput = output
 	log.Infof("finished merging the dataset")
 
-	output, err = Clean(latestSchemaOutput, params.ID, config)
+	output, err = Clean(latestSchemaOutput, params.ID, params, config)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to clean all data")
 	}
