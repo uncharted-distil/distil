@@ -18,6 +18,7 @@ package task
 import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/metadata"
+	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 
@@ -25,7 +26,7 @@ import (
 )
 
 // Clean will clean bad data for further processing.
-func Clean(schemaFile string, dataset string, config *IngestTaskConfig) (string, error) {
+func Clean(schemaFile string, dataset string, params *IngestParams, config *IngestTaskConfig) (string, error) {
 	outputPath := createDatasetPaths(schemaFile, dataset, compute.D3MLearningData)
 
 	// load metadata from original schema
@@ -35,8 +36,30 @@ func Clean(schemaFile string, dataset string, config *IngestTaskConfig) (string,
 	}
 	mainDR := meta.GetMainDataResource()
 
+	metaStorage, err := params.MetaCtor()
+	if err != nil {
+		return "", errors.Wrap(err, "unable to initialize metadata storage")
+	}
+
+	vars := []*model.Variable{}
+	exists, _ := metaStorage.DatasetExists(meta.ID)
+	if exists {
+		vars, err = metaStorage.FetchVariables(meta.ID, false, false, false)
+		if err != nil {
+			return "", err
+		}
+	} else if params.DefinitiveTypes != nil {
+		for _, v := range mainDR.Variables {
+			if params.DefinitiveTypes[v.Key] != nil {
+				clone := v.Clone()
+				clone.Type = params.DefinitiveTypes[v.Key].Type
+				vars = append(vars, clone)
+			}
+		}
+	}
+
 	// create & submit the solution request
-	pip, err := description.CreateDataCleaningPipeline("Mary Poppins", "")
+	pip, err := description.CreateDataCleaningPipeline("Mary Poppins", "", vars)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to create format pipeline")
 	}
