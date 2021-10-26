@@ -17,21 +17,29 @@
 
 <template>
   <div class="search-bar">
-    <b-form-input
-      ref="searchbox"
-      v-model="terms"
-      type="text"
-      placeholder="Search datasets"
-      name="datasetsearch"
-      @keypress.native="onEnter"
-      @change="submitSearch"
-    ></b-form-input>
+    <b-input-group>
+      <b-form-input
+        ref="searchbox"
+        v-model="terms"
+        type="text"
+        placeholder="Search datasets"
+        name="datasetsearch"
+        @keypress.native="onEnter"
+        @change="submitSearch"
+      ></b-form-input>
+      <b-input-group-append v-if="doesSearchBoxHaveContent">
+        <b-button size="sm" @click="clearSearch">
+          <b-icon-x />
+        </b-button>
+      </b-input-group-append>
+    </b-input-group>
     <i class="fa fa-search search-icon" @click="submitSearch"></i>
   </div>
 </template>
 
 <script lang="ts">
 import _ from "lodash";
+import { BIconX } from "bootstrap-vue";
 import { createRouteEntry, overlayRouteEntry } from "../util/routes";
 import { getters as routeGetters } from "../store/route/module";
 import { actions as appActions } from "../store/app/module";
@@ -43,6 +51,10 @@ const ENTER_KEYCODE = 13;
 
 export default Vue.extend({
   name: "search-bar",
+
+  components: {
+    BIconX,
+  },
 
   data() {
     return {
@@ -63,6 +75,9 @@ export default Vue.extend({
         }
         return routeGetters.getRouteTerms(this.$store);
       },
+    },
+    doesSearchBoxHaveContent(): boolean {
+      return typeof this.terms === "string" && this.terms.length > 0;
     },
   },
 
@@ -113,6 +128,10 @@ export default Vue.extend({
       }
       this.$router.push(entry).catch((err) => console.warn(err));
       this.uncommittedInput = false;
+    },
+    clearSearch(): void {
+      this.terms = "";
+      this.submitSearch();
     },
   },
 });
