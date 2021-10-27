@@ -247,10 +247,12 @@ func (d *DiskDataset) ReorderFields(fields []*model.Variable) error {
 
 	reorderedData := make([][]string, len(d.Dataset.Data))
 	for i, row := range d.Dataset.Data {
+		reorderedData[i] = make([]string, len(row))
 		for j, c := range row {
 			reorderedData[i][newOrderMap[j]] = c
 		}
 	}
+	d.Dataset.Data = reorderedData
 
 	return nil
 }
