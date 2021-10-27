@@ -204,6 +204,57 @@ func (d *DiskDataset) UpdateRawData(varMap map[string]*model.Variable, data [][]
 	return nil
 }
 
+// HasFields returns true if the dataset has the specified fields, and if specified,
+// only those fields.
+func (d *DiskDataset) HasFields(fields []*model.Variable, exactMatch bool) bool {
+	dsFields := d.Dataset.Metadata.GetMainDataResource().Variables
+	if exactMatch && len(dsFields) != len(fields) {
+		return false
+	}
+
+	dsMap := map[string]*model.Variable{}
+	for _, f := range dsFields {
+		dsMap[f.Key] = f
+	}
+
+	for _, f := range fields {
+		if dsMap[f.Key] == nil {
+			return false
+		}
+	}
+
+	return !exactMatch || len(dsFields) == len(fields)
+}
+
+// ReorderFields will reorder the dataset fields to match the passed in order.
+func (d *DiskDataset) ReorderFields(fields []*model.Variable) error {
+	if !d.HasFields(fields, true) {
+		return errors.Errorf("unable to reorder fields because the dataset does not have the same fields")
+	}
+
+	fieldMap := map[string]*model.Variable{}
+	for _, f := range fields {
+		fieldMap[f.Key] = f
+	}
+
+	newOrderMap := map[int]int{}
+	for _, f := range d.Dataset.Metadata.GetMainDataResource().Variables {
+		newOrderMap[f.Index] = fieldMap[f.Key].Index
+
+		// update the index of the field in the metadata
+		f.Index = fieldMap[f.Key].Index
+	}
+
+	reorderedData := make([][]string, len(d.Dataset.Data))
+	for i, row := range d.Dataset.Data {
+		for j, c := range row {
+			reorderedData[i][newOrderMap[j]] = c
+		}
+	}
+
+	return nil
+}
+
 // UpdatePath updates the path of the disk dataset to point to a new location.
 func (d *DiskDataset) UpdatePath(datasetFolder string) {
 	d.schemaPath = path.Join(datasetFolder, compute.D3MDataSchema)
