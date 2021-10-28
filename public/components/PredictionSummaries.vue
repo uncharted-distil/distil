@@ -67,6 +67,7 @@
           label="Dataset Name"
           label-for="model-name-input"
           invalid-feedback="Dataset Name is Required"
+          :state="datasetModelNameState"
         >
           <b-form-input
             id="model-name-input"
@@ -182,9 +183,19 @@ export default Vue.extend({
       includeAllFeatures: true,
       selectedFormat: "csv",
       formats: ["csv", "geojson"],
-      datasetModelNameState: null,
+      datasetModelNameState: false,
       datasetExportNameState: null,
     };
+  },
+
+  watch: {
+    newDatasetName() {
+      if (this.newDatasetName !== null && this.newDatasetName.length > 0) {
+        this.datasetModelNameState = true;
+      } else {
+        this.datasetModelNameState = false;
+      }
+    },
   },
 
   computed: {
