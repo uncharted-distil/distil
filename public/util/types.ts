@@ -293,6 +293,7 @@ export interface MultiBandImagePackRequest {
   dataset: string;
   band?: string;
   imageIds: string[];
+  colorScale?: string;
 }
 export function isEquivalentType(a: string, b: string): boolean {
   const equiv = EQUIV_TYPES[a];

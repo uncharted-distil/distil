@@ -570,6 +570,10 @@ export const getters = {
     const colorScaleVar = state.query.colorScaleVariable as string;
     return colorScaleVar ?? "";
   },
+  getImageLayerScale(state: Route, getters: any): string {
+    const imageLayerScale = state.query.imageLayerScale as string;
+    return imageLayerScale ?? ColorScaleNames.viridis;
+  },
   getGeoCenter(state: Route, getters: any): number[] {
     const geo = state.query.geo as string;
     if (!geo) {

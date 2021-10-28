@@ -173,13 +173,14 @@ type ImageCacheKey struct {
 	DatasetDir      string
 	BandCombination string
 	ImageScale      *ImageScale
+	Ramp            string
 	Options         []Options
 	BandsMapped     []string
 }
 
 // ImageFromCombination takes a base dataset directory, fileID and a band combination label and
 // returns a composed image.  NOTE: Currently a bit hardcoded for sentinel-2 data.
-func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, bandCombo string, imageScale ImageScale, options ...Options) (*image.RGBA, error) {
+func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, bandCombo string, imageScale ImageScale, ramp string, options ...Options) (*image.RGBA, error) {
 	// attempt to get the folder file type for the supplied dataset dir from the cache, if
 	// not do the look up
 	bandCombination := strings.ToLower(string(BandCombinationID(bandCombo)))
@@ -188,6 +189,7 @@ func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, 
 		DatasetDir:      datasetDir,
 		BandCombination: bandCombination,
 		ImageScale:      &imageScale,
+		Ramp:            ramp,
 		Options:         options,
 	}
 
@@ -222,7 +224,14 @@ func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, 
 			filePaths = append(filePaths, path.Join(datasetDir, bandFileMapping[bandLabel]))
 		}
 
-		image, err := ImageFromBands(filePaths, bandCombo.Ramp, bandCombo.Transform, imageScale, options...)
+		var imageRamp []uint8
+		if ramp == "" {
+			imageRamp = bandCombo.Ramp
+		} else {
+			imageRamp = GetColorRamp(ramp)
+		}
+
+		image, err := ImageFromBands(filePaths, imageRamp, bandCombo.Transform, imageScale, options...)
 		if err != nil {
 			return nil, err
 		}

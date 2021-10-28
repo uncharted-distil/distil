@@ -31,6 +31,7 @@
           <li>Date: {{ date }}</li>
           <li>Time: {{ time }}</li>
         </ul>
+        <color-scale-selection v-if="isMultiBandImage" class="pr-1 height-36" />
         <layer-selection
           v-if="isMultiBandImage"
           class="pr-1 height-36"
@@ -136,6 +137,7 @@ import { IMAGE_TYPE, MULTIBAND_IMAGE_TYPE } from "../util/types";
 import ImageLabel from "./ImageLabel.vue";
 import ImageTransformer from "./ImageTransformer.vue";
 import LabelHeaderButtons from "./labelingComponents/LabelHeaderButtons.vue";
+import ColorScaleSelection from "../components/ColorScaleSelection.vue";
 import LayerSelection from "./LayerSelection.vue";
 import { EventList, EI } from "../util/events";
 import {
@@ -169,6 +171,7 @@ export default Vue.extend({
   components: {
     ImageLabel,
     ImageTransformer,
+    ColorScaleSelection,
     LayerSelection,
     LabelHeaderButtons,
   },
@@ -336,6 +339,9 @@ export default Vue.extend({
     uniqueId(): string {
       return this.selectedImageUrl + "-" + this.uniqueTrail;
     },
+    imageLayerScale(): string {
+      return routeGetters.getImageLayerScale(this.$store);
+    },
   },
 
   watch: {
@@ -357,6 +363,18 @@ export default Vue.extend({
       }
     },
     band() {
+      // only fetch new image if image drill down is visible
+      if (!this.visible) {
+        return;
+      }
+      this.requestImage({
+        gainL: 1.0,
+        gamma: 2.2,
+        gain: 2.5,
+        scale: this.scale,
+      });
+    },
+    imageLayerScale() {
       // only fetch new image if image drill down is visible
       if (!this.visible) {
         return;
@@ -466,6 +484,7 @@ export default Vue.extend({
           imageId: imageId(this.selectedImageUrl),
           bandCombination: this.band,
           isThumbnail: false,
+          colorScale: this.imageLayerScale,
           options: imageOptions,
           uniqueTrail: this.uniqueTrail,
         });
