@@ -64,9 +64,9 @@
     <b-modal id="save" title="Create Dataset" @ok="createDataset">
       <form ref="createDatasetForm">
         <b-form-group
-          label="Model Name"
+          label="Dataset Name"
           label-for="model-name-input"
-          invalid-feedback="Model Name is Required"
+          invalid-feedback="Dataset Name is Required"
         >
           <b-form-input
             id="model-name-input"
@@ -179,7 +179,7 @@ export default Vue.extend({
     return {
       saveFileName: "",
       newDatasetName: "",
-      includeAllFeatures: false,
+      includeAllFeatures: true,
       selectedFormat: "csv",
       formats: ["csv", "geojson"],
       datasetModelNameState: null,
