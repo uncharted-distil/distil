@@ -29,7 +29,6 @@
     v-else
     class="d-flex justify-content-space align-items-center btn-outline-secondary rounded"
   >
-    <i v-if="!isSelected" class="fas fa-palette fa-sm pl-1" />
     <d-drop-down
       ref="drop-down"
       class="p-0 pl-1 pr-1 shadow-none cursor-pointer"
@@ -41,14 +40,14 @@
       <template v-slot:selected-option-container>
         <div class="vs__selected">
           <div class="d-inline-flex align-items-center justify-content-center">
+            <div
+              v-if="isSelected"
+              class="selected-bar d-inline-flex mr-1"
+              :style="selectedColorScale.gradient"
+            />
             <i
               class="fas fa-times fa-sm white-color"
               @mousedown.stop="onDisableScale"
-            />
-            <div
-              v-if="isSelected"
-              class="selected-bar d-inline-flex ml-1"
-              :style="selectedColorScale.gradient"
             />
           </div>
         </div>
@@ -56,6 +55,12 @@
       <template v-slot:option="option">
         {{ option.name[0].toUpperCase() + option.name.slice(1) }}
         <div class="w-100 bar" :style="option.gradient" />
+      </template>
+      <template v-slot:dropdown-caret-sibling-icon>
+        <i
+          v-if="!isSelected"
+          class="dropdown-caret-sibling-icon fas fa-palette fa-sm"
+        />
       </template>
     </d-drop-down>
   </div>
@@ -250,5 +255,8 @@ export default Vue.extend({
 }
 .min-width-40 {
   min-width: 40px;
+}
+.dropdown-caret-sibling-icon {
+  margin-right: 5px;
 }
 </style>

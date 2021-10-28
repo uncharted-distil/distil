@@ -23,7 +23,10 @@
       <slot :name="slot" v-bind="scope" />
     </template>
     <template #open-indicator="{ attributes }">
-      <span v-bind="attributes"><i class="fas fa-caret-down"></i></span>
+      <slot name="dropdown-caret-sibling-icon" />
+      <span v-bind="attributes">
+        <i class="fas fa-caret-down"></i>
+      </span>
     </template>
   </v-select>
 </template>
@@ -127,5 +130,14 @@ div.vs__actions > svg {
 .vs--disabled .vs__search,
 .vs--disabled .vs__selected {
   background-color: transparent !important;
+}
+.vs__open-indicator {
+  transform-origin: 50% 50%;
+}
+.vs__selected-options {
+  flex-basis: auto !important;
+}
+.vs__selected {
+  margin: 2px 0 0 !important;
 }
 </style>
