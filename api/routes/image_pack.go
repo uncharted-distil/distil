@@ -40,6 +40,7 @@ type ImagePackRequest struct {
 	Dataset  string   `json:"dataset"`
 	ImageIDs []string `json:"imageIds"`
 	Band     string   `json:"band,omitempty"`
+	Ramp     string   `json:"colorScale,omitempty"`
 }
 
 // ImagePackResult is the expected post result for MultiBandImagePackHandler
@@ -245,7 +246,7 @@ func getMultiBandImages(multiBandPackRequest *ImagePackRequest, threadID int, nu
 	for i := threadID; i < len(multiBandPackRequest.ImageIDs); i += numThreads {
 		imageID := multiBandPackRequest.ImageIDs[i]
 
-		img, err := imagery.ImageFromCombination(sourcePath, bandMapping[imageID], multiBandPackRequest.Band, imageScale, options)
+		img, err := imagery.ImageFromCombination(sourcePath, bandMapping[imageID], multiBandPackRequest.Band, imageScale, multiBandPackRequest.Ramp, options)
 		if err != nil {
 			handleThreadError(&errorIDs, &imageID, &err)
 			continue

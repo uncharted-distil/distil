@@ -258,6 +258,10 @@ export default Vue.extend({
     },
 
     spinnerHTML,
+
+    imageLayerScale(): string {
+      return routeGetters.getImageLayerScale(this.$store);
+    },
   },
 
   watch: {
@@ -302,6 +306,16 @@ export default Vue.extend({
     // Refresh image on band change
     band(newBand: string, oldBand: string) {
       if (newBand !== oldBand) {
+        this.cleanUp();
+        this.hasRendered = false;
+        this.hasRequested = false;
+        if (this.isVisible) {
+          this.requestImage();
+        }
+      }
+    },
+    imageLayerScale(newScale: string, oldScale: string) {
+      if (newScale !== oldScale) {
         this.cleanUp();
         this.hasRendered = false;
         this.hasRequested = false;
@@ -425,6 +439,7 @@ export default Vue.extend({
           imageId: this.imageId,
           bandCombination: routeGetters.getBandCombinationId(this.$store),
           isThumbnail: true,
+          colorScale: routeGetters.getImageLayerScale(this.$store),
           uniqueTrail: this.uniqueTrail,
         });
         if (this.isVisible) {

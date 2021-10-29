@@ -431,6 +431,9 @@ export default Vue.extend({
     band(): string {
       return routeGetters.getBandCombinationId(this.$store);
     },
+    colorScale(): string {
+      return routeGetters.getImageLayerScale(this.$store);
+    },
     residualThresholdMin(): number {
       return _.toNumber(routeGetters.getRouteResidualThresholdMin(this.$store));
     },
@@ -456,6 +459,10 @@ export default Vue.extend({
     },
 
     band() {
+      this.debounceImageFetch();
+    },
+
+    colorScale() {
       this.debounceImageFetch();
     },
 

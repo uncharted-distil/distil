@@ -77,6 +77,10 @@
               </b-tab>
             </b-tabs>
           </div>
+          <color-scale-selection
+            v-if="isMultiBandImage"
+            class="align-self-center mr-2"
+          />
           <layer-selection
             v-if="isMultiBandImage"
             :has-image-attention="isResultState"
@@ -349,6 +353,7 @@ import ForecastHorizon from "../components/ForecastHorizon.vue";
 import GeoPlot from "../components/GeoPlot.vue";
 import ImageMosaic from "../components/ImageMosaic.vue";
 import LabelHeaderButtons from "../components/labelingComponents/LabelHeaderButtons.vue";
+import ColorScaleSelection from "../components/ColorScaleSelection.vue";
 import LayerSelection from "../components/LayerSelection.vue";
 import LeftSidePanel from "../components/layout/LeftSidePanel.vue";
 import LegendWeight from "../components/LegendWeight.vue";
@@ -408,6 +413,7 @@ const DataExplorer = Vue.extend({
     GeoPlot,
     ImageMosaic,
     LabelHeaderButtons,
+    ColorScaleSelection,
     LayerSelection,
     LeftSidePanel,
     LegendWeight,

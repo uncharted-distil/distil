@@ -1373,17 +1373,27 @@ export const actions = {
       imageId: string;
       bandCombination: string;
       isThumbnail: boolean;
+      colorScale?: string;
       uniqueTrail?: string;
       options?: { gamma: number; gain: number; gainL: number; scale: boolean };
     }
   ) {
-    if (!validateArgs(args, ["dataset", "imageId", "bandCombination"])) {
+    if (
+      !validateArgs(args, [
+        "dataset",
+        "imageId",
+        "bandCombination",
+        "colorScale",
+      ])
+    ) {
       return null;
     }
     const options = !!args.options ? `${JSON.stringify(args.options)}` : "";
     try {
       const response = await loadImage(
-        `distil/multiband-image/${args.dataset}/${args.imageId}/${args.bandCombination}/${args.isThumbnail}/${options}`
+        `distil/multiband-image/${args.dataset}/${args.imageId}/${
+          args.bandCombination
+        }/${args.isThumbnail}/${args.colorScale ?? "viridium"}/${options}`
       );
       const imageUrl = !!args.uniqueTrail
         ? `${args.imageId}/${args.uniqueTrail}`

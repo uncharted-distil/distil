@@ -52,6 +52,7 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, dataCtor api.DataStorag
 		bandCombo := pat.Param(r, "band-combination")
 		paramOption := getOptions(r.URL.Path)
 		isThumbnail, err := strconv.ParseBool(pat.Param(r, "is-thumbnail"))
+		ramp := pat.Param(r, "ramp")
 		if err != nil {
 			handleError(w, err)
 			return
@@ -109,7 +110,7 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, dataCtor api.DataStorag
 			return
 		}
 
-		img, err := imagery.ImageFromCombination(sourcePath, bandMapping[imageID], bandCombo, imageScale, options)
+		img, err := imagery.ImageFromCombination(sourcePath, bandMapping[imageID], bandCombo, imageScale, ramp, options)
 		if err != nil {
 			handleError(w, err)
 			return

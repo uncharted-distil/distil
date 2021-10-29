@@ -136,6 +136,7 @@ export const getters = {
   getRouteTask: read(moduleGetters.getRouteTask),
   getColorScale: read(moduleGetters.getColorScale),
   getColorScaleVariable: read(moduleGetters.getColorScaleVariable),
+  getImageLayerScale: read(moduleGetters.getImageLayerScale),
   getRouteFittedSolutionId: read(moduleGetters.getRouteFittedSolutionId),
   getRoutePredictionsDataset: read(moduleGetters.getRoutePredictionsDataset),
   isSingleSolution: read(moduleGetters.isSingleSolution),

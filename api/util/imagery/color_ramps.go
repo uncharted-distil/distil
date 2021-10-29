@@ -254,6 +254,26 @@ func GetColorScale(colorScaleName string) func(float64) *color.RGBA {
 	}
 }
 
+// GetColorRamp returns the color ramp based the supplied name. if name is incorrect defaults to viridis ramp
+func GetColorRamp(colorScaleName string) []uint8 {
+	var selectedRamp []RampEntry
+	switch colorScaleName {
+	case "viridis":
+		selectedRamp = ViridisColorRamp
+	case "magma":
+		selectedRamp = MagmaColorRamp
+	case "plasma":
+		selectedRamp = PlasmaColorRamp
+	case "inferno":
+		selectedRamp = InfernoColorRamp
+	case "turbo":
+		selectedRamp = TurboColorRamp
+	default:
+		selectedRamp = ViridisColorRamp
+	}
+	return GenerateRamp(selectedRamp, 255, Lab)
+}
+
 // RampToImage converts a color ramp to an image for debugging purposes
 func RampToImage(height int, ramp []uint8) *image.RGBA {
 	blocks := len(ramp) / 3

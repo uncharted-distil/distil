@@ -1513,6 +1513,7 @@ export function FetchImagePack(args: {
       }),
       dataset,
       band: type === MULTIBAND_IMAGE_TYPE ? band : "",
+      colorScale: routeGetters.getImageLayerScale(store),
     },
     uniqueTrail: args.uniqueTrail,
   });
