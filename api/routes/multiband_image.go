@@ -124,7 +124,7 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, dataCtor api.DataStorag
 			edge = optramMap[geoHash]
 		}
 
-		img, err := imagery.ImageFromCombination(sourcePath, bandMapping[imageID], bandCombo, imageScale, &edge, options)
+		img, err := imagery.ImageFromCombination(sourcePath, bandMapping[imageID], bandCombo, imageScale, &edge, ramp, options)
 		if err != nil {
 			handleError(w, err)
 			return

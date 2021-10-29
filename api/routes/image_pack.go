@@ -260,7 +260,7 @@ func getMultiBandImages(multiBandPackRequest *ImagePackRequest, optramMap map[st
 		if val, ok := optramMap[geoHash]; ok {
 			edge = val
 		}
-		img, err := imagery.ImageFromCombination(sourcePath, bandMapping[imageID], multiBandPackRequest.Band, imageScale, &edge, options)
+		img, err := imagery.ImageFromCombination(sourcePath, bandMapping[imageID], multiBandPackRequest.Band, imageScale, &edge, multiBandPackRequest.Ramp, options)
 		if err != nil {
 			handleThreadError(&errorIDs, &imageID, &err)
 			continue

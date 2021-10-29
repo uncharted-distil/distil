@@ -221,7 +221,7 @@ type ImageCacheKey struct {
 
 // ImageFromCombination takes a base dataset directory, fileID and a band combination label and
 // returns a composed image.  NOTE: Currently a bit hardcoded for sentinel-2 data.
-func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, bandCombo string, imageScale ImageScale, edges *OptramEdges, options ...Options) (*image.RGBA, error) {
+func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, bandCombo string, imageScale ImageScale, edges *OptramEdges, ramp string, options ...Options) (*image.RGBA, error) {
 	// attempt to get the folder file type for the supplied dataset dir from the cache, if
 	// not do the look up
 	bandCombination := strings.ToLower(string(BandCombinationID(bandCombo)))
@@ -271,7 +271,7 @@ func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, 
 			imageRamp = GetColorRamp(ramp)
 		}
 
-		image, err := ImageFromBands(filePaths, imageRamp, bandCombo.Transform, imageScale, options...)
+		image, err := ImageFromBands(filePaths, imageRamp, bandCombo, imageScale, edges, options...)
 		if err != nil {
 			return nil, err
 		}
@@ -289,7 +289,7 @@ func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, 
 // where the file names map to R,G,B in order.  The results are returned as a JPEG
 // encoded byte stream. If errors are encountered processing a band an attempt will
 // be made to create the image from the remaining bands, while logging an error.
-func ImageFromBands(paths []string, bandCombo *BandCombination, imageScale ImageScale, edges *OptramEdges, options ...Options) (*image.RGBA, error) {
+func ImageFromBands(paths []string, ramp []uint8, bandCombo *BandCombination, imageScale ImageScale, edges *OptramEdges, options ...Options) (*image.RGBA, error) {
 	bandImages := []*image.Gray16{}
 	maxXSize := 0
 	maxYSize := 0
@@ -323,7 +323,7 @@ func ImageFromBands(paths []string, bandCombo *BandCombination, imageScale Image
 		// Create an RGBA image from the resized bands
 		return createRGBAFromBands(maxXSize, maxYSize, bandImages, options...), nil
 	}
-	return createRGBAFromRamp(maxXSize, maxYSize, bandImages, bandCombo.Transform, bandCombo.Ramp, edges), nil
+	return createRGBAFromRamp(maxXSize, maxYSize, bandImages, bandCombo.Transform, ramp, edges), nil
 }
 
 // ScaleConfidenceMatrix scales confidence matrix to desired size using linear scaling
