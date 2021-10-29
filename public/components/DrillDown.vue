@@ -191,6 +191,9 @@ export default Vue.extend({
         (k) => this.tiles[0].item[k]?.value === this.tiles[0].imageUrl
       );
     },
+    imageLayerScale(): string {
+      return routeGetters.getImageLayerScale(this.$store);
+    },
   },
 
   watch: {
@@ -219,6 +222,10 @@ export default Vue.extend({
       this.clearImages();
       this.fetchImagePack();
     },
+    imageLayerScale() {
+      this.clearImages();
+      this.fetchImagePack();
+    },
   },
 
   mounted() {
@@ -233,6 +240,7 @@ export default Vue.extend({
           imageIds: this.imagesToFetch,
           dataset: this.dataset,
           band: this.band,
+          colorScale: this.imageLayerScale,
         },
         uniqueTrail: this.uniqueTrail,
       });

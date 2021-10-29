@@ -38,7 +38,7 @@ func TestImageFromCombination(t *testing.T) {
 		"b11": "S2A_MSIL2A_20171121T112351_79_21_B11.tif",
 		"b12": "S2A_MSIL2A_20171121T112351_79_21_B12.tif",
 	}
-	composedImage, err := ImageFromCombination("../test/bigearthnet", bandMap, NaturalColors, ImageScale{})
+	composedImage, err := ImageFromCombination("../test/bigearthnet", bandMap, NaturalColors, ImageScale{}, "")
 	assert.NoError(t, err)
 	assert.NotNil(t, composedImage)
 	assert.True(t, len(composedImage.Pix) > 0)

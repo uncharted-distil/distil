@@ -259,7 +259,7 @@ func main() {
 	registerRoute(mux, "/distil/export/:solution-id", routes.ExportHandler(solutionClient, config.D3MOutputDir, discoveryLogger))
 	registerRoute(mux, "/distil/config", routes.ConfigHandler(config, version, timestamp, ta2Version))
 	registerRoute(mux, "/distil/task/:dataset/:target/:variables", routes.TaskHandler(pgDataStorageCtor, esMetadataStorageCtor))
-	registerRoute(mux, "/distil/multiband-image/:dataset/:image-id/:band-combination/:is-thumbnail/*", routes.MultiBandImageHandler(esMetadataStorageCtor, pgDataStorageCtor, config))
+	registerRoute(mux, "/distil/multiband-image/:dataset/:image-id/:band-combination/:is-thumbnail/:ramp/*", routes.MultiBandImageHandler(esMetadataStorageCtor, pgDataStorageCtor, config))
 	registerRoute(mux, "/distil/solution-variable-rankings/:solution-id", routes.SolutionVariableRankingHandler(esMetadataStorageCtor, pgSolutionStorageCtor))
 	registerRoute(mux, "/distil/export-results/:produce-request-id/:format", routes.ExportResultHandler(pgSolutionStorageCtor, pgDataStorageCtor, esMetadataStorageCtor))
 	registerRoute(mux, "/ws", ws.SolutionHandler(solutionClient, esMetadataStorageCtor, pgDataStorageCtor, pgSolutionStorageCtor, esExportedModelStorageCtor))

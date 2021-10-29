@@ -165,7 +165,7 @@ func IngestDataset(params *IngestParams, config *IngestTaskConfig, steps *Ingest
 	latestSchemaOutput = output
 	log.Infof("finished merging the dataset")
 
-	output, err = Clean(latestSchemaOutput, params.ID, config)
+	output, err = Clean(latestSchemaOutput, params.ID, params, config)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to clean all data")
 	}
@@ -254,7 +254,7 @@ func IngestDataset(params *IngestParams, config *IngestTaskConfig, steps *Ingest
 		_, featurizedDatasetPath, err := FeaturizeDataset(originalSchemaFile, latestSchemaOutput, datasetID, metaStorage, config)
 		if err != nil {
 			// if the featurize step fails hard delete the dataset
-			DeleteDataset(ingestedDataset, metaStorage, dataStorage, false)
+			_ = DeleteDataset(ingestedDataset, metaStorage, dataStorage, false)
 			return nil, errors.Wrap(err, "unable to featurize dataset")
 		}
 		log.Infof("finished featurizing the dataset")

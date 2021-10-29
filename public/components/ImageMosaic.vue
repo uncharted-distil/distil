@@ -40,6 +40,7 @@
                 :summaries="summaries"
                 :index="imageIndex(idx)"
                 :items="dataItems"
+                :label-feature-name="labelFeatureName"
                 @click="onImageClick"
                 @shift-click="onImageShiftClick"
                 @cycle-images="onImageCycle"

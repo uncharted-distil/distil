@@ -214,6 +214,7 @@ type ImageCacheKey struct {
 	DatasetDir      string
 	BandCombination string
 	ImageScale      *ImageScale
+	Ramp            string
 	Options         []Options
 	BandsMapped     []string
 }
@@ -229,6 +230,7 @@ func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, 
 		DatasetDir:      datasetDir,
 		BandCombination: bandCombination,
 		ImageScale:      &imageScale,
+		Ramp:            ramp,
 		Options:         options,
 	}
 
@@ -263,7 +265,13 @@ func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, 
 			filePaths = append(filePaths, path.Join(datasetDir, bandFileMapping[bandLabel]))
 		}
 
-		image, err := ImageFromBands(filePaths, bandCombo, imageScale, edges, options...)
+		imageRamp := bandCombo.Ramp
+
+		if ramp != "" {
+			imageRamp = GetColorRamp(ramp)
+		}
+
+		image, err := ImageFromBands(filePaths, imageRamp, bandCombo.Transform, imageScale, options...)
 		if err != nil {
 			return nil, err
 		}

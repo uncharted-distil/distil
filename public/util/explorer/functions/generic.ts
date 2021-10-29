@@ -42,6 +42,8 @@ import { Filter, INCLUDE_FILTER } from "../../filters";
 import { BaseState } from "../../state/AppStateWrapper";
 import { overlayRouteEntry, RouteArgs } from "../../routes";
 import { clearHighlight } from "../../highlights";
+import { datasetActions } from "../../../store";
+import { getters as datasetGetters } from "../../../store/dataset/module";
 
 export const GENERIC_METHODS = {
   /**
@@ -252,6 +254,20 @@ export const GENERIC_METHODS = {
     } else {
       clearRowSelection(self.$router);
     }
+  },
+  /**
+   * is the user able to navigate away from a cloned dataset
+   */
+  async isCurrentDatasetSaved(): Promise<boolean> {
+    const self = (this as unknown) as DataExplorerRef;
+
+    const datasetString = routeGetters.getRouteDataset(store);
+    await datasetActions.fetchDataset(store, { dataset: datasetString });
+
+    const datasets = datasetGetters.getDatasets(store);
+    const dataset = datasets.find((d) => d.id === self.dataset);
+
+    return dataset && dataset.immutable === false;
   },
 };
 

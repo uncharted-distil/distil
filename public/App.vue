@@ -44,6 +44,8 @@ import "vue-select/dist/vue-select.css";
 import "./assets/graphs/G1.gml";
 import { ExplorerStateNames } from "./util/explorer";
 import { DataExplorerRef } from "./util/componentTypes";
+import { getters as routeGetters } from "./store/route/module";
+
 Vue.component("v-select", vSelect);
 Vue.use(BootstrapVue);
 Vue.use(VueObserveVisibility);
@@ -61,7 +63,23 @@ export default Vue.extend({
   methods: {
     async onExplorerNav(state: ExplorerStateNames) {
       const dataExplorer = (this.$refs.view as unknown) as DataExplorerRef;
-      await dataExplorer.changeStatesByName(state);
+
+      if (
+        dataExplorer.isClone &&
+        routeGetters.getDataExplorerState(store) ===
+          ExplorerStateNames.LABEL_VIEW &&
+        state !== ExplorerStateNames.LABEL_VIEW
+      ) {
+        const isDatasetSaved = await dataExplorer.isCurrentDatasetSaved();
+
+        if (!isDatasetSaved) {
+          dataExplorer.$bvModal.show(dataExplorer.unsaveModalId);
+        } else {
+          await dataExplorer.changeStatesByName(state);
+        }
+      } else {
+        await dataExplorer.changeStatesByName(state);
+      }
     },
   },
   beforeMount() {

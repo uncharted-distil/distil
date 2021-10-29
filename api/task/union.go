@@ -19,21 +19,33 @@ import (
 	"fmt"
 	"path"
 
+	log "github.com/unchartedsoftware/plog"
+
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
+	"github.com/uncharted-distil/distil/api/env"
 	apiModel "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/serialization"
+	"github.com/uncharted-distil/distil/api/util"
 )
 
 // VerticalConcat will bring mastery.
 func VerticalConcat(dataStorage apiModel.DataStorage, joinLeft *JoinSpec, joinRight *JoinSpec) (string, *apiModel.FilteredData, error) {
+	unionPaths, deletePaths, err := reorderFields(joinLeft.DatasetPath, joinRight.DatasetPath)
+	if err != nil {
+		return "", nil, err
+	}
+	for _, d := range deletePaths {
+		defer util.Delete(d)
+	}
+
 	pipelineDesc, err := description.CreateVerticalConcatPipeline("Unioner", "Combine existing data")
 	if err != nil {
 		return "", nil, err
 	}
 
-	datasetPath, _, err := join(joinLeft, joinRight, pipelineDesc, []string{joinLeft.DatasetPath, joinRight.DatasetPath}, defaultSubmitter{}, true)
+	datasetPath, _, err := join(joinLeft, joinRight, pipelineDesc, unionPaths, defaultSubmitter{}, true)
 	if err != nil {
 		return "", nil, err
 	}
@@ -46,6 +58,53 @@ func VerticalConcat(dataStorage apiModel.DataStorage, joinLeft *JoinSpec, joinRi
 	}
 
 	return datasetPath, data, nil
+}
+
+func reorderFields(dsAPath string, dsBPath string) ([]string, []string, error) {
+	log.Infof("reordering fields to have datasets found at '%s' and '%s' match", dsAPath, dsBPath)
+	dsA, err := apiModel.LoadDiskDatasetFromFolder(dsAPath)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	dsB, err := apiModel.LoadDiskDatasetFromFolder(dsBPath)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	clonePath := ""
+	unionPaths := []string{}
+	if len(dsB.Dataset.Data) > len(dsA.Dataset.Data) {
+		clonePath, err = reorderDatasetFields(dsA, dsB)
+		unionPaths = append(unionPaths, dsBPath)
+	} else {
+		clonePath, err = reorderDatasetFields(dsB, dsA)
+		unionPaths = append(unionPaths, dsAPath)
+	}
+	if err != nil {
+		return nil, nil, err
+	}
+	unionPaths = append(unionPaths, clonePath)
+
+	return unionPaths, []string{clonePath}, nil
+}
+
+func reorderDatasetFields(dsToReorder *apiModel.DiskDataset, dsOrder *apiModel.DiskDataset) (string, error) {
+	pathClone := path.Join(env.GetTmpPath(), fmt.Sprintf("%s-reorder", dsToReorder.Dataset.ID))
+	dsA, err := dsToReorder.Clone(pathClone, dsToReorder.Dataset.ID, dsToReorder.Dataset.ID)
+	if err != nil {
+		return "", err
+	}
+	err = dsA.ReorderFields(dsOrder.Dataset.Metadata.GetMainDataResource().Variables)
+	if err != nil {
+		return "", err
+	}
+	err = dsA.SaveDataset()
+	if err != nil {
+		return "", err
+	}
+
+	return pathClone, nil
 }
 
 func rewriteD3MIndex(datasetPath string) (*apiModel.FilteredData, error) {

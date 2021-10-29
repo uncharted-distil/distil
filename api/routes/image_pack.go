@@ -41,6 +41,7 @@ type ImagePackRequest struct {
 	Dataset  string   `json:"dataset"`
 	ImageIDs []string `json:"imageIds"`
 	Band     string   `json:"band,omitempty"`
+	Ramp     string   `json:"colorScale,omitempty"`
 }
 
 // ImagePackResult is the expected post result for MultiBandImagePackHandler

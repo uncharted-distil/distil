@@ -69,6 +69,7 @@ export interface RouteArgs {
   singleSolution?: string;
   colorScale?: ColorScaleNames;
   colorScaleVariable?: string;
+  imageLayerScale?: ColorScaleNames;
   predictionsDataset?: string;
   bandCombinationId?: string;
   imageAttention?: boolean;

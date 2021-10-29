@@ -86,6 +86,7 @@ export interface DataExplorerRef {
   labelNameState: boolean;
   metaTypes: string[];
   state: BaseState;
+  unsaveModalId: string;
 
   // methods
   bindEventHandlers: (eventHandlers: Record<string, Function>) => void;
@@ -100,6 +101,7 @@ export interface DataExplorerRef {
   updateRoute: (args: RouteArgs) => void;
   updateTask: () => Promise<void>;
   setBusyState: (isBusy: boolean, busyState?: string) => void;
+  isCurrentDatasetSaved: () => Promise<boolean>;
   // globals
   $bvModal: BvModal;
   $bvToast: BvToast;
