@@ -17,6 +17,7 @@ package json
 
 import (
 	"encoding/json"
+	"io/ioutil"
 )
 
 // RawMessage is an alias for json.RawMessage
@@ -357,4 +358,13 @@ func Copy(j map[string]interface{}) (map[string]interface{}, error) {
 		return nil, err
 	}
 	return Unmarshal(bytes)
+}
+
+// ReadFile will read a json file into a byte array and unmarshal it to a map[string]interface
+func ReadFile(file string) (map[string]interface{}, error) {
+	buffer, err := ioutil.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+	return Unmarshal(buffer)
 }

@@ -17,6 +17,7 @@ package imagery
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"image"
 	"image/color"
@@ -96,6 +97,10 @@ const (
 
 	// RSWIR identifies a band mapping that displays Red and Shortwave Infrared mapped using an RGB ramp
 	RSWIR = "rswir"
+	// OPTRAM identifies a band mapping that represents the soil moisture
+	OPTRAM = "optram"
+	// OPTRAMJSONFile contains the file name to look for in the learning folder to check if optram is supported
+	OPTRAMJSONFile = "optram_variables.json"
 )
 
 var (
@@ -111,7 +116,7 @@ type BandCombination struct {
 	DisplayName string
 	Mapping     []string
 	Ramp        []uint8
-	Transform   func(...uint16) float64
+	Transform   func(*OptramEdges, ...uint16) float64
 }
 
 // ImageScale defines what to scale the image size to. If one property is defined aspect ratio will be kept. If nil for both the func will determine the size.
@@ -119,19 +124,54 @@ type ImageScale struct {
 	Width  int
 	Height int
 }
+type OptramEdges struct {
+	IDryEdge float64 `json:"i_d"`
+	SDryEdge float64 `json:"s_d"`
+	IWetEdge float64 `json:"i_w"`
+	SWetEdge float64 `json:"s_w"`
+}
 
+// ReadOptramFile will parse the optram json file into a map[string]OptramEdges struct and return the precision
+func ReadOptramFile(file string) (map[string]OptramEdges, int, error) {
+	buffer, err := ioutil.ReadFile(file)
+	if err != nil {
+		return nil, 0, err
+	}
+	result := map[string]OptramEdges{}
+	err = json.Unmarshal(buffer, &result)
+	if err != nil {
+		return nil, 0, err
+	}
+	precision := 0
+	for key := range result {
+		precision = len(key)
+		break
+	}
+	return result, precision, nil
+}
 func (imageScale *ImageScale) shouldScale() bool {
 	return imageScale.Width != 0 && imageScale.Height != 0
 }
 
 // ClampedNormalizingTransform transforms to a range of (-1, 1) and then clamps to (0, 1)
-func ClampedNormalizingTransform(bandValues ...uint16) float64 {
+func ClampedNormalizingTransform(edges *OptramEdges, bandValues ...uint16) float64 {
 	return math.Max(0, float64(int32(bandValues[0])-int32(bandValues[1]))/float64(int32(bandValues[0])+int32(bandValues[1])))
 }
 
 // NormalizingTransform transforms to a range of (-1, 1) and then normalizes to (0, 1)
-func NormalizingTransform(bandValues ...uint16) float64 {
+func NormalizingTransform(edges *OptramEdges, bandValues ...uint16) float64 {
 	return (1.0 + float64(int32(bandValues[0])-int32(bandValues[1]))/float64(int32(bandValues[0])+int32(bandValues[1]))) / 2.0
+}
+
+func OptramTransform(edges *OptramEdges, bandValues ...uint16) float64 {
+	b08 := float64(bandValues[0])
+	b04 := float64(bandValues[1])
+	b12 := float64(bandValues[2])
+	NDVI := (b08 - b04) / (b08 + b04)
+	STR := (math.Pow((1.0-b12), 2.0) / (2.0 * b12))
+	numerator := edges.IDryEdge + edges.SDryEdge*NDVI - STR
+	denominator := edges.IDryEdge - edges.IWetEdge + (edges.IDryEdge-edges.SWetEdge)*NDVI
+	return math.Max(0.0, math.Min((numerator/denominator)/float64(math.MaxUint8), 1.0))
 }
 
 var (
@@ -158,6 +198,7 @@ func init() {
 		NSMI:                   {NSMI, "Normalized Soil Moisture Index", []string{"b11", "b12"}, BlueYellowBrownRamp, NormalizingTransform},
 		MNDWI:                  {MNDWI, "Modified Normalized Difference Water Index", []string{"b03", "b11"}, BlueYellowBrownRamp, NormalizingTransform},
 		RSWIR:                  {RSWIR, "Red and Shortwave Infrared", []string{"b04", "b11"}, BlueYellowBrownRamp, NormalizingTransform},
+		OPTRAM:                 {OPTRAM, "OPTRAM", []string{"b08", "b04", "b12"}, RedYellowGreenRamp, OptramTransform},
 	}
 }
 
@@ -179,7 +220,7 @@ type ImageCacheKey struct {
 
 // ImageFromCombination takes a base dataset directory, fileID and a band combination label and
 // returns a composed image.  NOTE: Currently a bit hardcoded for sentinel-2 data.
-func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, bandCombo string, imageScale ImageScale, options ...Options) (*image.RGBA, error) {
+func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, bandCombo string, imageScale ImageScale, edges *OptramEdges, options ...Options) (*image.RGBA, error) {
 	// attempt to get the folder file type for the supplied dataset dir from the cache, if
 	// not do the look up
 	bandCombination := strings.ToLower(string(BandCombinationID(bandCombo)))
@@ -222,7 +263,7 @@ func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, 
 			filePaths = append(filePaths, path.Join(datasetDir, bandFileMapping[bandLabel]))
 		}
 
-		image, err := ImageFromBands(filePaths, bandCombo.Ramp, bandCombo.Transform, imageScale, options...)
+		image, err := ImageFromBands(filePaths, bandCombo, imageScale, edges, options...)
 		if err != nil {
 			return nil, err
 		}
@@ -240,7 +281,7 @@ func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, 
 // where the file names map to R,G,B in order.  The results are returned as a JPEG
 // encoded byte stream. If errors are encountered processing a band an attempt will
 // be made to create the image from the remaining bands, while logging an error.
-func ImageFromBands(paths []string, ramp []uint8, transform func(...uint16) float64, imageScale ImageScale, options ...Options) (*image.RGBA, error) {
+func ImageFromBands(paths []string, bandCombo *BandCombination, imageScale ImageScale, edges *OptramEdges, options ...Options) (*image.RGBA, error) {
 	bandImages := []*image.Gray16{}
 	maxXSize := 0
 	maxYSize := 0
@@ -270,11 +311,11 @@ func ImageFromBands(paths []string, ramp []uint8, transform func(...uint16) floa
 
 	// Ceate the final image either as a direct mapping from the supplied bands, or by applying
 	// a transform and color lookup
-	if ramp == nil || transform == nil {
+	if bandCombo.Ramp == nil || bandCombo.Transform == nil {
 		// Create an RGBA image from the resized bands
 		return createRGBAFromBands(maxXSize, maxYSize, bandImages, options...), nil
 	}
-	return createRGBAFromRamp(maxXSize, maxYSize, bandImages, transform, ramp), nil
+	return createRGBAFromRamp(maxXSize, maxYSize, bandImages, bandCombo.Transform, bandCombo.Ramp, edges), nil
 }
 
 // ScaleConfidenceMatrix scales confidence matrix to desired size using linear scaling
@@ -467,7 +508,7 @@ func createRGBAFromBands(xSize int, ySize int, bandImages []*image.Gray16, optio
 	return outputImage
 }
 
-func createRGBAFromRamp(xSize int, ySize int, bandImages []*image.Gray16, transform func(...uint16) float64, ramp []uint8) *image.RGBA {
+func createRGBAFromRamp(xSize int, ySize int, bandImages []*image.Gray16, transform func(*OptramEdges, ...uint16) float64, ramp []uint8, edges *OptramEdges) *image.RGBA {
 	// Create a new RGBA image to hold the collected bands
 	outputImage := image.NewRGBA(image.Rect(0, 0, xSize, ySize))
 
@@ -476,17 +517,19 @@ func createRGBAFromRamp(xSize int, ySize int, bandImages []*image.Gray16, transf
 	// Copy the 16 bit band images into the 8 bit target image.  If a band image couldn't be processed
 	// earlier, we set to grey.
 	outputIdx := 0
-	bandImage0 := bandImages[0]
-	bandImage1 := bandImages[1]
 	for i := 0; i < (xSize * ySize * 2); i += 2 {
-		// extract the 16 bit pixel values for each input band
-		grayValue0 := uint16(bandImage0.Pix[i])<<8 | uint16(bandImage0.Pix[i+1])
-		grayValue1 := uint16(bandImage1.Pix[i])<<8 | uint16(bandImage1.Pix[i+1])
-
+		grayValues := make([]uint16, len(bandImages))
+		valid := false
+		for ii, v := range bandImages {
+			grayValues[ii] = uint16(v.Pix[i])<<8 | uint16(v.Pix[i+1])
+			if !valid {
+				valid = grayValues[ii] != 0
+			}
+		}
 		// compute NDVI ratio
 		transformedValue := 0.0
-		if grayValue0 != 0 || grayValue1 != 0 {
-			transformedValue = transform(grayValue0, grayValue1)
+		if valid {
+			transformedValue = transform(edges, grayValues...)
 		}
 		pixelOffset := int(transformedValue * float64(rampElements))
 
@@ -602,4 +645,10 @@ func CreatePolygonFromCoordinates(coordinates []float64) string {
 
 func lerp(v0 float64, v1 float64, t float64) float64 {
 	return (1.0-t)*v0 + t*v1
+}
+
+// ParseGeoHashFromID will extrapolate the geohash from the path
+func ParseGeoHashFromID(ID string, precision int) string {
+	geoHash := strings.Split(ID, "_")[0]
+	return geoHash[:precision]
 }

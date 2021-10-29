@@ -108,8 +108,22 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, dataCtor api.DataStorag
 			handleError(w, err)
 			return
 		}
+		var optramMap map[string]imagery.OptramEdges
+		optramPath := ""
+		edge := imagery.OptramEdges{}
+		precision := 0
+		if bandCombo == imagery.OPTRAM {
+			optramPath = strings.Join([]string{env.ResolvePath(res.Source, res.Folder), imagery.OPTRAMJSONFile}, "/")
+			optramMap, precision, err = imagery.ReadOptramFile(optramPath)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			geoHash := imagery.ParseGeoHashFromID(imageID, precision)
+			edge = optramMap[geoHash]
+		}
 
-		img, err := imagery.ImageFromCombination(sourcePath, bandMapping[imageID], bandCombo, imageScale, options)
+		img, err := imagery.ImageFromCombination(sourcePath, bandMapping[imageID], bandCombo, imageScale, &edge, options)
 		if err != nil {
 			handleError(w, err)
 			return

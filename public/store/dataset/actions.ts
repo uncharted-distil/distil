@@ -1695,7 +1695,7 @@ export const actions = {
     try {
       const repsonse = await axios.post<BandCombinations>(
         `distil/index-data/bands`,
-        {}
+        { dataset: args.dataset }
       );
       const bands = repsonse.data.combinations;
       mutations.updateBands(context, bands);
