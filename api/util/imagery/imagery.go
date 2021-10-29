@@ -224,10 +224,9 @@ func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, 
 			filePaths = append(filePaths, path.Join(datasetDir, bandFileMapping[bandLabel]))
 		}
 
-		var imageRamp []uint8
-		if ramp == "" {
-			imageRamp = bandCombo.Ramp
-		} else {
+		imageRamp := bandCombo.Ramp
+
+		if ramp != "" {
 			imageRamp = GetColorRamp(ramp)
 		}
 
