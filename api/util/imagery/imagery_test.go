@@ -57,7 +57,7 @@ func TestImageFromBandsTrueColor(t *testing.T) {
 		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B04.tif",
 		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B03.tif",
 		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B02.tif",
-	}, nil, nil, ImageScale{}, &OptramEdges{})
+	}, nil, SentinelBandCombinations[NaturalColors], ImageScale{}, &OptramEdges{})
 	assert.NoError(t, err)
 	assert.NotNil(t, composedImage)
 	assert.True(t, len(composedImage.Pix) > 0)
@@ -77,7 +77,7 @@ func TestImageFromBandsResize(t *testing.T) {
 		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B12.tif",
 		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B08.tif",
 		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B04.tif",
-	}, nil, nil, ImageScale{}, &OptramEdges{})
+	}, nil, SentinelBandCombinations[ShortwaveInfrared], ImageScale{}, &OptramEdges{})
 	assert.NoError(t, err)
 	assert.NotNil(t, composedImage)
 	assert.True(t, len(composedImage.Pix) > 0)
@@ -135,7 +135,7 @@ func TestImageFromBandsMissing(t *testing.T) {
 		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B12.tif",
 		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B08.tif",
 		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B04.tif",
-	}, nil, nil, ImageScale{}, &OptramEdges{})
+	}, nil, SentinelBandCombinations[ShortwaveInfrared], ImageScale{}, &OptramEdges{})
 	assert.NoError(t, err)
 	assert.NotNil(t, composedImage)
 	assert.True(t, len(composedImage.Pix) > 0)
