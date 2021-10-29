@@ -78,7 +78,7 @@ func IndexDataHandler(ctor api.MetadataStorageCtor) func(http.ResponseWriter, *h
 				handleError(w, err)
 				return
 			}
-			
+
 			combinations = getBandCombinations(env.ResolvePath(ds.Source, ds.Folder))
 		default:
 			err = errors.Errorf("unrecognized index data type '%s'", typ)
@@ -98,15 +98,15 @@ func IndexDataHandler(ctor api.MetadataStorageCtor) func(http.ResponseWriter, *h
 }
 
 func getBandCombinations(augmentFolder string) *Combinations {
-	optramSupported:=true
+	optramSupported := true
 	// check augmented folder for optram variables
 	_, err := os.Stat(strings.Join([]string{augmentFolder, imagery.OPTRAMJSONFile}, "/"))
-	size:= len(imagery.SentinelBandCombinations)
+	size := len(imagery.SentinelBandCombinations)
 	if err != nil {
 		// file does not exist remove optram
-		optramSupported=false
+		optramSupported = false
 		// decrease size of result array
-		size-=1
+		size -= 1
 	}
 	combinationsList := make([]interface{}, size)
 	idx := 0
