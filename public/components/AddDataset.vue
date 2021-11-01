@@ -71,6 +71,17 @@
         required
       />
     </b-form-group>
+
+    <!-- Dataset Description -->
+    <b-form-group label="Dataset Description" label-for="desc-input">
+      <b-form-textarea
+        id="desc-input"
+        ref="nameinput"
+        v-model="description"
+        rows="3"
+        max-rows="6"
+      />
+    </b-form-group>
   </b-modal>
 </template>
 
@@ -99,6 +110,7 @@ export default Vue.extend({
       file: null as File,
       name: "" as string,
       nameState: null as boolean,
+      description: "" as string,
       isUpload: null as boolean, // flag to know if we upload a file or import an available dataset
     };
   },
@@ -230,6 +242,7 @@ export default Vue.extend({
         const response = await datasetActions.importDataFile(this.$store, {
           datasetID: this.deconflictedName,
           file: this.file,
+          description: this.description,
         });
         this.$emit(EventList.UPLOAD.FINISHED_EVENT, null, response);
       } catch (err) {
