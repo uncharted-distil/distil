@@ -196,7 +196,7 @@ func getPreFilteringOutputDataFile(folder string) (bool, string) {
 
 func preparePrefilteringDataset(outputFolder string, sourceDataset *api.Dataset, dataStorage api.DataStorage) ([]*model.Variable, error) {
 	// read the data from the database
-	data, err := dataStorage.FetchDataset(sourceDataset.ID, sourceDataset.StorageName, true, nil)
+	data, err := dataStorage.FetchDataset(sourceDataset.ID, sourceDataset.StorageName, true, false, nil)
 	if err != nil {
 		return nil, err
 	}

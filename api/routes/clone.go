@@ -36,6 +36,20 @@ func CloningHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCt
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
 
+		// parse POST params
+		params, err := getPostParameters(r)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
+			return
+		}
+
+		// get variable names and ranges out of the params
+		filterParams, err := api.ParseFilterParamsFromJSON(params)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
 		metaStorage, err := metaCtor()
 		if err != nil {
 			handleError(w, err)
@@ -63,7 +77,14 @@ func CloningHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCt
 		}
 		folderClone := env.ResolvePath(metadata.Augmented, datasetClone)
 
-		err = task.CloneDataset(dataset, datasetClone, folderClone, true, metaStorage, dataStorage)
+		// replace any grouped variables in filter params with the group's
+		expandedFilterParams, err := api.ExpandFilterParams(dataset, filterParams, false, metaStorage)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to expand filter params"))
+			return
+		}
+
+		err = task.CloneDataset(dataset, datasetClone, folderClone, metaStorage, dataStorage, expandedFilterParams)
 		if err != nil {
 			handleError(w, err)
 			return

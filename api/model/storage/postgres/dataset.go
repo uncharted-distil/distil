@@ -343,17 +343,26 @@ func unnestStringJSON(raw interface{}) map[string]string {
 }
 
 // FetchDataset extracts the complete raw data from the database.
-func (s *Storage) FetchDataset(dataset string, storageName string, includeMetadata bool, filterParams *api.FilterParams) ([][]string, error) {
+func (s *Storage) FetchDataset(dataset string, storageName string,
+	includeMetadata bool, limitSelectedFields bool, filterParams *api.FilterParams) ([][]string, error) {
 	// get data variables (to exclude metadata variables)
 	vars, err := s.metadata.FetchVariables(dataset, true, includeMetadata, false)
 	if err != nil {
 		return nil, err
 	}
 	filteredVars := []*model.Variable{}
+
+	selectedVars := map[string]bool{}
+	for _, v := range filterParams.Variables {
+		selectedVars[v] = true
+	}
+
 	// only include data with distilrole data and index
+	// limit vars to only those selecred (if applicable)
 	for _, v := range vars {
-		if model.IsTA2Field(v.DistilRole, v.SelectedRole) ||
-			(v.DistilRole == model.VarDistilRoleMetadata && includeMetadata) {
+		if (model.IsTA2Field(v.DistilRole, v.SelectedRole) ||
+			(v.DistilRole == model.VarDistilRoleMetadata && includeMetadata)) &&
+			(!limitSelectedFields || selectedVars[v.Key]) {
 			filteredVars = append(filteredVars, v)
 		}
 	}
