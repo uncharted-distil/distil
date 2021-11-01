@@ -32,6 +32,7 @@ import (
 type MultiBandCombinationDesc struct {
 	ID          imagery.BandCombinationID `json:"id"`
 	DisplayName string                    `json:"displayName"`
+	Ramp        bool                      `json:"ramp"`
 }
 
 // ModelMetricDesc provides a scoring ID, display name, and description.
@@ -87,7 +88,8 @@ func getBandCombinations() *Combinations {
 	combinationsList := make([]interface{}, len(imagery.SentinelBandCombinations))
 	idx := 0
 	for _, value := range imagery.SentinelBandCombinations {
-		combinationsList[idx] = &MultiBandCombinationDesc{value.ID, value.DisplayName}
+		hasRamp := len(value.Ramp) != 0
+		combinationsList[idx] = &MultiBandCombinationDesc{value.ID, value.DisplayName, hasRamp}
 		idx++
 	}
 	return &Combinations{combinationsList}

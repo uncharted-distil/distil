@@ -439,6 +439,7 @@ export interface WorkingSet {
 export interface BandCombination {
   id: BandID;
   displayName: string;
+  ramp: boolean;
 }
 
 export interface BandCombinations {
