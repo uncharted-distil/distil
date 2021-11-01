@@ -532,7 +532,7 @@ export const actions = {
     args: {
       datasetID: string;
       file: File;
-      description: string;
+      description?: string;
     }
   ): Promise<any> {
     if (!validateArgs(args, ["datasetID", "file"])) {
