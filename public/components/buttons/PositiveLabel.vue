@@ -36,22 +36,7 @@
 import Vue from "vue";
 import { getters as routeGetters } from "../../store/route/module";
 import { overlayRouteEntry } from "../../util/routes";
-
-/**
- * Library to find best available positive label
- * https://github.com/aceakash/string-similarity#findbestmatchmainstring-targetstrings
- */
-import { findBestMatch } from "string-similarity";
-const findBestRating = (
-  mainString: string,
-  targetStrings: string[]
-): number => {
-  return findBestMatch(mainString, targetStrings)?.bestMatch.rating ?? 0;
-};
-
-// List of positives and negatives words that could be used in labels
-const positives = ["true", "positive", "aff", "1", "yes", "good", "high"];
-const negatives = ["false", "negative", "not", "0", "no", "bad", "low"];
+import { findAPositiveLabel } from "../../util/data";
 
 /** Dropdown to select a positive label for Binary Classification task */
 export default Vue.extend({
@@ -96,29 +81,7 @@ export default Vue.extend({
 
   methods: {
     // Find which labels is most suited to be the positive one
-    findAPositiveLabel(labels: string[]): string {
-      const ratings = labels.map((label) => {
-        return {
-          positive: findBestRating(label, positives),
-          negative: findBestRating(label, negatives),
-        };
-      });
-
-      // Default to the first label
-      let positiveLabel = labels[0];
-
-      // Select the second label, if the first label...
-      if (
-        // has a lower or identical positive rating and
-        ratings[0].positive <= ratings[1].positive &&
-        // has a higher negative rating
-        ratings[0].negative > ratings[1].negative
-      ) {
-        positiveLabel = labels[1];
-      }
-
-      return positiveLabel;
-    },
+    findAPositiveLabel,
   },
 });
 </script>
