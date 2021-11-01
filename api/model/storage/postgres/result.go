@@ -210,6 +210,26 @@ func (s *Storage) PersistExplainedResult(dataset string, storageName string, res
 	return nil
 }
 
+func (s *Storage) hasExplainOutput(storageName string, resultURI string) (bool, error) {
+	sql := fmt.Sprintf("SELECT COUNT(explain_values) FROM %s WHERE result_id = $1;", s.getResultTable(storageName))
+	res, err := s.client.Query(sql, resultURI)
+	if err != nil {
+		return false, errors.Wrapf(err, "unable execute query to verify presence of explain output")
+	}
+
+	if !res.Next() {
+		return false, nil
+	}
+
+	var count int
+	err = res.Scan(&count)
+	if err != nil {
+		return false, errors.Wrapf(err, "unable to read explain output")
+	}
+
+	return count > 0, nil
+}
+
 // FetchResultDataset extracts the complete results and base table data.
 func (s *Storage) FetchResultDataset(dataset string, storageName string, predictionName string,
 	features []string, resultURI string, includeExplain bool) ([][]string, error) {
@@ -233,7 +253,11 @@ func (s *Storage) FetchResultDataset(dataset string, storageName string, predict
 	}
 	fields = append(fields, fmt.Sprintf("COALESCE(result.value) AS \"%s\"", predictionName))
 	if includeExplain {
-		fields = append(fields, fmt.Sprintf("COALESCE(result.explain_values) AS \"_explain_%s\"", predictionName))
+		// make sure there is explain output before including it!
+		hasExplain, err := s.hasExplainOutput(storageName, resultURI)
+		if err != nil || hasExplain {
+			fields = append(fields, fmt.Sprintf("COALESCE(result.explain_values) AS \"_explain_%s\"", predictionName))
+		}
 	}
 	sql := fmt.Sprintf(`
 		SELECT %s

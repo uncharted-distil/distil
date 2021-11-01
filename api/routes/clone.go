@@ -194,13 +194,12 @@ func getCloningParams(predictionRequestID string, metaStorage api.MetadataStorag
 			return nil, err
 		}
 
-		features = make([]string, len(ds.Variables)-1)
-		counter := 0
+		features = []string{}
 		for _, v := range ds.Variables {
 			// the target is not a feature!
-			if v.Key != targetName {
-				features[counter] = v.Key
-				counter++
+			// augmented fields should not be included
+			if v.Key != targetName && v.DistilRole != model.VarDistilRoleAugmented {
+				features = append(features, v.Key)
 			}
 		}
 	}
