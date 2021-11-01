@@ -41,6 +41,7 @@
                 :index="imageIndex(idx)"
                 :items="dataItems"
                 :label-feature-name="labelFeatureName"
+                :dataset-name="dataset"
                 @click="onImageClick"
                 @shift-click="onImageShiftClick"
                 @cycle-images="onImageCycle"
