@@ -532,6 +532,7 @@ export const actions = {
     args: {
       datasetID: string;
       file: File;
+      description: string;
     }
   ): Promise<any> {
     if (!validateArgs(args, ["datasetID", "file"])) {
@@ -549,6 +550,7 @@ export const actions = {
       originalDataset: null,
       joinedDataset: null,
       path: uploadResponse.data.location,
+      description: args.description,
     });
 
     // Add the location for potential reimport of the dataset.
