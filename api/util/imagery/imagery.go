@@ -43,12 +43,11 @@ const (
 	// value.
 	Sentinel2Max = 10000
 
-	// Exponent is the exponent to apply to channel values during pre-processing.  A value of 1.0 will leave values
-	// unchanged.
-	Exponent = 0.3
+	// NaturalColors1 identifies a band mapping that displays an image in natural color.
+	NaturalColors1 = "natural_colors_1"
 
-	// NaturalColors identifies a band mapping that displays an image in natural color.
-	NaturalColors = "natural_colors"
+	// NaturalColors2 identifies a band mapping that displays an image in natural color.
+	NaturalColors2 = "natural_colors_2"
 
 	// FalseColorInfrared identifies a band mapping that displays an image in false color for visualizing vegatation.
 	FalseColorInfrared = "false_color_infrared"
@@ -107,11 +106,12 @@ type BandCombinationID string
 
 // BandCombination defines a mapping of satellite bands to image RGB channels.
 type BandCombination struct {
-	ID          BandCombinationID
-	DisplayName string
-	Mapping     []string
-	Ramp        []uint8
-	Transform   func(...uint16) float64
+	ID                 BandCombinationID
+	DisplayName        string
+	Mapping            []string
+	Ramp               []uint8
+	Transform          func(...uint16) float64
+	AdvancedColorModel bool
 }
 
 // ImageScale defines what to scale the image size to. If one property is defined aspect ratio will be kept. If nil for both the func will determine the size.
@@ -142,22 +142,23 @@ var (
 func init() {
 	// initialize the band combination structures - needs to be done in init so that referenced color ramps are built
 	SentinelBandCombinations = map[string]*BandCombination{
-		NaturalColors:          {NaturalColors, "Natural Colors", []string{"b04", "b03", "b02"}, nil, nil},
-		FalseColorInfrared:     {FalseColorInfrared, "False Color Infrared", []string{"b08", "b04", "b03"}, nil, nil},
-		FalseColorUrban:        {FalseColorUrban, "False Color Urban", []string{"b12", "b11", "b04"}, nil, nil},
-		Agriculture:            {Agriculture, "Agriculture", []string{"b11", "b08", "b02"}, nil, nil},
-		AtmosphericPenetration: {AtmosphericPenetration, "Atmospheric Penetration", []string{"b12", "b11", "b8a"}, nil, nil},
-		HealthyVegetation:      {HealthyVegetation, "Healthy Vegetation", []string{"b08", "b11", "b02"}, nil, nil},
-		LandWater:              {LandWater, "Land/Water", []string{"b08", "b11", "b04"}, nil, nil},
-		AtmosphericRemoval:     {AtmosphericRemoval, "Atmospheric Removal", []string{"b12", "b08", "b03"}, nil, nil},
-		ShortwaveInfrared:      {ShortwaveInfrared, "Shortwave Infrared", []string{"b12", "b08", "b04"}, nil, nil},
-		VegetationAnalysis:     {VegetationAnalysis, "Vegetation Analysis", []string{"b11", "b08", "b04"}, nil, nil},
-		NDVI:                   {NDVI, "Normalized Difference Vegetation Index", []string{"b08", "b04"}, RedYellowGreenRamp, ClampedNormalizingTransform},
-		NDMI:                   {NDMI, "Normalized Difference Moisture Index ", []string{"b08", "b11"}, BlueYellowBrownRamp, NormalizingTransform},
-		NDWI:                   {NDWI, "Normalized Difference Water Index", []string{"b03", "b08"}, BlueYellowBrownRamp, NormalizingTransform},
-		NSMI:                   {NSMI, "Normalized Soil Moisture Index", []string{"b11", "b12"}, BlueYellowBrownRamp, NormalizingTransform},
-		MNDWI:                  {MNDWI, "Modified Normalized Difference Water Index", []string{"b03", "b11"}, BlueYellowBrownRamp, NormalizingTransform},
-		RSWIR:                  {RSWIR, "Red and Shortwave Infrared", []string{"b04", "b11"}, BlueYellowBrownRamp, NormalizingTransform},
+		NaturalColors1:         {NaturalColors1, "Natural Colors", []string{"b04", "b03", "b02"}, nil, nil, false},
+		NaturalColors2:         {NaturalColors2, "Natural Colors 2", []string{"b04", "b03", "b02"}, nil, nil, true},
+		FalseColorInfrared:     {FalseColorInfrared, "False Color Infrared", []string{"b08", "b04", "b03"}, nil, nil, false},
+		FalseColorUrban:        {FalseColorUrban, "False Color Urban", []string{"b12", "b11", "b04"}, nil, nil, false},
+		Agriculture:            {Agriculture, "Agriculture", []string{"b11", "b08", "b02"}, nil, nil, false},
+		AtmosphericPenetration: {AtmosphericPenetration, "Atmospheric Penetration", []string{"b12", "b11", "b8a"}, nil, nil, false},
+		HealthyVegetation:      {HealthyVegetation, "Healthy Vegetation", []string{"b08", "b11", "b02"}, nil, nil, false},
+		LandWater:              {LandWater, "Land/Water", []string{"b08", "b11", "b04"}, nil, nil, false},
+		AtmosphericRemoval:     {AtmosphericRemoval, "Atmospheric Removal", []string{"b12", "b08", "b03"}, nil, nil, false},
+		ShortwaveInfrared:      {ShortwaveInfrared, "Shortwave Infrared", []string{"b12", "b08", "b04"}, nil, nil, false},
+		VegetationAnalysis:     {VegetationAnalysis, "Vegetation Analysis", []string{"b11", "b08", "b04"}, nil, nil, false},
+		NDVI:                   {NDVI, "Normalized Difference Vegetation Index", []string{"b08", "b04"}, RedYellowGreenRamp, ClampedNormalizingTransform, false},
+		NDMI:                   {NDMI, "Normalized Difference Moisture Index ", []string{"b08", "b11"}, BlueYellowBrownRamp, NormalizingTransform, false},
+		NDWI:                   {NDWI, "Normalized Difference Water Index", []string{"b03", "b08"}, BlueYellowBrownRamp, NormalizingTransform, false},
+		NSMI:                   {NSMI, "Normalized Soil Moisture Index", []string{"b11", "b12"}, BlueYellowBrownRamp, NormalizingTransform, false},
+		MNDWI:                  {MNDWI, "Modified Normalized Difference Water Index", []string{"b03", "b11"}, BlueYellowBrownRamp, NormalizingTransform, false},
+		RSWIR:                  {RSWIR, "Red and Shortwave Infrared", []string{"b04", "b11"}, BlueYellowBrownRamp, NormalizingTransform, false},
 	}
 }
 
@@ -230,7 +231,7 @@ func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, 
 			imageRamp = GetColorRamp(ramp)
 		}
 
-		image, err := ImageFromBands(filePaths, imageRamp, bandCombo.Transform, imageScale, options...)
+		image, err := ImageFromBands(filePaths, imageRamp, bandCombo.Transform, imageScale, bandCombo.AdvancedColorModel, options...)
 		if err != nil {
 			return nil, err
 		}
@@ -248,7 +249,7 @@ func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, 
 // where the file names map to R,G,B in order.  The results are returned as a JPEG
 // encoded byte stream. If errors are encountered processing a band an attempt will
 // be made to create the image from the remaining bands, while logging an error.
-func ImageFromBands(paths []string, ramp []uint8, transform func(...uint16) float64, imageScale ImageScale, options ...Options) (*image.RGBA, error) {
+func ImageFromBands(paths []string, ramp []uint8, transform func(...uint16) float64, imageScale ImageScale, advancedColorModel bool, options ...Options) (*image.RGBA, error) {
 	bandImages := []*image.Gray16{}
 	maxXSize := 0
 	maxYSize := 0
@@ -280,7 +281,7 @@ func ImageFromBands(paths []string, ramp []uint8, transform func(...uint16) floa
 	// a transform and color lookup
 	if ramp == nil || transform == nil {
 		// Create an RGBA image from the resized bands
-		return createRGBAFromBands(maxXSize, maxYSize, bandImages, options...), nil
+		return createRGBAFromBands(maxXSize, maxYSize, bandImages, advancedColorModel, options...), nil
 	}
 	return createRGBAFromRamp(maxXSize, maxYSize, bandImages, transform, ramp), nil
 }
@@ -448,7 +449,7 @@ func loadAsGray16(filePath string) (*image.Gray16, error) {
 	return bandImage, nil
 }
 
-func createRGBAFromBands(xSize int, ySize int, bandImages []*image.Gray16, options ...Options) *image.RGBA {
+func createRGBAFromBands(xSize int, ySize int, bandImages []*image.Gray16, advancedColorModel bool, options ...Options) *image.RGBA {
 	// Create a new RGBA image to hold the collected bands
 	outputImage := image.NewRGBA(image.Rect(0, 0, xSize, ySize))
 
@@ -465,7 +466,7 @@ func createRGBAFromBands(xSize int, ySize int, bandImages []*image.Gray16, optio
 				bandBuffer[j] = 0.5
 			}
 		}
-		rgb := ConvertS2ToRgb(bandBuffer, options...)
+		rgb := ConvertS2ToRgb(bandBuffer, advancedColorModel, options...)
 		outputImage.Pix[outputIdx] = uint8(rgb[0] * 255)   // r
 		outputImage.Pix[outputIdx+1] = uint8(rgb[1] * 255) // g
 		outputImage.Pix[outputIdx+2] = uint8(rgb[2] * 255) // b

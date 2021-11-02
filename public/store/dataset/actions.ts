@@ -1289,7 +1289,7 @@ export const actions = {
           return actions.fetchMultiBandImage(context, {
             dataset: args.dataset,
             imageId: url,
-            bandCombination: BandID.NATURAL_COLORS,
+            bandCombination: BandID.NATURAL_COLORS_1,
             isThumbnail: true,
           });
         }
