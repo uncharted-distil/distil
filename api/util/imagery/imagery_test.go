@@ -99,7 +99,7 @@ func TestImageFromRamp(t *testing.T) {
 	composedImage, err := ImageFromBands([]string{
 		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B08.tif",
 		"../test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B11.tif",
-	}, BlueYellowBrownRamp, SentinelBandCombinations[NDMI].Transform, ImageScale{}, &OptramEdges{}, true)
+	}, BrownYellowBlueRamp, SentinelBandCombinations[NDMI].Transform, ImageScale{}, &OptramEdges{}, true)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, composedImage)

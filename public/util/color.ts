@@ -25,12 +25,12 @@ import {
   interpolateTurbo,
   interpolateViridis,
 } from "d3-scale-chromatic";
-import { BlueYellowBrown, RedYellowGreen } from "./ramp";
+import { BrownYellowBlue, RedYellowGreen } from "./ramp";
 
 // ColorScaleNames is an enum that contains all the supported color scale names. Can be used to access COLOR_SCALES functions
 export enum ColorScaleNames {
   redyellowgreen = "red yellow green",
-  blueyellowbrown = "blue yellow brown",
+  brownyellowblue = "brown yellow blue",
   viridis = "viridis",
   magma = "magma",
   inferno = "inferno",
@@ -48,7 +48,7 @@ export enum ColorScaleNames {
 export function getGradientScales(): ColorScaleNames[] {
   return [
     ColorScaleNames.redyellowgreen,
-    ColorScaleNames.blueyellowbrown,
+    ColorScaleNames.brownyellowblue,
     ColorScaleNames.viridis,
     ColorScaleNames.magma,
     ColorScaleNames.inferno,
@@ -330,7 +330,7 @@ export const COLOR_SCALES: Map<
   (t: number) => string
 > = new Map([
   [ColorScaleNames.redyellowgreen, RedYellowGreen],
-  [ColorScaleNames.blueyellowbrown, BlueYellowBrown],
+  [ColorScaleNames.brownyellowblue, BrownYellowBlue],
   [ColorScaleNames.viridis, interpolateViridis],
   [ColorScaleNames.magma, interpolateMagma],
   [ColorScaleNames.inferno, interpolateInferno],

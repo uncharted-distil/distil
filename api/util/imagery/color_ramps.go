@@ -51,8 +51,8 @@ var (
 	// RedYellowGreenRamp defines an evenly spaced ramp suitable for visualizing vegetation
 	RedYellowGreenRamp = []uint8{}
 
-	// BlueYellowBrownRamp defines an evenly spaced ramp suitable for visualizing moisture
-	BlueYellowBrownRamp = []uint8{}
+	// BrownYellowBlueRamp defines an evenly spaced ramp suitable for visualizing moisture
+	BrownYellowBlueRamp = []uint8{}
 
 	// ViridisColorRamp color scale
 	ViridisColorRamp = []RampEntry{}
@@ -76,8 +76,8 @@ func init() {
 		{1.0, color.RGBA{16, 103, 57, 255}},
 	}, 255, Lab)
 
-	// BlueYellowBrownRamp generates a ramp sutiable for visualizing water and moisture
-	BlueYellowBrownRamp = GenerateRamp([]RampEntry{
+	// BrownYellowBlueRamp generates a ramp sutiable for visualizing water and moisture
+	BrownYellowBlueRamp = GenerateRamp([]RampEntry{
 		{0.0, color.RGBA{179, 114, 59, 255}},
 		{0.333, color.RGBA{243, 238, 63, 255}},
 		{0.666, color.RGBA{42, 198, 223, 255}},
@@ -259,8 +259,8 @@ func GetColorRamp(colorScaleName string) []uint8 {
 	switch colorScaleName {
 	case "red yellow green":
 		return RedYellowGreenRamp
-	case "blue yellow brown":
-		return BlueYellowBrownRamp
+	case "brown yellow blue":
+		return BrownYellowBlueRamp
 	case "magma":
 		return GenerateRamp(MagmaColorRamp, 255, Lab)
 	case "plasma":
