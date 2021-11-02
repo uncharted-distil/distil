@@ -16,7 +16,7 @@
 -->
 
 <template>
-  <b-dropdown variant="outline-secondary">
+  <b-dropdown v-if="bandRamp" variant="outline-secondary">
     <template v-slot:button-content>
       <i class="fas fa-palette"></i> Color Scale:
       <div class="selected-bar d-inline-flex mx-1" :style="selectedGradient" />
@@ -41,6 +41,7 @@ import {
   getGradientScales,
 } from "../util/color";
 import { getters as routeGetters } from "../store/route/module";
+import { getters as datasetGetters } from "../store/dataset/module";
 import { overlayRouteEntry } from "../util/routes";
 
 interface ColorScaleItem {
@@ -58,6 +59,14 @@ export default Vue.extend({
   },
 
   computed: {
+    bandId(): string {
+      return routeGetters.getBandCombinationId(this.$store);
+    },
+    bandRamp(): boolean {
+      return datasetGetters
+        .getMultiBandCombinations(this.$store)
+        .find((multiBandCombo) => multiBandCombo.id === this.bandId)?.ramp;
+    },
     gradientScales(): ColorScaleItem[] {
       const result = [];
       for (const key of getGradientScales()) {
