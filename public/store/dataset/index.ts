@@ -302,7 +302,8 @@ export enum TaskTypes {
 }
 
 export enum BandID {
-  NATURAL_COLORS = "natural_colors",
+  NATURAL_COLORS_1 = "natural_colors_1",
+  NATURAL_COLORS_2 = "natural_colors_2",
   FALSE_COLOR_INFRARED = "false_color_infrared",
   FALSE_COLOR_URBAN = "false_color_urban",
   AGRICULTURE = "agriculture",

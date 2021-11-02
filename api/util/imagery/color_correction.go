@@ -17,6 +17,8 @@ package imagery
 
 import "math"
 
+const basicGainLScale = 2.5
+
 // Options for ConvertS2ToRgb
 type Options struct {
 	Gain  float64 `json:"gain"`
@@ -27,7 +29,16 @@ type Options struct {
 
 // ConvertS2ToRgb bands: [b02, b03, b04], Options gain amount, gamma correction amount, gainL light gain
 // default options: gain=2.5, gamma=2.2, gainL=1.0
-func ConvertS2ToRgb(bands [3]float64, options ...Options) [3]float64 {
+func ConvertS2ToRgb(bands [3]float64, advancedColorModel bool, options ...Options) [3]float64 {
+	if !advancedColorModel {
+		// GainL comes in on a scale from 0 to 2.
+		gainScale := 1.0
+		if len(options) > 0 {
+			gainScale = options[0].GainL * basicGainLScale
+		}
+		return clamp([3]float64{bands[0] * gainScale, bands[1] * gainScale, bands[2] * gainScale})
+	}
+
 	t := [3][3]float64{{0.268, 0.362, 0.371},
 		{0.240, 0.587, 0.174},
 		{1.463, -0.427, -0.043}} // magic matrix
@@ -128,4 +139,16 @@ func xyzToRGB(xyz [3]float64) [3]float64 {
 		sRGB[i] = math.Max(math.Min(adj(v), 1.0), 0)
 	}
 	return sRGB
+}
+
+func clamp(xyz [3]float64) [3]float64 {
+	result := [3]float64{0.0, 0.0, 0.0}
+	for i, v := range xyz {
+		if v > 1.0 {
+			result[i] = 1.0
+		} else {
+			result[i] = v
+		}
+	}
+	return result
 }

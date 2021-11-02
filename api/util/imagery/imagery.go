@@ -44,12 +44,11 @@ const (
 	// value.
 	Sentinel2Max = 10000
 
-	// Exponent is the exponent to apply to channel values during pre-processing.  A value of 1.0 will leave values
-	// unchanged.
-	Exponent = 0.3
+	// NaturalColors1 identifies a band mapping that displays an image in natural color.
+	NaturalColors1 = "natural_colors_1"
 
-	// NaturalColors identifies a band mapping that displays an image in natural color.
-	NaturalColors = "natural_colors"
+	// NaturalColors2 identifies a band mapping that displays an image in natural color.
+	NaturalColors2 = "natural_colors_2"
 
 	// FalseColorInfrared identifies a band mapping that displays an image in false color for visualizing vegatation.
 	FalseColorInfrared = "false_color_infrared"
@@ -117,6 +116,7 @@ type BandCombination struct {
 	Mapping     []string
 	Ramp        []uint8
 	Transform   func(*OptramEdges, ...uint16) float64
+	AdvancedColorModel bool
 }
 
 // ImageScale defines what to scale the image size to. If one property is defined aspect ratio will be kept. If nil for both the func will determine the size.
@@ -192,13 +192,13 @@ func init() {
 		AtmosphericRemoval:     {AtmosphericRemoval, "Atmospheric Removal", []string{"b12", "b08", "b03"}, nil, nil},
 		ShortwaveInfrared:      {ShortwaveInfrared, "Shortwave Infrared", []string{"b12", "b08", "b04"}, nil, nil},
 		VegetationAnalysis:     {VegetationAnalysis, "Vegetation Analysis", []string{"b11", "b08", "b04"}, nil, nil},
-		NDVI:                   {NDVI, "Normalized Difference Vegetation Index", []string{"b08", "b04"}, RedYellowGreenRamp, ClampedNormalizingTransform},
-		NDMI:                   {NDMI, "Normalized Difference Moisture Index ", []string{"b08", "b11"}, BlueYellowBrownRamp, NormalizingTransform},
-		NDWI:                   {NDWI, "Normalized Difference Water Index", []string{"b03", "b08"}, BlueYellowBrownRamp, NormalizingTransform},
-		NSMI:                   {NSMI, "Normalized Soil Moisture Index", []string{"b11", "b12"}, BlueYellowBrownRamp, NormalizingTransform},
-		MNDWI:                  {MNDWI, "Modified Normalized Difference Water Index", []string{"b03", "b11"}, BlueYellowBrownRamp, NormalizingTransform},
-		RSWIR:                  {RSWIR, "Red and Shortwave Infrared", []string{"b04", "b11"}, BlueYellowBrownRamp, NormalizingTransform},
-		OPTRAM:                 {OPTRAM, "OPTRAM", []string{"b08", "b04", "b12"}, RedYellowGreenRamp, OptramTransform},
+		NDVI:                   {NDVI, "Normalized Difference Vegetation Index", []string{"b08", "b04"}, RedYellowGreenRamp, ClampedNormalizingTransform, false},
+		NDMI:                   {NDMI, "Normalized Difference Moisture Index ", []string{"b08", "b11"}, BlueYellowBrownRamp, NormalizingTransform, false},
+		NDWI:                   {NDWI, "Normalized Difference Water Index", []string{"b03", "b08"}, BlueYellowBrownRamp, NormalizingTransform, false},
+		NSMI:                   {NSMI, "Normalized Soil Moisture Index", []string{"b11", "b12"}, BlueYellowBrownRamp, NormalizingTransform, false},
+		MNDWI:                  {MNDWI, "Modified Normalized Difference Water Index", []string{"b03", "b11"}, BlueYellowBrownRamp, NormalizingTransform, false},
+		RSWIR:                  {RSWIR, "Red and Shortwave Infrared", []string{"b04", "b11"}, BlueYellowBrownRamp, NormalizingTransform, false},
+		OPTRAM:                 {OPTRAM, "OPTRAM", []string{"b08", "b04", "b12"}, RedYellowGreenRamp, OptramTransform, false},
 	}
 }
 
@@ -271,7 +271,8 @@ func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, 
 			imageRamp = GetColorRamp(ramp)
 		}
 
-		image, err := ImageFromBands(filePaths, imageRamp, bandCombo, imageScale, edges, options...)
+		image, err := ImageFromBands(filePaths, imageRamp, bandCombo.Transform, imageScale, edges, bandCombo.AdvancedColorModel, options...)
+    
 		if err != nil {
 			return nil, err
 		}
@@ -289,7 +290,8 @@ func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, 
 // where the file names map to R,G,B in order.  The results are returned as a JPEG
 // encoded byte stream. If errors are encountered processing a band an attempt will
 // be made to create the image from the remaining bands, while logging an error.
-func ImageFromBands(paths []string, ramp []uint8, bandCombo *BandCombination, imageScale ImageScale, edges *OptramEdges, options ...Options) (*image.RGBA, error) {
+
+func ImageFromBands(paths []string, ramp []uint8, transform func(...uint16) float64, imageScale ImageScale, edges *OptramEdges, advancedColorModel bool, options ...Options) (*image.RGBA, error) {
 	bandImages := []*image.Gray16{}
 	maxXSize := 0
 	maxYSize := 0
@@ -321,7 +323,7 @@ func ImageFromBands(paths []string, ramp []uint8, bandCombo *BandCombination, im
 	// a transform and color lookup
 	if bandCombo.Ramp == nil || bandCombo.Transform == nil {
 		// Create an RGBA image from the resized bands
-		return createRGBAFromBands(maxXSize, maxYSize, bandImages, options...), nil
+		return createRGBAFromBands(maxXSize, maxYSize, bandImages, advancedColorModel, options...), nil
 	}
 	return createRGBAFromRamp(maxXSize, maxYSize, bandImages, bandCombo.Transform, ramp, edges), nil
 }
@@ -489,7 +491,7 @@ func loadAsGray16(filePath string) (*image.Gray16, error) {
 	return bandImage, nil
 }
 
-func createRGBAFromBands(xSize int, ySize int, bandImages []*image.Gray16, options ...Options) *image.RGBA {
+func createRGBAFromBands(xSize int, ySize int, bandImages []*image.Gray16, advancedColorModel bool, options ...Options) *image.RGBA {
 	// Create a new RGBA image to hold the collected bands
 	outputImage := image.NewRGBA(image.Rect(0, 0, xSize, ySize))
 
@@ -506,7 +508,7 @@ func createRGBAFromBands(xSize int, ySize int, bandImages []*image.Gray16, optio
 				bandBuffer[j] = 0.5
 			}
 		}
-		rgb := ConvertS2ToRgb(bandBuffer, options...)
+		rgb := ConvertS2ToRgb(bandBuffer, advancedColorModel, options...)
 		outputImage.Pix[outputIdx] = uint8(rgb[0] * 255)   // r
 		outputImage.Pix[outputIdx+1] = uint8(rgb[1] * 255) // g
 		outputImage.Pix[outputIdx+2] = uint8(rgb[2] * 255) // b
