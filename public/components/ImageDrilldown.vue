@@ -415,13 +415,13 @@ export default Vue.extend({
       this.currentBrightness = 0.5; // reset brightness
       this.sliderPosition = 50; // reset slider position
     },
-    cycleImage(sideToCycleTo: EI.IMAGES.Side) {
+    async cycleImage(sideToCycleTo: EI.IMAGES.Side) {
       this.carouselPosition = Math.max(
         0,
         Math.min(this.carouselPosition + sideToCycleTo, this.items.length - 1)
       );
       this.resetDrillDownData();
-      this.requestImage({
+      await this.requestImage({
         gainL: 1.0,
         gamma: 2.2,
         gain: 2.5,

@@ -42,8 +42,9 @@
 import _ from "lodash";
 import Vue from "vue";
 import { EventList } from "../util/events";
+
 export default Vue.extend({
-  name: "image-transformer",
+  name: "ImageTransformer",
   props: {
     width: { type: Number as () => number, default: 300 },
     height: { type: Number as () => number, default: 300 },
@@ -58,11 +59,6 @@ export default Vue.extend({
       startMouseEvent: null as MouseEvent,
     };
   },
-  watch: {
-    imgSrcs() {
-      this.initImages();
-    },
-  },
   computed: {
     ctx(): CanvasRenderingContext2D {
       return this.canvas.getContext("2d");
@@ -73,18 +69,26 @@ export default Vue.extend({
     canvas(): HTMLCanvasElement {
       return this.$refs.canvas as HTMLCanvasElement;
     },
-    refreshStyle(): string {
-      const bottomPadding = 45;
-      return `top: ${this.size.height - bottomPadding}px; left: ${
-        this.size.width / 2 - 16
-      }px;z-index:1;`;
-    },
     mouseOnCanvas(): boolean {
       return this.isMouseOnCanvas;
     },
   },
+  watch: {
+    imgSrcs() {
+      if (!this.imgSrcs.length) {
+        return;
+      }
+      this.draw();
+    },
+    size() {
+      // vue is going to resize the canvas next tick which will clear the canvas
+      // we have to redraw after the resize thanks VUE
+      this.$nextTick(() => {
+        this.draw();
+      });
+    },
+  },
   mounted() {
-    this.initImages();
     this.$eventBus.$on(
       EventList.IMAGE_DRILL_DOWN.RESET_IMAGE_EVENT,
       this.resetIdentity
@@ -107,19 +111,10 @@ export default Vue.extend({
     setIsMouseOnCanvas(val: boolean) {
       this.isMouseOnCanvas = val;
     },
-    initImages() {
+    draw() {
       if (!this.imgSrcs.length) {
         return;
       }
-      this.imgSrcs.forEach((img) => {
-        const image = new Image();
-        image.onload = () => {
-          this.draw();
-        };
-        image.src = img.src;
-      });
-    },
-    draw() {
       // clears canvas
       this.ctx.save();
       this.ctx.setTransform(1, 0, 0, 1, 0, 0);
