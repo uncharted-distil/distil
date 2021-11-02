@@ -261,8 +261,6 @@ func GetColorRamp(colorScaleName string) []uint8 {
 		return RedYellowGreenRamp
 	case "blue yellow brown":
 		return BlueYellowBrownRamp
-	case "viridis":
-		return GenerateRamp(ViridisColorRamp, 255, Lab)
 	case "magma":
 		return GenerateRamp(MagmaColorRamp, 255, Lab)
 	case "plasma":
@@ -271,6 +269,8 @@ func GetColorRamp(colorScaleName string) []uint8 {
 		return GenerateRamp(InfernoColorRamp, 255, Lab)
 	case "turbo":
 		return GenerateRamp(TurboColorRamp, 255, Lab)
+	case "viridis":
+		fallthrough
 	default:
 		return GenerateRamp(ViridisColorRamp, 255, Lab)
 	}
