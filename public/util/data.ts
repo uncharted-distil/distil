@@ -90,6 +90,7 @@ import { Dictionary } from "./dict";
 import { Group } from "./facets";
 import { FilterParams, FilterSetsParams, removeFiltersByName } from "./filters";
 import { overlayRouteEntry, varModesToString } from "./routes";
+import { findBestMatch } from "string-similarity";
 
 // Postfixes for special variable names
 export const PREDICTED_SUFFIX = "_predicted";
@@ -155,7 +156,40 @@ export function addRecentDataset(dataset: string) {
     localStorage.set("recent-datasets", datasets);
   }
 }
+const findBestRating = (
+  mainString: string,
+  targetStrings: string[]
+): number => {
+  return findBestMatch(mainString, targetStrings)?.bestMatch.rating ?? 0;
+};
 
+// Find which labels is most suited to be the positive one
+export function findAPositiveLabel(labels: string[]): string {
+  // List of positives and negatives words that could be used in labels
+  const positives = ["true", "positive", "aff", "1", "yes", "good", "high"];
+  const negatives = ["false", "negative", "not", "0", "no", "bad", "low"];
+  const ratings = labels.map((label) => {
+    return {
+      positive: findBestRating(label, positives),
+      negative: findBestRating(label, negatives),
+    };
+  });
+
+  // Default to the first label
+  let positiveLabel = labels[0];
+
+  // Select the second label, if the first label...
+  if (
+    // has a lower or identical positive rating and
+    ratings[0].positive <= ratings[1].positive &&
+    // has a higher negative rating
+    ratings[0].negative > ratings[1].negative
+  ) {
+    positiveLabel = labels[1];
+  }
+
+  return positiveLabel;
+}
 // include the highlight
 export function getAllDataItems(includedActive: boolean): TableRow[] {
   const tableData = includedActive

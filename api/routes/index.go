@@ -34,6 +34,7 @@ import (
 type MultiBandCombinationDesc struct {
 	ID          imagery.BandCombinationID `json:"id"`
 	DisplayName string                    `json:"displayName"`
+	Ramp        bool                      `json:"ramp"`
 }
 
 // ModelMetricDesc provides a scoring ID, display name, and description.
@@ -111,11 +112,15 @@ func getBandCombinations(augmentFolder string) *Combinations {
 	combinationsList := make([]interface{}, size)
 	idx := 0
 	for _, value := range imagery.SentinelBandCombinations {
+
 		// if not supported make sure not to add band combination to results
 		if !optramSupported && value.ID == imagery.OPTRAM {
 			continue
 		}
-		combinationsList[idx] = &MultiBandCombinationDesc{value.ID, value.DisplayName}
+    
+		hasRamp := len(value.Ramp) != 0
+		combinationsList[idx] = &MultiBandCombinationDesc{value.ID, value.DisplayName, hasRamp}
+
 		idx++
 	}
 	return &Combinations{combinationsList}

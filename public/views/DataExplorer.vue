@@ -392,11 +392,10 @@ import {
   selectMethods,
   predictionMethods,
   predictionComputes,
-  labelEventHandlers,
 } from "../util/explorer";
+import { findAPositiveLabel } from "../util/data";
 import _ from "lodash";
 import { DataExplorerRef } from "../util/componentTypes";
-import { Dictionary } from "vue-router/types/router";
 
 const DataExplorer = Vue.extend({
   name: "DataExplorer",
@@ -457,11 +456,13 @@ const DataExplorer = Vue.extend({
       this.state.fetchData();
       this.dataLoading = false;
     },
+
     produceRequestId() {
       this.dataLoading = true;
       this.state.fetchData();
       this.dataLoading = false;
     },
+
     activeVariables(n, o) {
       if (_.isEqual(n, o)) return;
       this.state.fetchVariableSummaries();
@@ -487,6 +488,7 @@ const DataExplorer = Vue.extend({
       await viewActions.updateDataExplorerData(this.$store);
       this.dataLoading = false;
     },
+
     async geoVarExists() {
       const self = (this as unknown) as DataExplorerRef; // because the computes/methods are added in beforeCreate typescript does not work so we cast it to a type here
       if (
@@ -499,9 +501,29 @@ const DataExplorer = Vue.extend({
       const entry = overlayRouteEntry(route, { hasGeoData: self.geoVarExists });
       this.$router.push(entry).catch((err) => console.warn(err));
     },
+
     targetName() {
       const self = (this as unknown) as DataExplorerRef; // because the computes/methods are added in beforeCreate typescript does not work so we cast it to a type here
       datasetActions.fetchOutliers(this.$store, self.dataset);
+      // if binary classification add positive label
+      if (routeGetters.isBinaryClassification(this.$store)) {
+        //find target summary
+        const targetSummary = self.summaries.find(
+          (v) => v.key === self.target.key
+        );
+        if (targetSummary) {
+          // build labels from buckets
+          const buckets = targetSummary?.baseline?.buckets;
+          if (buckets) {
+            // use the buckets keys as labels
+            const labels = buckets.map((bucket) => bucket.key);
+            // get the "most positive" label
+            const positiveLabel = findAPositiveLabel(labels);
+            self.updateRoute({ positiveLabel });
+          }
+        }
+      }
+      // fetch metrics
       const metrics = routeGetters.getModelMetrics(this.$store);
       if (metrics) {
         const storedMetrics = datasetGetters.getModelingMetrics(this.$store);

@@ -228,6 +228,10 @@ func main() {
 
 	// Loads image enhancement library
 	if config.ShouldScaleImages {
+		if config.UpscaleOnCPU {
+			// set cuda env variable to force cpu execution for child processes
+			os.Setenv("CUDA_VISIBLE_DEVICES", "-1")
+		}
 		err = c_util.LoadImageUpscaleLibrary(c_util.GetModelType(config.ModelType))
 		if err != nil {
 			log.Error(err)

@@ -328,8 +328,12 @@ func (s *Storage) parseData(rows pgx.Rows) ([][]string, error) {
 }
 
 func unnestStringJSON(raw interface{}) map[string]string {
-	cast := raw.(map[string]interface{})
 	result := map[string]string{}
+	if raw == nil {
+		return result
+	}
+
+	cast := raw.(map[string]interface{})
 	for k, v := range cast {
 		switch t := v.(type) {
 		case float64:
