@@ -124,6 +124,8 @@ type ImageScale struct {
 	Width  int
 	Height int
 }
+
+//OptramEdges is the struct that contains the edges needed for the optram calculation
 type OptramEdges struct {
 	IDryEdge float64 `json:"i_d"`
 	SDryEdge float64 `json:"s_d"`
@@ -163,6 +165,7 @@ func NormalizingTransform(edges *OptramEdges, bandValues ...uint16) float64 {
 	return (1.0 + float64(int32(bandValues[0])-int32(bandValues[1]))/float64(int32(bandValues[0])+int32(bandValues[1]))) / 2.0
 }
 
+// OptramTransform calculates a moisture normalized value between (0, 1)
 func OptramTransform(edges *OptramEdges, bandValues ...uint16) float64 {
 	b08 := float64(bandValues[0])
 	b04 := float64(bandValues[1])
@@ -291,7 +294,6 @@ func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, 
 // where the file names map to R,G,B in order.  The results are returned as a JPEG
 // encoded byte stream. If errors are encountered processing a band an attempt will
 // be made to create the image from the remaining bands, while logging an error.
-
 func ImageFromBands(paths []string, ramp []uint8, transform func(*OptramEdges, ...uint16) float64, imageScale ImageScale, edges *OptramEdges, advancedColorModel bool, options ...Options) (*image.RGBA, error) {
 	bandImages := []*image.Gray16{}
 	maxXSize := 0

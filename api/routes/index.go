@@ -107,7 +107,7 @@ func getBandCombinations(augmentFolder string) *Combinations {
 		// file does not exist remove optram
 		optramSupported = false
 		// decrease size of result array
-		size -= 1
+		size--
 	}
 	combinationsList := make([]interface{}, size)
 	idx := 0
@@ -117,7 +117,7 @@ func getBandCombinations(augmentFolder string) *Combinations {
 		if !optramSupported && value.ID == imagery.OPTRAM {
 			continue
 		}
-    
+
 		hasRamp := len(value.Ramp) != 0
 		combinationsList[idx] = &MultiBandCombinationDesc{value.ID, value.DisplayName, hasRamp}
 
