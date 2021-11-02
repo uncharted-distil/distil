@@ -23,6 +23,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path"
+	"strings"
 
 	"github.com/nfnt/resize"
 	"github.com/pkg/errors"
@@ -77,9 +78,18 @@ func MultiBandImagePackHandler(ctor api.MetadataStorageCtor, dataCtor api.DataSt
 		}
 		// default to getImages
 		funcPointer := getImages
+		optramMap := map[string]imagery.OptramEdges{}
+		precision := 0
 		if params.Band != "" {
 			// if band is not empty then get multiBandImages
 			funcPointer = getMultiBandImages
+			if params.Band == imagery.OPTRAM {
+				optramMap, precision, err = fetchOptramVariables(params, ctor)
+				if err != nil {
+					handleError(w, err)
+					return
+				}
+			}
 		}
 		// channel for threads to communicate
 		result := make(chan chanStruct)
@@ -104,7 +114,7 @@ func MultiBandImagePackHandler(ctor api.MetadataStorageCtor, dataCtor api.DataSt
 		}
 
 		for i := 0; i < numOfThreads; i++ {
-			go funcPointer(params, i, numOfThreads, result, ctor, dataCtor)
+			go funcPointer(params, optramMap, precision, i, numOfThreads, result, ctor, dataCtor)
 		}
 		imagesBuffer := [][]byte{}
 		IDs := []string{}
@@ -133,7 +143,7 @@ func MultiBandImagePackHandler(ctor api.MetadataStorageCtor, dataCtor api.DataSt
 		}
 	}
 }
-func getImages(imagePackRequest *ImagePackRequest, threadID int, numThreads int, result chan chanStruct, ctor api.MetadataStorageCtor, dataCtor api.DataStorageCtor) {
+func getImages(imagePackRequest *ImagePackRequest, _ map[string]imagery.OptramEdges, _ int, threadID int, numThreads int, result chan chanStruct, ctor api.MetadataStorageCtor, dataCtor api.DataStorageCtor) {
 	temp := [][]byte{}
 	IDs := []string{}
 	errorIDs := []string{}
@@ -150,7 +160,6 @@ func getImages(imagePackRequest *ImagePackRequest, threadID int, numThreads int,
 		log.Error(err)
 		return
 	}
-
 	sourcePath := env.ResolvePath(res.Source, res.Folder)
 	metaDisk, err := metadata.LoadMetadataFromOriginalSchema(path.Join(sourcePath, compute.D3MDataSchema), false)
 	if err != nil {
@@ -191,7 +200,7 @@ func getImages(imagePackRequest *ImagePackRequest, threadID int, numThreads int,
 	}
 	result <- chanStruct{data: temp, IDs: IDs, errorIDs: errorIDs}
 }
-func getMultiBandImages(multiBandPackRequest *ImagePackRequest, threadID int, numThreads int, result chan chanStruct, ctor api.MetadataStorageCtor, dataCtor api.DataStorageCtor) {
+func getMultiBandImages(multiBandPackRequest *ImagePackRequest, optramMap map[string]imagery.OptramEdges, precision int, threadID int, numThreads int, result chan chanStruct, ctor api.MetadataStorageCtor, dataCtor api.DataStorageCtor) {
 	temp := [][]byte{}
 	IDs := []string{}
 	errorIDs := []string{}
@@ -212,6 +221,7 @@ func getMultiBandImages(multiBandPackRequest *ImagePackRequest, threadID int, nu
 		log.Error(err)
 		return
 	}
+
 	sourcePath := env.ResolvePath(res.Source, res.Folder)
 	metaDisk, err := metadata.LoadMetadataFromOriginalSchema(path.Join(sourcePath, compute.D3MDataSchema), false)
 	if err != nil {
@@ -245,8 +255,12 @@ func getMultiBandImages(multiBandPackRequest *ImagePackRequest, threadID int, nu
 	// loop through image info
 	for i := threadID; i < len(multiBandPackRequest.ImageIDs); i += numThreads {
 		imageID := multiBandPackRequest.ImageIDs[i]
-
-		img, err := imagery.ImageFromCombination(sourcePath, bandMapping[imageID], multiBandPackRequest.Band, imageScale, multiBandPackRequest.Ramp, options)
+		geoHash := imagery.ParseGeoHashFromID(imageID, precision)
+		edge := imagery.OptramEdges{}
+		if val, ok := optramMap[geoHash]; ok {
+			edge = val
+		}
+		img, err := imagery.ImageFromCombination(sourcePath, bandMapping[imageID], multiBandPackRequest.Band, imageScale, &edge, multiBandPackRequest.Ramp, options)
 		if err != nil {
 			handleThreadError(&errorIDs, &imageID, &err)
 			continue
@@ -267,4 +281,28 @@ func getMultiBandImages(multiBandPackRequest *ImagePackRequest, threadID int, nu
 func handleThreadError(errorIDs *[]string, imageID *string, err *error) {
 	*errorIDs = append(*errorIDs, *imageID)
 	log.Error(*err)
+}
+
+func fetchOptramVariables(imagePackRequest *ImagePackRequest, ctor api.MetadataStorageCtor) (map[string]imagery.OptramEdges, int, error) {
+	storage, err := ctor()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	res, err := storage.FetchDataset(imagePackRequest.Dataset, false, false, false)
+	if err != nil {
+		return nil, 0, err
+	}
+	var optramMap map[string]imagery.OptramEdges
+	// load optram file
+	// parse optram variables
+	precision := 0
+	optramPath := strings.Join([]string{env.ResolvePath(res.Source, res.Folder), imagery.OPTRAMJSONFile}, "/")
+	edgeMap, mapPrecision, err := imagery.ReadOptramFile(optramPath)
+	if err != nil {
+		return nil, 0, err
+	}
+	optramMap = edgeMap
+	precision = mapPrecision
+	return optramMap, precision, nil
 }

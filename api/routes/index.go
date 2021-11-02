@@ -17,12 +17,14 @@ package routes
 
 import (
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/pkg/errors"
 	"goji.io/v3/pat"
 
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
+	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util"
 	"github.com/uncharted-distil/distil/api/util/imagery"
@@ -60,17 +62,29 @@ func IndexDataHandler(ctor api.MetadataStorageCtor) func(http.ResponseWriter, *h
 			handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
 			return
 		}
-
+		meta, err := ctor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
 		var combinations *Combinations
 		switch typ {
 		case "metrics":
 			task := params["task"].(string)
 			combinations = getModelMetrics(task)
 		case "bands":
-			combinations = getBandCombinations()
+			datasetName := params["dataset"].(string)
+			ds, err := meta.FetchDataset(datasetName, false, false, false)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+
+			combinations = getBandCombinations(env.ResolvePath(ds.Source, ds.Folder))
 		default:
 			err = errors.Errorf("unrecognized index data type '%s'", typ)
 		}
+
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal result histogram into JSON"))
 			return
@@ -84,12 +98,29 @@ func IndexDataHandler(ctor api.MetadataStorageCtor) func(http.ResponseWriter, *h
 	}
 }
 
-func getBandCombinations() *Combinations {
-	combinationsList := make([]interface{}, len(imagery.SentinelBandCombinations))
+func getBandCombinations(augmentFolder string) *Combinations {
+	optramSupported := true
+	// check augmented folder for optram variables
+	_, err := os.Stat(strings.Join([]string{augmentFolder, imagery.OPTRAMJSONFile}, "/"))
+	size := len(imagery.SentinelBandCombinations)
+	if err != nil {
+		// file does not exist remove optram
+		optramSupported = false
+		// decrease size of result array
+		size -= 1
+	}
+	combinationsList := make([]interface{}, size)
 	idx := 0
 	for _, value := range imagery.SentinelBandCombinations {
+
+		// if not supported make sure not to add band combination to results
+		if !optramSupported && value.ID == imagery.OPTRAM {
+			continue
+		}
+    
 		hasRamp := len(value.Ramp) != 0
 		combinationsList[idx] = &MultiBandCombinationDesc{value.ID, value.DisplayName, hasRamp}
+
 		idx++
 	}
 	return &Combinations{combinationsList}
