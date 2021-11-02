@@ -111,11 +111,11 @@ type BandCombinationID string
 
 // BandCombination defines a mapping of satellite bands to image RGB channels.
 type BandCombination struct {
-	ID          BandCombinationID
-	DisplayName string
-	Mapping     []string
-	Ramp        []uint8
-	Transform   func(*OptramEdges, ...uint16) float64
+	ID                 BandCombinationID
+	DisplayName        string
+	Mapping            []string
+	Ramp               []uint8
+	Transform          func(*OptramEdges, ...uint16) float64
 	AdvancedColorModel bool
 }
 
@@ -182,16 +182,17 @@ var (
 func init() {
 	// initialize the band combination structures - needs to be done in init so that referenced color ramps are built
 	SentinelBandCombinations = map[string]*BandCombination{
-		NaturalColors:          {NaturalColors, "Natural Colors", []string{"b04", "b03", "b02"}, nil, nil},
-		FalseColorInfrared:     {FalseColorInfrared, "False Color Infrared", []string{"b08", "b04", "b03"}, nil, nil},
-		FalseColorUrban:        {FalseColorUrban, "False Color Urban", []string{"b12", "b11", "b04"}, nil, nil},
-		Agriculture:            {Agriculture, "Agriculture", []string{"b11", "b08", "b02"}, nil, nil},
-		AtmosphericPenetration: {AtmosphericPenetration, "Atmospheric Penetration", []string{"b12", "b11", "b8a"}, nil, nil},
-		HealthyVegetation:      {HealthyVegetation, "Healthy Vegetation", []string{"b08", "b11", "b02"}, nil, nil},
-		LandWater:              {LandWater, "Land/Water", []string{"b08", "b11", "b04"}, nil, nil},
-		AtmosphericRemoval:     {AtmosphericRemoval, "Atmospheric Removal", []string{"b12", "b08", "b03"}, nil, nil},
-		ShortwaveInfrared:      {ShortwaveInfrared, "Shortwave Infrared", []string{"b12", "b08", "b04"}, nil, nil},
-		VegetationAnalysis:     {VegetationAnalysis, "Vegetation Analysis", []string{"b11", "b08", "b04"}, nil, nil},
+		NaturalColors1:         {NaturalColors1, "Natural Colors", []string{"b04", "b03", "b02"}, nil, nil, false},
+		NaturalColors2:         {NaturalColors2, "Natural Colors 2", []string{"b04", "b03", "b02"}, nil, nil, true},
+		FalseColorInfrared:     {FalseColorInfrared, "False Color Infrared", []string{"b08", "b04", "b03"}, nil, nil, false},
+		FalseColorUrban:        {FalseColorUrban, "False Color Urban", []string{"b12", "b11", "b04"}, nil, nil, false},
+		Agriculture:            {Agriculture, "Agriculture", []string{"b11", "b08", "b02"}, nil, nil, false},
+		AtmosphericPenetration: {AtmosphericPenetration, "Atmospheric Penetration", []string{"b12", "b11", "b8a"}, nil, nil, false},
+		HealthyVegetation:      {HealthyVegetation, "Healthy Vegetation", []string{"b08", "b11", "b02"}, nil, nil, false},
+		LandWater:              {LandWater, "Land/Water", []string{"b08", "b11", "b04"}, nil, nil, false},
+		AtmosphericRemoval:     {AtmosphericRemoval, "Atmospheric Removal", []string{"b12", "b08", "b03"}, nil, nil, false},
+		ShortwaveInfrared:      {ShortwaveInfrared, "Shortwave Infrared", []string{"b12", "b08", "b04"}, nil, nil, false},
+		VegetationAnalysis:     {VegetationAnalysis, "Vegetation Analysis", []string{"b11", "b08", "b04"}, nil, nil, false},
 		NDVI:                   {NDVI, "Normalized Difference Vegetation Index", []string{"b08", "b04"}, RedYellowGreenRamp, ClampedNormalizingTransform, false},
 		NDMI:                   {NDMI, "Normalized Difference Moisture Index ", []string{"b08", "b11"}, BlueYellowBrownRamp, NormalizingTransform, false},
 		NDWI:                   {NDWI, "Normalized Difference Water Index", []string{"b03", "b08"}, BlueYellowBrownRamp, NormalizingTransform, false},
@@ -272,7 +273,7 @@ func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, 
 		}
 
 		image, err := ImageFromBands(filePaths, imageRamp, bandCombo.Transform, imageScale, edges, bandCombo.AdvancedColorModel, options...)
-    
+
 		if err != nil {
 			return nil, err
 		}
@@ -291,7 +292,7 @@ func ImageFromCombination(datasetDir string, bandFileMapping map[string]string, 
 // encoded byte stream. If errors are encountered processing a band an attempt will
 // be made to create the image from the remaining bands, while logging an error.
 
-func ImageFromBands(paths []string, ramp []uint8, transform func(...uint16) float64, imageScale ImageScale, edges *OptramEdges, advancedColorModel bool, options ...Options) (*image.RGBA, error) {
+func ImageFromBands(paths []string, ramp []uint8, transform func(*OptramEdges, ...uint16) float64, imageScale ImageScale, edges *OptramEdges, advancedColorModel bool, options ...Options) (*image.RGBA, error) {
 	bandImages := []*image.Gray16{}
 	maxXSize := 0
 	maxYSize := 0
@@ -321,11 +322,11 @@ func ImageFromBands(paths []string, ramp []uint8, transform func(...uint16) floa
 
 	// Ceate the final image either as a direct mapping from the supplied bands, or by applying
 	// a transform and color lookup
-	if bandCombo.Ramp == nil || bandCombo.Transform == nil {
+	if ramp == nil || transform == nil {
 		// Create an RGBA image from the resized bands
 		return createRGBAFromBands(maxXSize, maxYSize, bandImages, advancedColorModel, options...), nil
 	}
-	return createRGBAFromRamp(maxXSize, maxYSize, bandImages, bandCombo.Transform, ramp, edges), nil
+	return createRGBAFromRamp(maxXSize, maxYSize, bandImages, transform, ramp, edges), nil
 }
 
 // ScaleConfidenceMatrix scales confidence matrix to desired size using linear scaling
