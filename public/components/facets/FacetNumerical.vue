@@ -186,8 +186,13 @@ export default Vue.extend({
         for (let i = 0, n = buckets.length; i < n; ++i) {
           const count = buckets[i].count;
           const key = parseFloat(buckets[i].key);
+          const visualWeight = 0.045;
+          const ratio = !count
+            ? count / this.maxBucketCount
+            : Math.min(count / this.maxBucketCount + visualWeight, 1.0);
+
           values.push({
-            ratio: count / this.maxBucketCount,
+            ratio: ratio,
             label: key,
             tooltip: `Range:\t\t${key}-${
               key + bucketSize
