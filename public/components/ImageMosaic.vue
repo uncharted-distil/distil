@@ -166,10 +166,18 @@ export default Vue.extend({
     band(): string {
       return routeGetters.getBandCombinationId(this.$store);
     },
+
+    imageLayerScale(): string {
+      return routeGetters.getImageLayerScale(this.$store);
+    },
   },
 
   watch: {
     band() {
+      this.debounceImageFetch();
+    },
+
+    imageLayerScale() {
       this.debounceImageFetch();
     },
 
