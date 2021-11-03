@@ -51,8 +51,8 @@ var (
 	// RedYellowGreenRamp defines an evenly spaced ramp suitable for visualizing vegetation
 	RedYellowGreenRamp = []uint8{}
 
-	// BlueYellowBrownRamp defines an evenly spaced ramp suitable for visualizing moisture
-	BlueYellowBrownRamp = []uint8{}
+	// BrownYellowBlueRamp defines an evenly spaced ramp suitable for visualizing moisture
+	BrownYellowBlueRamp = []uint8{}
 
 	// ViridisColorRamp color scale
 	ViridisColorRamp = []RampEntry{}
@@ -76,8 +76,8 @@ func init() {
 		{1.0, color.RGBA{16, 103, 57, 255}},
 	}, 255, Lab)
 
-	// BlueYellowBrownRamp generates a ramp sutiable for visualizing water and moisture
-	BlueYellowBrownRamp = GenerateRamp([]RampEntry{
+	// BrownYellowBlueRamp generates a ramp sutiable for visualizing water and moisture
+	BrownYellowBlueRamp = GenerateRamp([]RampEntry{
 		{0.0, color.RGBA{179, 114, 59, 255}},
 		{0.333, color.RGBA{243, 238, 63, 255}},
 		{0.666, color.RGBA{42, 198, 223, 255}},
@@ -256,22 +256,24 @@ func GetColorScale(colorScaleName string) func(float64) *color.RGBA {
 
 // GetColorRamp returns the color ramp based the supplied name. if name is incorrect defaults to viridis ramp
 func GetColorRamp(colorScaleName string) []uint8 {
-	var selectedRamp []RampEntry
 	switch colorScaleName {
-	case "viridis":
-		selectedRamp = ViridisColorRamp
+	case "red yellow green":
+		return RedYellowGreenRamp
+	case "brown yellow blue":
+		return BrownYellowBlueRamp
 	case "magma":
-		selectedRamp = MagmaColorRamp
+		return GenerateRamp(MagmaColorRamp, 255, Lab)
 	case "plasma":
-		selectedRamp = PlasmaColorRamp
+		return GenerateRamp(PlasmaColorRamp, 255, Lab)
 	case "inferno":
-		selectedRamp = InfernoColorRamp
+		return GenerateRamp(InfernoColorRamp, 255, Lab)
 	case "turbo":
-		selectedRamp = TurboColorRamp
+		return GenerateRamp(TurboColorRamp, 255, Lab)
+	case "viridis":
+		fallthrough
 	default:
-		selectedRamp = ViridisColorRamp
+		return GenerateRamp(ViridisColorRamp, 255, Lab)
 	}
-	return GenerateRamp(selectedRamp, 255, Lab)
 }
 
 // RampToImage converts a color ramp to an image for debugging purposes

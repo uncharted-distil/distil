@@ -197,11 +197,11 @@ func init() {
 		ShortwaveInfrared:      {ShortwaveInfrared, "Shortwave Infrared", []string{"b12", "b08", "b04"}, nil, nil, false},
 		VegetationAnalysis:     {VegetationAnalysis, "Vegetation Analysis", []string{"b11", "b08", "b04"}, nil, nil, false},
 		NDVI:                   {NDVI, "Normalized Difference Vegetation Index", []string{"b08", "b04"}, RedYellowGreenRamp, ClampedNormalizingTransform, false},
-		NDMI:                   {NDMI, "Normalized Difference Moisture Index ", []string{"b08", "b11"}, BlueYellowBrownRamp, NormalizingTransform, false},
-		NDWI:                   {NDWI, "Normalized Difference Water Index", []string{"b03", "b08"}, BlueYellowBrownRamp, NormalizingTransform, false},
-		NSMI:                   {NSMI, "Normalized Soil Moisture Index", []string{"b11", "b12"}, BlueYellowBrownRamp, NormalizingTransform, false},
-		MNDWI:                  {MNDWI, "Modified Normalized Difference Water Index", []string{"b03", "b11"}, BlueYellowBrownRamp, NormalizingTransform, false},
-		RSWIR:                  {RSWIR, "Red and Shortwave Infrared", []string{"b04", "b11"}, BlueYellowBrownRamp, NormalizingTransform, false},
+		NDMI:                   {NDMI, "Normalized Difference Moisture Index ", []string{"b08", "b11"}, BrownYellowBlueRamp, NormalizingTransform, false},
+		NDWI:                   {NDWI, "Normalized Difference Water Index", []string{"b03", "b08"}, BrownYellowBlueRamp, NormalizingTransform, false},
+		NSMI:                   {NSMI, "Normalized Soil Moisture Index", []string{"b11", "b12"}, BrownYellowBlueRamp, NormalizingTransform, false},
+		MNDWI:                  {MNDWI, "Modified Normalized Difference Water Index", []string{"b03", "b11"}, BrownYellowBlueRamp, NormalizingTransform, false},
+		RSWIR:                  {RSWIR, "Red and Shortwave Infrared", []string{"b04", "b11"}, BrownYellowBlueRamp, NormalizingTransform, false},
 		OPTRAM:                 {OPTRAM, "OPTRAM", []string{"b08", "b04", "b12"}, RedYellowGreenRamp, OptramTransform, false},
 	}
 }

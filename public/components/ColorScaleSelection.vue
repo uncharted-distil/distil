@@ -27,7 +27,7 @@
       @click="setGradient(gradientScale.name)"
       class=""
     >
-      {{ gradientScale.name[0].toUpperCase() + gradientScale.name.slice(1) }}
+      {{ formatGradientName(gradientScale.name) }}
       <div class="w-100 bar" :style="gradientScale.gradient" />
     </b-dropdown-item>
   </b-dropdown>
@@ -84,6 +84,11 @@ export default Vue.extend({
   },
 
   methods: {
+    formatGradientName(str: string): string {
+      // Capitalize the first letter of every word
+      return str.replace(/(\b[a-z](?!\s))/g, (s) => s.toUpperCase());
+    },
+
     getGradient(colorScaleName: ColorScaleNames): string {
       const vals = [0.0, 0.25, 0.5, 0.75, 1.0]; // array to get the values to generate linear gradient
       const colors = vals.map(COLOR_SCALES.get(colorScaleName));

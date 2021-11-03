@@ -53,7 +53,7 @@
         </div>
       </template>
       <template v-slot:option="option">
-        {{ option.name[0].toUpperCase() + option.name.slice(1) }}
+        {{ formatGradientName(option.name) }}
         <div class="w-100 bar" :style="option.gradient" />
       </template>
       <template v-slot:dropdown-caret-sibling-icon>
@@ -190,6 +190,10 @@ export default Vue.extend({
         0,
         linearGradient.length - 1
       )});`;
+    },
+    formatGradientName(str: string): string {
+      // Capitalize the first letter of every word
+      return str.replace(/(\b[a-z](?!\s))/g, (s) => s.toUpperCase());
     },
     getGradient(colorScaleName: ColorScaleNames): string {
       const vals = [0.0, 0.25, 0.5, 0.75, 1.0]; // array to get the values to generate linear gradient
