@@ -409,6 +409,7 @@ export function getSubSelectionValues(
     return [];
   }
   const hasFilterBuckets = hasFiltered(summary);
+  const visualWeight = 0.045;
   if (!hasFilterBuckets && !rowSelection) {
     return summary.baseline?.buckets?.map((b) => [null, b.count / max]);
   }
@@ -436,18 +437,24 @@ export function getSubSelectionValues(
         : filteredKeys[b.key]
         ? filteredKeys[b.key]
         : 0;
+      const value = !bucketCount
+        ? bucketCount / max
+        : Math.min(bucketCount / max + visualWeight, 1.0);
       return hasRowLabels
-        ? [null, bucketCount / max, null]
+        ? [null, value, null]
         : include
-        ? [null, null, bucketCount / max]
-        : [bucketCount / max, null, null];
+        ? [null, null, value]
+        : [value, null, null];
     });
   } else {
-    subSelectionValues = summary.baseline.buckets.map((b) =>
+    subSelectionValues = summary.baseline.buckets.map((b) => {
+      const value = !b.count
+        ? b.count / max
+        : Math.min(b.count / max + visualWeight, 1.0);
       rowLabelMatches(rowLabels, b.key, isNumeric)
-        ? [null, b.count / max, null]
-        : [null, null, b.count / max]
-    );
+        ? [null, value, null]
+        : [null, null, value];
+    });
   }
   return subSelectionValues;
 }
