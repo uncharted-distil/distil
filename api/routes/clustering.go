@@ -53,6 +53,16 @@ func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorag
 		dataset := pat.Param(r, "dataset")
 		// get variable name
 		variable := pat.Param(r, "variable")
+		// get cluster count
+		params, err := getPostParameters(r)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
+			return
+		}
+		clusterCount := 4
+		if params["clusterCount"] != nil {
+			clusterCount = params["clusterCount"].(int)
+		}
 
 		// get storage clients
 		metaStorage, err := metaCtor()
@@ -105,7 +115,7 @@ func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorag
 			}
 
 			// cluster data
-			addMeta, clustered, err := task.Cluster(datasetMeta, variable, config.ClusteringKMeans)
+			addMeta, clustered, err := task.Cluster(datasetMeta, variable, config.ClusteringKMeans, clusterCount)
 			if err != nil {
 				handleError(w, err)
 				return
