@@ -16,13 +16,45 @@
  */
 
 import VueRouter from "vue-router";
-import { VariableSummary } from "../store/dataset";
+import { Dictionary } from "vue-router/types/router";
+import { TableColumn, VariableSummary } from "../store/dataset";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { JOIN_DATASETS_ROUTE } from "../store/route/index";
 import { getters as routeGetters } from "../store/route/module";
 import store from "../store/store";
 import { addRecentDataset, minimumRouteKey } from "./data";
 import { createRouteEntry, overlayRouteEntry } from "./routes";
+
+export function verticalJoinSupported(
+  dataFields: Dictionary<TableColumn>,
+  other: Dictionary<TableColumn>
+): boolean {
+  // if there is a different amount of fields fail
+  if (Object.keys(dataFields).length != Object.keys(other).length) {
+    return false;
+  }
+  const typeMap = new Map<string, number>();
+  // create a map that holds a type name and number of occurences
+  for (const key in dataFields) {
+    const field = dataFields[key];
+    typeMap.set(field.type, (typeMap.get(field.type) ?? 0) + 1);
+  }
+  for (const key in other) {
+    const field = other[key];
+    // if typeMap does not contain the type fail
+    if (!typeMap.has(field.type)) {
+      return false;
+    }
+    // decrease occurence counter based on other data fields
+    typeMap.set(field.type, typeMap.get(field.type) - 1);
+    // if occurence is 0 remove from map resulting
+    // in a fail if checked for that type again
+    if (typeMap.get(field.type) == 0) {
+      typeMap.delete(field.type);
+    }
+  }
+  return typeMap.size == 0;
+}
 
 export function loadJoinedDataset(
   router: VueRouter,

@@ -61,6 +61,11 @@ func JoinHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor)
 			return
 		}
 
+		if params["operation"] == nil {
+			missingParamErr(w, "operation")
+			return
+		}
+
 		// fetch vars from params
 		datasetLeft := params["datasetLeft"].(map[string]interface{})
 		datasetRight := params["datasetRight"].(map[string]interface{})
@@ -89,7 +94,7 @@ func JoinHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor)
 		}
 
 		// check for vertical concat operation
-		if params["operation"] != nil && params["operation"].(string) == "vertical" {
+		if params["operation"].(string) == "vertical" {
 			union(w, dataStorage, meta, leftJoin, rightJoin)
 			return
 		}
@@ -309,9 +314,9 @@ func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, params map[st
 	var path string
 	var data *api.FilteredData
 	if dsLeft.LearningDataset != "" {
-		path, data, err = joinPrefeaturized(dataStorage, metaStorage, joinLeft, joinRight, joinPairs)
+		path, data, err = joinPrefeaturized(dataStorage, metaStorage, joinLeft, joinRight, joinPairs, params["operation"].(string))
 	} else {
-		path, data, err = task.JoinDistil(dataStorage, joinLeft, joinRight, joinPairs, false)
+		path, data, err = task.JoinDistil(dataStorage, joinLeft, joinRight, joinPairs, params["operation"].(string), false)
 	}
 	if err != nil {
 		return "", nil, err
@@ -321,7 +326,7 @@ func joinDistil(joinLeft *task.JoinSpec, joinRight *task.JoinSpec, params map[st
 }
 
 func joinPrefeaturized(dataStorage api.DataStorage, metaStorage api.MetadataStorage, joinLeft *task.JoinSpec,
-	joinRight *task.JoinSpec, joinPairs []*task.JoinPair) (string, *api.FilteredData, error) {
+	joinRight *task.JoinSpec, joinPairs []*task.JoinPair, joinType string) (string, *api.FilteredData, error) {
 	sourceDataset := joinLeft.DatasetPath
 
 	log.Infof("joining a prefeaturized dataset")
@@ -340,7 +345,7 @@ func joinPrefeaturized(dataStorage api.DataStorage, metaStorage api.MetadataStor
 	}
 
 	// join as normal
-	path, data, err := task.JoinDistil(dataStorage, joinLeft, joinRight, joinPairs, true)
+	path, data, err := task.JoinDistil(dataStorage, joinLeft, joinRight, joinPairs, joinType, true)
 	if err != nil {
 		return "", nil, err
 	}

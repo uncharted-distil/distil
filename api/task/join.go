@@ -62,7 +62,10 @@ func JoinDatamart(joinLeft *JoinSpec, joinRight *JoinSpec, rightOrigin *model.Da
 }
 
 // JoinDistil will bring misery.
-func JoinDistil(dataStorage apiModel.DataStorage, joinLeft *JoinSpec, joinRight *JoinSpec, joinPairs []*JoinPair, returnRaw bool) (string, *apiModel.FilteredData, error) {
+func JoinDistil(dataStorage apiModel.DataStorage, joinLeft *JoinSpec, joinRight *JoinSpec, joinPairs []*JoinPair, joinType string, returnRaw bool) (string, *apiModel.FilteredData, error) {
+	if !isValidJoinType(joinType) {
+		return "", nil, errors.Errorf("unsupported join type")
+	}
 	isKey := false
 	varsLeftMapUpdated := mapDistilJoinVars(joinLeft.UpdatedVariables)
 	varsRightMapUpdated := mapDistilJoinVars(joinRight.UpdatedVariables)
@@ -100,7 +103,7 @@ func JoinDistil(dataStorage apiModel.DataStorage, joinLeft *JoinSpec, joinRight 
 		LeftVariables:  joinLeft.UpdatedVariables,
 		RightExcludes:  rightExcludes,
 		RightVariables: joinRight.UpdatedVariables,
-		Type:           description.JoinTypeLeft,
+		Type:           joinType,
 	}
 	pipelineDesc, err := description.CreateJoinPipeline("Joiner", "Join existing data", joinInfo)
 	if err != nil {
@@ -280,4 +283,8 @@ func mapDistilJoinVars(variables []*model.Variable) map[string]*model.Variable {
 	}
 
 	return varsMapped
+}
+// isValidJoinType returns if the provided string is within the currently supported join operations
+func isValidJoinType(joinType string) bool {
+	return joinType == description.JoinTypeLeft || joinType == description.JoinTypeInner
 }

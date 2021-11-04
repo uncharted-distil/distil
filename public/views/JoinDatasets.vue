@@ -92,6 +92,8 @@
               :dataset-id-b="bottomDataset"
               :dataset-a-column="topColumn"
               :dataset-b-column="bottomColumn"
+              :dataset-a-fields="topDatasetFields"
+              :dataset-b-fields="bottomDatasetFields"
               :join-accuracy="joinAccuracies"
               :join-absolute="joinAbsolute"
               @swap-datasets="swapDatasets"

@@ -63,8 +63,6 @@ import {
   VariableRankingPendingRequest,
   DatasetPendingRequestStatus,
   GeocodingPendingRequest,
-  SummaryMode,
-  DataMode,
 } from "../store/dataset/index";
 import {
   actions as datasetActions,
@@ -75,12 +73,9 @@ import {
   getters as appGetters,
 } from "../store/app/module";
 import { getters as routeGetters } from "../store/route/module";
-import { actions as viewActions } from "../store/view/module";
 import { StatusPanelState, StatusPanelContentType } from "../store/app";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { overlayRouteEntry, varModesToString } from "../util/routes";
-import { IMAGE_TYPE, isClusterType } from "../util/types";
-import { $enum } from "ts-enum-util";
 import { EventList } from "../util/events";
 
 const STATUS_USER_EVENT = new Map<DatasetPendingRequestType, Feature>([

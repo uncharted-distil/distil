@@ -804,6 +804,7 @@ export const actions = {
   async joinDatasetsPreview(
     context: DatasetContext,
     args: {
+      operation: string;
       datasetA: Dataset;
       datasetB: Dataset;
       joinAccuracy: number[];
@@ -831,7 +832,7 @@ export const actions = {
       datasetRight: datasetBrevised,
       joinPairs: args.joinPairs,
       searchResultIndex: args.joinSuggestionIndex,
-      operation: "horizontal",
+      operation: args.operation.toLowerCase(),
     });
     return response.data;
   },

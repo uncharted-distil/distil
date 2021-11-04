@@ -32,6 +32,12 @@ export enum DISTIL_ROLES {
   SystemData = "system-data",
 }
 
+export enum JoinTypes {
+  Inner = "Inner",
+  Left = "Left",
+  Vertical = "Vertical",
+}
+
 // TODO: Convert these to enums.
 export const CLUSTER_PREFIX = "_cluster_";
 export const GEOCODED_LAT_PREFIX = "_lat_";
