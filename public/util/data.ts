@@ -864,16 +864,30 @@ export function sortVariablesByImportance(variables: Variable[]): Variable[] {
       rankMap = resultsGetters.getFeatureImportanceRanking(store)[solutionId];
     }
   }
+  const findImageAndGeoTypes = (v: Variable) => {
+    return isImageType(v.colType) || isGeoLocatedType(v.colType);
+  };
+  const filterImageAndGeoTypes = (v: Variable) => {
+    return !isImageType(v.colType) && !isGeoLocatedType(v.colType);
+  };
   // Fallback to PCA if none of the above is available
   if (!rankMap) {
-    return variables.sort((a, b) => {
+    variables.sort((a, b) => {
       return b.importance - a.importance;
     });
+    return [
+      ...variables.filter(findImageAndGeoTypes),
+      ...variables.filter(filterImageAndGeoTypes),
+    ];
   }
   variables.sort((a, b) => {
     return rankMap[b.key] - rankMap[a.key];
   });
-  return variables;
+  // give image and coordinate data priority
+  return [
+    ...variables.filter(findImageAndGeoTypes),
+    ...variables.filter(filterImageAndGeoTypes),
+  ];
 }
 export function multibandURLtoInfo(url: string) {
   let split = url.split("_");
