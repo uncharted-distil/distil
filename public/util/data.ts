@@ -885,8 +885,8 @@ export function sortVariablesByImportance(variables: Variable[]): Variable[] {
   });
   // give image and coordinate data priority
   return [
-    ...variables.filter(findImageAndGeoTypes),
-    ...variables.filter(filterImageAndGeoTypes),
+    ...variables.filter(isImageOrGeoType),
+    ...variables.filter(isNotImageOrGeoType),
   ];
 }
 export function multibandURLtoInfo(url: string) {
