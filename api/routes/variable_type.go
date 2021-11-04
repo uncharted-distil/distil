@@ -182,5 +182,10 @@ func getPostParameters(r *http.Request) (map[string]interface{}, error) {
 		return nil, errors.Wrap(err, "unable to parse POST request")
 	}
 
+	// could have an empty parameter
+	if len(body) == 0 {
+		return map[string]interface{}{}, nil
+	}
+
 	return json.Unmarshal(body)
 }

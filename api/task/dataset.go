@@ -128,83 +128,8 @@ func CopyDiskDataset(existingURI string, newURI string, newDatasetID string, new
 // ExportDataset extracts a dataset from the database and metadata storage, writing
 // it to disk in D3M dataset format.
 func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage api.DataStorage, filterParams *api.FilterParams) (string, string, error) {
-	metaDataset, err := metaStorage.FetchDataset(dataset, true, false, false)
-	if err != nil {
-		return "", "", err
-	}
-	meta := metaDataset.ToMetadata()
-
-	data, err := dataStorage.FetchDataset(dataset, meta.StorageName, false, filterParams)
-	if err != nil {
-		return "", "", err
-	}
-
-	// need to update metadata variable order to match extracted data
-	header := data[0]
-	exportedVariables := make([]*model.Variable, len(header))
-	exportVarMap := api.MapVariables(metaDataset.Variables, func(variable *model.Variable) string { return variable.Key })
-	for i, v := range header {
-		variable := exportVarMap[v]
-		variable.Index = i
-		exportedVariables[i] = variable
-	}
-	meta.GetMainDataResource().Variables = exportedVariables
-
-	// update the header with the proper variable names
-	data[0] = meta.GetMainDataResource().GenerateHeader()
-	dataRaw := &serialization.RawDataset{
-		Name:     meta.Name,
-		ID:       meta.ID,
-		Data:     data,
-		Metadata: meta,
-	}
-
-	// need to write the prefeaturized version of the dataset if it exists
-	if metaDataset.ParentDataset != "" {
-		log.Infof("exporting dataset %s that has parent dataset %s", dataset, metaDataset.ParentDataset)
-		parentDS, err := metaStorage.FetchDataset(metaDataset.ParentDataset, false, false, false)
-		if err != nil {
-			return "", "", err
-		}
-
-		err = api.UpdateDiskDataset(metaDataset, data)
-		if err != nil {
-			return "", "", err
-		}
-
-		// read metadata of the parent from disk to get the non main data resources
-		parentDatasetDoc := path.Join(env.ResolvePath(parentDS.Source, parentDS.Folder), compute.D3MDataSchema)
-		parentMetaDisk, err := serialization.ReadMetadata(parentDatasetDoc)
-		if err != nil {
-			return "", "", err
-		}
-		parentMetaDiskMainDR := parentMetaDisk.GetMainDataResource()
-		for _, dr := range parentMetaDisk.DataResources {
-			if dr != parentMetaDiskMainDR {
-				dr.ResPath = model.GetResourcePath(parentDatasetDoc, dr)
-				meta.DataResources = append(meta.DataResources, dr)
-			}
-		}
-
-		// main data resources need to be checked for any resource references
-		parentVariablesMap := api.MapVariables(parentMetaDiskMainDR.Variables, func(variable *model.Variable) string { return variable.Key })
-		for _, v := range dataRaw.Metadata.GetMainDataResource().Variables {
-			parentVar := parentVariablesMap[v.Key]
-			if parentVar != nil && parentVar.RefersTo != nil {
-				v.RefersTo = parentVar.RefersTo
-			}
-		}
-	}
-
 	// TODO: most likely need to either get a unique folder name for output or error if already exists
-	outputFolder := env.ResolvePath(metadata.Augmented, dataset)
-	storage := serialization.GetCSVStorage()
-	err = storage.WriteDataset(outputFolder, dataRaw)
-	if err != nil {
-		return "", "", err
-	}
-
-	return dataset, outputFolder, nil
+	return exportDiskDataset(dataset, dataset, env.ResolvePath(metadata.Augmented, dataset), metaStorage, dataStorage, false, filterParams)
 }
 
 // CreateDatasetFromResult creates a new dataset based on a result set & the input
@@ -602,4 +527,84 @@ func batchSubmitDataset(schemaFile string, dataset string, size int, submitFunc 
 	}
 
 	return outputURI, nil
+}
+
+func exportDiskDataset(dataset string, newDatasetID string, outputFolder string, metaStorage api.MetadataStorage,
+	dataStorage api.DataStorage, limitSelectedFields bool, filterParams *api.FilterParams) (string, string, error) {
+	metaDataset, err := metaStorage.FetchDataset(dataset, true, false, false)
+	if err != nil {
+		return "", "", err
+	}
+	meta := metaDataset.ToMetadata()
+	meta.ID = newDatasetID
+
+	data, err := dataStorage.FetchDataset(dataset, meta.StorageName, false, limitSelectedFields, filterParams)
+	if err != nil {
+		return "", "", err
+	}
+
+	// need to update metadata variable order to match extracted data
+	header := data[0]
+	exportedVariables := make([]*model.Variable, len(header))
+	exportVarMap := api.MapVariables(metaDataset.Variables, func(variable *model.Variable) string { return variable.Key })
+	for i, v := range header {
+		variable := exportVarMap[v]
+		variable.Index = i
+		exportedVariables[i] = variable
+	}
+	meta.GetMainDataResource().Variables = exportedVariables
+
+	// update the header with the proper variable names
+	data[0] = meta.GetMainDataResource().GenerateHeader()
+	dataRaw := &serialization.RawDataset{
+		Name:     meta.Name,
+		ID:       meta.ID,
+		Data:     data,
+		Metadata: meta,
+	}
+
+	// need to write the prefeaturized version of the dataset if it exists
+	if metaDataset.ParentDataset != "" {
+		log.Infof("exporting dataset %s that has parent dataset %s", dataset, metaDataset.ParentDataset)
+		parentDS, err := metaStorage.FetchDataset(metaDataset.ParentDataset, false, false, false)
+		if err != nil {
+			return "", "", err
+		}
+
+		err = api.UpdateDiskDataset(metaDataset, data)
+		if err != nil {
+			return "", "", err
+		}
+
+		// read metadata of the parent from disk to get the non main data resources
+		parentDatasetDoc := path.Join(env.ResolvePath(parentDS.Source, parentDS.Folder), compute.D3MDataSchema)
+		parentMetaDisk, err := serialization.ReadMetadata(parentDatasetDoc)
+		if err != nil {
+			return "", "", err
+		}
+		parentMetaDiskMainDR := parentMetaDisk.GetMainDataResource()
+		for _, dr := range parentMetaDisk.DataResources {
+			if dr != parentMetaDiskMainDR {
+				dr.ResPath = model.GetResourcePath(parentDatasetDoc, dr)
+				meta.DataResources = append(meta.DataResources, dr)
+			}
+		}
+
+		// main data resources need to be checked for any resource references
+		parentVariablesMap := api.MapVariables(parentMetaDiskMainDR.Variables, func(variable *model.Variable) string { return variable.Key })
+		for _, v := range dataRaw.Metadata.GetMainDataResource().Variables {
+			parentVar := parentVariablesMap[v.Key]
+			if parentVar != nil && parentVar.RefersTo != nil {
+				v.RefersTo = parentVar.RefersTo
+			}
+		}
+	}
+
+	storage := serialization.GetCSVStorage()
+	err = storage.WriteDataset(outputFolder, dataRaw)
+	if err != nil {
+		return "", "", err
+	}
+
+	return dataset, outputFolder, nil
 }

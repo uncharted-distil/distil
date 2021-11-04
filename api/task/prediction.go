@@ -221,7 +221,11 @@ func createPredictionDatasetID(existingDatasetID string, fittedSolutionID string
 
 // CloneDataset clones a dataset in metadata storage, data storage and on disk.
 func CloneDataset(sourceDatasetID string, cloneDatasetID string, cloneFolder string,
-	cloneLearningDataset bool, metaStorage api.MetadataStorage, dataStorage api.DataStorage) error {
+	metaStorage api.MetadataStorage, dataStorage api.DataStorage, filterParams *api.FilterParams) error {
+
+	if filterParams != nil {
+		return cloneSubset(sourceDatasetID, cloneDatasetID, cloneFolder, metaStorage, dataStorage, filterParams)
+	}
 
 	ds, err := metaStorage.FetchDataset(sourceDatasetID, false, false, false)
 	if err != nil {
@@ -290,7 +294,7 @@ func PrepExistingPredictionDataset(params *PredictParams) (string, string, error
 
 	// clone the base dataset, then add the necessary fields
 	log.Infof("cloning '%s' for predictions using '%s' as new id stored on disk at '%s'", params.Dataset, cloneDatasetID, targetFolder)
-	err = CloneDataset(params.Dataset, cloneDatasetID, targetFolder, false, params.MetaStorage, params.DataStorage)
+	err = CloneDataset(params.Dataset, cloneDatasetID, targetFolder, params.MetaStorage, params.DataStorage, nil)
 	if err != nil {
 		return "", "", err
 	}
@@ -1187,4 +1191,82 @@ func resolveTarget(datasetID string, target *model.Variable, metaStorage api.Met
 	}
 
 	return trueTarget, nil
+}
+
+func cloneSubset(sourceDatasetID string, cloneDatasetID string, cloneFolder string,
+	metaStorage api.MetadataStorage, dataStorage api.DataStorage, filterParams *api.FilterParams) error {
+	// extract the subset to write to disk
+	if filterParams != nil {
+		filterParams.AddVariable(model.D3MIndexFieldName)
+	}
+	_, _, err := exportDiskDataset(sourceDatasetID, cloneDatasetID, cloneFolder, metaStorage, dataStorage, true, filterParams)
+	if err != nil {
+		return err
+	}
+
+	// update metadata to have the data variables and general metadata match the original dataset
+	sourceDS, err := metaStorage.FetchDataset(sourceDatasetID, true, true, true)
+	if err != nil {
+		return err
+	}
+	diskDS, err := api.LoadDiskDatasetFromFolder(cloneFolder)
+	if err != nil {
+		return err
+	}
+
+	storageName, err := dataStorage.GetStorageName(diskDS.Dataset.Metadata.ID)
+	if err != nil {
+		return err
+	}
+
+	sourceDS.ID = diskDS.Dataset.Metadata.ID
+	sourceDS.Folder = path.Base(cloneFolder)
+	sourceDS.LearningDataset = diskDS.Dataset.Metadata.LearningDataset
+	sourceDS.StorageName = storageName
+
+	diskVars := api.MapVariables(diskDS.Dataset.Metadata.GetMainDataResource().Variables, func(variable *model.Variable) string { return variable.Key })
+	varsToKeep := []*model.Variable{}
+	for _, v := range sourceDS.Variables {
+		if diskVars[v.Key] != nil {
+			v.Index = diskVars[v.Key].Index
+			varsToKeep = append(varsToKeep, v)
+		}
+	}
+	sourceDS.Variables = varsToKeep
+	err = metaStorage.UpdateDataset(sourceDS)
+	if err != nil {
+		return err
+	}
+
+	diskDS.Dataset.Metadata.DatasetFolder = sourceDS.Folder
+	diskDS.Dataset.Metadata.StorageName = storageName
+	err = diskDS.SaveMetadata()
+	if err != nil {
+		return err
+	}
+
+	// ingest the newly created disk dataset
+	steps := &IngestSteps{
+		VerifyMetadata:       false,
+		FallbackMerged:       false,
+		CreateMetadataTables: false,
+	}
+	params := &IngestParams{
+		Source: metadata.Augmented,
+		Type:   api.DatasetTypeModelling,
+	}
+	config, _ := env.LoadConfig()
+	ingestConfig := NewConfig(config)
+	cloneSchemaPath := path.Join(cloneFolder, compute.D3MDataSchema)
+	_, err = IngestMetadata(cloneSchemaPath, cloneSchemaPath, nil, metaStorage, params, ingestConfig, steps)
+	if err != nil {
+		return err
+	}
+
+	err = IngestPostgres(cloneSchemaPath, cloneSchemaPath, params, ingestConfig, steps)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
