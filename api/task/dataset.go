@@ -128,7 +128,8 @@ func CopyDiskDataset(existingURI string, newURI string, newDatasetID string, new
 // ExportDataset extracts a dataset from the database and metadata storage, writing
 // it to disk in D3M dataset format.
 func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage api.DataStorage, filterParams *api.FilterParams) (string, string, error) {
-	return exportDiskDataset(dataset, metaStorage, dataStorage, false, filterParams)
+	// TODO: most likely need to either get a unique folder name for output or error if already exists
+	return exportDiskDataset(dataset, dataset, env.ResolvePath(metadata.Augmented, dataset), metaStorage, dataStorage, false, filterParams)
 }
 
 // CreateDatasetFromResult creates a new dataset based on a result set & the input
@@ -528,13 +529,14 @@ func batchSubmitDataset(schemaFile string, dataset string, size int, submitFunc 
 	return outputURI, nil
 }
 
-func exportDiskDataset(dataset string, metaStorage api.MetadataStorage,
+func exportDiskDataset(dataset string, newDatasetID string, outputFolder string, metaStorage api.MetadataStorage,
 	dataStorage api.DataStorage, limitSelectedFields bool, filterParams *api.FilterParams) (string, string, error) {
 	metaDataset, err := metaStorage.FetchDataset(dataset, true, false, false)
 	if err != nil {
 		return "", "", err
 	}
 	meta := metaDataset.ToMetadata()
+	meta.ID = newDatasetID
 
 	data, err := dataStorage.FetchDataset(dataset, meta.StorageName, false, limitSelectedFields, filterParams)
 	if err != nil {
@@ -598,8 +600,6 @@ func exportDiskDataset(dataset string, metaStorage api.MetadataStorage,
 		}
 	}
 
-	// TODO: most likely need to either get a unique folder name for output or error if already exists
-	outputFolder := env.ResolvePath(metadata.Augmented, dataset)
 	storage := serialization.GetCSVStorage()
 	err = storage.WriteDataset(outputFolder, dataRaw)
 	if err != nil {

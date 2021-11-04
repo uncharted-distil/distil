@@ -44,10 +44,13 @@ func CloningHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCt
 		}
 
 		// get variable names and ranges out of the params
-		filterParams, err := api.ParseFilterParamsFromJSON(params)
-		if err != nil {
-			handleError(w, err)
-			return
+		var filterParams *api.FilterParams
+		if len(params) > 0 {
+			filterParams, err = api.ParseFilterParamsFromJSON(params)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
 		}
 
 		metaStorage, err := metaCtor()
