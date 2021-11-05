@@ -149,8 +149,10 @@ export const SELECT_EVENT_HANDLERS = {
       .getGroupings(store)
       .filter((v) => isClusterType(v.colType))
       .forEach((v) => {
-        varModesMap.set(v.key, SummaryMode.Cluster);
-        clusterVars.add(v.grouping.clusterCol);
+        if (v.grouping.clusterCol) {
+          varModesMap.set(v.key, SummaryMode.Cluster);
+          clusterVars.add(v.grouping.clusterCol);
+        }
       });
 
     // find any image variables using this cluster data and update their mode
@@ -168,6 +170,10 @@ export const SELECT_EVENT_HANDLERS = {
       varModes: varModesStr,
       dataMode: DataMode.Cluster,
       clustering: "1",
+      explore: [
+        ...routeGetters.getExploreVariables(store),
+        ...clusterVars,
+      ].join(","),
     });
     self.$router.push(entry).catch((err) => console.warn(err));
 
