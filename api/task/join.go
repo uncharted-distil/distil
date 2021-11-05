@@ -284,6 +284,7 @@ func mapDistilJoinVars(variables []*model.Variable) map[string]*model.Variable {
 
 	return varsMapped
 }
+
 // isValidJoinType returns if the provided string is within the currently supported join operations
 func isValidJoinType(joinType string) bool {
 	return joinType == description.JoinTypeLeft || joinType == description.JoinTypeInner
