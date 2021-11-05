@@ -61,7 +61,11 @@ func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorag
 		}
 		clusterCount := 4
 		if params["clusterCount"] != nil {
-			clusterCount = params["clusterCount"].(int)
+			clusterCount = int(params["clusterCount"].(float64))
+		}
+		if clusterCount < 3 || clusterCount > 10 {
+			handleError(w, errors.Errorf("cluster count must be between 3 and 10"))
+			return
 		}
 
 		// get storage clients
@@ -83,7 +87,7 @@ func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorag
 		}
 		storageName := ds.StorageName
 
-		clusterVarName := fmt.Sprintf("%s%s", model.ClusterVarPrefix, variable)
+		clusterVarName := fmt.Sprintf("%s%s_%d", model.ClusterVarPrefix, variable, clusterCount)
 
 		// check if the cluster variables exist
 		clusterVarExist, err := metaStorage.DoesVariableExist(dataset, clusterVarName)
