@@ -621,6 +621,7 @@ export const actions = {
       nosample?: boolean;
       leftCols?: string[];
       rightCols?: string[];
+      filterByUpdates?: boolean;
     }
   ): Promise<any> {
     if (!validateArgs(args, ["datasetID", "source"])) {
@@ -637,6 +638,7 @@ export const actions = {
         description: args.description,
         leftCols: args.leftCols,
         rightCols: args.rightCols,
+        filterByUpdates: args.filterByUpdates,
       };
     } else if (args.originalDataset !== null) {
       postParams = {
@@ -644,6 +646,7 @@ export const actions = {
         joinedDataset: args.joinedDataset,
         leftCols: args.leftCols,
         rightCols: args.rightCols,
+        filterByUpdates: args.filterByUpdates,
       };
     }
     const response = await axios.post(
@@ -804,6 +807,7 @@ export const actions = {
   async joinDatasetsPreview(
     context: DatasetContext,
     args: {
+      operation: string;
       datasetA: Dataset;
       datasetB: Dataset;
       joinAccuracy: number[];
@@ -831,7 +835,7 @@ export const actions = {
       datasetRight: datasetBrevised,
       joinPairs: args.joinPairs,
       searchResultIndex: args.joinSuggestionIndex,
-      operation: "horizontal",
+      operation: args.operation.toLowerCase(),
     });
     return response.data;
   },

@@ -32,6 +32,7 @@
         :dataset-b="datasetB"
         :joined-column="joinedColumn"
         :path="joinedPath"
+        :join-type="joinType"
         @success="onJoinCommitSuccess"
         @failure="onJoinCommitFailure"
         @close="showJoinSuccess = !showJoinSuccess"
@@ -51,11 +52,21 @@
       <i class="fa fa-exclamation-triangle warning-icon mr-2" />
       <span v-html="joinWarning" />
     </div>
-    <div class="d-flex justify-content-between bottom-margin form-height">
-      <div class="d-flex">
+    <div class="d-flex justify-content-between bottom-margin">
+      <div class="d-flex form-height">
         <b-button variant="primary" @click="swapDatasets" class="join-button">
           Swap Datasets
         </b-button>
+        <b-button-toolbar>
+          <b-button-group v-for="item in joinTypes" :key="item">
+            <b-button
+              :variant="isSelected(item) ? 'primary' : 'secondary'"
+              @click="setJoinType(item)"
+            >
+              {{ displayJoinType(item) }}
+            </b-button>
+          </b-button-group>
+        </b-button-toolbar>
       </div>
       <main class="d-flex w-50">
         <badge
@@ -67,7 +78,7 @@
           @removed="badgeRemoved"
         />
       </main>
-      <div class="d-flex">
+      <div class="d-flex form-height">
         <b-button-group>
           <b-button
             variant="primary"
@@ -121,8 +132,8 @@ import {
 } from "../store/dataset/module";
 import { Dictionary } from "../util/dict";
 import { getTableDataItems, getTableDataFields, JoinPair } from "../util/data";
-import { isJoinable } from "../util/types";
-import { loadJoinedDataset } from "../util/join";
+import { isJoinable, JoinTypes } from "../util/types";
+import { loadJoinedDataset, verticalJoinSupported } from "../util/join";
 import { overlayRouteEntry, overlayRouteReplace } from "../util/routes";
 import { EventList } from "../util/events";
 
@@ -145,6 +156,8 @@ export default Vue.extend({
     datasetBColumn: Object as () => TableColumn,
     joinAccuracy: Array as () => number[],
     joinAbsolute: Array as () => boolean[],
+    datasetAFields: Object as () => Dictionary<TableColumn>,
+    datasetBFields: Object as () => Dictionary<TableColumn>,
   },
 
   data() {
@@ -156,6 +169,7 @@ export default Vue.extend({
       joinErrorMessage: null,
       previewTableData: null,
       joinedPath: "",
+      joinType: JoinTypes.Left,
       datasetA: null,
       datasetB: null,
     };
@@ -187,6 +201,15 @@ export default Vue.extend({
       if (this.columnTypesDoNotMatch) {
         return `Unable to join column <b>${this.datasetAColumn.key}</b> of type <b>${this.datasetAColumn.type}</b> with <b>${this.datasetBColumn.key}</b> of type <b>${this.datasetBColumn.type}</b>`;
       }
+    },
+    joinTypes(): JoinTypes[] {
+      const result = [] as JoinTypes[];
+      for (const val in JoinTypes) {
+        result.push(JoinTypes[val as keyof typeof JoinTypes]);
+      }
+      return verticalJoinSupported(this.datasetAFields, this.datasetBFields)
+        ? result
+        : result.filter((j) => j != JoinTypes.Vertical);
     },
     disableAdd(): boolean {
       return (
@@ -226,6 +249,15 @@ export default Vue.extend({
   },
 
   methods: {
+    isSelected(joinType: JoinTypes): boolean {
+      return this.joinType === joinType;
+    },
+    displayJoinType(joinType: JoinTypes): string {
+      return JoinTypes[joinType];
+    },
+    setJoinType(joinType: JoinTypes) {
+      this.joinType = joinType;
+    },
     swapDatasets() {
       this.$emit(EventList.JOIN.SWAP_EVENT);
     },
@@ -288,6 +320,7 @@ export default Vue.extend({
           joinAccuracy: this.joinAccuracy,
           joinPairs: this.joinPairs,
           joinAbsolute: this.joinAbsolute,
+          operation: this.joinType,
         })
         .then((tableData) => {
           this.pending = false;

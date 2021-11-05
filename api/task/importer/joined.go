@@ -26,6 +26,7 @@ type Joined struct {
 	rightCols             []string
 	sourceLearningDataset string
 	updateDatasetID       string
+	filterByUpdates       bool
 	meta                  api.MetadataStorage
 }
 
@@ -54,7 +55,13 @@ func (j *Joined) Initialize(params map[string]interface{}, ingestParams *task.In
 	if params["originalDataset"] == nil {
 		return errors.Errorf("missing 'originalDataset' parameter")
 	}
-
+	j.filterByUpdates = false
+	if params["filterByUpdates"] != nil {
+		castedBool, ok := params["filterByUpdates"].(bool)
+		if ok {
+			j.filterByUpdates = castedBool
+		}
+	}
 	j.sourcePath = params["path"].(string)
 
 	originalDataset, ok := params["originalDataset"].(map[string]interface{})
@@ -169,7 +176,7 @@ func (j *Joined) PrepareImport() (*task.IngestSteps, *task.IngestParams, error) 
 // CleanupImport removes temporary files and structures created during the import.
 func (j *Joined) CleanupImport(ingestResult *task.IngestResult) error {
 	// if there is a source learning dataset, then sync it properly with the newly imported dataset
-	err := syncPrefeaturizedDataset(ingestResult.DatasetID, j.updateDatasetID, j.sourceLearningDataset, j.meta)
+	err := syncPrefeaturizedDataset(ingestResult.DatasetID, j.updateDatasetID, j.sourceLearningDataset, j.meta, j.filterByUpdates)
 	if err != nil {
 		return err
 	}
@@ -254,7 +261,7 @@ func combineDatasetGroupings(groupingsFirst []map[string]interface{}, groupingsS
 	return combined
 }
 
-func syncPrefeaturizedDataset(datasetID string, updateDatasetID string, sourceLearningDataset string, metaStorage api.MetadataStorage) error {
+func syncPrefeaturizedDataset(datasetID string, updateDatasetID string, sourceLearningDataset string, metaStorage api.MetadataStorage, filterByUpdates bool) error {
 	// make sure there is a prefeaturized dataset to sync
 	if sourceLearningDataset == "" {
 		return nil
@@ -291,8 +298,8 @@ func syncPrefeaturizedDataset(datasetID string, updateDatasetID string, sourceLe
 
 	// update the featurized dataset using the unfeaturized data
 	log.Infof("updating dataset on disk using data from '%s'", dsUpdateLearningFolder)
-	// do not filter dataset by updates
-	err = dsDisk.UpdateOnDisk(ds, dsDiskUpdate.Dataset.Data, true, false)
+
+	err = dsDisk.UpdateOnDisk(ds, dsDiskUpdate.Dataset.Data, true, filterByUpdates)
 	if err != nil {
 		return err
 	}

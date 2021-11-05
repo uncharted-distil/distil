@@ -206,6 +206,7 @@ import {
   topVariablesNames,
 } from "../util/data";
 import { loadJoinedDataset, loadJoinView } from "../util/join";
+import { JoinTypes } from "../util/types";
 
 interface JoinSuggestionDatasetItem {
   dataset: Dataset;
@@ -479,6 +480,7 @@ export default Vue.extend({
         joinAccuracy: [1],
         joinAbsolute: [false],
         joinSuggestionIndex: joinSuggestionIndex,
+        operation: JoinTypes.Left,
       };
 
       // dispatch action that triggers request send to server
