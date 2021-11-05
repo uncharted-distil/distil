@@ -83,6 +83,7 @@ import {
 import { actions as datasetActions } from "../store/dataset/module";
 import { getTableDataItems, getTableDataFields } from "../util/data";
 import { EventList, EI } from "../util/events";
+import { JoinTypes } from "../util/types";
 
 export default Vue.extend({
   name: "JoinDatasetsPreview",
@@ -98,6 +99,7 @@ export default Vue.extend({
     previewTableData: Object as () => TableData,
     searchResultIndex: Number as () => number,
     path: String as () => string,
+    joinType: { type: Object as () => JoinTypes, default: null },
   },
 
   data() {
@@ -177,6 +179,7 @@ export default Vue.extend({
         searchResultIndex: this.searchResultIndex,
         description: args.description,
         path: this.path,
+        filterByUpdates: this.joinType === JoinTypes.Inner,
       };
       datasetActions
         .importDataset(this.$store, importDatasetArgs)

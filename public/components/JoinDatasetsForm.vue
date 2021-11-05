@@ -32,6 +32,7 @@
         :dataset-b="datasetB"
         :joined-column="joinedColumn"
         :path="joinedPath"
+        :join-type="joinType"
         @success="onJoinCommitSuccess"
         @failure="onJoinCommitFailure"
         @close="showJoinSuccess = !showJoinSuccess"
