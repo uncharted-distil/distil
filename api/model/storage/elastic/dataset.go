@@ -484,7 +484,7 @@ func (s *Storage) SetExtrema(dataset string, key string, extrema *api.Extrema) e
 }
 
 // AddVariable adds a new variable to the dataset.  If the varDisplayName is left blank it will be set to the key value.
-func (s *Storage) AddVariable(dataset string, key string, varDisplayName string, varType string, varRole string) error {
+func (s *Storage) AddVariable(dataset string, key string, varDisplayName string, varType string, varRole []string) error {
 
 	if varDisplayName == "" {
 		varDisplayName = key
@@ -575,7 +575,7 @@ func (s *Storage) DatasetExists(dataset string) (bool, error) {
 }
 
 // AddGroupedVariable adds a grouping to the metadata.
-func (s *Storage) AddGroupedVariable(dataset string, varName string, varDisplayName string, varType string, varRole string, grouping model.BaseGrouping) error {
+func (s *Storage) AddGroupedVariable(dataset string, varName string, varDisplayName string, varType string, varRole []string, grouping model.BaseGrouping) error {
 
 	// Create a new grouping variable
 	err := s.AddVariable(dataset, varName, varDisplayName, varType, varRole)

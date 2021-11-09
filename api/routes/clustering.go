@@ -126,7 +126,7 @@ func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorag
 			}
 
 			if addMeta {
-				err = metaStorage.AddVariable(dataset, clusterVarName, "Pattern", model.CategoricalType, model.VarDistilRoleMetadata)
+				err = metaStorage.AddVariable(dataset, clusterVarName, "Pattern", model.CategoricalType, []string{model.VarDistilRoleMetadata})
 				if err != nil {
 					handleError(w, err)
 					return

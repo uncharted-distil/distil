@@ -87,8 +87,8 @@ func GeocodeForwardDataset(schemaFile string, dataset string, config *IngestTask
 		latDesc := fmt.Sprintf("latitude obtained from field %s", field[0].SourceField)
 		lonDesc := fmt.Sprintf("longitude obtained from field %s", field[0].SourceField)
 		fields[field[0].SourceField] = []*model.Variable{
-			model.NewVariable(len(mainDR.Variables), latName, "label", latName, latName, model.LatitudeType, model.LatitudeType, latDesc, []string{"attribute"}, model.VarDistilRoleMetadata, nil, mainDR.Variables, false),
-			model.NewVariable(len(mainDR.Variables)+1, lonName, "label", latName, lonName, model.LongitudeType, model.LongitudeType, lonDesc, []string{"attribute"}, model.VarDistilRoleMetadata, nil, mainDR.Variables, false),
+			model.NewVariable(len(mainDR.Variables), latName, "label", latName, latName, model.LatitudeType, model.LatitudeType, latDesc, []string{"attribute"}, []string{model.VarDistilRoleMetadata}, nil, mainDR.Variables, false),
+			model.NewVariable(len(mainDR.Variables)+1, lonName, "label", latName, lonName, model.LongitudeType, model.LongitudeType, lonDesc, []string{"attribute"}, []string{model.VarDistilRoleMetadata}, nil, mainDR.Variables, false),
 		}
 		mainDR.Variables = append(mainDR.Variables, fields[field[0].SourceField]...)
 		for _, gc := range field {

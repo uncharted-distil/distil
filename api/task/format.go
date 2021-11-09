@@ -100,7 +100,7 @@ func addD3MIndex(schemaFile string, meta *model.Metadata, data [][]string) (*mod
 	dr := meta.GetMainDataResource()
 	name := model.D3MIndexFieldName
 	v := model.NewVariable(len(dr.Variables), name, name, name, name, model.IntegerType, model.IntegerType,
-		"required index field", []string{model.RoleIndex}, model.VarDistilRoleIndex, nil, dr.Variables, false)
+		"required index field", []string{model.RoleIndex}, []string{model.VarDistilRoleIndex}, nil, dr.Variables, false)
 	dr.Variables = append(dr.Variables, v)
 
 	// parse the raw output and write the line out

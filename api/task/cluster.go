@@ -85,7 +85,7 @@ func Cluster(dataset *api.Dataset, variable string, useKMeans bool, clusterCount
 			step, err = description.CreateMultiBandImageClusteringPipeline("remote_sensing_cluster", "multiband image clustering",
 				rsg, features, clusterParams, envConfig.RemoteSensingGPUBatchSize, envConfig.RemoteSensingNumJobs)
 		}
-	} else if clusteringVar.DistilRole == model.VarDistilRoleGrouping {
+	} else if clusteringVar.HasRole(model.VarDistilRoleGrouping) {
 		// assume timeseries for now if distil role is grouping
 		step, err = description.CreateSlothPipeline("timeseries_cluster", "k-means time series clustering",
 			"", "", clusterGroup.(*model.TimeseriesGrouping), features)

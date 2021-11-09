@@ -103,6 +103,7 @@ import { DISTIL_ROLES, isUnsupportedTargetVar } from "../../util/types";
 import { ExplorerStateNames } from "../../util/explorer";
 import { EventList } from "../../util/events";
 import { requestActions } from "../../store";
+import { hasRole } from "../../util/data";
 
 export default Vue.extend({
   name: "FacetListPane",
@@ -187,7 +188,7 @@ export default Vue.extend({
             const buttonList = [] as HTMLElement[];
             // Display and Hide variables in the Data Explorer.
             const exploreButton = this.displayButton(variableName);
-            if (variable?.distilRole !== DISTIL_ROLES.Augmented) {
+            if (!hasRole(variable, DISTIL_ROLES.Augmented)) {
               if (this.hasTarget) {
                 // Add/Remove a variable as training.
                 buttonList.push(this.trainingButton(variableName));

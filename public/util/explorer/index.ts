@@ -48,6 +48,7 @@ import {
 import { getters as routeGetters } from "../../store/route/module";
 import store from "../../store/store";
 import { Dictionary } from "vue-router/types/router";
+import { hasRole } from "../data";
 export interface Action {
   name: string;
   icon: string;
@@ -336,7 +337,7 @@ export const ACTIONS = [
         : [];
       // add all the augmented variables
       return result.concat(
-        variables.filter((v) => v.distilRole === DISTIL_ROLES.Augmented)
+        variables.filter((v) => hasRole(v, DISTIL_ROLES.Augmented))
       );
     },
   },

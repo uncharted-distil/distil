@@ -115,6 +115,16 @@ func TargetRank(dataset *api.Dataset, target string, features []*model.Variable,
 	return ranks, nil
 }
 
+// withinExcludedRoles returns true if any of the supplied roles exists within excludedRoles
+func withinExcludedRoles(roles []string) bool {
+	for _, role := range roles {
+		if excludedRoles[role] {
+			return true
+		}
+	}
+	return false
+}
+
 func filterFeatures(features []*model.Variable, target string) map[string]bool {
 	filteredFeatures := map[string]*model.Variable{}
 
@@ -126,7 +136,7 @@ func filterFeatures(features []*model.Variable, target string) map[string]bool {
 		}
 
 		// check if this is a feature that we've marked as elligible for ranking and save it if so
-		if !excludedTypes[feature.Type] && !excludedRoles[feature.DistilRole] && feature.Key != target {
+		if !excludedTypes[feature.Type] && !withinExcludedRoles(feature.DistilRole) && feature.Key != target {
 			filteredFeatures[feature.Key] = feature
 		}
 	}

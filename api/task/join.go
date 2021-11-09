@@ -224,7 +224,7 @@ func joinMetadataVariables(headerNames []string, leftMetadata *model.Metadata, r
 				// create a new variable and default type to string
 				// ingest process should be able to provide better info
 				v = model.NewVariable(i, varName, varName, varName, varName, model.UnknownType,
-					model.UnknownType, "", []string{"attribute"}, "data", nil, mergedVariables, false)
+					model.UnknownType, "", []string{"attribute"}, []string{"data"}, nil, mergedVariables, false)
 			}
 		}
 

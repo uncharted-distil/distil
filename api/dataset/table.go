@@ -82,7 +82,7 @@ func (t *Table) CreateDataset(rootDataPath string, datasetName string, config *e
 			if c == model.D3MIndexFieldName {
 				d3mIndexVar := model.NewVariable(i, model.D3MIndexFieldName, model.D3MIndexFieldName,
 					model.D3MIndexFieldName, model.D3MIndexFieldName, model.IntegerType, model.IntegerType, "D3M index",
-					[]string{model.RoleIndex}, model.VarDistilRoleIndex, nil, nil, false)
+					[]string{model.RoleIndex}, []string{model.VarDistilRoleIndex}, nil, nil, false)
 				dr.Variables = []*model.Variable{d3mIndexVar}
 				dr.ResType = model.ResTypeTable
 			}

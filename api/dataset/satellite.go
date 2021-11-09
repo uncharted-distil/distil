@@ -255,44 +255,44 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(varCounter, model.D3MIndexFieldName, model.D3MIndexFieldName, model.D3MIndexFieldName,
 			model.D3MIndexFieldName, model.IntegerType, model.IntegerType, "D3M index",
-			[]string{model.RoleMultiIndex}, model.VarDistilRoleIndex, nil, dr.Variables, false),
+			[]string{model.RoleMultiIndex}, []string{model.VarDistilRoleIndex}, nil, dr.Variables, false),
 	)
 	varCounter++
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(varCounter, "image_file", "image_file", "image_file", "image_file", model.MultiBandImageType,
 			model.StringType, "Reference to image file", []string{"attribute"},
-			model.VarDistilRoleData, map[string]interface{}{"resID": "0", "resObject": "item"}, dr.Variables, false))
+			[]string{model.VarDistilRoleData}, map[string]interface{}{"resID": "0", "resObject": "item"}, dr.Variables, false))
 	varCounter++
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(varCounter, "group_id", "group_id", "group_id", "group_id", model.StringType,
 			model.StringType, "ID linking all bands of a particular image set together", []string{"attribute", "suggestedGroupingKey"},
-			model.VarDistilRoleGrouping, nil, dr.Variables, false))
+			[]string{model.VarDistilRoleGrouping}, nil, dr.Variables, false))
 	varCounter++
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(varCounter, "band", "band", "band", "band", model.StringType,
 			model.StringType, "Image band", []string{"attribute"},
-			model.VarDistilRoleData, nil, dr.Variables, false))
+			[]string{model.VarDistilRoleData}, nil, dr.Variables, false))
 	varCounter++
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(varCounter, "timestamp", "timestamp", "timestamp", "timestamp", timestampType,
 			model.StringType, "Image timestamp", []string{"attribute"},
-			model.VarDistilRoleData, nil, dr.Variables, false))
+			[]string{model.VarDistilRoleData}, nil, dr.Variables, false))
 	varCounter++
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(varCounter, "coordinates", "coordinates", "coordinates", "coordinates", model.RealVectorType,
 			model.RealVectorType, "Coordinates of the image defined by a bounding box", []string{"attribute"},
-			model.VarDistilRoleData, nil, dr.Variables, false))
+			[]string{model.VarDistilRoleData}, nil, dr.Variables, false))
 	varCounter++
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(varCounter, "__geo_coordinates", "coordinates", "geo_coordinates", "__geo_coordinates", model.GeoBoundsType,
 			model.GeoBoundsType, "postgis structure for the bounding box coordinates of the tile", []string{},
-			model.VarDistilRoleData, nil, dr.Variables, false))
+			[]string{model.VarDistilRoleData}, nil, dr.Variables, false))
 	varCounter++
 	if len(expectedHeaders) == len(headerNames) {
 		dr.Variables = append(dr.Variables,
 			model.NewVariable(varCounter, "label", "label", "label", "label", model.CategoricalType,
 				model.StringType, "Label of the image", []string{"suggestedTarget"},
-				model.VarDistilRoleData, nil, dr.Variables, false))
+				[]string{model.VarDistilRoleData}, nil, dr.Variables, false))
 	}
 
 	// create the data resource for the referenced images

@@ -95,7 +95,7 @@ func AddFieldHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageC
 			}
 		}
 		// update elasticsearch
-		err = metaStorage.AddVariable(dataset, name, displayName, fieldType, model.VarDistilRoleData)
+		err = metaStorage.AddVariable(dataset, name, displayName, fieldType, []string{model.VarDistilRoleData})
 		if err != nil {
 			handleError(w, err)
 			return

@@ -375,7 +375,7 @@ func CreateBatches(schemaFile string, maxBatchSize int) ([]string, error) {
 	// get grouping column, defaulting to d3m index
 	groupColIndex := -1
 	for _, v := range meta.GetMainDataResource().Variables {
-		if v.DistilRole == model.VarDistilRoleGrouping {
+		if v.HasRole(model.VarDistilRoleGrouping) {
 			groupColIndex = v.Index
 		} else if v.Key == model.D3MIndexFieldName && groupColIndex == -1 {
 			groupColIndex = v.Index

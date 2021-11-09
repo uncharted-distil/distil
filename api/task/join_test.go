@@ -42,21 +42,21 @@ func TestJoin(t *testing.T) {
 			HeaderName:  "D3M Index",
 			DisplayName: "D3M Index",
 			Type:        model.IntegerType,
-			DistilRole:  "data",
+			DistilRole:  []string{"data"},
 		},
 		{
 			Key:         "alpha",
 			HeaderName:  "Alpha",
 			DisplayName: "Alpha",
 			Type:        model.RealType,
-			DistilRole:  "data",
+			DistilRole:  []string{"data"},
 		},
 		{
 			Key:         "bravo",
 			HeaderName:  "Bravo",
 			DisplayName: "Bravo",
 			Type:        model.IntegerType,
-			DistilRole:  "data",
+			DistilRole:  []string{"data"},
 		},
 	}
 
@@ -66,21 +66,21 @@ func TestJoin(t *testing.T) {
 			HeaderName:  "D3M Index",
 			DisplayName: "D3M Index",
 			Type:        model.IntegerType,
-			DistilRole:  "data",
+			DistilRole:  []string{"data"},
 		},
 		{
 			Key:         "charlie",
 			HeaderName:  "Charlie",
 			DisplayName: "Charlie",
 			Type:        model.CategoricalType,
-			DistilRole:  "data",
+			DistilRole:  []string{"data"},
 		},
 		{
 			Key:         "delta",
 			HeaderName:  "Delta",
 			DisplayName: "Delta",
 			Type:        model.IntegerType,
-			DistilRole:  "data",
+			DistilRole:  []string{"data"},
 		},
 	}
 

@@ -560,11 +560,13 @@ export function removeSummary(
     Vue.delete(summaries, index);
   }
 }
-
+export function hasRole(v: Variable, distilRole: DISTIL_ROLES): boolean {
+  return v.distilRole.some((role) => role === distilRole);
+}
 export function filterVariablesByFeature(variables: Variable[]): Variable[] {
   // need to exclude the hidden variables
   const groupingVars = variables.filter(
-    (v) => v.distilRole === DISTIL_ROLES.Grouping && v.grouping !== null
+    (v) => hasRole(v, DISTIL_ROLES.Grouping) && v.grouping !== null
   );
   const hiddenFlat = [].concat.apply(
     [],
@@ -579,7 +581,7 @@ export function filterVariablesByFeature(variables: Variable[]): Variable[] {
 
   return variables.filter(
     (v) =>
-      (v.distilRole === "data" && !hidden.has(v.key)) ||
+      (hasRole(v, DISTIL_ROLES.Data) && !hidden.has(v.key)) ||
       groupingDisplayed.has(v.key)
   );
 }
@@ -1553,7 +1555,7 @@ export function FetchImagePack(args: {
   if (!args.items[0][key]) {
     return;
   }
-  let dataset = args.dataset ?? routeGetters.getRouteDataset(store);
+  const dataset = args.dataset ?? routeGetters.getRouteDataset(store);
   datasetActions.fetchImagePack(store, {
     multiBandImagePackRequest: {
       imageIds: args.items.map((item) => {

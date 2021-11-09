@@ -364,8 +364,8 @@ func (s *Storage) FetchDataset(dataset string, storageName string,
 	// only include data with distilrole data and index
 	// limit vars to only those selecred (if applicable)
 	for _, v := range vars {
-		if (model.IsTA2Field(v.DistilRole, v.SelectedRole) ||
-			(v.DistilRole == model.VarDistilRoleMetadata && includeMetadata)) &&
+		if (v.IsTA2Field() ||
+			(v.HasRole(model.VarDistilRoleMetadata) && includeMetadata)) &&
 			(!limitSelectedFields || selectedVars[v.Key]) {
 			filteredVars = append(filteredVars, v)
 		}
