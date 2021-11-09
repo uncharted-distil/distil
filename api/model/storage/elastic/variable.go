@@ -72,9 +72,9 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 	if !ok {
 		displayVariable = ""
 	}
-	distilRole, ok := json.String(child, model.VarDistilRole)
+	distilRole, ok := json.StringArray(child, model.VarDistilRole)
 	if !ok {
-		distilRole = ""
+		distilRole = []string{""}
 	}
 	deleted, ok := json.Bool(child, model.VarDeleted)
 	if !ok {
@@ -212,14 +212,14 @@ func (s *Storage) parseVariables(searchHit *elastic.SearchHit, includeIndex bool
 		if !includeIndex && len(variable.Role) > 0 && model.IsIndexRole(variable.Role[0]) {
 			continue
 		}
-		if !includeMeta && variable.DistilRole == model.VarDistilRoleMetadata {
+		if !includeMeta && variable.HasRole(model.VarDistilRoleMetadata) {
 			continue
 		}
-		if !includeSystemData && variable.DistilRole == model.VarDistilRoleSystemData {
+		if !includeSystemData && variable.HasRole(model.VarDistilRoleSystemData) {
 			continue
 		}
 		// systemData and padding is virtually the same thing, the only difference being fitting will require it
-		if !includeSystemData && variable.DistilRole == model.VarDistilRolePadding {
+		if !includeSystemData && variable.HasRole(model.VarDistilRolePadding) {
 			continue
 		}
 		if variable != nil {
@@ -473,7 +473,7 @@ func (s *Storage) FetchVariablesByName(dataset string, varKeys []string, include
 	// filter the returned variables to match our input list
 	filteredVariables := []*model.Variable{}
 	for _, variable := range fetchedVariables {
-		if varKeySet[variable.Key] || (includeIndex && variable.DistilRole == model.VarDistilRoleIndex) {
+		if varKeySet[variable.Key] || (includeIndex && variable.HasRole(model.VarDistilRoleIndex)) {
 			filteredVariables = append(filteredVariables, variable)
 		}
 	}

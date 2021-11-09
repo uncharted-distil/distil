@@ -200,10 +200,10 @@ func writeQueryDataset(ds *api.Dataset, data [][]string) (string, error) {
 	dr.Variables = []*model.Variable{
 		model.NewVariable(0, model.D3MIndexFieldName, model.D3MIndexFieldName, model.D3MIndexFieldName,
 			model.D3MIndexFieldName, model.IntegerType, model.IntegerType, "D3M index",
-			[]string{model.RoleMultiIndex}, model.VarDistilRoleIndex, nil, dr.Variables, false),
+			[]string{model.RoleMultiIndex}, []string{model.VarDistilRoleIndex}, nil, dr.Variables, false),
 		model.NewVariable(1, queryFieldName, queryFieldName, queryFieldName, queryFieldName, model.StringType,
 			model.StringType, "Label for the query", []string{"suggestedTarget"},
-			model.VarDistilRoleData, nil, dr.Variables, false),
+			[]string{model.VarDistilRoleData}, nil, dr.Variables, false),
 	}
 	dr.ResPath = dataPathTarget
 	meta.DataResources = []*model.DataResource{dr}
@@ -228,7 +228,7 @@ func upsertVariable(params QueryParams, dataset string, storageName string, varN
 		if err != nil {
 			return err
 		}
-		err = params.MetaStorage.AddVariable(params.Dataset, varName, displayName, varType, model.VarDistilRoleData)
+		err = params.MetaStorage.AddVariable(params.Dataset, varName, displayName, varType, []string{model.VarDistilRoleData})
 		if err != nil {
 			return err
 		}

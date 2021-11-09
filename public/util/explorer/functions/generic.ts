@@ -17,7 +17,11 @@ import {
   VariableSummary,
 } from "../../../store/dataset";
 import { ActionColumnRef, DataExplorerRef } from "../../componentTypes";
-import { sortVariablesByImportance, totalAreaCoverage } from "../../data";
+import {
+  hasRole,
+  sortVariablesByImportance,
+  totalAreaCoverage,
+} from "../../data";
 import {
   DISTIL_ROLES,
   isGeoLocatedType,
@@ -548,7 +552,7 @@ export const GENERIC_COMPUTES = {
     const self = (this as unknown) as DataExplorerRef;
     const variables = self?.state
       .getVariables()
-      .filter((v) => v?.distilRole !== DISTIL_ROLES.Meta);
+      .filter((v) => !hasRole(v, DISTIL_ROLES.Meta));
     return sortVariablesByImportance(variables);
   },
   /**

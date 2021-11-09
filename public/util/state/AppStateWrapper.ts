@@ -24,6 +24,7 @@ import { getters as routeGetters } from "../../store/route/module";
 import store from "../../store/store";
 import {
   getAllVariablesSummaries,
+  hasRole,
   LOW_SHOT_RANK_COLUMN_PREFIX,
   LOW_SHOT_SCORE_COLUMN_PREFIX,
   sortVariablesByImportance,
@@ -383,8 +384,8 @@ export class ResultViewState implements BaseState {
           .getVariables(store)
           .filter(
             (variable) =>
-              variable.distilRole === DISTIL_ROLES.Augmented &&
-              variable.key === "_outlier"
+              variable.key === "_outlier" &&
+              hasRole(variable, DISTIL_ROLES.Augmented)
           )
       );
   }
@@ -673,9 +674,9 @@ export class LabelViewState implements BaseState {
     const labelRankName = LOW_SHOT_RANK_COLUMN_PREFIX + labelName;
     return datasetGetters.getVariables(store).filter((v) => {
       return (
-        v.distilRole !== DISTIL_ROLES.SystemData &&
         v.key !== labelScoreName &&
-        v.key !== labelRankName
+        v.key !== labelRankName &&
+        !hasRole(v, DISTIL_ROLES.SystemData)
       );
     });
   }

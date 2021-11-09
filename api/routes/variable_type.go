@@ -155,7 +155,7 @@ func setGeoBoundsField(ds *api.Dataset, field string, storage api.DataStorage, m
 	}
 
 	// create the metadata variable for the hidden geobounds field
-	err = meta.AddVariable(ds.ID, geometryFieldName, field, model.GeoBoundsType, model.VarDistilRoleMetadata)
+	err = meta.AddVariable(ds.ID, geometryFieldName, field, model.GeoBoundsType, []string{model.VarDistilRoleMetadata})
 	if err != nil {
 		return err
 	}
@@ -172,7 +172,7 @@ func setGeoBoundsField(ds *api.Dataset, field string, storage api.DataStorage, m
 	grouping.PolygonCol = geometryFieldName
 	grouping.Hidden = []string{field, geometryFieldName}
 
-	return meta.AddGroupedVariable(ds.ID, groupName, field, model.GeoBoundsType, model.VarDistilRoleGrouping, grouping)
+	return meta.AddGroupedVariable(ds.ID, groupName, field, model.GeoBoundsType, []string{model.VarDistilRoleGrouping}, grouping)
 }
 
 func getPostParameters(r *http.Request) (map[string]interface{}, error) {

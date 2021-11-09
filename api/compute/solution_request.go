@@ -659,10 +659,10 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	dataVariables := []*model.Variable{}
 	groupingVariableIndex := -1
 	for _, variable := range variables {
-		if model.IsTA2Field(variable.DistilRole, variable.SelectedRole) {
+		if variable.IsTA2Field() {
 			dataVariables = append(dataVariables, variable)
 		}
-		if variable.DistilRole == model.VarDistilRoleGrouping {
+		if variable.HasRole(model.VarDistilRoleGrouping) {
 			// if this is a group var, find the grouping ID col and use that
 			if variable.Grouping != nil && variable.Grouping.GetIDCol() != "" {
 				groupVariable, err := findVariable(variable.Grouping.GetIDCol(), variables)
@@ -818,7 +818,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		// ignore the index field
 		if v == model.D3MIndexFieldName {
 			continue
-		} else if variablesMap[v].DistilRole == model.VarDistilRoleAugmented {
+		} else if variablesMap[v].HasRole(model.VarDistilRoleAugmented) {
 			continue
 		}
 

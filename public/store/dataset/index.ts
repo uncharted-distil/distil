@@ -109,7 +109,7 @@ export interface Variable {
   colOriginalType: string;
   colType: string;
   datasetName: string;
-  distilRole: string;
+  distilRole: string[];
   grouping: Grouping;
   importance: number;
   isColTypeChanged: boolean;

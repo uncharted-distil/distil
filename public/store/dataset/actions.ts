@@ -25,6 +25,7 @@ import {
   createPendingSummary,
   DatasetUpdate,
   fetchSummaryExemplars,
+  hasRole,
   JoinPair,
   minimumRouteKey,
   validateArgs,
@@ -126,8 +127,7 @@ function isOutlierExist(): boolean {
   const variables = getters.getVariables(store) ?? [];
   return variables.some(
     (variable) =>
-      variable.distilRole === DISTIL_ROLES.Augmented &&
-      variable.key === "_outlier"
+      variable.key === "_outlier" && hasRole(variable, DISTIL_ROLES.Augmented)
   );
 }
 

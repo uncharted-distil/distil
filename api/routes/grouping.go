@@ -137,7 +137,7 @@ func RemoveGroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataSt
 				handleError(w, err)
 				return
 			}
-			if idColVariable.DistilRole == model.VarDistilRoleGrouping {
+			if idColVariable.HasRole(model.VarDistilRoleGrouping) {
 				err = meta.DeleteVariable(dataset, variable.Grouping.GetIDCol())
 				if err != nil {
 					handleError(w, err)
@@ -246,7 +246,7 @@ func createGrouping(dataset string, storageName string, groupingType string, raw
 					if err != nil {
 						return err
 					}
-					if idColVariable.DistilRole == model.VarDistilRoleGrouping {
+					if idColVariable.HasRole(model.VarDistilRoleGrouping) {
 						err = meta.DeleteVariable(dataset, v.Grouping.GetIDCol())
 						if err != nil {
 							return err
@@ -269,7 +269,7 @@ func createGrouping(dataset string, storageName string, groupingType string, raw
 		// Set the name of the expected cluster column - it doesn't necessarily exist.
 		tsg.ClusterCol = model.ClusterVarPrefix + tsg.IDCol
 
-		err = meta.AddGroupedVariable(dataset, groupingVarName, tsg.YCol, model.TimeSeriesType, model.VarDistilRoleGrouping, tsg)
+		err = meta.AddGroupedVariable(dataset, groupingVarName, tsg.YCol, model.TimeSeriesType, []string{model.VarDistilRoleGrouping}, tsg)
 		if err != nil {
 			return err
 		}
@@ -281,7 +281,7 @@ func createGrouping(dataset string, storageName string, groupingType string, raw
 
 		// No key required in this case.
 		groupingVarName := strings.Join([]string{gcg.XCol, gcg.YCol}, task.DefaultSeparator)
-		err = meta.AddGroupedVariable(dataset, groupingVarName, "Geocoordinate", model.BivariateFilter, model.VarDistilRoleGrouping, gcg)
+		err = meta.AddGroupedVariable(dataset, groupingVarName, "Geocoordinate", model.BivariateFilter, []string{model.VarDistilRoleGrouping}, gcg)
 		if err != nil {
 			return err
 		}
@@ -294,7 +294,7 @@ func createGrouping(dataset string, storageName string, groupingType string, raw
 		// Set the name of the expected cluster column - it doesn't necessarily exist.
 		varName := rsg.IDCol + "_group"
 		rsg.ClusterCol = model.ClusterVarPrefix + rsg.IDCol
-		err = meta.AddGroupedVariable(dataset, varName, "Tile", model.MultiBandImageType, model.VarDistilRoleGrouping, rsg)
+		err = meta.AddGroupedVariable(dataset, varName, "Tile", model.MultiBandImageType, []string{model.VarDistilRoleGrouping}, rsg)
 		if err != nil {
 			return err
 		}

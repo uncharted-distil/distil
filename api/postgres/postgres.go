@@ -45,7 +45,7 @@ const (
 
 	metadataTableCreationSQL = `CREATE TABLE %s (
 			name	text	NOT NULL,
-			role	varchar(100),
+			role	varchar[],
 			type	varchar(100)
 		);`
 	resultTableCreationSQL = `CREATE TABLE %s (

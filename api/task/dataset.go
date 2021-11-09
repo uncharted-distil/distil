@@ -200,7 +200,7 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 		if variableMeta == nil {
 			// assume explanaibility output and create a new variable for it
 			variableMeta = model.NewVariable(i, v, v, v, v, model.StringType, model.StringType,
-				"", []string{"attribute"}, model.VarDistilRoleData, nil, nil, true)
+				"", []string{"attribute"}, []string{model.VarDistilRoleData}, nil, nil, true)
 		}
 		variableMeta.Index = i
 		variableMeta.SuggestedTypes = nil
