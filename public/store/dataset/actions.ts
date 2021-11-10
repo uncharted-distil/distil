@@ -352,7 +352,7 @@ export const actions = {
   // Sends a request to the server to generate cluaster for all data that is a valid target for clustering.
   async fetchClusters(
     context: DatasetContext,
-    args: { dataset: string }
+    args: { dataset: string; clusterCount?: number }
   ): Promise<any> {
     if (!validateArgs(args, ["dataset"])) {
       return null;
@@ -385,7 +385,9 @@ export const actions = {
       if (v.grouping && isClusteredGrouping(v.grouping)) {
         return axios.post(
           `/distil/cluster/${args.dataset}/${v.grouping.idCol}`,
-          {}
+          {
+            clusterCount: args.clusterCount || null,
+          }
         );
       } else if (isImageType(v.colType)) {
         return axios.post(`/distil/cluster/${args.dataset}/${v.key}`, {});
@@ -1135,7 +1137,6 @@ export const actions = {
       dataMode: DataMode;
       mode: SummaryMode;
       handleMutation: boolean;
-      clusterCount?: number;
     }
   ): Promise<VariableSummaryResp<DatasetContext> | void> {
     if (!validateArgs(args, ["dataset", "variable"])) {

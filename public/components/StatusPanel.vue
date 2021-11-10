@@ -25,6 +25,12 @@
         </div>
       </div>
       <div class="content">
+        <b-form-group label="Number of clusters">
+          <b-form-select
+            v-model="selectedNumberOfClusters"
+            :options="availableNumberOfClusters"
+          />
+        </b-form-group>
         <div v-if="!requestData">There is no new update.</div>
         <div v-else-if="isPending" class="spinner">
           <div class="circle-spinner"></div>
@@ -37,12 +43,6 @@
                 {{ contentData.resolvedMsg }}
               </p>
             </div>
-            <b-form-group label="Number of clusters">
-              <b-form-select
-                v-model="selectedNumberOfClusters"
-                :options="availableNumberOfClusters"
-              />
-            </b-form-group>
             <b-button variant="primary" @click="applyChange">Apply</b-button>
             <b-button variant="secondary" @click="clearData">Discard</b-button>
           </div>
@@ -98,7 +98,7 @@ export default Vue.extend({
 
   data() {
     return {
-      selectedNumberOfClusters: null,
+      selectedNumberOfClusters: 4,
     };
   },
   components: {
@@ -307,8 +307,10 @@ export default Vue.extend({
 
   watch: {
     selectedNumberOfClusters() {
-      const self = (this.$root.$refs.view as unknown) as DataExplorerRef;
-      self.clusterCount = this.selectedNumberOfClusters;
+      datasetActions.fetchClusters(this.$store, {
+        dataset: this.dataset,
+        clusterCount: this.selectedNumberOfClusters,
+      });
     },
   },
 });
