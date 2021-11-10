@@ -83,7 +83,6 @@ import { StatusPanelState, StatusPanelContentType } from "../store/app";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { overlayRouteEntry, varModesToString } from "../util/routes";
 import { EventList } from "../util/events";
-import { DataExplorerRef } from "../util/componentTypes";
 
 const STATUS_USER_EVENT = new Map<DatasetPendingRequestType, Feature>([
   [DatasetPendingRequestType.VARIABLE_RANKING, Feature.RANK_FEATURES],
