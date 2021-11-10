@@ -198,21 +198,7 @@ export default Vue.extend({
 
   watch: {
     tiles(prev: Tile[], cur: Tile[]) {
-      // only things that should trigger a fetch and render is gray changing, order, and length
-      let same = true;
-      if (prev.length === cur.length) {
-        prev.forEach((element, i) => {
-          if (
-            element.item.d3mIndex !== cur[i].item.d3mIndex ||
-            element.gray !== cur[i].gray
-          ) {
-            same = false;
-          }
-        });
-      } else {
-        same = false;
-      }
-      if (same) {
+      if (JSON.stringify(prev) === JSON.stringify(cur)) {
         return;
       }
       this.renderTiles = this.spatialSort();

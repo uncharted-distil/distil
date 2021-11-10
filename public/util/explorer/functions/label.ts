@@ -237,7 +237,7 @@ export const LABEL_EVENT_HANDLERS = {
     const rowSelection = routeGetters.getDecodedRowSelection(store);
     const innerData = new Map<number, unknown>();
     const updateData = rowSelection.d3mIndices.map((i) => {
-      innerData.set(i, { LowShotLabel: label });
+      innerData.set(i, { [routeGetters.getRouteLabel(store)]: label });
       return {
         index: i.toString(),
         name: self.labelName,
@@ -258,6 +258,10 @@ export const LABEL_EVENT_HANDLERS = {
       annotationHasChanged: true,
     });
     await self.state.fetchData();
+    datasetMutations.setAreaOfInterestIncludeInner(
+      store,
+      datasetGetters.getIncludedTableData(store)
+    );
     if (self.isRemoteSensing) {
       self.state.fetchMapBaseline();
     }
