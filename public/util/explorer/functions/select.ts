@@ -193,6 +193,7 @@ export const SELECT_EVENT_HANDLERS = {
         dataMode: DataMode.Cluster,
         mode: $enum(SummaryMode).asValueOrDefault(v, SummaryMode.Default),
         handleMutation: true,
+        clusterCount: self.clusterCount,
       });
     }
 

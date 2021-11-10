@@ -37,6 +37,12 @@
                 {{ contentData.resolvedMsg }}
               </p>
             </div>
+            <b-form-group label="Number of clusters">
+              <b-form-select
+                v-model="selectedNumberOfClusters"
+                :options="availableNumberOfClusters"
+              />
+            </b-form-group>
             <b-button variant="primary" @click="applyChange">Apply</b-button>
             <b-button variant="secondary" @click="clearData">Discard</b-button>
           </div>
@@ -77,6 +83,7 @@ import { StatusPanelState, StatusPanelContentType } from "../store/app";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { overlayRouteEntry, varModesToString } from "../util/routes";
 import { EventList } from "../util/events";
+import { DataExplorerRef } from "../util/componentTypes";
 
 const STATUS_USER_EVENT = new Map<DatasetPendingRequestType, Feature>([
   [DatasetPendingRequestType.VARIABLE_RANKING, Feature.RANK_FEATURES],
@@ -89,6 +96,11 @@ const STATUS_USER_EVENT = new Map<DatasetPendingRequestType, Feature>([
 export default Vue.extend({
   name: "StatusPanel",
 
+  data() {
+    return {
+      selectedNumberOfClusters: null,
+    };
+  },
   components: {
     StatusPanelJoin,
   },
@@ -198,6 +210,21 @@ export default Vue.extend({
           };
       }
     },
+    availableNumberOfClusters(): Array<Object> {
+      const minNumber = 3;
+      const maxNumber = 10;
+
+      const returnNumberOfClusterOptions = [];
+
+      for (let i = minNumber; i <= maxNumber; i++) {
+        returnNumberOfClusterOptions.push({
+          value: i,
+          text: i,
+        });
+      }
+
+      return returnNumberOfClusterOptions;
+    },
   },
 
   methods: {
@@ -275,6 +302,13 @@ export default Vue.extend({
         .then(() => {
           this.clearData();
         });
+    },
+  },
+
+  watch: {
+    selectedNumberOfClusters() {
+      const self = (this.$root.$refs.view as unknown) as DataExplorerRef;
+      self.clusterCount = this.selectedNumberOfClusters;
     },
   },
 });

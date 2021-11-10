@@ -1135,6 +1135,7 @@ export const actions = {
       dataMode: DataMode;
       mode: SummaryMode;
       handleMutation: boolean;
+      clusterCount?: number;
     }
   ): Promise<VariableSummaryResp<DatasetContext> | void> {
     if (!validateArgs(args, ["dataset", "variable"])) {

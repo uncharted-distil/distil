@@ -87,6 +87,7 @@ export interface DataExplorerRef {
   metaTypes: string[];
   state: BaseState;
   unsaveModalId: string;
+  clusterCount: number;
 
   // methods
   bindEventHandlers: (eventHandlers: Record<string, Function>) => void;
