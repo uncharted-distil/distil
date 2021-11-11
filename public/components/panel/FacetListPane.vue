@@ -18,14 +18,13 @@
 <template>
   <div class="h-100">
     <header v-if="enableFooter">
-      <b-button size="sm" variant="outline-primary" @click="hideAll">
+      <b-button size="sm" variant="outline-secondary" @click="hideAll">
         Hide All
       </b-button>
-      <b-button size="sm" variant="primary" @click="showAll">
-        Show All
-      </b-button>
+      <b-button size="sm" @click="showAll"> Show All </b-button>
       <b-button
         v-if="hasTarget"
+        variant="primary"
         size="sm"
         class="float-right"
         @click="selectAllTraining"
