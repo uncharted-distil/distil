@@ -25,7 +25,10 @@
         </div>
       </div>
       <div class="content">
-        <b-form-group label="Number of clusters">
+        <b-form-group
+          label="Number of clusters"
+          v-if="this.statusType === 'CLUSTERING'"
+        >
           <b-form-select
             v-model="selectedNumberOfClusters"
             :options="availableNumberOfClusters"
