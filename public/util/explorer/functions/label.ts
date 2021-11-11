@@ -385,7 +385,9 @@ export const LABEL_EVENT_HANDLERS = {
   /**
    * onExport is called when the user wants to download the newly annotated dataset to csv
    */
-  [EventList.LABEL.EXPORT_EVENT]: async function (): Promise<void> {
+  [EventList.LABEL.EXPORT_EVENT]: async function (
+    filename?: string
+  ): Promise<void> {
     const self = (this as unknown) as DataExplorerRef;
     const highlights = [
       {
@@ -407,7 +409,7 @@ export const LABEL_EVENT_HANDLERS = {
       mode: EXCLUDE_FILTER,
       dataMode,
     });
-    downloadFile(file, self.dataset, ".csv");
+    downloadFile(file, filename || self.dataset, ".csv");
     return;
   },
   /**

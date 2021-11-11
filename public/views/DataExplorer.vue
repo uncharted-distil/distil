@@ -29,6 +29,7 @@
         :enable-label="imageVarExists"
         @label="switchToLabelState"
       />
+      <export-pane v-else-if="activePane === 'export'" />
       <template v-else>
         <template v-if="hasNoVariables">
           <p v-if="activePane === 'selected'">Select a variable to explore.</p>
@@ -344,6 +345,7 @@ import { capitalize } from "lodash";
 // Components
 import ActionColumn from "../components/layout/ActionColumn.vue";
 import AddVariablePane from "../components/panel/AddVariablePane.vue";
+import ExportPane from "../components/panel/ExportPane.vue";
 import CreateLabelingForm from "../components/labelingComponents/CreateLabelingForm.vue";
 import CreateSolutionsForm from "../components/CreateSolutionsForm.vue";
 import DataSize from "../components/buttons/DataSize.vue";
@@ -403,6 +405,7 @@ const DataExplorer = Vue.extend({
   components: {
     ActionColumn,
     AddVariablePane,
+    ExportPane,
     CreateLabelingForm,
     CreateSolutionsForm,
     DataSize,
