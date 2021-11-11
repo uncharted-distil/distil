@@ -288,7 +288,7 @@
         {{ labelModalTitle }}
       </template>
       <b-form-group
-        v-if="!isClone"
+        v-if="!hasLabelRole"
         id="input-group-1"
         label="Label name:"
         label-for="label-input-field"
@@ -319,10 +319,10 @@
     </b-modal>
     <b-modal
       :id="unsaveModalId"
-      @ok="onConfirmRouteSave(nextRoute)"
-      @cancel="onCancelRouteSave(nextRoute)"
       ok-variant="danger"
       ok-title="Delete Cloned Dataset"
+      @ok="onConfirmRouteSave(nextRoute)"
+      @cancel="onCancelRouteSave(nextRoute)"
     >
       <template #modal-header> Unsaved dataset </template>
       <template>

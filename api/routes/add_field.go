@@ -94,8 +94,15 @@ func AddFieldHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageC
 				displayName = name
 			}
 		}
+		distilRoles := []string{model.VarDistilRoleData}
+		if params["isLabel"] != nil {
+			isLabel, ok := params["isLabel"].(bool)
+			if ok && isLabel {
+				distilRoles = append(distilRoles, model.VarDistilRoleLabel)
+			}
+		}
 		// update elasticsearch
-		err = metaStorage.AddVariable(dataset, name, displayName, fieldType, []string{model.VarDistilRoleData})
+		err = metaStorage.AddVariable(dataset, name, displayName, fieldType, distilRoles)
 		if err != nil {
 			handleError(w, err)
 			return

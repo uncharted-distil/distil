@@ -133,7 +133,7 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 		} else {
 			v = model.NewVariable(index, field, field, field, field, model.RealType,
 				model.RealType, "featurized value", []string{model.RoleAttribute},
-				[]string{model.VarDistilRoleSystemData}, nil, mainDR.Variables, false)
+				[]string{model.VarDistilRoleSystemData, model.VarDistilRoleFeaturized}, nil, mainDR.Variables, false)
 		}
 		vars = append(vars, v)
 	}
