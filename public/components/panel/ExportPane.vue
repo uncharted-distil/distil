@@ -3,7 +3,7 @@
   <b-form> <b-input-group append=".csv"> <b-form-input v-model="fileName"
   :state="validation"></b-form-input> </b-input-group> <b-form-invalid-feedback
   :state="validation"> Filename cannot be empty or contain invalid characters.
-  </b-form-invalid-feedback> <b-button class="mt-2" variant="dark"
+  </b-form-invalid-feedback> <b-button class="mt-2" variant="secondary"
   @click="onExportClick" :disabled="!validation"><i class="fa fa-floppy-o" />
   Export</b-button> </b-form> </div>
 </template>
