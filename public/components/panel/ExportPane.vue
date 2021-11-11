@@ -1,5 +1,6 @@
 <template lang="">
-  <div> <b-form> <b-input-group append=".csv"> <b-form-input v-model="fileName"
+  <div> <p>Export your current highlighted and filtered data to file</p>
+  <b-form> <b-input-group append=".csv"> <b-form-input v-model="fileName"
   :state="validation"></b-form-input> </b-input-group> <b-form-invalid-feedback
   :state="validation"> Filename cannot be empty or contain invalid characters.
   </b-form-invalid-feedback> <b-button class="mt-2" variant="dark"
