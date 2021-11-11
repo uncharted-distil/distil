@@ -720,14 +720,7 @@ export const GENERIC_EVENT_HANDLERS = {
     filename?: string
   ): Promise<void> {
     const self = (this as unknown) as DataExplorerRef;
-    const highlights = [
-      {
-        context: LABEL_FEATURE_INSTANCE,
-        dataset: self.dataset,
-        key: self.labelName,
-        value: LowShotLabels.unlabeled,
-      },
-    ]; // exclude unlabeled from data export
+    const highlights = routeGetters.getDecodedHighlights(store);
     const filterParams = routeGetters.getDecodedSolutionRequestFilterParams(
       store
     );
