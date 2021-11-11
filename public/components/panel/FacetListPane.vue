@@ -341,7 +341,9 @@ export default Vue.extend({
       const isInExplore = this.isExplore(variable);
       const button = document.createElement("button");
       button.className = "btn btn-sm";
-      button.className += isInExplore ? " btn-outline-primary" : " btn-primary";
+      button.className += isInExplore
+        ? " btn-outline-secondary"
+        : " btn-secondary";
       button.textContent = isInExplore ? "Hide" : "Display";
       button.addEventListener("click", () => this.updateExplore(variable));
       return button;
@@ -355,9 +357,7 @@ export default Vue.extend({
 
       const button = document.createElement("button");
       button.className = "btn btn-sm";
-      button.className += isTraining
-        ? " btn-outline-secondary"
-        : " btn-secondary";
+      button.className += isTraining ? " btn-outline-primary" : " btn-primary";
       button.textContent = isTraining ? "Remove Training" : "Select Training";
       button.addEventListener("click", () => this.updateTraining(variable));
       return button;
@@ -376,9 +376,7 @@ export default Vue.extend({
 
       const button = document.createElement("button");
       button.className = "btn btn-sm";
-      button.className += isTarget
-        ? " btn-outline-secondary"
-        : " btn-secondary";
+      button.className += isTarget ? " btn-outline-secondary" : " btn-primary";
       button.textContent = isTarget ? "Remove Target" : "Select Target";
       button.addEventListener("click", () => this.updateTarget(variable));
       return button;
