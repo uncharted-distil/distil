@@ -120,6 +120,7 @@ export class SelectViewConfig implements ExplorerConfig {
       ActionNames.COMPUTED_VARIABLES,
       ActionNames.TARGET_VARIABLE,
       ActionNames.TRAINING_VARIABLE,
+      ActionNames.EXPORT,
     ];
     return actions.map((a) => {
       return ACTION_MAP.get(a);
@@ -146,6 +147,7 @@ export class ResultViewConfig implements ExplorerConfig {
       ActionNames.COMPUTED_VARIABLES,
       ActionNames.TARGET_VARIABLE,
       ActionNames.OUTCOME_VARIABLES,
+      ActionNames.EXPORT,
     ];
     return actions.map((a) => {
       return ACTION_MAP.get(a);
@@ -172,6 +174,7 @@ export class PredictViewConfig implements ExplorerConfig {
       ActionNames.COMPUTED_VARIABLES,
       ActionNames.TARGET_VARIABLE,
       ActionNames.OUTCOME_VARIABLES,
+      ActionNames.EXPORT,
     ];
     return actions.map((a) => {
       return ACTION_MAP.get(a);
@@ -198,6 +201,7 @@ export class LabelViewConfig implements ExplorerConfig {
       ActionNames.TARGET_VARIABLE,
       ActionNames.TRAINING_VARIABLE,
       ActionNames.OUTCOME_VARIABLES,
+      ActionNames.EXPORT,
     ];
     return actions.map((a) => {
       return ACTION_MAP.get(a);
@@ -227,6 +231,7 @@ export enum ActionNames {
   OUTCOME_VARIABLES = "Outcome Variables",
   MODEL_VARIABLES = "Model Variables",
   COMPUTED_VARIABLES = "Computed Variables",
+  EXPORT = "Export",
 }
 
 export const ACTIONS = [
@@ -374,6 +379,14 @@ export const ACTIONS = [
     toggle: false,
     variables: function (self: DataExplorerRef) {
       return self.state.getSecondaryVariables();
+    },
+  },
+  {
+    name: ActionNames.EXPORT,
+    icon: "fas fa-floppy-o",
+    paneId: "export",
+    variables: function (self: DataExplorerRef) {
+      return [];
     },
   },
 ] as Action[];

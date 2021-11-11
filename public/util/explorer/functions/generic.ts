@@ -41,13 +41,15 @@ import store from "../../../store/store";
 import { Dictionary } from "../../dict";
 import { clearRowSelection, getNumIncludedRows } from "../../row";
 import { spinnerHTML } from "../../spinner";
-import { EI } from "../../events";
-import { Filter, INCLUDE_FILTER } from "../../filters";
+import { EI, EventList } from "../../events";
+import { Filter, INCLUDE_FILTER, EXCLUDE_FILTER } from "../../filters";
 import { BaseState } from "../../state/AppStateWrapper";
 import { overlayRouteEntry, RouteArgs } from "../../routes";
 import { clearHighlight } from "../../highlights";
 import { datasetActions } from "../../../store";
 import { getters as datasetGetters } from "../../../store/dataset/module";
+import { downloadFile, LowShotLabels } from "../../data";
+import { LABEL_FEATURE_INSTANCE } from "../../../store/route";
 
 export const GENERIC_METHODS = {
   /**
@@ -707,5 +709,31 @@ export const GENERIC_COMPUTES = {
    */
   isRemoteSensing(): boolean {
     return routeGetters.isMultiBandImage(store);
+  },
+};
+
+export const GENERIC_EVENT_HANDLERS = {
+  /**
+   * onExport is called when the user wants to download the newly annotated dataset to csv
+   */
+  [EventList.EXPLORER.EXPLORER_EXPORT]: async function (
+    filename?: string
+  ): Promise<void> {
+    const self = (this as unknown) as DataExplorerRef;
+    const highlights = routeGetters.getDecodedHighlights(store);
+    const filterParams = routeGetters.getDecodedSolutionRequestFilterParams(
+      store
+    );
+    const dataMode = routeGetters.getDataMode(store);
+    const file = await datasetActions.extractDataset(store, {
+      dataset: self.dataset,
+      filterParams,
+      highlights,
+      include: true,
+      mode: EXCLUDE_FILTER,
+      dataMode,
+    });
+    downloadFile(file, filename || self.dataset, ".csv");
+    return;
   },
 };
