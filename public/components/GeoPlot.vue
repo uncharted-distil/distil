@@ -149,6 +149,7 @@ import { isGeoLocatedType } from "../util/types";
 import { EventList } from "../util/events";
 import { ExplorerStateNames } from "../util/explorer";
 import { Filter } from "../util/filters";
+import { bulkRowSelectionUpdate } from "../util/row";
 
 const SINGLE_FIELD = 1;
 const SPLIT_FIELD = 2;
@@ -1371,6 +1372,14 @@ export default Vue.extend({
       // don't show exit button
       this.showExit = false;
       this.$emit(EventList.MAP.FINISHED_LOADING);
+    },
+    selectAll() {
+      bulkRowSelectionUpdate(
+        this.$router,
+        this.instanceName,
+        this.rowSelection,
+        this.dataItems.map((pi) => pi.d3mIndex)
+      );
     },
   },
 });
