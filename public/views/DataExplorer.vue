@@ -61,7 +61,7 @@
 
         <!-- Tabs to switch views -->
 
-        <div v-if="!isBusy" class="d-flex flex-row align-items-end mt-2">
+        <div v-if="!isBusy" class="d-flex flex-row align-items-center mt-2">
           <div class="flex-grow-1 mr-2">
             <b-tabs v-model="activeView" class="tab-container">
               <b-tab
