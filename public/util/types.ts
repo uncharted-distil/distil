@@ -30,6 +30,7 @@ export enum DISTIL_ROLES {
   Meta = "metadata",
   Data = "data",
   SystemData = "system-data",
+  Label = "label",
 }
 
 export enum JoinTypes {

@@ -1762,6 +1762,7 @@ export const actions = {
       fieldType: string;
       defaultValue?: T;
       displayName?: string;
+      isLabel?: boolean;
     }
   ) {
     // check for valid dataset
@@ -1774,6 +1775,7 @@ export const actions = {
         fieldType: args.fieldType,
         defaultValue: args.defaultValue.toString(),
         displayName: args.displayName,
+        isLabel: args.isLabel ?? false,
       });
       return response.data;
     } catch (error) {

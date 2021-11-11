@@ -53,6 +53,9 @@ export const RESULT_COMPUTES = {
     const self = (this as unknown) as DataExplorerRef;
     return self.solution?.solutionId;
   },
+  /**
+   * fittedSolutionId returns the current solution's fittedSolutionId
+   */
   fittedSolutionId(): string | undefined {
     const self = (this as unknown) as DataExplorerRef;
     return self.solution?.fittedSolutionId;

@@ -17,18 +17,19 @@ import {
 import { cloneFilters } from "../../highlights";
 import { bulkRowSelectionUpdate, clearRowSelection } from "../../row";
 import { EI, EventList } from "../../events";
-import { CATEGORICAL_TYPE } from "../../types";
+import { CATEGORICAL_TYPE, DISTIL_ROLES } from "../../types";
 import {
   addOrderBy,
   cloneDatasetUpdateRoute,
   downloadFile,
+  hasRole,
   LowShotLabels,
   LOW_SHOT_RANK_COLUMN_PREFIX,
   LOW_SHOT_SCORE_COLUMN_PREFIX,
 } from "../../data";
 import { LABEL_FEATURE_INSTANCE } from "../../../store/route";
 import router from "../../../router/router";
-import { ActionNames, ACTION_MAP, ExplorerStateNames, labelComputes } from "..";
+import { ActionNames, ACTION_MAP, ExplorerStateNames } from "..";
 import { NavigationGuardNext } from "vue-router";
 
 /**
@@ -43,26 +44,12 @@ export const LABEL_COMPUTES = {
     return LOW_SHOT_SCORE_COLUMN_PREFIX + self.labelName;
   },
   /**
-   * isClone checks if the current dataset is a clone
-   * this is necessary for multiple labelling sessions
-   * if this dataset is still a clone the user needs to select the label variable they are annotating
-   * Note: when the labelled dataset is saved it is no longer a clone but an original
-   * isClone checks if the current dataset is a clone
-   * this is necessary for multiple labelling sessions
-   * if this dataset is still a clone the user needs to select the label variable they are annotating
-   * Note: when the labelled dataset is saved it is no longer a clone but an original
+   * When DISTIL_ROLES.Label exists within the variable list then this dataset has been used in the label
+   * workflow before
    */
-  isClone(): boolean | null {
+  hasLabelRole(): boolean | null {
     const self = (this as unknown) as DataExplorerRef;
-    if (!self) {
-      return null;
-    }
-    const datasets = datasetGetters.getDatasets(store);
-    const dataset = datasets.find((d) => d.id === self.dataset);
-    if (!dataset) {
-      return null;
-    }
-    return dataset.clone === undefined ? false : dataset.clone;
+    return self?.variables.some((v) => hasRole(v, DISTIL_ROLES.Label));
   },
   /**
    * options is displayed to the user when selecting a pre-existing variable to annotate
@@ -71,7 +58,7 @@ export const LABEL_COMPUTES = {
     const self = (this as unknown) as DataExplorerRef;
     return self?.variables
       .filter((v) => {
-        return v.colType === CATEGORICAL_TYPE;
+        return hasRole(v, DISTIL_ROLES.Label);
       })
       .map((v) => {
         return { value: v.colName, text: v.colName };
@@ -170,6 +157,7 @@ export const LABEL_METHODS = {
       fieldType: CATEGORICAL_TYPE,
       defaultValue: LowShotLabels.unlabeled,
       displayName: self.labelName,
+      isLabel: true,
     });
     self.setBusyState(true, "Fetching Data");
     // fetch new dataset with the newly added field
