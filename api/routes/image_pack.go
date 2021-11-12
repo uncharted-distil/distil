@@ -80,7 +80,9 @@ func MultiBandImagePackHandler(ctor api.MetadataStorageCtor, dataCtor api.DataSt
 		funcPointer := getImages
 		optramMap := map[string]imagery.OptramEdges{}
 		precision := 0
-		if params.Band != "" {
+		if params.Band == imagery.Segmentation {
+			funcPointer = getSegmentationImages
+		} else if params.Band != "" {
 			// if band is not empty then get multiBandImages
 			funcPointer = getMultiBandImages
 			if params.Band == imagery.OPTRAM {
@@ -200,6 +202,7 @@ func getImages(imagePackRequest *ImagePackRequest, _ map[string]imagery.OptramEd
 	}
 	result <- chanStruct{data: temp, IDs: IDs, errorIDs: errorIDs}
 }
+
 func getMultiBandImages(multiBandPackRequest *ImagePackRequest, optramMap map[string]imagery.OptramEdges, precision int, threadID int, numThreads int, result chan chanStruct, ctor api.MetadataStorageCtor, dataCtor api.DataStorageCtor) {
 	temp := [][]byte{}
 	IDs := []string{}
@@ -261,6 +264,46 @@ func getMultiBandImages(multiBandPackRequest *ImagePackRequest, optramMap map[st
 			edge = val
 		}
 		img, err := imagery.ImageFromCombination(sourcePath, bandMapping[imageID], multiBandPackRequest.Band, imageScale, &edge, multiBandPackRequest.Ramp, options)
+		if err != nil {
+			handleThreadError(&errorIDs, &imageID, &err)
+			continue
+		}
+
+		imageBytes, err := imagery.ImageToJPEG(img)
+		if err != nil {
+			handleThreadError(&errorIDs, &imageID, &err)
+			continue
+		}
+		temp = append(temp, imageBytes)
+		IDs = append(IDs, imageID)
+	}
+
+	result <- chanStruct{data: temp, IDs: IDs, errorIDs: errorIDs}
+}
+
+func getSegmentationImages(multiBandPackRequest *ImagePackRequest, optramMap map[string]imagery.OptramEdges, precision int, threadID int, numThreads int, result chan chanStruct, ctor api.MetadataStorageCtor, dataCtor api.DataStorageCtor) {
+	temp := [][]byte{}
+	IDs := []string{}
+	errorIDs := []string{}
+	// get common storage
+	storage, err := ctor()
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
+	res, err := storage.FetchDataset(multiBandPackRequest.Dataset, false, false, false)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
+	sourcePath := path.Join(env.GetResourcePath(), res.ID, "media")
+
+	// loop through image info
+	for i := threadID; i < len(multiBandPackRequest.ImageIDs); i += numThreads {
+		imageID := multiBandPackRequest.ImageIDs[i]
+		img, err := getSegmentationImage(imageID, sourcePath, true, ThumbnailDimensions)
 		if err != nil {
 			handleThreadError(&errorIDs, &imageID, &err)
 			continue

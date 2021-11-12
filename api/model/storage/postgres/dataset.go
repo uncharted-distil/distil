@@ -357,8 +357,10 @@ func (s *Storage) FetchDataset(dataset string, storageName string,
 	filteredVars := []*model.Variable{}
 
 	selectedVars := map[string]bool{}
-	for _, v := range filterParams.Variables {
-		selectedVars[v] = true
+	if limitSelectedFields && filterParams != nil {
+		for _, v := range filterParams.Variables {
+			selectedVars[v] = true
+		}
 	}
 
 	// only include data with distilrole data and index

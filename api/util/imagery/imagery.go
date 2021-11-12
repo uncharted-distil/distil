@@ -71,6 +71,9 @@ const (
 	// AtmosphericRemoval identifies a band mapping that displays an image in near true color with atmoshperic effects reduced.
 	AtmosphericRemoval = "atmospheric_removal"
 
+	// Segmentation identifies a placeholder band mapping to display image segmentation output.
+	Segmentation = "segmentation"
+
 	// ShortwaveInfrared identifies a band mapping that displays an image in shortwave infrared.
 	ShortwaveInfrared = "shortwave_infrared"
 
@@ -203,6 +206,7 @@ func init() {
 		MNDWI:                  {MNDWI, "Modified Normalized Difference Water Index", []string{"b03", "b11"}, BrownYellowBlueRamp, NormalizingTransform, false},
 		RSWIR:                  {RSWIR, "Red and Shortwave Infrared", []string{"b04", "b11"}, BrownYellowBlueRamp, NormalizingTransform, false},
 		OPTRAM:                 {OPTRAM, "OPTRAM", []string{"b08", "b04", "b12"}, RedYellowGreenRamp, OptramTransform, false},
+		Segmentation:           {Segmentation, "Segmentation", []string{}, nil, nil, false},
 	}
 }
 

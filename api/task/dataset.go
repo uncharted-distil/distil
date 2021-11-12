@@ -129,7 +129,40 @@ func CopyDiskDataset(existingURI string, newURI string, newDatasetID string, new
 // it to disk in D3M dataset format.
 func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage api.DataStorage, filterParams *api.FilterParams) (string, string, error) {
 	// TODO: most likely need to either get a unique folder name for output or error if already exists
-	return exportDiskDataset(dataset, dataset, env.ResolvePath(metadata.Augmented, dataset), metaStorage, dataStorage, false, filterParams)
+	datasetID, datasetPath, err := exportDiskDataset(dataset, dataset, env.ResolvePath(metadata.Augmented, dataset), metaStorage, dataStorage, false, filterParams)
+	if err != nil {
+		return "", "", err
+	}
+
+	// update the metadata stored to have the index reflect what is on disk
+	metaDisk, err := serialization.ReadMetadata(path.Join(datasetPath, compute.D3MDataSchema))
+	if err != nil {
+		return "", "", err
+	}
+
+	metaStored, err := metaStorage.FetchDataset(datasetID, true, true, true)
+	if err != nil {
+		return "", "", err
+	}
+
+	diskVars := api.MapVariables(metaDisk.GetMainDataResource().Variables, func(variable *model.Variable) string { return variable.Key })
+	notIncludedCount := 0
+	for _, v := range metaStored.Variables {
+		vDisk := diskVars[v.Key]
+		if vDisk == nil {
+			// variable not in disk dataset so arbitrarily give it an index > # of variables on disk
+			v.Index = len(diskVars) + notIncludedCount
+			notIncludedCount++
+		} else {
+			v.Index = vDisk.Index
+		}
+	}
+	err = metaStorage.UpdateDataset(metaStored)
+	if err != nil {
+		return "", "", err
+	}
+
+	return datasetID, datasetPath, nil
 }
 
 // CreateDatasetFromResult creates a new dataset based on a result set & the input

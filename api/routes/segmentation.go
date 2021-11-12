@@ -16,8 +16,16 @@ func SegmentationHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStor
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
+		// get variable name
+		variable := pat.Param(r, "variable")
 
 		metaStorage, err := metaCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		dataStorage, err := dataCtor()
 		if err != nil {
 			handleError(w, err)
 			return
@@ -29,7 +37,7 @@ func SegmentationHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStor
 			return
 		}
 
-		outputURI, err := task.Segment(ds)
+		outputURI, err := task.Segment(ds, dataStorage, variable)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable segment dataset"))
 			return
