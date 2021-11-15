@@ -649,6 +649,7 @@ export const actions = {
         leftCols: args.leftCols,
         rightCols: args.rightCols,
         filterByUpdates: args.filterByUpdates,
+        nosample: args.nosample,
       };
     }
     const response = await axios.post(
