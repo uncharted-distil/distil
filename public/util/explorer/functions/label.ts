@@ -52,6 +52,16 @@ export const LABEL_COMPUTES = {
     return self?.variables.some((v) => hasRole(v, DISTIL_ROLES.Label));
   },
   /**
+   * isClone returns if the current dataset is a clone
+   */
+  isClone(): boolean {
+    const self = (this as unknown) as DataExplorerRef;
+    const dataset = datasetGetters
+      .getDatasets(store)
+      .find((d) => d.id === self.dataset);
+    return dataset?.clone;
+  },
+  /**
    * options is displayed to the user when selecting a pre-existing variable to annotate
    */
   options(): { value: string; text: string }[] {
@@ -159,6 +169,7 @@ export const LABEL_METHODS = {
       displayName: self.labelName,
       isLabel: true,
     });
+    self.shouldSaveDataset = true;
     self.setBusyState(true, "Fetching Data");
     // fetch new dataset with the newly added field
     await self.changeStatesByName(ExplorerStateNames.LABEL_VIEW);
@@ -179,7 +190,7 @@ export const LABEL_METHODS = {
       dataset: self.dataset,
       terms: terms,
     });
-
+    self.shouldSaveDataset = false;
     // switch route back to search after delete
     if (nextRoute) {
       nextRoute();
@@ -224,6 +235,7 @@ export const LABEL_EVENT_HANDLERS = {
     const self = (this as unknown) as DataExplorerRef;
     const rowSelection = routeGetters.getDecodedRowSelection(store);
     const innerData = new Map<number, unknown>();
+    self.shouldSaveDataset = true; // data has changed require the dataset to be saved to sync the featurized file
     const updateData = rowSelection.d3mIndices.map((i) => {
       innerData.set(i, { [routeGetters.getRouteLabel(store)]: label });
       return {
@@ -306,9 +318,7 @@ export const LABEL_EVENT_HANDLERS = {
     self.$bvModal.show("save-dataset-modal");
   },
   /**
-   * onSaveDataset calls the backend and saves the dataset
-   * this removes the clone property for a dataset so if the user tries to label they
-   * will have to create a new label
+   * onSaveDataset calls the backend and saves the dataset syncing the on disk sources for the dataset
    */
   [EventList.LABEL.SAVE_EVENT]: async function (
     saveName: string,
@@ -366,6 +376,7 @@ export const LABEL_EVENT_HANDLERS = {
       dataMode,
     });
     self.isBusy = false;
+    self.shouldSaveDataset = false;
     // CHANGE TO SELECT VIEW AFTER DS IS SAVED IN LABEL VIEW
     self.changeStatesByName(ExplorerStateNames.SELECT_VIEW);
     return;

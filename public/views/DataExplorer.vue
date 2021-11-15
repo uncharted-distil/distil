@@ -444,6 +444,7 @@ const DataExplorer = Vue.extend({
       instanceName: DATA_EXPLORER_VAR_INSTANCE, // component instance name
       isBusy: false, // controls spinners in label state when search similar or save is used
       labelModalId: "label-input-form", // modal id
+      shouldSaveDataset: false, // There is not a not a nice way of denoting saving currently for the label view
       unsaveModalId: "unsaved-modal",
       labelName: "", // labelName of the variable being annotated in the label view
       labelNameState: null,

@@ -48,8 +48,7 @@ import { overlayRouteEntry, RouteArgs } from "../../routes";
 import { clearHighlight } from "../../highlights";
 import { datasetActions } from "../../../store";
 import { getters as datasetGetters } from "../../../store/dataset/module";
-import { downloadFile, LowShotLabels } from "../../data";
-import { LABEL_FEATURE_INSTANCE } from "../../../store/route";
+import { downloadFile } from "../../data";
 
 export const GENERIC_METHODS = {
   /**
