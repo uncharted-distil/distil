@@ -357,12 +357,14 @@ func (s *Storage) FetchDataset(dataset string, storageName string,
 	filteredVars := []*model.Variable{}
 
 	selectedVars := map[string]bool{}
-	for _, v := range filterParams.Variables {
-		selectedVars[v] = true
+	if filterParams != nil {
+		for _, v := range filterParams.Variables {
+			selectedVars[v] = true
+		}
 	}
 
 	// only include data with distilrole data and index
-	// limit vars to only those selecred (if applicable)
+	// limit vars to only those selected (if applicable)
 	for _, v := range vars {
 		if (v.IsTA2Field() ||
 			(v.HasRole(model.VarDistilRoleMetadata) && includeMetadata)) &&
