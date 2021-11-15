@@ -176,6 +176,7 @@ export default Vue.extend({
         joinedDataset: this.datasetB,
         leftCols: leftCols,
         rightCols: rightCols,
+        nosample: true,
         searchResultIndex: this.searchResultIndex,
         description: args.description,
         path: this.path,
