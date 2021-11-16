@@ -84,6 +84,7 @@ type Config struct {
 	ResourceSubFolder          string  `env:"RESOURCE_SUBFOLDER" envDefault:"resources"`
 	ShouldScaleImages          bool    `env:"SHOULD_SCALE_IMAGES" envDefault:"false"` // enables and disables image scaling
 	SkipPreprocessing          bool    `env:"SKIP_PREPROCESSING" envDefault:"false"`
+	SegmentationEnabled        bool    `env:"SEGMENTATION_ENABLED" envDefault:"false"`
 	SolutionComputeEndpoint    string  `env:"SOLUTION_COMPUTE_ENDPOINT" envDefault:"localhost:50051"`
 	SolutionComputePullTimeout int     `env:"SOLUTION_COMPUTE_PULL_TIMEOUT" envDefault:"60"`
 	SolutionComputePullMax     int     `env:"SOLUTION_COMPUTE_PULL_MAX" envDefault:"10"`

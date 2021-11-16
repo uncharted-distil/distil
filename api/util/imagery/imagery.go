@@ -186,6 +186,7 @@ var (
 )
 
 func init() {
+	config, _ := env.LoadConfig()
 	// initialize the band combination structures - needs to be done in init so that referenced color ramps are built
 	SentinelBandCombinations = map[string]*BandCombination{
 		NaturalColors1:         {NaturalColors1, "Natural Colors", []string{"b04", "b03", "b02"}, nil, nil, false},
@@ -206,7 +207,10 @@ func init() {
 		MNDWI:                  {MNDWI, "Modified Normalized Difference Water Index", []string{"b03", "b11"}, BrownYellowBlueRamp, NormalizingTransform, false},
 		RSWIR:                  {RSWIR, "Red and Shortwave Infrared", []string{"b04", "b11"}, BrownYellowBlueRamp, NormalizingTransform, false},
 		OPTRAM:                 {OPTRAM, "OPTRAM", []string{"b08", "b04", "b12"}, RedYellowGreenRamp, OptramTransform, false},
-		Segmentation:           {Segmentation, "Segmentation", []string{}, nil, nil, false},
+	}
+
+	if config.SegmentationEnabled {
+		SentinelBandCombinations[Segmentation] = &BandCombination{Segmentation, "Segmentation", []string{}, nil, nil, false}
 	}
 }
 
