@@ -110,7 +110,8 @@ func ResolveTask(storage api.DataStorage, datasetStorageName string, targetVaria
 				task = append(task, compute.SemiSupervisedTask)
 			}
 			// If there are 3 labels (2 + empty), update this as a binary classification task
-			if len(targetCounts) == 2 {
+			excludeEmptySize := len(targetCounts) - 1
+			if excludeEmptySize == 2 {
 				task = append(task, compute.BinaryTask)
 			} else {
 				task = append(task, compute.MultiClassTask)
