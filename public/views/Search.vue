@@ -46,48 +46,54 @@
       />
     </div>
 
-    <!-- Search bar -->
-    <section class="row justify-content-center">
-      <div class="col-12 col-md-11 col-lg-10 col-xl-8">
-        <search-bar class="search-search-bar" />
-      </div>
-    </section>
-
     <!-- Search navigation -->
     <section class="row justify-content-center">
       <div class="col-12 col-md-11 col-lg-10 col-xl-8">
-        <nav class="search-nav">
-          <button
-            class="search-nav-tab"
-            :class="{ active: tab === 'all' }"
-            @click="tab = 'all'"
+        <ul class="nav nav-tabs" role="tablist">
+          <li class="nav-item">
+            <a class="nav-link active" data-toggle="tab" href="#all" role="tab">
+              All
+              <span class="badge badge-pill badge-danger">{{
+                nbSearchModels + nbSearchDatasets
+              }}</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-toggle="tab" href="#models" role="tab">
+              <i class="fa fa-connectdevelop" /> Models
+              <span class="badge badge-pill badge-danger">{{
+                nbSearchModels
+              }}</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-toggle="tab" href="#datasets" role="tab">
+              <i class="fa fa-table" /> Datasets
+              <span class="badge badge-pill badge-danger">{{
+                nbSearchDatasets
+              }}</span>
+            </a>
+          </li>
+          <b-button
+            v-b-modal.add-dataset
+            class="add-new-datasets"
+            variant="secondary"
           >
-            All
-            <span class="badge badge-pill badge-danger">{{
-              nbSearchModels + nbSearchDatasets
-            }}</span>
-          </button>
-          <button
-            class="search-nav-tab"
-            :class="{ active: tab === 'models' }"
-            @click="tab = 'models'"
-          >
-            <i class="fa fa-connectdevelop" /> Models
-            <span class="badge badge-pill badge-danger">{{
-              nbSearchModels
-            }}</span>
-          </button>
-          <button
-            class="search-nav-tab"
-            :class="{ active: tab === 'datasets' }"
-            @click="tab = 'datasets'"
-          >
-            <i class="fa fa-table" /> Datasets
-            <span class="badge badge-pill badge-danger">{{
-              nbSearchDatasets
-            }}</span>
-          </button>
-          <b-dropdown variant="outline-dark" size="sm">
+            <i class="fa fa-plus-circle" /> Add Dataset
+          </b-button>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Main view. -->
+    <section class="row flex-1 justify-content-center">
+      <div class="col-12 col-md-11 col-lg-10 col-xl-8 search-content-wrapper">
+        <!-- Search bar -->
+        <section class="row justify-content-center">
+          <div class="col-12 col-md-11 col-lg-10 col-xl-8">
+            <search-bar class="search-search-bar" />
+          </div>
+          <b-dropdown variant="outline-dark">
             <template v-slot:button-content>
               <i :class="sortingIcon" /> Sort by:
               <strong>{{ sortingDisplayName }}</strong>
@@ -118,20 +124,7 @@
               Imported
             </b-dropdown-item-button>
           </b-dropdown>
-          <b-button
-            v-b-modal.add-dataset
-            class="add-new-datasets"
-            variant="primary"
-          >
-            <i class="fa fa-plus-circle" /> Add Dataset
-          </b-button>
-        </nav>
-      </div>
-    </section>
-
-    <!-- Main view. -->
-    <section class="row flex-1 justify-content-center">
-      <div class="col-12 col-md-11 col-lg-10 col-xl-8 search-content-wrapper">
+        </section>
         <div
           v-if="isPending"
           class="search-content-spinner"
