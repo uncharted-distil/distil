@@ -133,7 +133,7 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 		} else {
 			v = model.NewVariable(index, field, field, field, field, model.RealType,
 				model.RealType, "featurized value", []string{model.RoleAttribute},
-				model.VarDistilRoleSystemData, nil, mainDR.Variables, false)
+				[]string{model.VarDistilRoleSystemData, model.VarDistilRoleFeaturized}, nil, mainDR.Variables, false)
 		}
 		vars = append(vars, v)
 	}
@@ -165,7 +165,7 @@ func SetGroups(datasetID string, rawGroupings []map[string]interface{}, data api
 		// Set the name of the expected cluster column - it doesn't necessarily exist.
 		varName := rsg.IDCol + "_group"
 		rsg.ClusterCol = model.ClusterVarPrefix + rsg.IDCol
-		err = meta.AddGroupedVariable(datasetID, varName, "Tile", model.MultiBandImageType, model.VarDistilRoleGrouping, rsg)
+		err = meta.AddGroupedVariable(datasetID, varName, "Tile", model.MultiBandImageType, []string{model.VarDistilRoleGrouping}, rsg)
 		if err != nil {
 			return err
 		}
@@ -175,7 +175,7 @@ func SetGroups(datasetID string, rawGroupings []map[string]interface{}, data api
 		if err != nil {
 			return err
 		}
-		idColVariable.DistilRole = model.VarDistilRoleGrouping
+		idColVariable.DistilRole = []string{model.VarDistilRoleGrouping}
 		err = meta.UpdateVariable(datasetID, rsg.GetIDCol(), idColVariable)
 		if err != nil {
 			return err
@@ -221,7 +221,7 @@ func SetGroups(datasetID string, rawGroupings []map[string]interface{}, data api
 
 		// Set the name of the expected cluster column
 		varName := grouping.CoordinatesCol + "_group"
-		err = meta.AddGroupedVariable(datasetID, varName, "coordinates", model.GeoBoundsType, model.VarDistilRoleGrouping, grouping)
+		err = meta.AddGroupedVariable(datasetID, varName, "coordinates", model.GeoBoundsType, []string{model.VarDistilRoleGrouping}, grouping)
 		if err != nil {
 			return err
 		}
@@ -298,7 +298,7 @@ func createGeoboundsField(datasetID string, storageName string, coordinateField 
 	}
 
 	// add the field to the metadata
-	err = meta.AddVariable(datasetID, geometryField, coordinateField, model.GeoBoundsType, model.VarDistilRoleMetadata)
+	err = meta.AddVariable(datasetID, geometryField, coordinateField, model.GeoBoundsType, []string{model.VarDistilRoleMetadata})
 	if err != nil {
 		return err
 	}

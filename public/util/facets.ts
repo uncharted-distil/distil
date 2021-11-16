@@ -451,7 +451,7 @@ export function getSubSelectionValues(
       const value = !b.count
         ? b.count / max
         : Math.min(b.count / max + visualWeight, 1.0);
-      rowLabelMatches(rowLabels, b.key, isNumeric)
+      return rowLabelMatches(rowLabels, b.key, isNumeric)
         ? [null, value, null]
         : [null, null, value];
     });

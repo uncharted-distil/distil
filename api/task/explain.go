@@ -77,7 +77,7 @@ func (e explainDataset) CreateDataset(rootDataPath string, datasetName string, c
 		}
 		dr.Variables = append(dr.Variables,
 			model.NewVariable(i, field, field, field, field, typ, typ,
-				"", []string{role}, model.VarDistilRoleData, nil, dr.Variables, true))
+				"", []string{role}, []string{model.VarDistilRoleData}, nil, dr.Variables, true))
 	}
 
 	meta.DataResources = []*model.DataResource{dr}

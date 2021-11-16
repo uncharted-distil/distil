@@ -239,6 +239,7 @@ import {
   hasTimeseriesFeatures,
   hasGeoordinateFeatures,
   minimumRouteKey,
+  hasRole,
 } from "../util/data";
 import { getFacetByType } from "../util/facets";
 import FacetLoading from "../components/facets/FacetLoading.vue";
@@ -483,7 +484,7 @@ export default Vue.extend({
     },
 
     isGroupingCol(variable: Variable): boolean {
-      return variable.distilRole === DISTIL_ROLES.Grouping;
+      return hasRole(variable, DISTIL_ROLES.Grouping);
     },
 
     onChange() {

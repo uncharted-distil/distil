@@ -25,6 +25,7 @@ import {
   createPendingSummary,
   DatasetUpdate,
   fetchSummaryExemplars,
+  hasRole,
   JoinPair,
   minimumRouteKey,
   validateArgs,
@@ -126,8 +127,7 @@ function isOutlierExist(): boolean {
   const variables = getters.getVariables(store) ?? [];
   return variables.some(
     (variable) =>
-      variable.distilRole === DISTIL_ROLES.Augmented &&
-      variable.key === "_outlier"
+      variable.key === "_outlier" && hasRole(variable, DISTIL_ROLES.Augmented)
   );
 }
 
@@ -352,7 +352,7 @@ export const actions = {
   // Sends a request to the server to generate cluaster for all data that is a valid target for clustering.
   async fetchClusters(
     context: DatasetContext,
-    args: { dataset: string }
+    args: { dataset: string; clusterCount?: number }
   ): Promise<any> {
     if (!validateArgs(args, ["dataset"])) {
       return null;
@@ -385,7 +385,9 @@ export const actions = {
       if (v.grouping && isClusteredGrouping(v.grouping)) {
         return axios.post(
           `/distil/cluster/${args.dataset}/${v.grouping.idCol}`,
-          {}
+          {
+            clusterCount: args.clusterCount || null,
+          }
         );
       } else if (isImageType(v.colType)) {
         return axios.post(`/distil/cluster/${args.dataset}/${v.key}`, {});
@@ -647,6 +649,7 @@ export const actions = {
         leftCols: args.leftCols,
         rightCols: args.rightCols,
         filterByUpdates: args.filterByUpdates,
+        nosample: args.nosample,
       };
     }
     const response = await axios.post(
@@ -1762,6 +1765,7 @@ export const actions = {
       fieldType: string;
       defaultValue?: T;
       displayName?: string;
+      isLabel?: boolean;
     }
   ) {
     // check for valid dataset
@@ -1774,6 +1778,7 @@ export const actions = {
         fieldType: args.fieldType,
         defaultValue: args.defaultValue.toString(),
         displayName: args.displayName,
+        isLabel: args.isLabel ?? false,
       });
       return response.data;
     } catch (error) {

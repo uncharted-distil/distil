@@ -20,6 +20,7 @@ import { ActionContext } from "vuex";
 import {
   createEmptyTableData,
   filterArrayByPage,
+  hasRole,
   NUM_PER_PAGE,
   NUM_PER_TARGET_PAGE,
   searchVariables,
@@ -788,7 +789,7 @@ export const actions = {
           .getVariables(store)
           .filter(
             (variable) =>
-              variable.distilRole === DISTIL_ROLES.Augmented &&
+              hasRole(variable, DISTIL_ROLES.Augmented) &&
               variable.key === "_outlier"
           )
       );

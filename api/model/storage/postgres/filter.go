@@ -48,7 +48,7 @@ func getVariableByKey(key string, variables []*model.Variable) *model.Variable {
 		if variable.IsGrouping() && variable.Grouping.GetIDCol() == key {
 			return variable
 		}
-		if variable.Key == key && variable.DistilRole != model.VarDistilRoleGrouping {
+		if variable.Key == key && !variable.HasRole(model.VarDistilRoleGrouping) {
 			return variable
 		}
 	}
@@ -81,7 +81,7 @@ func (s *Storage) parseFilteredData(dataset string, filterVariables []*model.Var
 						Index: len(columns),
 					}
 					fieldIndexMap = append(fieldIndexMap, fieldIdx)
-				} else if fieldKey == variable.Key && (includeGroupingCol || variable.DistilRole != model.VarDistilRoleGrouping) {
+				} else if fieldKey == variable.Key && (includeGroupingCol || !variable.HasRole(model.VarDistilRoleGrouping)) {
 					columns[variable.Key] = &api.Column{
 						Key:   variable.Key,
 						Label: variable.DisplayName,
@@ -375,7 +375,7 @@ func (s *Storage) buildSelectStatement(variables []*model.Variable, filterVariab
 
 		// derived metadata variables (ex: postgis geometry) should use the original variables
 		varName := variable.Key
-		if variable.DistilRole == model.VarDistilRoleMetadata && variable.OriginalVariable != variable.Key {
+		if variable.HasRole(model.VarDistilRoleMetadata) && variable.OriginalVariable != variable.Key {
 			varName = variable.OriginalVariable
 		}
 
@@ -401,13 +401,13 @@ func (s *Storage) buildFilteredQueryField(variables []*model.Variable, filterVar
 			continue
 		}
 
-		if variable.DistilRole == model.VarDistilRoleGrouping && distinct {
+		if variable.HasRole(model.VarDistilRoleGrouping) && distinct {
 			distincts = append(distincts, fmt.Sprintf("DISTINCT ON (\"%s\")", variable.Key))
 		}
 
 		// derived metadata variables (ex: postgis geometry) should use the original variables
 		varKey := variable.Key
-		if variable.DistilRole == model.VarDistilRoleMetadata && variable.OriginalVariable != variable.Key {
+		if variable.HasRole(model.VarDistilRoleMetadata) && variable.OriginalVariable != variable.Key {
 			varKey = variable.OriginalVariable
 		}
 
@@ -436,7 +436,7 @@ func (s *Storage) buildFilteredResultQueryField(variables []*model.Variable, tar
 
 		if strings.Compare(targetVariable.Key, variable.Key) != 0 {
 
-			if variable.DistilRole == model.VarDistilRoleGrouping && !groupingCols[variable.Key] {
+			if variable.HasRole(model.VarDistilRoleGrouping) && !groupingCols[variable.Key] {
 				groupingCols[variable.Key] = true // don't duplicate columns in our distinct
 				distincts = append(distincts, fmt.Sprintf("DISTINCT ON (\"%s\")", variable.Key))
 			}

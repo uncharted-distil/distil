@@ -55,7 +55,7 @@ func Segment(ds *api.Dataset, dataStorage api.DataStorage, variableName string) 
 	// TODO: may need to build the grouping key from multiple fields when moving away from test
 	var groupingKey *model.Variable
 	for _, v := range ds.Variables {
-		if v.DistilRole == model.VarDistilRoleGrouping {
+		if v.HasRole(model.VarDistilRoleGrouping) {
 			groupingKey = v
 			break
 		}

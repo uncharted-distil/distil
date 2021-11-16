@@ -183,7 +183,7 @@ func parseNYUSearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 				Key:          c.Name,
 				DisplayName:  c.Name,
 				OriginalType: mapNYUDataTypesToDistil(c.StructuralType),
-				DistilRole:   model.VarDistilRoleData,
+				DistilRole:   []string{model.VarDistilRoleData},
 			})
 		}
 

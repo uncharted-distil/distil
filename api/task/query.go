@@ -21,8 +21,10 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
+	metaData "github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
@@ -61,7 +63,12 @@ func Query(params QueryParams) (map[string]interface{}, error) {
 	if ds.LearningDataset == "" {
 		return nil, errors.Errorf("only prefeaturized datasets support querying")
 	}
-
+	metaDisk, err := metaData.LoadMetadataFromOriginalSchema(strings.Join([]string{ds.LearningDataset, compute.D3MDataSchema}, "/"), false)
+	if err != nil {
+		return nil, err
+	}
+	// drop columns that are not an Index or Featurized
+	columnsToDrop := dropUnwantedColumns(metaDisk)
 	// extract the dataset from the database
 	data, err := params.DataStorage.FetchDataset(params.Dataset, ds.StorageName, false, false, params.Filters)
 	if err != nil {
@@ -78,7 +85,7 @@ func Query(params QueryParams) (map[string]interface{}, error) {
 	}
 
 	// create the image retrieval pipeline
-	desc, err := description.CreateImageQueryPipeline("image query", "pipeline to retrieve pertinent images", getQueryCachePath(ds.ID))
+	desc, err := description.CreateImageQueryPipeline("image query", "pipeline to retrieve pertinent images", getQueryCachePath(ds.ID), columnsToDrop)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +114,15 @@ func Query(params QueryParams) (map[string]interface{}, error) {
 
 	return nil, nil
 }
-
+func dropUnwantedColumns(metaDisk *model.Metadata) []int {
+	result := []int{}
+	for _, variable := range metaDisk.DataResources[0].Variables {
+		if !variable.HasAnyRole([]string{model.VarDistilRoleFeaturized, model.VarDistilRoleIndex}) {
+			result = append(result, variable.Index)
+		}
+	}
+	return result
+}
 func convertResultToRanking(results *[][]string) error {
 	// index for result values
 	valueIdx := 1
@@ -200,10 +215,10 @@ func writeQueryDataset(ds *api.Dataset, data [][]string) (string, error) {
 	dr.Variables = []*model.Variable{
 		model.NewVariable(0, model.D3MIndexFieldName, model.D3MIndexFieldName, model.D3MIndexFieldName,
 			model.D3MIndexFieldName, model.IntegerType, model.IntegerType, "D3M index",
-			[]string{model.RoleMultiIndex}, model.VarDistilRoleIndex, nil, dr.Variables, false),
+			[]string{model.RoleMultiIndex}, []string{model.VarDistilRoleIndex}, nil, dr.Variables, false),
 		model.NewVariable(1, queryFieldName, queryFieldName, queryFieldName, queryFieldName, model.StringType,
 			model.StringType, "Label for the query", []string{"suggestedTarget"},
-			model.VarDistilRoleData, nil, dr.Variables, false),
+			[]string{model.VarDistilRoleData}, nil, dr.Variables, false),
 	}
 	dr.ResPath = dataPathTarget
 	meta.DataResources = []*model.DataResource{dr}
@@ -228,7 +243,7 @@ func upsertVariable(params QueryParams, dataset string, storageName string, varN
 		if err != nil {
 			return err
 		}
-		err = params.MetaStorage.AddVariable(params.Dataset, varName, displayName, varType, model.VarDistilRoleData)
+		err = params.MetaStorage.AddVariable(params.Dataset, varName, displayName, varType, []string{model.VarDistilRoleData})
 		if err != nil {
 			return err
 		}

@@ -100,19 +100,13 @@ func Classify(schemaPath string, dataset string, config *IngestTaskConfig) (stri
 
 			typesArray, ok := v[0].([]interface{})
 			if !ok {
-				vs, ok := v[0].(interface{})
-				if !ok {
-					return "", fmt.Errorf("second column returned is not of type `[]interface{}` %v", v[0])
-				}
+				vs := v[0]
 				typesArray = []interface{}{vs}
 			}
 
 			probabilitiesArray, ok := v[1].([]interface{})
 			if !ok {
-				vs, ok := v[1].(interface{})
-				if !ok {
-					return "", fmt.Errorf("third column returned is not of type `[]interface{}` %v", v[1])
-				}
+				vs := v[1]
 				probabilitiesArray = []interface{}{vs}
 			}
 

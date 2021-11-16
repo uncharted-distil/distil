@@ -25,6 +25,15 @@
         </div>
       </div>
       <div class="content">
+        <b-form-group
+          label="Number of clusters"
+          v-if="this.statusType === 'CLUSTERING'"
+        >
+          <b-form-select
+            v-model="selectedNumberOfClusters"
+            :options="availableNumberOfClusters"
+          />
+        </b-form-group>
         <div v-if="!requestData">There is no new update.</div>
         <div v-else-if="isPending" class="spinner">
           <div class="circle-spinner"></div>
@@ -89,6 +98,11 @@ const STATUS_USER_EVENT = new Map<DatasetPendingRequestType, Feature>([
 export default Vue.extend({
   name: "StatusPanel",
 
+  data() {
+    return {
+      selectedNumberOfClusters: 4,
+    };
+  },
   components: {
     StatusPanelJoin,
   },
@@ -198,6 +212,21 @@ export default Vue.extend({
           };
       }
     },
+    availableNumberOfClusters(): Array<Object> {
+      const minNumber = 3;
+      const maxNumber = 10;
+
+      const returnNumberOfClusterOptions = [];
+
+      for (let i = minNumber; i <= maxNumber; i++) {
+        returnNumberOfClusterOptions.push({
+          value: i,
+          text: i,
+        });
+      }
+
+      return returnNumberOfClusterOptions;
+    },
   },
 
   methods: {
@@ -275,6 +304,15 @@ export default Vue.extend({
         .then(() => {
           this.clearData();
         });
+    },
+  },
+
+  watch: {
+    selectedNumberOfClusters() {
+      datasetActions.fetchClusters(this.$store, {
+        dataset: this.dataset,
+        clusterCount: this.selectedNumberOfClusters,
+      });
     },
   },
 });

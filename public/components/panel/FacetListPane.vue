@@ -18,14 +18,13 @@
 <template>
   <div class="h-100">
     <header v-if="enableFooter">
-      <b-button size="sm" variant="outline-primary" @click="hideAll">
+      <b-button size="sm" variant="outline-secondary" @click="hideAll">
         Hide All
       </b-button>
-      <b-button size="sm" variant="primary" @click="showAll">
-        Show All
-      </b-button>
+      <b-button size="sm" @click="showAll"> Show All </b-button>
       <b-button
         v-if="hasTarget"
+        variant="primary"
         size="sm"
         class="float-right"
         @click="selectAllTraining"
@@ -103,6 +102,7 @@ import { DISTIL_ROLES, isUnsupportedTargetVar } from "../../util/types";
 import { ExplorerStateNames } from "../../util/explorer";
 import { EventList } from "../../util/events";
 import { requestActions } from "../../store";
+import { hasRole } from "../../util/data";
 
 export default Vue.extend({
   name: "FacetListPane",
@@ -187,7 +187,7 @@ export default Vue.extend({
             const buttonList = [] as HTMLElement[];
             // Display and Hide variables in the Data Explorer.
             const exploreButton = this.displayButton(variableName);
-            if (variable?.distilRole !== DISTIL_ROLES.Augmented) {
+            if (!hasRole(variable, DISTIL_ROLES.Augmented)) {
               if (this.hasTarget) {
                 // Add/Remove a variable as training.
                 buttonList.push(this.trainingButton(variableName));
@@ -340,7 +340,9 @@ export default Vue.extend({
       const isInExplore = this.isExplore(variable);
       const button = document.createElement("button");
       button.className = "btn btn-sm";
-      button.className += isInExplore ? " btn-outline-primary" : " btn-primary";
+      button.className += isInExplore
+        ? " btn-outline-secondary"
+        : " btn-secondary";
       button.textContent = isInExplore ? "Hide" : "Display";
       button.addEventListener("click", () => this.updateExplore(variable));
       return button;
@@ -354,9 +356,7 @@ export default Vue.extend({
 
       const button = document.createElement("button");
       button.className = "btn btn-sm";
-      button.className += isTraining
-        ? " btn-outline-secondary"
-        : " btn-secondary";
+      button.className += isTraining ? " btn-outline-primary" : " btn-primary";
       button.textContent = isTraining ? "Remove Training" : "Select Training";
       button.addEventListener("click", () => this.updateTraining(variable));
       return button;
@@ -375,9 +375,7 @@ export default Vue.extend({
 
       const button = document.createElement("button");
       button.className = "btn btn-sm";
-      button.className += isTarget
-        ? " btn-outline-secondary"
-        : " btn-secondary";
+      button.className += isTarget ? " btn-outline-secondary" : " btn-primary";
       button.textContent = isTarget ? "Remove Target" : "Select Target";
       button.addEventListener("click", () => this.updateTarget(variable));
       return button;

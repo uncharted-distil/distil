@@ -1,41 +1,44 @@
-elastic:
-  image: docker.uncharted.software/distil_dev_es:latest
-  ports:
-    - "9200:9200"
+version: ‘3’
 
-postgres:
-  image: docker.uncharted.software/distil_dev_postgres:latest
-  ports:
-    - "5432:5432"
-  command: -d postgres
-# pipeline_server:
-#   image:
-#     docker.uncharted.software/distil-pipeline-server:latest
-#   ports:
-#     - "45042:45042"
-#   environment:
-#     - SOLUTION_SERVER_RESULT_DIR=$D3MOUTPUTDIR
-#     - SOLUTION_SEND_DELAY=2000
-#     - SOLUTION_NUM_UPDATES=3
-#     - SOLUTION_MAX_SOLUTIONS=3
-#     - SOLUTION_ERR_PERCENT=0.1
-#   volumes:
-#     - $D3MINPUTDIR:$D3MINPUTDIR
-#     - $D3MOUTPUTDIR:$D3MOUTPUTDIR
+services:
+  elastic:
+    image: docker.uncharted.software/distil_dev_es:latest
+    ports:
+      - "9200:9200"
 
-distil-auto-ml:
-  image: docker.uncharted.software/distil-auto-ml:latest
-  environment:
-    - D3MINPUTDIR=$D3MINPUTDIR
-    - D3MOUTPUTDIR=$D3MOUTPUTDIR
-    - D3MSTATICDIR=$D3MSTATICDIR
-    - DATAMART_IMPORT_FOLDER=$DATAMART_IMPORT_FOLDER
-    - DATAMART_URL_NYU=https://auctus.vida-nyu.org
-    - HYPERPARAMETER_TUNING=False
-  volumes:
-    - $D3MINPUTDIR:$D3MINPUTDIR
-    - $D3MOUTPUTDIR:$D3MOUTPUTDIR
-    - $D3MSTATICDIR:$D3MSTATICDIR
-    - $DATAMART_IMPORT_FOLDER:$DATAMART_IMPORT_FOLDER
-  ports:
-    - "45042:45042"
+  postgres:
+    image: docker.uncharted.software/distil_dev_postgres:latest
+    ports:
+      - "5432:5432"
+    command: -d postgres
+  # pipeline_server:
+  #   image:
+  #     docker.uncharted.software/distil-pipeline-server:latest
+  #   ports:
+  #     - "45042:45042"
+  #   environment:
+  #     - SOLUTION_SERVER_RESULT_DIR=${D3MOUTPUTDIR}
+  #     - SOLUTION_SEND_DELAY=2000
+  #     - SOLUTION_NUM_UPDATES=3
+  #     - SOLUTION_MAX_SOLUTIONS=3
+  #     - SOLUTION_ERR_PERCENT=0.1
+  #   volumes:
+  #     - $D3MINPUTDIR:${D3MINPUTDIR}
+  #     - $D3MOUTPUTDIR:${D3MOUTPUTDIR}
+
+  distil-auto-ml:
+    image: docker.uncharted.software/distil-auto-ml:latest
+    environment:
+      - D3MINPUTDIR=${D3MINPUTDIR}
+      - D3MOUTPUTDIR=${D3MOUTPUTDIR}
+      - D3MSTATICDIR=${D3MSTATICDIR}
+      - DATAMART_IMPORT_FOLDER=${DATAMART_IMPORT_FOLDER}
+      - DATAMART_URL_NYU=https://auctus.vida-nyu.org
+      - HYPERPARAMETER_TUNING=False
+    volumes:
+      - $D3MINPUTDIR:${D3MINPUTDIR}
+      - $D3MOUTPUTDIR:${D3MOUTPUTDIR}
+      - $D3MSTATICDIR:${D3MSTATICDIR}
+      - $DATAMART_IMPORT_FOLDER:${DATAMART_IMPORT_FOLDER}
+    ports:
+      - "45042:45042"

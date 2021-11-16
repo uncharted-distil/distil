@@ -29,6 +29,7 @@
         :enable-label="imageVarExists"
         @label="switchToLabelState"
       />
+      <export-pane v-else-if="activePane === 'export'" />
       <template v-else>
         <template v-if="hasNoVariables">
           <p v-if="activePane === 'selected'">Select a variable to explore.</p>
@@ -61,7 +62,7 @@
 
         <!-- Tabs to switch views -->
 
-        <div v-if="!isBusy" class="d-flex flex-row align-items-end mt-2">
+        <div v-if="!isBusy" class="d-flex flex-row align-items-center mt-2">
           <div class="flex-grow-1 mr-2">
             <b-tabs v-model="activeView" class="tab-container">
               <b-tab
@@ -288,7 +289,7 @@
         {{ labelModalTitle }}
       </template>
       <b-form-group
-        v-if="!isClone"
+        v-if="!hasLabelRole"
         id="input-group-1"
         label="Label name:"
         label-for="label-input-field"
@@ -319,10 +320,10 @@
     </b-modal>
     <b-modal
       :id="unsaveModalId"
-      @ok="onConfirmRouteSave(nextRoute)"
-      @cancel="onCancelRouteSave(nextRoute)"
       ok-variant="danger"
       ok-title="Delete Cloned Dataset"
+      @ok="onConfirmRouteSave(nextRoute)"
+      @cancel="onCancelRouteSave(nextRoute)"
     >
       <template #modal-header> Unsaved dataset </template>
       <template>
@@ -344,6 +345,7 @@ import { capitalize } from "lodash";
 // Components
 import ActionColumn from "../components/layout/ActionColumn.vue";
 import AddVariablePane from "../components/panel/AddVariablePane.vue";
+import ExportPane from "../components/panel/ExportPane.vue";
 import CreateLabelingForm from "../components/labelingComponents/CreateLabelingForm.vue";
 import CreateSolutionsForm from "../components/CreateSolutionsForm.vue";
 import DataSize from "../components/buttons/DataSize.vue";
@@ -396,6 +398,7 @@ import {
 import { findAPositiveLabel } from "../util/data";
 import _ from "lodash";
 import { DataExplorerRef } from "../util/componentTypes";
+import { GENERIC_EVENT_HANDLERS } from "../util/explorer/functions/generic";
 
 const DataExplorer = Vue.extend({
   name: "DataExplorer",
@@ -403,6 +406,7 @@ const DataExplorer = Vue.extend({
   components: {
     ActionColumn,
     AddVariablePane,
+    ExportPane,
     CreateLabelingForm,
     CreateSolutionsForm,
     DataSize,
@@ -576,9 +580,11 @@ const DataExplorer = Vue.extend({
   },
   beforeDestroy() {
     this.removeEventHandlers(this.config.eventHandlers);
+    this.removeEventHandlers(GENERIC_EVENT_HANDLERS);
   },
   async beforeMount() {
     const self = (this as unknown) as DataExplorerRef; // because the computes/methods are added in beforeCreate typescript does not work so we cast it to a type here
+    self.bindEventHandlers(GENERIC_EVENT_HANDLERS);
     if (self.isSelectState) {
       // First get the dataset informations
       await viewActions.fetchDataExplorerData(this.$store, [] as Variable[]);

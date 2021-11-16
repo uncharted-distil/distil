@@ -64,7 +64,7 @@ export function summaryToVariable(summary: VariableSummary): Variable {
     min: summary.baseline?.extrema.min,
     max: summary.baseline?.extrema.max,
     values: summary.baseline?.buckets.map((b) => b.key),
-    distilRole: "",
+    distilRole: [],
     role: [],
     novelty: null,
   };

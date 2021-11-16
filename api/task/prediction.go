@@ -377,7 +377,7 @@ func getPredictionDatasetAlignmentUpdates(modelVariables []*model.Variable, pred
 	predictVars := map[string]*model.Variable{}
 	for _, v := range predictionVariables {
 		predictVars[v.Key] = v
-		if v.DistilRole == model.VarDistilRoleSystemData && v.Index < generatedFeatureIdx {
+		if v.HasRole(model.VarDistilRoleSystemData) && v.Index < generatedFeatureIdx {
 			generatedFeatureIdx = v.Index
 		}
 	}
@@ -462,7 +462,7 @@ func updatePredictionAlignment(updates *alignmentUpdates, dataset *api.Dataset, 
 
 		// update data storage with the added variables
 		for _, addVariable := range updates.adds {
-			addVariable.DistilRole = model.VarDistilRolePadding
+			addVariable.DistilRole = []string{model.VarDistilRolePadding}
 			err := dataStorage.AddVariable(dataset.ID, dataset.StorageName, addVariable.Key, addVariable.Type, "")
 			if err != nil {
 				return err
@@ -806,7 +806,7 @@ func augmentPredictionDataset(csvData [][]string, target *model.Variable,
 				log.Infof("new prediction field '%s' found and mapped to index %d", pv, newFieldIndex)
 				predictVariablesMap[i] = -1
 				newPredictionFields[i] = model.NewVariable(newFieldIndex, pv, pv, pv, pv, model.StringType,
-					model.StringType, "", []string{model.RoleAttribute}, model.VarDistilRoleData, nil, sourceVariables, true)
+					model.StringType, "", []string{model.RoleAttribute}, []string{model.VarDistilRoleData}, nil, sourceVariables, true)
 			}
 			if pv == model.D3MIndexFieldName {
 				addIndex = false
@@ -921,7 +921,7 @@ func CreateComposedVariable(metaStorage api.MetadataStorage, dataStorage api.Dat
 	}
 	if !varExists {
 		// create the variable metadata entry
-		err := metaStorage.AddVariable(dataset, composedVarName, composedVarDisplayName, model.StringType, model.VarDistilRoleGrouping)
+		err := metaStorage.AddVariable(dataset, composedVarName, composedVarDisplayName, model.StringType, []string{model.VarDistilRoleGrouping})
 		if err != nil {
 			return err
 		}

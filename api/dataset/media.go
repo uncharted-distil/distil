@@ -169,17 +169,17 @@ func (m *Media) CreateDataset(rootDataPath string, datasetName string, config *e
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(0, model.D3MIndexFieldName, model.D3MIndexFieldName, model.D3MIndexFieldName,
 			model.D3MIndexFieldName, model.IntegerType, model.IntegerType, "D3M index",
-			[]string{model.RoleIndex}, model.VarDistilRoleIndex, nil, dr.Variables, false),
+			[]string{model.RoleIndex}, []string{model.VarDistilRoleIndex}, nil, dr.Variables, false),
 	)
 	// TODO: the image type is currently assumed but the type should be determined based on the type of media.
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(1, "media_file", "media_file", "media_file", "media_file", model.ImageType,
 			model.StringType, "Reference to media file", []string{"attribute"},
-			model.VarDistilRoleData, map[string]interface{}{"resID": "0", "resObject": "item"}, dr.Variables, false))
+			[]string{model.VarDistilRoleData}, map[string]interface{}{"resID": "0", "resObject": "item"}, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(2, "label", "label", "label", "label", model.CategoricalType,
 			model.StringType, "Label of the media", []string{"suggestedTarget"},
-			model.VarDistilRoleData, nil, dr.Variables, false))
+			[]string{model.VarDistilRoleData}, nil, dr.Variables, false))
 
 	// create the data resource for the referenced media
 	refDR := model.NewDataResource("0", mediaTypeMap[m.TargetMediaType], map[string][]string{mediaFormatMap[m.TargetMediaType]: mediaTypeContentMap[m.TargetMediaType]})
