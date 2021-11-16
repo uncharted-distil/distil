@@ -20,15 +20,6 @@
     <!-- Spacer for the App.vue <navigation> component. -->
     <div class="row flex-0-nav" />
 
-    <!-- Title of the page. -->
-    <header class="header row justify-content-center">
-      <div class="col-12 col-md-10">
-        <h5 class="header-title">
-          Select a Model to reuse or a Dataset to create a model
-        </h5>
-      </div>
-    </header>
-
     <!-- Add dataset modal -->
     <add-dataset
       id="add-dataset"
@@ -47,33 +38,35 @@
     </div>
 
     <!-- Search navigation -->
-    <section class="row justify-content-center">
+    <section class="row justify-content-center mt-5">
       <div class="col-12 col-md-11 col-lg-10 col-xl-8">
-        <ul class="nav nav-tabs" role="tablist">
-          <li class="nav-item">
-            <a class="nav-link active" data-toggle="tab" href="#all" role="tab">
-              All
-              <span class="badge badge-pill badge-danger">{{
-                nbSearchModels + nbSearchDatasets
-              }}</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" data-toggle="tab" href="#models" role="tab">
-              <i class="fa fa-connectdevelop" /> Models
-              <span class="badge badge-pill badge-danger">{{
-                nbSearchModels
-              }}</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" data-toggle="tab" href="#datasets" role="tab">
-              <i class="fa fa-table" /> Datasets
-              <span class="badge badge-pill badge-danger">{{
-                nbSearchDatasets
-              }}</span>
-            </a>
-          </li>
+        <div class="d-flex justify-content-between">
+          <b-tabs active-nav-item-class="active-search-tab">
+            <b-tab active>
+              <template #title>
+                All
+                <span class="badge badge-pill badge-light">{{
+                  nbSearchModels + nbSearchDatasets
+                }}</span>
+              </template>
+            </b-tab>
+            <b-tab>
+              <template #title>
+                <i class="fa fa-connectdevelop" /> Models
+                <span class="badge badge-pill badge-light">{{
+                  nbSearchModels
+                }}</span>
+              </template>
+            </b-tab>
+            <b-tab>
+              <template #title>
+                <i class="fa fa-table" /> Datasets
+                <span class="badge badge-pill badge-light">{{
+                  nbSearchDatasets
+                }}</span>
+              </template>
+            </b-tab>
+          </b-tabs>
           <b-button
             v-b-modal.add-dataset
             class="add-new-datasets"
@@ -81,7 +74,7 @@
           >
             <i class="fa fa-plus-circle" /> Add Dataset
           </b-button>
-        </ul>
+        </div>
       </div>
     </section>
 
@@ -89,41 +82,25 @@
     <section class="row flex-1 justify-content-center">
       <div class="col-12 col-md-11 col-lg-10 col-xl-8 search-content-wrapper">
         <!-- Search bar -->
-        <section class="row justify-content-center">
-          <div class="col-12 col-md-11 col-lg-10 col-xl-8">
+        <section class="row">
+          <div class="col-8">
             <search-bar class="search-search-bar" />
           </div>
-          <b-dropdown variant="outline-dark">
-            <template v-slot:button-content>
-              <i :class="sortingIcon" /> Sort by:
-              <strong>{{ sortingDisplayName }}</strong>
-            </template>
-            <!-- <b-dropdown-item-button @click="sortRecentDesc">
-              <i class="fa fa-sort-amount-desc"></i> Recent Activity
-            </b-dropdown-item-button>
-            <b-dropdown-divider></b-dropdown-divider> -->
-            <b-dropdown-item-button @click="sortNameAsc">
-              <i class="fa fa-sort-alpha-asc" /> Name
-            </b-dropdown-item-button>
-            <b-dropdown-item-button @click="sortNameDesc">
-              <i class="fa fa-sort-alpha-desc" /> Name
-            </b-dropdown-item-button>
-            <b-dropdown-divider />
-            <b-dropdown-item-button @click="sortFeaturesAsc">
-              <i class="fa fa-sort-numeric-asc" /> Features
-            </b-dropdown-item-button>
-            <b-dropdown-item-button @click="sortFeaturesDesc">
-              <i class="fa fa-sort-numeric-desc" /> Features
-            </b-dropdown-item-button>
-            <b-dropdown-item-button @click="sortImportedAsc">
-              <i class="fa fa-long-arrow-down" /><i class="fa fa-file" />
-              Imported
-            </b-dropdown-item-button>
-            <b-dropdown-item-button @click="sortImportedDesc">
-              <i class="fa fa-long-arrow-down" /><i class="fa fa-file-o" />
-              Imported
-            </b-dropdown-item-button>
-          </b-dropdown>
+          <div class="col-3">
+            <div class="input-group search-search-bar">
+              <div class="input-group-prepend">
+                <div class="input-group-text">Sort By:</div>
+              </div>
+              <select id="inputState" class="form-control">
+                <option selected>Name Ascending</option>
+                <option>Name Descending</option>
+                <option>Features Ascending</option>
+                <option>Features Descending</option>
+                <option>Imported Ascending</option>
+                <option>Imported Descending</option>
+              </select>
+            </div>
+          </div>
         </section>
         <div
           v-if="isPending"
@@ -134,22 +111,10 @@
           No {{ tab === "all" ? "datasets or models" : tab }} found for search
         </p>
         <div v-else class="search-content">
-          <template v-for="result in sortedResults">
-            <dataset-preview
-              v-if="result.type === 'dataset'"
-              :key="result.dataset.id"
-              :dataset="result.dataset"
-              allow-join
-              allow-import
-              @dataset-delete="onDatasetDeletionClicked"
-            />
-            <model-preview
-              v-if="result.type === 'model'"
-              :key="result.model.fittedSolutionId"
-              :model="result.model"
-              @model-delete="onModelDeletionClicked"
-            />
-          </template>
+          <dataset-preview-table
+            class="mt-3"
+            :datasets="sortedDatasetResults"
+          />
         </div>
         <deletion-modal
           :target="deletionTarget"
@@ -171,6 +136,7 @@ import DatasetPreview from "../components/DatasetPreview.vue";
 import DeletionModal from "../components/DeletionModal.vue";
 import ImportStatus from "../components/ImportStatus.vue";
 import ModelPreview from "../components/ModelPreview.vue";
+import DatasetPreviewTable from "../components/searchComponents/DatasetPreviewTable.vue";
 import SearchBar from "../components/SearchBar.vue";
 import { Dataset } from "../store/dataset/index";
 import {
@@ -206,6 +172,7 @@ export default Vue.extend({
   components: {
     AddDataset,
     DatasetPreview,
+    DatasetPreviewTable,
     ImportStatus,
     ModelPreview,
     SearchBar,
@@ -295,7 +262,11 @@ export default Vue.extend({
 
       return results;
     },
-
+    sortedDatasetResults(): Dataset[] {
+      return (this.sortedResults.filter(
+        (d) => d.type === "dataset"
+      ) as DatasetResult[]).map((d) => d.dataset);
+    },
     /* Sort the results based on the sorting selected. */
     sortedResults(): (ModelResult | DatasetResult)[] {
       return this.searchResults.slice().sort((a, b) => {
@@ -541,6 +512,7 @@ export default Vue.extend({
   /* As we use flexbox with .row, the height needs to be define
      here to allow .search-content to be scrollable. */
   height: 100%;
+  background-color: white;
 }
 
 .search-content {
@@ -576,5 +548,12 @@ export default Vue.extend({
   pointer-events: none;
   position: absolute;
   right: 0;
+}
+</style>
+<style>
+.active-search-tab {
+  background-color: white !important;
+  border-bottom: none !important;
+  border-top: 5px solid #424242 !important;
 }
 </style>
