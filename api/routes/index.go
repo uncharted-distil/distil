@@ -131,7 +131,11 @@ func getModelMetrics(task string) *Combinations {
 
 	if strings.Contains(task, compute.ClassificationTask) {
 		if strings.Contains(task, compute.SemiSupervisedTask) {
-			taskMetrics = util.TaskMetricMap[compute.SemiSupervisedTask]
+			if strings.Contains(task, compute.BinaryTask) {
+				taskMetrics = util.TaskMetricMap[compute.BinaryTask]
+			} else {
+				taskMetrics = util.TaskMetricMap[compute.SemiSupervisedTask]
+			}
 		} else if strings.Contains(task, compute.MultiClassTask) {
 			taskMetrics = util.TaskMetricMap[compute.MultiClassTask]
 		} else if strings.Contains(task, compute.BinaryTask) {
