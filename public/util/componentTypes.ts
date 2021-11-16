@@ -87,6 +87,7 @@ export interface DataExplorerRef {
   metaTypes: string[];
   state: BaseState;
   unsaveModalId: string;
+  shouldSaveDataset: boolean;
 
   // methods
   bindEventHandlers: (eventHandlers: Record<string, Function>) => void;

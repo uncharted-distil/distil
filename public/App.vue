@@ -70,9 +70,7 @@ export default Vue.extend({
           ExplorerStateNames.LABEL_VIEW &&
         state !== ExplorerStateNames.LABEL_VIEW
       ) {
-        const isDatasetSaved = await dataExplorer.isCurrentDatasetSaved();
-
-        if (!isDatasetSaved) {
+        if (dataExplorer.shouldSaveDataset) {
           dataExplorer.$bvModal.show(dataExplorer.unsaveModalId);
         } else {
           await dataExplorer.changeStatesByName(state);
