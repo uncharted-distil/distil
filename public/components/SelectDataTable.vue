@@ -704,7 +704,7 @@ table tr {
   border-right: 2px solid var(--gray-900);
 }
 .table td {
-  padding: 0px !important;
+  padding: 0px;
 }
 .table td > div {
   text-align: left;

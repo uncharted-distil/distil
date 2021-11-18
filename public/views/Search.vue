@@ -40,36 +40,34 @@
     <!-- Search navigation -->
     <section class="row justify-content-center mt-5">
       <div class="col-12 col-md-11 col-lg-10 col-xl-8">
-        <div class="d-flex justify-content-between">
+        <div class="d-flex justify-content-between align-items-end">
           <b-tabs active-nav-item-class="active-search-tab">
-            <b-tab active>
+            <b-tab @click="onTab(0)">
               <template #title>
-                All
-                <span class="badge badge-pill badge-light">{{
-                  nbSearchModels + nbSearchDatasets
-                }}</span>
+                <i class="fa fa-connectdevelop color-black" />
+                <b class="color-black">Models</b>
+                <span
+                  class="badge badge-pill badge-light background-color-grey"
+                >
+                  {{ nbSearchModels }}
+                </span>
               </template>
             </b-tab>
-            <b-tab>
+            <b-tab active @click="onTab(1)">
               <template #title>
-                <i class="fa fa-connectdevelop" /> Models
-                <span class="badge badge-pill badge-light">{{
-                  nbSearchModels
-                }}</span>
-              </template>
-            </b-tab>
-            <b-tab>
-              <template #title>
-                <i class="fa fa-table" /> Datasets
-                <span class="badge badge-pill badge-light">{{
-                  nbSearchDatasets
-                }}</span>
+                <i class="fa fa-table color-black" />
+                <b class="color-black">Datasets</b>
+                <span
+                  class="badge badge-pill badge-light background-color-grey"
+                >
+                  {{ nbSearchDatasets }}
+                </span>
               </template>
             </b-tab>
           </b-tabs>
           <b-button
             v-b-modal.add-dataset
-            class="add-new-datasets"
+            class="add-new-datasets mb-2"
             variant="secondary"
           >
             <i class="fa fa-plus-circle" /> Add Dataset
@@ -91,7 +89,7 @@
               <div class="input-group-prepend">
                 <div class="input-group-text">Sort By:</div>
               </div>
-              <select id="inputState" class="form-control">
+              <select id="inputState" v-model="sortType" class="form-control">
                 <option selected>Name Ascending</option>
                 <option>Name Descending</option>
                 <option>Features Ascending</option>
@@ -112,8 +110,16 @@
         </p>
         <div v-else class="search-content">
           <dataset-preview-table
+            v-if="currentTab"
             class="mt-3"
             :datasets="sortedDatasetResults"
+            @dataset-delete="onDatasetDeletionClicked"
+          />
+          <model-preview-table
+            v-if="!currentTab"
+            class="mt-3"
+            :models="sortedModelResults"
+            @model-delete="onModelDeletionClicked"
           />
         </div>
         <deletion-modal
@@ -132,11 +138,10 @@
 import _ from "lodash";
 import Vue from "vue";
 import AddDataset from "../components/AddDataset.vue";
-import DatasetPreview from "../components/DatasetPreview.vue";
 import DeletionModal from "../components/DeletionModal.vue";
 import ImportStatus from "../components/ImportStatus.vue";
-import ModelPreview from "../components/ModelPreview.vue";
 import DatasetPreviewTable from "../components/searchComponents/DatasetPreviewTable.vue";
+import ModelPreviewTable from "../components/searchComponents/ModelPreviewTable.vue";
 import SearchBar from "../components/SearchBar.vue";
 import { Dataset } from "../store/dataset/index";
 import {
@@ -171,16 +176,16 @@ export default Vue.extend({
 
   components: {
     AddDataset,
-    DatasetPreview,
     DatasetPreviewTable,
     ImportStatus,
-    ModelPreview,
+    ModelPreviewTable,
     SearchBar,
     DeletionModal,
   },
 
   data() {
     return {
+      sortType: "Name Ascending",
       isPending: false,
       sorting: {
         asc: true,
@@ -198,6 +203,7 @@ export default Vue.extend({
       deletionTarget: "",
       deletionInfo: null,
       deletionInfoModel: null,
+      currentTab: 1,
     };
   },
 
@@ -233,7 +239,7 @@ export default Vue.extend({
       const results = [] as (ModelResult | DatasetResult)[];
 
       // If tab is either 'models' or 'all' we display the models.
-      if (this.tab !== "datasets") {
+      if (!this.currentTab) {
         const models = this.filteredModels.map((model) => {
           return {
             type: "model",
@@ -247,7 +253,7 @@ export default Vue.extend({
       }
 
       // If tab is either 'datasets' or 'all' we display the datasets.
-      if (this.tab !== "models") {
+      if (this.currentTab) {
         const datasets = this.filteredDatasets.map((dataset) => {
           return {
             type: "dataset",
@@ -266,6 +272,11 @@ export default Vue.extend({
       return (this.sortedResults.filter(
         (d) => d.type === "dataset"
       ) as DatasetResult[]).map((d) => d.dataset);
+    },
+    sortedModelResults(): Model[] {
+      return (this.sortedResults.filter(
+        (d) => d.type === "model"
+      ) as ModelResult[]).map((d) => d.model);
     },
     /* Sort the results based on the sorting selected. */
     sortedResults(): (ModelResult | DatasetResult)[] {
@@ -344,6 +355,9 @@ export default Vue.extend({
     terms() {
       this.fetch();
     },
+    sortType() {
+      this.onSort(this.sortType);
+    },
   },
 
   beforeMount() {
@@ -352,6 +366,31 @@ export default Vue.extend({
   },
 
   methods: {
+    onTab(tab: number) {
+      this.currentTab = tab;
+    },
+    onSort(val: string) {
+      switch (val) {
+        case "Name Ascending":
+          this.sortNameAsc();
+          break;
+        case "Name Descending":
+          this.sortNameDesc();
+          break;
+        case "Features Ascending":
+          this.sortFeaturesAsc();
+          break;
+        case "Features Descending":
+          this.sortFeaturesDesc();
+          break;
+        case "Imported Ascending":
+          this.sortImportedAsc();
+          break;
+        case "Imported Descending":
+          this.sortImportedDesc();
+          break;
+      }
+    },
     fetch() {
       this.isPending = true;
       viewActions.fetchSearchData(this.$store).then(() => {
@@ -489,7 +528,9 @@ export default Vue.extend({
 .search-nav > * + * {
   margin-left: 2em;
 }
-
+.background-color-grey {
+  background-color: #eee;
+}
 .search-nav-tab {
   background: #eeeeee;
   border-color: transparent;
@@ -511,20 +552,22 @@ export default Vue.extend({
 .search-content-wrapper {
   /* As we use flexbox with .row, the height needs to be define
      here to allow .search-content to be scrollable. */
-  height: 100%;
+  height: 95%;
   background-color: white;
 }
 
 .search-content {
-  height: 100%;
-  overflow: scroll;
+  height: 95%;
+  overflow: none;
 }
 
 .search-content .card-result {
   margin-left: 0;
   margin-right: 0;
 }
-
+.color-black {
+  color: #757575;
+}
 .search-content-empty,
 .search-content-spinner {
   margin-top: 3rem;
