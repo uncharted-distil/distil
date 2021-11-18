@@ -149,7 +149,7 @@ export default Vue.extend({
           this.accuracyData.push({
             joinPair: cur[end],
             absolute: false,
-            accuracy: 1.0,
+            accuracy: this.getDefaultUnitValue(unitType),
             unitType,
             unit: this.getDefaultUnit(unitType),
           });
@@ -196,6 +196,15 @@ export default Vue.extend({
         return UnitTypes.None;
       }
       return UnitTypes.Disabled;
+    },
+    getDefaultUnitValue(unitType: UnitTypes): number {
+      if (unitType === UnitTypes.Time) {
+        return 1;
+      }
+      if (unitType === UnitTypes.Distance) {
+        return 5;
+      }
+      return 1.0;
     },
     getDefaultUnit(unitType: UnitTypes): string {
       if (unitType === UnitTypes.None || unitType === UnitTypes.Disabled) {
