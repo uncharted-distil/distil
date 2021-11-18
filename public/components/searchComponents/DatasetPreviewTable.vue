@@ -152,7 +152,21 @@ import { Activity, Feature, SubActivity } from "../../util/userEvents";
 import _ from "lodash";
 
 const NUM_TOP_FEATURES = 5;
-
+interface Item {
+  open: boolean;
+  DatasetName: string;
+  Features: number;
+  Rows: number;
+  Size: string;
+}
+interface ExpandedItem {
+  topVariables: string;
+  summaryML: string;
+  summary: string;
+  fullDescription: string;
+  id: string;
+  moreDetails: boolean;
+}
 export default Vue.extend({
   name: "DatasetPreviewTable",
 
@@ -164,8 +178,8 @@ export default Vue.extend({
   },
   data() {
     return {
-      items: [],
-      expandedItems: [],
+      items: [] as Item[],
+      expandedItems: [] as ExpandedItem[],
     };
   },
   computed: {
@@ -182,7 +196,7 @@ export default Vue.extend({
       );
       const moreDetailsMap = new Map(
         this.expandedItems.map((item) => {
-          return [item.DatasetName, item.moreDetails];
+          return [item.id, item.moreDetails];
         })
       );
       this.items = this.formatItems(openMap);
@@ -217,7 +231,7 @@ export default Vue.extend({
     onDeleteClicked(index: number) {
       this.$emit(EventList.DATASETS.DELETE_EVENT, this.datasets[index]);
     },
-    formatItems(openMap: Map<string, boolean>) {
+    formatItems(openMap: Map<string, boolean>): Item[] {
       return this.datasets.map((d) => {
         return {
           open: openMap.get(d.name),
@@ -228,7 +242,7 @@ export default Vue.extend({
         };
       });
     },
-    formatExpandedItems(openMap: Map<string, boolean>) {
+    formatExpandedItems(openMap: Map<string, boolean>): ExpandedItem[] {
       return this.datasets.map((d) => {
         return {
           topVariables: sortVariablesByPCARanking(
@@ -241,7 +255,7 @@ export default Vue.extend({
           summary: d.summary || "n/a",
           fullDescription: this.highlightedDescription(d.description),
           id: d.id,
-          moreDetails: openMap.get(d.name),
+          moreDetails: openMap.get(d.id),
         };
       });
     },
