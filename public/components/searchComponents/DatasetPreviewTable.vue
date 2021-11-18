@@ -89,9 +89,17 @@
                 <b>May relate to topics such as:</b>
               </div>
               <div class="row m-0 p-0"><b>Summary:</b></div>
+              <div v-if="expandedItems[i].moreDetails" class="row m-0 p-0">
+                <b>Full Description</b>
+              </div>
               <div class="row ml-0 mr-0 mb-3 mt-3 p-0">
-                <b-button v-if="expandedItems[i].description" size="sm">
-                  More Details
+                <b-button
+                  v-if="expandedItems[i].fullDescription"
+                  size="sm"
+                  @click="onMoreDetails(i)"
+                >
+                  <span v-if="!expandedItems[i].moreDetails">More Details</span>
+                  <span v-else>Less Details</span>
                 </b-button>
               </div>
             </td>
@@ -103,6 +111,11 @@
               <div class="row m-0 p-0">{{ expandedItems[i].topVariables }}</div>
               <div class="row m-0 p-0">{{ expandedItems[i].summaryML }}</div>
               <div class="row m-0 p-0">{{ expandedItems[i].summary }}</div>
+              <div
+                v-if="expandedItems[i].moreDetails"
+                class="row m-0 p-0"
+                v-html="expandedItems[i].fullDescription"
+              />
               <div class="row ml-0 mr-0 mb-3 mt-3 p-0 flex-row-reverse">
                 <b-button
                   variant="danger"
@@ -167,13 +180,18 @@ export default Vue.extend({
           return [item.DatasetName, item.open];
         })
       );
+      const moreDetailsMap = new Map(
+        this.expandedItems.map((item) => {
+          return [item.DatasetName, item.moreDetails];
+        })
+      );
       this.items = this.formatItems(openMap);
-      this.expandedItems = this.formatExpandedItems();
+      this.expandedItems = this.formatExpandedItems(moreDetailsMap);
     },
   },
   beforeMount() {
     this.items = this.formatItems(new Map());
-    this.expandedItems = this.formatExpandedItems();
+    this.expandedItems = this.formatExpandedItems(new Map());
   },
   methods: {
     highlightedDescription(datasetDescription: string): string {
@@ -188,6 +206,10 @@ export default Vue.extend({
         regex,
         '<span class="highlight">$1</span>'
       );
+    },
+    onMoreDetails(index: number) {
+      this.expandedItems[index].moreDetails = !this.expandedItems[index]
+        .moreDetails;
     },
     onExpand(index: number) {
       this.items[index].open = !this.items[index].open;
@@ -206,7 +228,7 @@ export default Vue.extend({
         };
       });
     },
-    formatExpandedItems() {
+    formatExpandedItems(openMap: Map<string, boolean>) {
       return this.datasets.map((d) => {
         return {
           topVariables: sortVariablesByPCARanking(
@@ -219,6 +241,7 @@ export default Vue.extend({
           summary: d.summary || "n/a",
           fullDescription: this.highlightedDescription(d.description),
           id: d.id,
+          moreDetails: openMap.get(d.name),
         };
       });
     },
