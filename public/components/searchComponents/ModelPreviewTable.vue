@@ -126,7 +126,18 @@ import { openModelSolution } from "../../util/solutions";
 import { ExplorerStateNames } from "../../util/explorer";
 
 const NUM_TOP_FEATURES = 5;
-
+interface Item {
+  open: boolean;
+  modelName: string;
+  DatasetName: string;
+  Features: number;
+  Target: string;
+}
+interface ExpandedItem {
+  topVariables: string;
+  description: string;
+  allVariables: string;
+}
 export default Vue.extend({
   name: "ModelPreviewTable",
 
@@ -138,8 +149,8 @@ export default Vue.extend({
   },
   data() {
     return {
-      items: [],
-      expandedItems: [],
+      items: [] as Item[],
+      expandedItems: [] as ExpandedItem[],
     };
   },
   computed: {
@@ -182,7 +193,7 @@ export default Vue.extend({
     onDeleteClicked(index: number) {
       this.$emit(EventList.MODEL.DELETE_EVENT, this.models[index]);
     },
-    formatItems(openMap: Map<string, boolean>) {
+    formatItems(openMap: Map<string, boolean>): Item[] {
       return this.models.map((m) => {
         return {
           open: openMap.get(m.modelName),
@@ -193,7 +204,7 @@ export default Vue.extend({
         };
       });
     },
-    formatExpandedItems() {
+    formatExpandedItems(): ExpandedItem[] {
       return this.models.map((m) => {
         const sortedVars = m.variableDetails
           .slice()
