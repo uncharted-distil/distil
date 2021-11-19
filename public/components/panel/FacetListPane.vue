@@ -185,8 +185,6 @@ export default Vue.extend({
             const variableName = group.key;
             const variable = this.variables.find((v) => v.key === variableName);
             const buttonList = [] as HTMLElement[];
-            // Display and Hide variables in the Data Explorer.
-            const exploreButton = this.displayButton(variableName);
             if (!hasRole(variable, DISTIL_ROLES.Augmented)) {
               if (this.hasTarget) {
                 // Add/Remove a variable as training.
@@ -205,7 +203,7 @@ export default Vue.extend({
             // Container to display the buttons with flex.
             const container = document.createElement("div");
             container.className = "d-flex justify-content-between w-100";
-            container.append(exploreButton, modelButtons);
+            container.append(modelButtons);
             return container;
           };
     },
@@ -335,17 +333,6 @@ export default Vue.extend({
 
       args.explore = this.explore.filter((v) => !map.has(v)).join(",");
       this.updateRoute(args);
-    },
-    displayButton(variable: string): HTMLElement {
-      const isInExplore = this.isExplore(variable);
-      const button = document.createElement("button");
-      button.className = "btn btn-sm";
-      button.className += isInExplore
-        ? " btn-outline-secondary"
-        : " btn-secondary";
-      button.textContent = isInExplore ? "Hide" : "Display";
-      button.addEventListener("click", () => this.updateExplore(variable));
-      return button;
     },
 
     trainingButton(variable: string): HTMLElement {
@@ -516,19 +503,6 @@ export default Vue.extend({
         args = await this.addTrainingVariables([variable]);
       }
 
-      this.updateRoute(args);
-    },
-
-    updateExplore(variable: string): void {
-      const args = {} as RouteArgs;
-      if (this.isExplore(variable)) {
-        args.explore = this.explore.filter((v) => v !== variable).join(",");
-        if (variable === this.colorScaleVar) {
-          args.colorScaleVariable = "";
-        }
-      } else {
-        args.explore = this.explore.concat([variable]).join(",");
-      }
       this.updateRoute(args);
     },
   },

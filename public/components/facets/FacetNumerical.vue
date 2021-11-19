@@ -26,10 +26,11 @@
       :disabled.prop="!enableHighlighting"
       @facet-element-updated="updateSelection"
     >
-      <div slot="header-label" :class="headerClass" class="d-flex">
+      <div slot="header-label" :class="headerClass">
         <span>{{ summary.label.toUpperCase() }}</span>
         <importance-bars v-if="enableImportance" :importance="importance" />
-        <div class="facet-header-dropdown d-flex align-items-center">
+        <div class="d-flex align-items-center my-1">
+          <toggle-explore :variable="summary.key" />
           <color-scale-drop-down
             v-if="geoEnabled"
             :variable-summary="summary"
@@ -84,6 +85,7 @@ import Vue from "vue";
 import "@uncharted.software/facets-core";
 import "@uncharted.software/facets-plugins";
 import { FacetBarsData } from "@uncharted.software/facets-core/dist/types/facet-bars/FacetBars";
+import ToggleExplore from "../ToggleExplore.vue";
 import ColorScaleDropDown from "../ColorScaleDropDown.vue";
 import TypeChangeMenu from "../TypeChangeMenu.vue";
 import ImportanceBars from "../ImportanceBars.vue";
@@ -106,6 +108,7 @@ export default Vue.extend({
   components: {
     TypeChangeMenu,
     ImportanceBars,
+    ToggleExplore,
     ColorScaleDropDown,
   },
 
@@ -350,11 +353,6 @@ export default Vue.extend({
 </script>
 
 <style scoped>
-.facet-header-dropdown {
-  position: absolute;
-  right: 12px;
-}
-
 .facet-footer-container {
   min-height: 12px;
   padding: 6px 4px 5px 5px;
@@ -370,8 +368,6 @@ export default Vue.extend({
 
 .facet-header-container {
   color: rgba(0, 0, 0, 0.54);
-  display: flex;
-  align-items: center;
 }
 
 .facet-header-container-no-scroll {

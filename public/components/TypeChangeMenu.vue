@@ -16,7 +16,7 @@
 -->
 
 <template>
-  <div class="type-change-dropdown-wrapper">
+  <div class="type-change-dropdown-wrapper d-flex align-items-center my-1">
     <d-drop-down
       id="type-change-dropdown"
       :value="label"

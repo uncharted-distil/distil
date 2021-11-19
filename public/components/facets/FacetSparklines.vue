@@ -29,7 +29,6 @@
       <span>{{ summary.label.toUpperCase() }}</span>
       <type-change-menu
         v-if="facetEnableTypeChanges"
-        class="facet-header-dropdown"
         :dataset="summary.dataset"
         :field="summary.key"
         :expand-collapse="expandCollapse"
@@ -357,11 +356,6 @@ export default Vue.extend({
   margin-right: 6px;
 }
 
-.facet-header-dropdown {
-  position: absolute;
-  right: 12px;
-}
-
 .facet-footer-container {
   min-height: 12px;
   padding: 6px 4px 5px 5px;
@@ -406,8 +400,6 @@ export default Vue.extend({
 
 .facet-header-container {
   color: rgba(0, 0, 0, 0.54);
-  display: flex;
-  align-items: center;
   overflow-y: scroll !important;
 }
 

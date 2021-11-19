@@ -22,15 +22,18 @@
         {{ headerLabel }}
       </span>
       <i class="fa fa-globe"></i>
-      <type-change-menu
-        :geocoordinate="true"
-        :dataset="dataset"
-        :field="target"
-        :expandCollapse="expandCollapse"
-        :expand="expand"
-        :type-change-event="typeChangeEvent"
-        @type-change="onTypeChange"
-      />
+      <div class="d-flex align-items-center my-1">
+        <toggle-explore :variable="target" />
+        <type-change-menu
+          :geocoordinate="true"
+          :dataset="dataset"
+          :field="target"
+          :expandCollapse="expandCollapse"
+          :expand="expand"
+          :type-change-event="typeChangeEvent"
+          @type-change="onTypeChange"
+        />
+      </div>
     </div>
     <div class="geofacet-container">
       <div
@@ -88,6 +91,7 @@ import {
   NUMERICAL_SUMMARY,
   RowSelection,
 } from "../../store/dataset";
+import ToggleExplore from "../ToggleExplore.vue";
 import TypeChangeMenu from "../TypeChangeMenu.vue";
 import FacetNumerical from "./FacetNumerical.vue";
 import {
@@ -139,6 +143,7 @@ export default Vue.extend({
   name: "geocoordinate-facet",
 
   components: {
+    ToggleExplore,
     TypeChangeMenu,
     IconBase,
     IconCropFree,
@@ -1149,9 +1154,6 @@ export default Vue.extend({
 }
 .padding-right-12 {
   padding-right: 12px;
-}
-.facet-card .group-header .type-change-dropdown-wrapper {
-  float: right;
 }
 
 .geofacet-container .type-change-dropdown-wrapper .dropdown-menu {

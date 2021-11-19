@@ -31,7 +31,8 @@
       <div slot="header-label" :class="headerClass">
         <i :class="getGroupIcon(summary) + ' facet-header-icon'" />
         <span>{{ summary.label.toUpperCase() }}</span>
-        <div class="facet-header-dropdown d-flex align-items-center">
+        <div class="d-flex align-items-center my-1">
+          <toggle-explore :variable="summary.key" />
           <color-scale-drop-down
             v-if="geoEnabled && isClustering"
             :variable-summary="summary"
@@ -106,6 +107,7 @@ import {
   facetTypeChangeState,
   generateFacetDiscreteStyle,
 } from "../../util/facets";
+import ToggleExplore from "../ToggleExplore.vue";
 import ColorScaleDropDown from "../ColorScaleDropDown.vue";
 import { DISTIL_ROLES } from "../../util/types";
 import { EventList } from "../../util/events";
@@ -116,6 +118,7 @@ export default Vue.extend({
   components: {
     TypeChangeMenu,
     ImagePreview,
+    ToggleExplore,
     ColorScaleDropDown,
   },
 
@@ -416,11 +419,6 @@ export default Vue.extend({
   margin-right: 6px;
 }
 
-.facet-header-dropdown {
-  position: absolute;
-  right: 12px;
-}
-
 .facet-footer-container {
   min-height: 12px;
   padding: 6px 4px 5px 5px;
@@ -465,8 +463,6 @@ export default Vue.extend({
 
 .facet-header-container {
   color: rgba(0, 0, 0, 0.54);
-  display: flex;
-  align-items: center;
   overflow-y: scroll !important;
 }
 

@@ -27,7 +27,7 @@
   </b-button>
   <div
     v-else
-    class="d-flex justify-content-space align-items-center btn-outline-secondary rounded"
+    class="d-flex justify-content-space align-items-center btn-secondary rounded"
   >
     <d-drop-down
       ref="drop-down"
