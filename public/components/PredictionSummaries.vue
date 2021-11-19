@@ -172,6 +172,7 @@ export default Vue.extend({
   props: {
     includeFooter: { type: Boolean as () => boolean, default: false },
     includeTitle: { type: Boolean as () => boolean, default: false },
+    isBusy: { type: Boolean as () => boolean, default: false },
   },
   data() {
     return {
@@ -207,11 +208,11 @@ export default Vue.extend({
           prediction: p,
         };
         if (
-          !meta.rank &&
-          !meta.confidence &&
-          !meta.summary &&
-          !meta.prediction &&
-          !meta.summary.key
+          !meta.rank ||
+          !meta.confidence ||
+          !meta.summary ||
+          !meta.prediction ||
+          !meta.summary?.key
         ) {
           return;
         }
@@ -271,7 +272,11 @@ export default Vue.extend({
     onClick(key: string) {
       // Note that the key is of the form <requestId>:predicted and so needs to be parsed.
       const requestId = getIDFromKey(key);
-      if (this.summaries && this.produceRequestId !== requestId) {
+      if (
+        this.summaries &&
+        this.produceRequestId !== requestId &&
+        !this.isBusy
+      ) {
         appActions.logUserEvent(this.$store, {
           feature: Feature.SELECT_PREDICTIONS,
           activity: Activity.PREDICTION_ANALYSIS,
@@ -288,6 +293,7 @@ export default Vue.extend({
           predictionsDataset: dataset,
           colorScaleVariable: "",
         });
+        console.log;
         this.$router.push(entry).catch((err) => console.warn(err));
       }
     },
