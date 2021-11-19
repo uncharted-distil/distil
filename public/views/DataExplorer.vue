@@ -231,6 +231,7 @@
           </template>
           <b-button
             v-else-if="isResultState"
+            :disabled="!currentSolutionCompleted"
             variant="success"
             class="save-button"
             @click="$bvModal.show('save-model-modal')"

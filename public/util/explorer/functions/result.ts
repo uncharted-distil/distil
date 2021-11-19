@@ -10,7 +10,11 @@ import {
 } from "../../../store";
 import { getters as routeGetters } from "../../../store/route/module";
 import store from "../../../store/store";
-import { Solution } from "../../../store/requests";
+import {
+  Solution,
+  SolutionRequestStatus,
+  SolutionStatus,
+} from "../../../store/requests";
 import { ExplorerStateNames } from "..";
 import { Activity, Feature, SubActivity } from "../../userEvents";
 import {
@@ -23,6 +27,7 @@ import { overlayRouteEntry, RouteArgs, varModesToString } from "../../routes";
 import { isFittedSolutionIdSavedAsModel } from "../../models";
 import { EI, EventList } from "../../events";
 import { IMAGE_TYPE, isClusterType } from "../../types";
+import { getSolutionById } from "../../solutions";
 
 /**
  * RESULT_COMPUTES contains all of the computes for the result state in the data explorer
@@ -52,6 +57,38 @@ export const RESULT_COMPUTES = {
   solutionId(): string | undefined {
     const self = (this as unknown) as DataExplorerRef;
     return self.solution?.solutionId;
+  },
+  /**
+   * returns true if current solution is done fitting
+   */
+  currentSolutionCompleted(): boolean {
+    let solutionRequests = requestGetters.getRelevantSolutionRequests(store);
+    const self = (this as unknown) as DataExplorerRef;
+    let solutions = [] as Solution[];
+    const solutionId = routeGetters.getRouteSolutionId(store);
+    if (self.isSingleSolution) {
+      const solution = getSolutionById(
+        requestGetters.getSolutions(store),
+        solutionId
+      );
+      if (solution) {
+        solutions = [solution];
+        solutionRequests = [
+          solutionRequests.find(
+            (request) => request.requestId === solution.requestId
+          ),
+        ];
+      }
+    } else {
+      // multiple solutions
+      solutions = requestGetters.getRelevantSolutions(store);
+    }
+
+    return solutions.some(
+      (s) =>
+        s.solutionId === solutionId &&
+        s.progress === SolutionStatus.SOLUTION_COMPLETED
+    );
   },
   /**
    * fittedSolutionId returns the current solution's fittedSolutionId
@@ -115,6 +152,7 @@ export const RESULT_METHODS = {
   async fetchSummarySolution(id: string): Promise<void> {
     viewActions.updateResultSummaries(store, { requestIds: [id] });
   },
+
   /**
    * onSaveModel sends information to the backend and the current active solution's model
    * will be saved and therefore will be able to be used for predictions

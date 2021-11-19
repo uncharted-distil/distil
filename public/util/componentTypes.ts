@@ -59,6 +59,7 @@ export interface DataExplorerRef {
   isFilteringSelection: boolean;
   isRemoteSensing: boolean;
   isSelectState: boolean;
+  isSingleSolution: boolean;
   items: TableRow[];
   numRows: number;
   rowSelection: RowSelection;
