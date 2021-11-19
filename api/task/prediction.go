@@ -742,7 +742,8 @@ func persistPredictionResults(datasetName string, params *PredictParams, meta *m
 	}
 	log.Infof("stored feature weights to the database")
 
-	createdTime := time.Now()
+	createdTime := time.Now().UTC()
+
 	err := params.SolutionStorage.PersistPrediction(predictionResult.ProduceRequestID, datasetName, params.Target.Key, params.FittedSolutionID, "PREDICT_COMPLETED", createdTime)
 	if err != nil {
 		return err
