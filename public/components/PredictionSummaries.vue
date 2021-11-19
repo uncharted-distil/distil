@@ -44,9 +44,9 @@
           <div class="prediction-group-body">
             <!-- we need the new facets in here-->
             <prediction-group
-              :confidenceSummary="meta.confidence"
-              :predictedSummary="meta.summary"
-              :rankingSummary="meta.rank"
+              :confidence-summary="meta.confidence"
+              :predicted-summary="meta.summary"
+              :ranking-summary="meta.rank"
               :highlights="highlights"
               :prediction="meta.prediction"
               @categorical-click="onCategoricalClick"
@@ -86,9 +86,9 @@
 
     <b-button
       v-if="includeFooter"
+      v-b-modal.export
       variant="primary"
       class="float-right mt-3"
-      v-b-modal.export
     >
       Export Predictions
     </b-button>
@@ -130,9 +130,6 @@
 
 <script lang="ts">
 import Vue from "vue";
-import FileUploader from "../components/FileUploader.vue";
-import FacetNumerical from "../components/facets/FacetNumerical.vue";
-import FacetCategorical from "../components/facets/FacetCategorical.vue";
 import PredictionGroup from "./PredictionGroup.vue";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
@@ -164,12 +161,9 @@ import moment from "moment";
 import { EventList } from "../util/events";
 
 export default Vue.extend({
-  name: "prediction-summaries",
+  name: "PredictionSummaries",
 
   components: {
-    FacetNumerical,
-    FacetCategorical,
-    FileUploader,
     PredictionGroup,
   },
   props: {
@@ -186,16 +180,6 @@ export default Vue.extend({
       datasetModelNameState: false,
       datasetExportNameState: null,
     };
-  },
-
-  watch: {
-    newDatasetName() {
-      if (this.newDatasetName !== null && this.newDatasetName.length > 0) {
-        this.datasetModelNameState = true;
-      } else {
-        this.datasetModelNameState = false;
-      }
-    },
   },
 
   computed: {
@@ -252,12 +236,23 @@ export default Vue.extend({
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
     },
+
     openSolution(): Map<string, boolean> {
       return new Map(
         routeGetters.getRouteOpenSolutions(this.$store).map((s) => {
           return [s, true];
         })
       );
+    },
+  },
+
+  watch: {
+    newDatasetName() {
+      if (this.newDatasetName !== null && this.newDatasetName.length > 0) {
+        this.datasetModelNameState = true;
+      } else {
+        this.datasetModelNameState = false;
+      }
     },
   },
 
