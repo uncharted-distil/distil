@@ -66,7 +66,7 @@ func OutlierDetectionHandler(metaCtor api.MetadataStorageCtor) func(http.Respons
 		}
 
 		// get the metadata
-		datasetMeta, err := metaStorage.FetchDataset(dataset, false, false, false)
+		datasetMeta, err := metaStorage.FetchDataset(dataset, true, false, false)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -113,7 +113,7 @@ func OutlierResultsHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataSt
 		}
 
 		// get the metadata
-		datasetMeta, err := metaStorage.FetchDataset(dataset, false, false, false)
+		datasetMeta, err := metaStorage.FetchDataset(dataset, true, false, false)
 		if err != nil {
 			handleError(w, err)
 			return

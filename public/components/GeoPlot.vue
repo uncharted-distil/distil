@@ -205,8 +205,11 @@ export default Vue.extend({
 
   props: {
     instanceName: String as () => string,
-    dataItems: { type: Array as () => any[], default: [] },
-    baselineItems: { type: Array as () => TableRow[], default: [] },
+    dataItems: { type: Array as () => any[], default: Array as () => any[] },
+    baselineItems: {
+      type: Array as () => TableRow[],
+      default: Array as () => TableRow[],
+    },
     baselineMap: { type: Object as () => Dictionary<number>, default: null },
     dataFields: Object as () => Dictionary<TableColumn>,
     summaries: {
