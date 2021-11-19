@@ -15,12 +15,13 @@
           <b-col md>
             {{ ad.joinPair.first }} -> {{ ad.joinPair.second }}
           </b-col>
-          <b-col sm
-            ><b-form-checkbox
+          <b-col sm>
+            <b-form-checkbox
               v-model="ad.absolute"
               :disabled="ad.unitType === 3"
-            ></b-form-checkbox
-          ></b-col>
+              @change="onAbsolute(idx)"
+            />
+          </b-col>
           <b-col md>
             <b-tooltip
               v-if="!ad.absolute"
@@ -32,8 +33,8 @@
             <b-form-input
               v-if="!ad.absolute"
               :id="ad.joinPair.first + ad.joinPair.second"
-              number
               v-model="ad.accuracy"
+              number
               type="range"
               min="0"
               max="1"
@@ -42,9 +43,9 @@
             />
             <div v-else class="d-flex">
               <b-form-input
+                v-model="ad.accuracy"
                 type="number"
                 class="d-flex max-width-200"
-                v-model="ad.accuracy"
                 number
               />
               <b-dropdown
@@ -116,11 +117,6 @@ export default Vue.extend({
         .filter((v) => v.datasetName === ds);
     },
   },
-  mounted() {
-    if (this.routeAccuracyData != null) {
-      this.accuracyData = this.routeAccuracyData;
-    }
-  },
   watch: {
     joinPairs(cur: JoinPair<string>[], prev: JoinPair<string>[]) {
       if (!cur.length && !prev.length) {
@@ -148,8 +144,8 @@ export default Vue.extend({
         ) {
           this.accuracyData.push({
             joinPair: cur[end],
-            absolute: false,
-            accuracy: 1.0,
+            absolute: this.getUnitAbsoluteDefault(unitType),
+            accuracy: this.getDefaultUnitValue(unitType),
             unitType,
             unit: this.getDefaultUnit(unitType),
           });
@@ -158,7 +154,18 @@ export default Vue.extend({
       }
     },
   },
+  mounted() {
+    if (this.routeAccuracyData != null) {
+      this.accuracyData = this.routeAccuracyData;
+    }
+  },
   methods: {
+    onAbsolute(index: number) {
+      const accuracyData = this.accuracyData[index];
+      accuracyData.accuracy = accuracyData.absolute
+        ? this.getDefaultUnitValue(accuracyData.unitType)
+        : 1.0;
+    },
     updateRoute() {
       const route = this.$route;
       const entry = overlayRouteEntry(route, {
@@ -174,6 +181,15 @@ export default Vue.extend({
         return Object.values(TimeUnits);
       }
       return Object.values(DistanceUnits);
+    },
+    getUnitAbsoluteDefault(unitType: UnitTypes): boolean {
+      if (unitType === UnitTypes.Time) {
+        return false;
+      }
+      if (unitType === UnitTypes.Distance) {
+        return true;
+      }
+      return false;
     },
     getUnitTypes(joinPair: JoinPair<string>): UnitTypes {
       const key = joinPair.first;
@@ -196,6 +212,15 @@ export default Vue.extend({
         return UnitTypes.None;
       }
       return UnitTypes.Disabled;
+    },
+    getDefaultUnitValue(unitType: UnitTypes): number {
+      if (unitType === UnitTypes.Time) {
+        return 1;
+      }
+      if (unitType === UnitTypes.Distance) {
+        return 5;
+      }
+      return 1.0;
     },
     getDefaultUnit(unitType: UnitTypes): string {
       if (unitType === UnitTypes.None || unitType === UnitTypes.Disabled) {
