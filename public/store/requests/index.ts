@@ -55,7 +55,7 @@ export interface Request {
   dataset: string;
   feature: string;
   features: Feature[];
-  timestamp: number;
+  timestamp: string;
 }
 
 // A request to start the process of training, fitting and scoring a model

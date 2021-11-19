@@ -41,6 +41,9 @@
               />
             </div>
           </header>
+          <div class="prediction-group-datetime">
+            {{ predictionTimestamp(meta.summary.dataset) }}
+          </div>
           <div class="prediction-group-body">
             <!-- we need the new facets in here-->
             <prediction-group
@@ -264,6 +267,7 @@ export default Vue.extend({
         this.$emit(EventList.SUMMARIES.FETCH_SUMMARY_PREDICTION, requestId);
       }
     },
+
     onClick(key: string) {
       // Note that the key is of the form <requestId>:predicted and so needs to be parsed.
       const requestId = getIDFromKey(key);
@@ -480,6 +484,23 @@ export default Vue.extend({
         toaster: location,
       });
     },
+
+    predictionTimestamp(datasetName: string): string {
+      const timestamp = requestGetters
+        .getRelevantPredictions(this.$store)
+        .find((p) => p.dataset === datasetName).timestamp;
+      return new Date(Date.parse(timestamp)).toLocaleString(
+        navigator.language,
+        {
+          day: "numeric",
+          month: "long",
+          weekday: "short",
+          hour: "numeric",
+          minute: "numeric",
+          timeZoneName: "short",
+        }
+      );
+    },
   },
 });
 </script>
@@ -533,5 +554,10 @@ export default Vue.extend({
 }
 .prediction-group-container {
   max-height: 87%;
+}
+
+.prediction-group-datetime {
+  font-size: 75%;
+  color: var(--color-text-second);
 }
 </style>
