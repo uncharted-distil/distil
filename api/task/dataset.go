@@ -217,9 +217,19 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 	metaDisk.GetMainDataResource().Variables = varsNewDataset
 
 	// make the data resource paths absolute
+	predictionDSDatasetPath := path.Join(env.ResolvePath(predictionDS.Source, predictionDS.Folder), compute.D3MDataSchema)
+	predictionDSDisk, err := serialization.ReadMetadata(predictionDSDatasetPath)
+	if err != nil {
+		return "", err
+	}
+	predictionDSDiskDRs := map[string]*model.DataResource{}
+	for _, dr := range predictionDSDisk.DataResources {
+		predictionDSDiskDRs[dr.ResID] = dr
+	}
 	for _, dr := range metaDisk.DataResources {
 		if dr != mainDR {
-			dr.ResPath = model.GetResourcePath(sourceDSDatasetPath, dr)
+			// TODO: NOT SURE WE CAN ASSUME RES ID EQUALITY!
+			dr.ResPath = predictionDSDiskDRs[dr.ResID].ResPath
 		}
 	}
 
