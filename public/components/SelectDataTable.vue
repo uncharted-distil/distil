@@ -367,7 +367,7 @@ export default Vue.extend({
       return this.solution ? this.solution.errorKey : "";
     },
     imageFields(): Field[] {
-      return getImageFields(this.dataFields);
+      return getImageFields(this.dataFields, this.dataset);
     },
 
     timeseriesGroupings(): TimeseriesGrouping[] {
@@ -445,7 +445,7 @@ export default Vue.extend({
 
   watch: {
     visibleRows(cur: TableRow[], prev: TableRow[]) {
-      if (sameData(prev, cur)) {
+      if (sameData(prev, cur) || !this.dataset) {
         return;
       }
       this.debounceImageFetch();
@@ -464,12 +464,6 @@ export default Vue.extend({
 
     colorScale() {
       this.debounceImageFetch();
-    },
-
-    imageFields(cur: Field[], prev: Field[]) {
-      if (prev.length == 0 && cur.length > 0) {
-        this.debounceImageFetch();
-      }
     },
   },
 

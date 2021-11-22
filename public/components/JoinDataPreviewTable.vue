@@ -38,7 +38,7 @@
         :key="imageField.key"
         :image-url="data.item[imageField.key]"
         :type="imageField.type"
-      ></image-preview>
+      />
     </template>
 
     <template
@@ -53,8 +53,7 @@
         :y-col="timeseriesGrouping.yCol"
         :timeseries-col="timeseriesGrouping.idCol"
         :timeseries-id="data.item[timeseriesGrouping.idCol]"
-      >
-      </sparkline-preview>
+      />
     </template>
   </b-table>
 </template>
@@ -77,9 +76,10 @@ import {
   formatFieldsAsArray,
   getImageFields,
 } from "../util/data";
+import { getters as routeGetters } from "../store/route/module";
 
 export default Vue.extend({
-  name: "join-data-preview-table",
+  name: "JoinDataPreviewTable",
 
   components: {
     ImagePreview,
@@ -97,13 +97,16 @@ export default Vue.extend({
       return datasetGetters.getVariables(this.$store);
     },
     imageFields(): { key: string; type: string }[] {
-      return getImageFields(this.fields);
+      return getImageFields(this.fields, this.topDataset);
     },
 
     tableFields(): TableColumn[] {
       return formatFieldsAsArray(this.fields);
     },
-
+    topDataset(): string {
+      const joinDatasets = routeGetters.getRouteJoinDatasets(this.$store);
+      return joinDatasets.length >= 1 ? joinDatasets[0] : null;
+    },
     timeseriesGroupings(): TimeseriesGrouping[] {
       return getTimeseriesGroupingsFromFields(this.variables, this.fields);
     },

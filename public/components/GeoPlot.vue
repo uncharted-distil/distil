@@ -517,7 +517,9 @@ export default Vue.extend({
     coordinateColumn(): string {
       const coordinateColumns = datasetGetters
         .getVariables(this.$store)
-        .filter((v) => v.colType === GEOBOUNDS_TYPE)
+        .filter(
+          (v) => v.colType === GEOBOUNDS_TYPE && v.datasetName === this.dataset
+        )
         .map((v) => (v.grouping as GeoBoundsGrouping).coordinatesCol);
       if (coordinateColumns.length > 1) {
         console.error("only 1 coordinate column is supported");

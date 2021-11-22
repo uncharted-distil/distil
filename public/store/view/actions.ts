@@ -1045,7 +1045,10 @@ export const actions = {
     const inferenceDataset = getPredictionsById(
       context.getters.getPredictions,
       produceRequestId
-    ).dataset;
+    )?.dataset;
+    if (!inferenceDataset) {
+      return;
+    }
     const highlights = context.getters.getDecodedHighlights as Highlight[];
     const varModes = context.getters.getDecodedVarModes as Map<
       string,

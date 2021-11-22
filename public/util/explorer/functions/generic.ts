@@ -581,7 +581,7 @@ export const GENERIC_COMPUTES = {
     const self = (this as unknown) as DataExplorerRef;
     const varSums = self?.summaries ?? [];
     return varSums.some((v) => {
-      return isGeoLocatedType(v.type);
+      return v?.type && isGeoLocatedType(v.type);
     });
   },
   /**
@@ -667,7 +667,7 @@ export const GENERIC_COMPUTES = {
    */
   summaries(): VariableSummary[] {
     const self = (this as unknown) as DataExplorerRef;
-    return self.state.getAllVariableSummaries(self.include);
+    return self.state.getAllVariableSummaries(self.include) ?? [];
   },
   /**
    * available summaries, result summaries, prediction summaries
