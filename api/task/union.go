@@ -18,7 +18,9 @@ package task
 import (
 	"fmt"
 	"path"
+	"strings"
 
+	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil-compute/model"
@@ -51,7 +53,6 @@ func VerticalConcat(dataStorage apiModel.DataStorage, joinLeft *JoinSpec, joinRi
 	}
 
 	// rewrite dataset to have unique d3m index
-	// NOTE: THIS WONT WORK WHEN d3m index is a multi index!
 	data, err := rewriteD3MIndex(datasetPath)
 	if err != nil {
 		return "", nil, err
@@ -114,12 +115,46 @@ func rewriteD3MIndex(datasetPath string) (*apiModel.FilteredData, error) {
 		return nil, err
 	}
 
+	// if d3m index is a multi index, need to use the grouping variable to reindex
+	// NOTE: THIS CURRENTLY ASSUMES A SINGLE GROUPING VARIABLE IS USED TO DEFINE A GROUP!
+	indexingVariable := ds.GetVariableMetadata(model.D3MIndexFieldName)
+	if indexingVariable == nil {
+		return nil, errors.Errorf("no d3m index field in dataset")
+	}
+	isMulti := false
+	for _, r := range indexingVariable.Role {
+		if r == model.RoleMultiIndex {
+			isMulti = true
+			break
+		}
+	}
+	indexingVariableIndices := []int{}
+	if isMulti {
+		for _, v := range ds.Metadata.GetMainDataResource().Variables {
+			if v.HasRole(model.VarDistilRoleGrouping) || v.HasRole(model.VarDistilRoleGroupingSupplemental) {
+				indexingVariableIndices = append(indexingVariableIndices, v.Index)
+			}
+		}
+	} else {
+		indexingVariableIndices = append(indexingVariableIndices, indexingVariable.Index)
+	}
+
 	// find the d3m index field
 	d3mIndexIndex := ds.GetVariableIndex(model.D3MIndexFieldName)
 
 	// rewrite the index to make all rows unique (skipping header)
-	for i, r := range ds.Data[1:] {
-		r[d3mIndexIndex] = fmt.Sprintf("%d", i)
+	count := 1
+	reindexedValues := map[string]string{}
+	for _, r := range ds.Data[1:] {
+		keyValue := getKeyValue(r, indexingVariableIndices)
+		if reindexedValues[keyValue] != "" {
+			r[d3mIndexIndex] = reindexedValues[keyValue]
+		} else {
+			indexValue := fmt.Sprintf("%d", count)
+			count++
+			r[d3mIndexIndex] = indexValue
+			reindexedValues[keyValue] = indexValue
+		}
 	}
 
 	// save the updated dataset
@@ -134,4 +169,13 @@ func rewriteD3MIndex(datasetPath string) (*apiModel.FilteredData, error) {
 	}
 
 	return dataParsed, nil
+}
+
+func getKeyValue(row []string, groupingIndices []int) string {
+	keyValues := make([]string, len(row))
+	for i, v := range groupingIndices {
+		keyValues[i] = row[v]
+	}
+
+	return strings.Join(keyValues, "|")
 }
