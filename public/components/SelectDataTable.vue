@@ -444,7 +444,7 @@ export default Vue.extend({
   },
 
   watch: {
-    visibleRows(prev: TableRow[], cur: TableRow[]) {
+    visibleRows(cur: TableRow[], prev: TableRow[]) {
       if (sameData(prev, cur)) {
         return;
       }
@@ -495,9 +495,9 @@ export default Vue.extend({
     },
     debounceImageFetch() {
       debounceFetchImagePack({
-        items: this.visibleRows,
-        imageFields: this.imageFields,
-        dataset: this.dataset,
+        items: this.visibleRows.slice(),
+        imageFields: this.imageFields.slice(),
+        dataset: this.dataset.slice(),
         uniqueTrail: this.uniqueTrail,
         debounceKey: this.debounceKey,
       });
@@ -517,7 +517,7 @@ export default Vue.extend({
     removeImages() {
       bulkRemoveImages({
         imageFields: this.imageFields,
-        items: this.visibleRows,
+        items: this.visibleRows.slice(),
         uniqueTrail: this.uniqueTrail,
       });
     },

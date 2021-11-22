@@ -280,6 +280,7 @@
       />
       <prediction-summaries
         v-else
+        :is-busy="dataLoading"
         @fetch-summary-prediction="fetchSummaryPrediction"
       />
     </left-side-panel>
@@ -457,21 +458,23 @@ const DataExplorer = Vue.extend({
 
   // Update either the summaries or explore data on user interaction.
   watch: {
-    solutionId() {
+    async solutionId() {
       this.dataLoading = true;
-      this.state.fetchData();
+      await this.state.fetchData();
       this.dataLoading = false;
     },
 
-    produceRequestId() {
+    async produceRequestId() {
       this.dataLoading = true;
-      this.state.fetchData();
+      await this.state.fetchVariables();
+      await this.state.fetchVariableSummaries();
+      await this.state.fetchData();
       this.dataLoading = false;
     },
 
-    activeVariables(n, o) {
+    async activeVariables(n, o) {
       if (_.isEqual(n, o)) return;
-      this.state.fetchVariableSummaries();
+      await this.state.fetchVariableSummaries();
     },
 
     async filters(n, o) {
@@ -523,9 +526,11 @@ const DataExplorer = Vue.extend({
           if (buckets) {
             // use the buckets keys as labels
             const labels = buckets.map((bucket) => bucket.key);
-            // get the "most positive" label
-            const positiveLabel = findAPositiveLabel(labels);
-            self.updateRoute({ positiveLabel });
+            if (labels.length === 2) {
+              // get the "most positive" label
+              const positiveLabel = findAPositiveLabel(labels);
+              self.updateRoute({ positiveLabel });
+            }
           }
         }
       }

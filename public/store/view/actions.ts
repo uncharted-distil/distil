@@ -1130,7 +1130,7 @@ export const actions = {
       });
     });
   },
-  updatePredictions(context: ViewContext, args?: { isInit: boolean }) {
+  async updatePredictions(context: ViewContext, args?: { isInit: boolean }) {
     // fetch new state
     const produceRequestId = context.getters.getRouteProduceRequestId as string;
     const fittedSolutionId = context.getters.getRouteFittedSolutionId as string;
@@ -1153,8 +1153,9 @@ export const actions = {
       .filter((p) => {
         return openPredictions.has(p.requestId) || (args?.isInit ?? false);
       });
+    console.log(inferenceDataset);
     // table data
-    predictionActions.fetchPredictionTableData(store, {
+    await predictionActions.fetchPredictionTableData(store, {
       dataset: inferenceDataset,
       highlights: highlights,
       produceRequestId: produceRequestId,
@@ -1164,7 +1165,7 @@ export const actions = {
     // variable summaries
     actions.updatePredictionTrainingSummaries(context);
     // this is where rank and confidence should get updated
-    predictionActions.fetchPredictedSummaries(store, {
+    await predictionActions.fetchPredictedSummaries(store, {
       highlights: highlights,
       fittedSolutionId: fittedSolutionId,
       predictions: relPreds,
