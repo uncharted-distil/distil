@@ -310,6 +310,11 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 		return "", err
 	}
 
+	err = dataStorage.VerifyData(newDatasetName, newStorageName)
+	if err != nil {
+		return "", err
+	}
+
 	return metaDisk.ID, nil
 }
 
