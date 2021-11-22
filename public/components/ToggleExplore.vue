@@ -69,6 +69,7 @@ export default Vue.extend({
 </script>
 
 <style scoped>
+.dropdown,
 .toggle {
   height: 22px;
 }

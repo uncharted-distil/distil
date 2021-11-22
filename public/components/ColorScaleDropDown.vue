@@ -253,7 +253,7 @@ export default Vue.extend({
   background-color: #9e9e9e;
 }
 .selected-bar {
-  width: 100px;
+  width: 70px;
   height: 13px;
   display: inline-block;
 }
