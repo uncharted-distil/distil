@@ -274,22 +274,17 @@ func (s *Storage) parseData(rows pgx.Rows) ([][]string, error) {
 			if len(output) == 0 {
 				// parse columns
 				fields := rows.FieldDescriptions()
-				columns := make([]string, len(fields))
-				nestedAdjustment := 0
+				columns := []string{}
 				for i := 0; i < len(fields); i++ {
 					switch columnValues[i].(type) {
 					case string:
-						columns[i+nestedAdjustment] = string(fields[i].Name)
+						columns = append(columns, string(fields[i].Name))
 					default:
 						// handle nested data as separate columns
 						nested := unnestStringJSON(columnValues[i])
 						for k := range nested {
-							columns[i+nestedAdjustment] = fmt.Sprintf("%s_%s", fields[i].Name, k)
-							nestedAdjustment = nestedAdjustment + 1
+							columns = append(columns, fmt.Sprintf("%s_%s", fields[i].Name, k))
 						}
-
-						// the nested column itself was already counted
-						nestedAdjustment = nestedAdjustment - 1
 					}
 				}
 				output = append(output, columns)
