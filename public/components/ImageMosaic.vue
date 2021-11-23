@@ -20,7 +20,7 @@
     <div class="image-mosaic">
       <template v-for="imageField in imageFields">
         <template v-for="(item, idx) in paginatedItems">
-          <div :key="idx" class="image-tile">
+          <div :key="`${imageField.key}-${item.d3mIndex}`" class="image-tile">
             <template v-for="(fieldInfo, fieldKey) in dataFields">
               <image-preview
                 v-if="fieldKey === imageField.key"
@@ -160,7 +160,7 @@ export default Vue.extend({
     },
 
     imageFields(): Field[] {
-      return getImageFields(this.dataFields);
+      return getImageFields(this.dataFields, this.dataset);
     },
 
     band(): string {

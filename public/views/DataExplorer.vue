@@ -231,6 +231,7 @@
           </template>
           <b-button
             v-else-if="isResultState"
+            :disabled="!currentSolutionCompleted"
             variant="success"
             class="save-button"
             @click="$bvModal.show('save-model-modal')"
@@ -279,6 +280,7 @@
       />
       <prediction-summaries
         v-else
+        :is-busy="dataLoading"
         @fetch-summary-prediction="fetchSummaryPrediction"
       />
     </left-side-panel>
@@ -394,6 +396,7 @@ import {
   selectMethods,
   predictionMethods,
   predictionComputes,
+  ExplorerViewComponent,
 } from "../util/explorer";
 import { findAPositiveLabel } from "../util/data";
 import _ from "lodash";
@@ -436,7 +439,7 @@ const DataExplorer = Vue.extend({
 
   data() {
     return {
-      activeView: 0, // TABLE_VIEW
+      activeView: ExplorerViewComponent.TABLE, // TABLE_VIEW
       busyState: "Busy", // contains the info to display to the user when the UI is busy
       config: new SelectViewConfig(), // this config controls what is displayed in the action bar
       dataLoading: false, // this controls the spinners for the data view tabs (table, mosaic, geoplot)
@@ -456,21 +459,31 @@ const DataExplorer = Vue.extend({
 
   // Update either the summaries or explore data on user interaction.
   watch: {
-    solutionId() {
+    async solutionId() {
       this.dataLoading = true;
-      this.state.fetchData();
+      await this.state.fetchData();
       this.dataLoading = false;
     },
 
-    produceRequestId() {
+    async produceRequestId() {
+      this.isBusy = true;
       this.dataLoading = true;
-      this.state.fetchData();
+      this.activeView = ExplorerViewComponent.TABLE;
+      this.busyState = "Fetching Variables";
+      await this.state.fetchVariables();
+      this.busyState = "Fetch Summaries";
+      await this.state.fetchVariableSummaries();
+      this.busyState = "Fetching Data";
+      await this.state.fetchData();
+      await this.state.fetchMapBaseline();
       this.dataLoading = false;
+      this.isBusy = false;
+      this.busyState = "Busy";
     },
 
-    activeVariables(n, o) {
+    async activeVariables(n, o) {
       if (_.isEqual(n, o)) return;
-      this.state.fetchVariableSummaries();
+      await this.state.fetchVariableSummaries();
     },
 
     async filters(n, o) {
@@ -522,9 +535,11 @@ const DataExplorer = Vue.extend({
           if (buckets) {
             // use the buckets keys as labels
             const labels = buckets.map((bucket) => bucket.key);
-            // get the "most positive" label
-            const positiveLabel = findAPositiveLabel(labels);
-            self.updateRoute({ positiveLabel });
+            if (labels.length === 2) {
+              // get the "most positive" label
+              const positiveLabel = findAPositiveLabel(labels);
+              self.updateRoute({ positiveLabel });
+            }
           }
         }
       }

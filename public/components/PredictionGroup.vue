@@ -1,45 +1,45 @@
 <template>
   <div v-if="isOpen" class="prediction-group">
     <component
+      :is="getFacetByType(predictedSummary.type)"
+      :key="predictedSummary.key"
       enable-highlighting
       :summary="predictedSummary"
-      :key="predictedSummary.key"
       :geo-enabled="hasGeoData && isActivePrediction"
-      :is="getFacetByType(predictedSummary.type)"
       :highlights="highlights"
       :enabled-type-changes="[]"
       :row-selection="rowSelection"
-      :instanceName="predictionInstanceName"
+      :instance-name="predictionInstanceName"
       @facet-click="onCategoricalClick"
       @numerical-click="onNumericalClick"
       @range-change="onRangeChange"
     />
     <component
+      :is="getFacetByType(confidenceSummary.type)"
       v-if="!!confidenceSummary"
+      :key="confidenceSummary.key"
       enable-highlighting
       :summary="confidenceSummary"
       :geo-enabled="hasGeoData && isActivePrediction"
-      :key="confidenceSummary.key"
-      :is="getFacetByType(confidenceSummary.type)"
       :highlights="highlights"
       :enabled-type-changes="[]"
       :row-selection="rowSelection"
-      :instanceName="confidenceInstanceName"
+      :instance-name="confidenceInstanceName"
       @facet-click="onCategoricalClick"
       @numerical-click="onNumericalClick"
       @range-change="onRangeChange"
     />
     <component
+      :is="getFacetByType(rankingSummary.type)"
       v-if="!!rankingSummary"
+      :key="rankingSummary.key"
       enable-highlighting
       :geo-enabled="hasGeoData && isActivePrediction"
       :summary="rankingSummary"
-      :key="rankingSummary.key"
-      :is="getFacetByType(rankingSummary.type)"
       :highlights="highlights"
       :enabled-type-changes="[]"
       :row-selection="rowSelection"
-      :instanceName="rankingInstanceName"
+      :instance-name="rankingInstanceName"
       @facet-click="onCategoricalClick"
       @numerical-click="onNumericalClick"
       @range-change="onRangeChange"

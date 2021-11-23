@@ -1045,7 +1045,10 @@ export const actions = {
     const inferenceDataset = getPredictionsById(
       context.getters.getPredictions,
       produceRequestId
-    ).dataset;
+    )?.dataset;
+    if (!inferenceDataset) {
+      return;
+    }
     const highlights = context.getters.getDecodedHighlights as Highlight[];
     const varModes = context.getters.getDecodedVarModes as Map<
       string,
@@ -1081,14 +1084,14 @@ export const actions = {
       produceRequestId: produceRequestId,
     });
   },
-  updateBaselinePredictions(context: ViewContext) {
+  async updateBaselinePredictions(context: ViewContext) {
     const produceRequestId = context.getters.getRouteProduceRequestId as string;
     const allData = Number.MAX_SAFE_INTEGER;
     const inferenceDataset = getPredictionsById(
       context.getters.getPredictions,
       produceRequestId
     ).dataset;
-    predictionActions.fetchPredictionTableData(store, {
+    await predictionActions.fetchPredictionTableData(store, {
       dataset: inferenceDataset,
       highlights: [],
       produceRequestId: produceRequestId,
@@ -1130,7 +1133,7 @@ export const actions = {
       });
     });
   },
-  updatePredictions(context: ViewContext, args?: { isInit: boolean }) {
+  async updatePredictions(context: ViewContext, args?: { isInit: boolean }) {
     // fetch new state
     const produceRequestId = context.getters.getRouteProduceRequestId as string;
     const fittedSolutionId = context.getters.getRouteFittedSolutionId as string;
@@ -1153,8 +1156,9 @@ export const actions = {
       .filter((p) => {
         return openPredictions.has(p.requestId) || (args?.isInit ?? false);
       });
+    console.log(inferenceDataset);
     // table data
-    predictionActions.fetchPredictionTableData(store, {
+    await predictionActions.fetchPredictionTableData(store, {
       dataset: inferenceDataset,
       highlights: highlights,
       produceRequestId: produceRequestId,
@@ -1164,7 +1168,7 @@ export const actions = {
     // variable summaries
     actions.updatePredictionTrainingSummaries(context);
     // this is where rank and confidence should get updated
-    predictionActions.fetchPredictedSummaries(store, {
+    await predictionActions.fetchPredictedSummaries(store, {
       highlights: highlights,
       fittedSolutionId: fittedSolutionId,
       predictions: relPreds,

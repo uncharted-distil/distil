@@ -26,14 +26,14 @@
         name="datasetsearch"
         @keypress.native="onEnter"
         @change="submitSearch"
-      ></b-form-input>
+      />
       <b-input-group-append v-if="doesSearchBoxHaveContent">
         <b-button size="sm" @click="clearSearch">
           <b-icon-x />
         </b-button>
       </b-input-group-append>
     </b-input-group>
-    <i class="fa fa-search search-icon" @click="submitSearch"></i>
+    <i class="fa fa-search search-icon" @click="submitSearch" />
   </div>
 </template>
 
@@ -50,7 +50,7 @@ import Vue from "vue";
 const ENTER_KEYCODE = 13;
 
 export default Vue.extend({
-  name: "search-bar",
+  name: "SearchBar",
 
   components: {
     BIconX,

@@ -205,8 +205,11 @@ export default Vue.extend({
 
   props: {
     instanceName: String as () => string,
-    dataItems: { type: Array as () => any[], default: [] },
-    baselineItems: { type: Array as () => TableRow[], default: [] },
+    dataItems: { type: Array as () => any[], default: Array as () => any[] },
+    baselineItems: {
+      type: Array as () => TableRow[],
+      default: Array as () => TableRow[],
+    },
     baselineMap: { type: Object as () => Dictionary<number>, default: null },
     dataFields: Object as () => Dictionary<TableColumn>,
     summaries: {
@@ -340,7 +343,9 @@ export default Vue.extend({
       return -1;
     },
     fieldSpecs(): GeoField[] {
-      const variables = datasetGetters.getVariables(this.$store);
+      const variables = datasetGetters
+        .getVariables(this.$store)
+        .filter((v) => v.datasetName === this.dataset);
 
       const matches = variables.filter((v) => {
         return (
@@ -489,7 +494,9 @@ export default Vue.extend({
       });
     },
     isMultiBandImage(): boolean {
-      const variables = datasetGetters.getVariables(this.$store);
+      const variables = datasetGetters
+        .getVariables(this.$store)
+        .filter((v) => v.datasetName === this.dataset);
       return variables.some((v) => {
         return v.colType === MULTIBAND_IMAGE_TYPE;
       });
@@ -514,7 +521,9 @@ export default Vue.extend({
     coordinateColumn(): string {
       const coordinateColumns = datasetGetters
         .getVariables(this.$store)
-        .filter((v) => v.colType === GEOBOUNDS_TYPE)
+        .filter(
+          (v) => v.colType === GEOBOUNDS_TYPE && v.datasetName === this.dataset
+        )
         .map((v) => (v.grouping as GeoBoundsGrouping).coordinatesCol);
       if (coordinateColumns.length > 1) {
         console.error("only 1 coordinate column is supported");
@@ -526,6 +535,7 @@ export default Vue.extend({
     multibandImageGroupColumn(): string {
       const groupColumns = datasetGetters
         .getVariables(this.$store)
+        .filter((v) => v.datasetName === this.dataset)
         .find((v) => v.colType === MULTIBAND_IMAGE_TYPE);
       return groupColumns.key;
     },

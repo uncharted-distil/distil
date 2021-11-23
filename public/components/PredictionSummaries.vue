@@ -41,12 +41,15 @@
               />
             </div>
           </header>
+          <div class="prediction-group-datetime">
+            {{ predictionTimestamp(meta.summary.dataset) }}
+          </div>
           <div class="prediction-group-body">
             <!-- we need the new facets in here-->
             <prediction-group
-              :confidenceSummary="meta.confidence"
-              :predictedSummary="meta.summary"
-              :rankingSummary="meta.rank"
+              :confidence-summary="meta.confidence"
+              :predicted-summary="meta.summary"
+              :ranking-summary="meta.rank"
               :highlights="highlights"
               :prediction="meta.prediction"
               @categorical-click="onCategoricalClick"
@@ -86,9 +89,9 @@
 
     <b-button
       v-if="includeFooter"
+      v-b-modal.export
       variant="primary"
       class="float-right mt-3"
-      v-b-modal.export
     >
       Export Predictions
     </b-button>
@@ -130,9 +133,6 @@
 
 <script lang="ts">
 import Vue from "vue";
-import FileUploader from "../components/FileUploader.vue";
-import FacetNumerical from "../components/facets/FacetNumerical.vue";
-import FacetCategorical from "../components/facets/FacetCategorical.vue";
 import PredictionGroup from "./PredictionGroup.vue";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
@@ -164,17 +164,15 @@ import moment from "moment";
 import { EventList } from "../util/events";
 
 export default Vue.extend({
-  name: "prediction-summaries",
+  name: "PredictionSummaries",
 
   components: {
-    FacetNumerical,
-    FacetCategorical,
-    FileUploader,
     PredictionGroup,
   },
   props: {
     includeFooter: { type: Boolean as () => boolean, default: false },
     includeTitle: { type: Boolean as () => boolean, default: false },
+    isBusy: { type: Boolean as () => boolean, default: false },
   },
   data() {
     return {
@@ -186,16 +184,6 @@ export default Vue.extend({
       datasetModelNameState: false,
       datasetExportNameState: null,
     };
-  },
-
-  watch: {
-    newDatasetName() {
-      if (this.newDatasetName !== null && this.newDatasetName.length > 0) {
-        this.datasetModelNameState = true;
-      } else {
-        this.datasetModelNameState = false;
-      }
-    },
   },
 
   computed: {
@@ -220,11 +208,11 @@ export default Vue.extend({
           prediction: p,
         };
         if (
-          !meta.rank &&
-          !meta.confidence &&
-          !meta.summary &&
-          !meta.prediction &&
-          !meta.summary.key
+          !meta.rank ||
+          !meta.confidence ||
+          !meta.summary ||
+          !meta.prediction ||
+          !meta.summary?.key
         ) {
           return;
         }
@@ -252,12 +240,23 @@ export default Vue.extend({
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
     },
+
     openSolution(): Map<string, boolean> {
       return new Map(
         routeGetters.getRouteOpenSolutions(this.$store).map((s) => {
           return [s, true];
         })
       );
+    },
+  },
+
+  watch: {
+    newDatasetName() {
+      if (this.newDatasetName !== null && this.newDatasetName.length > 0) {
+        this.datasetModelNameState = true;
+      } else {
+        this.datasetModelNameState = false;
+      }
     },
   },
 
@@ -269,10 +268,15 @@ export default Vue.extend({
         this.$emit(EventList.SUMMARIES.FETCH_SUMMARY_PREDICTION, requestId);
       }
     },
+
     onClick(key: string) {
       // Note that the key is of the form <requestId>:predicted and so needs to be parsed.
       const requestId = getIDFromKey(key);
-      if (this.summaries && this.produceRequestId !== requestId) {
+      if (
+        this.summaries &&
+        this.produceRequestId !== requestId &&
+        !this.isBusy
+      ) {
         appActions.logUserEvent(this.$store, {
           feature: Feature.SELECT_PREDICTIONS,
           activity: Activity.PREDICTION_ANALYSIS,
@@ -289,6 +293,7 @@ export default Vue.extend({
           predictionsDataset: dataset,
           colorScaleVariable: "",
         });
+
         this.$router.push(entry).catch((err) => console.warn(err));
       }
     },
@@ -485,6 +490,23 @@ export default Vue.extend({
         toaster: location,
       });
     },
+
+    predictionTimestamp(datasetName: string): string {
+      const timestamp = requestGetters
+        .getRelevantPredictions(this.$store)
+        .find((p) => p.dataset === datasetName).timestamp;
+      return new Date(Date.parse(timestamp)).toLocaleString(
+        navigator.language,
+        {
+          day: "numeric",
+          month: "long",
+          weekday: "short",
+          hour: "numeric",
+          minute: "numeric",
+          timeZoneName: "short",
+        }
+      );
+    },
   },
 });
 </script>
@@ -538,5 +560,10 @@ export default Vue.extend({
 }
 .prediction-group-container {
   max-height: 87%;
+}
+
+.prediction-group-datetime {
+  font-size: 75%;
+  color: var(--color-text-second);
 }
 </style>

@@ -239,7 +239,7 @@ export default Vue.extend({
     },
 
     imageFields(): Field[] {
-      return getImageFields(this.fields);
+      return getImageFields(this.fields, this.dataset);
     },
 
     timeseriesGroupings(): TimeseriesGrouping[] {
