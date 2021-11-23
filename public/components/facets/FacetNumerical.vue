@@ -75,11 +75,6 @@
           auto-hide="true"
           round-caps="true"
         />
-        <div
-          v-if="displayFooter"
-          v-child="computeCustomHTML()"
-          class="facet-footer-custom-html d-flex justify-content-between"
-        />
       </div>
       <div v-else slot="footer" class="facet-footer-container">
         No Data Available
@@ -145,11 +140,6 @@ export default Vue.extend({
     },
     summary: Object as () => VariableSummary,
     enabledTypeChanges: Array as () => string[],
-    html: [
-      String as () => string,
-      Object as () => any,
-      Function as () => Function,
-    ],
     expandCollapse: Function as () => Function,
     highlights: {
       type: Array as () => Highlight[],
@@ -278,9 +268,6 @@ export default Vue.extend({
       }
       return highlightAsSelection.length > 0 ? highlightAsSelection : null;
     },
-    displayFooter(): boolean {
-      return !!this.html && this.summary.distilRole != DISTIL_ROLES.Augmented;
-    },
   },
 
   methods: {
@@ -352,22 +339,6 @@ export default Vue.extend({
           this.summary.dataset
         );
       }
-    },
-    computeCustomHTML(): HTMLElement | null {
-      // hack to get the custom html buttons showing up
-      // changing this would mean to change how the instantiation of the facets works
-      // right now they are wrapped by other components like
-      // available-target-variables, available-training-variables, etc
-      // those components inject HTML into the facets through their `html` function
-      // we might want to change that in the future though
-      if (this.html) {
-        return _.isFunction(this.html)
-          ? this.html({
-              key: this.summary.key,
-            })
-          : this.html;
-      }
-      return null;
     },
   },
 });

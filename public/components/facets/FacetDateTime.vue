@@ -69,11 +69,6 @@
           auto-hide="true"
           round-caps="true"
         />
-        <div
-          v-if="displayFooter"
-          v-child="computeCustomHTML()"
-          class="facet-footer-custom-html"
-        />
       </div>
     </facet-bars>
   </div>
@@ -136,11 +131,6 @@ export default Vue.extend({
     },
     summary: Object as () => VariableSummary,
     enabledTypeChanges: Array as () => string[],
-    html: [
-      String as () => string,
-      Object as () => any,
-      Function as () => Function,
-    ],
     expandCollapse: Function as () => Function,
     highlights: Array as () => Highlight[],
     enableHighlighting: Boolean as () => boolean,
@@ -257,9 +247,6 @@ export default Vue.extend({
           )
         : "";
     },
-    displayFooter(): boolean {
-      return !!this.html && this.summary.distilRole != DISTIL_ROLES.Augmented;
-    },
   },
 
   methods: {
@@ -333,22 +320,6 @@ export default Vue.extend({
           this.summary.dataset
         );
       }
-    },
-    computeCustomHTML(): HTMLElement | null {
-      // hack to get the custom html buttons showing up
-      // changing this would mean to change how the instantiation of the facets works
-      // right now they are wrapped by other components like
-      // available-target-variables, available-training-variables, etc
-      // those components inject HTML into the facets through their `html` function
-      // we might want to change that in the future though
-      if (this.html) {
-        return _.isFunction(this.html)
-          ? this.html({
-              key: this.summary.key,
-            })
-          : this.html;
-      }
-      return null;
     },
   },
 });

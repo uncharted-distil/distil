@@ -64,7 +64,6 @@
               :summary="summary"
               :highlights="highlights"
               :row-selection="rowSelection"
-              :html="html"
               :enabled-type-changes="enabledTypeChanges"
               :enable-highlighting="[enableHighlighting, enableHighlighting]"
               :ignore-highlights="[ignoreHighlights, ignoreHighlights]"
@@ -92,7 +91,6 @@
               :log-activity="logActivity"
               :dataset-name="datasetName"
               :include="include"
-              :html="html"
               :expanded="expandGeoAndTimeseriesFacets"
               :type-change-event="typeChangeEvent"
               @histogram-numerical-click="onNumericalClick"
@@ -108,7 +106,6 @@
               :highlights="highlights"
               :row-selection="rowSelection"
               :ranking="ranking[summary.key]"
-              :html="html"
               :enabled-type-changes="enabledTypeChanges"
               :enable-highlighting="enableHighlighting"
               :ignore-highlights="ignoreHighlights"
@@ -134,7 +131,6 @@
               :row-selection="rowSelection"
               :importance="ranking[summary.key]"
               :ranking="ranking[summary.key]"
-              :html="html"
               :enabled-type-changes="enabledTypeChanges"
               :enable-highlighting="enableHighlighting"
               :ignore-highlights="ignoreHighlights"
@@ -160,7 +156,6 @@
               :highlights="highlights"
               :row-selection="rowSelection"
               :importance="ranking[summary.key]"
-              :html="html"
               :enabled-type-changes="enabledTypeChanges"
               :enable-highlighting="enableHighlighting"
               :ignore-highlights="ignoreHighlights"
@@ -185,7 +180,6 @@
               :highlights="highlights"
               :row-selection="rowSelection"
               :importance="ranking[summary.key]"
-              :html="html"
               :enabled-type-changes="enabledTypeChanges"
               :enable-highlighting="enableHighlighting"
               :ignore-highlights="ignoreHighlights"
@@ -306,7 +300,6 @@ export default Vue.extend({
     enableTypeFiltering: Boolean,
     enableColorScales: { type: Boolean as () => boolean, default: false },
     facetCount: { type: Number, default: 0 },
-    html: { type: [String, Object, Function], default: null },
     instanceName: { type: String, default: "variableFacets" },
     isAvailableFeatures: Boolean,
     isFeaturesToModel: Boolean,

@@ -71,11 +71,6 @@
         @range-change="lonRangeChange"
       />
     </div>
-    <div
-      v-show="displayFooter"
-      class="facet-footer-custom-html padding-right-12"
-      ref="footer"
-    />
   </div>
 </template>
 
@@ -177,11 +172,6 @@ export default Vue.extend({
     expanded: { type: Boolean, default: false },
     datasetName: { type: String as () => string, default: null },
     include: { type: Boolean as () => boolean, default: true },
-    html: [
-      String as () => string,
-      Object as () => any,
-      Function as () => Function,
-    ],
     typeChangeEvent: { type: String as () => string, default: "" },
   },
 
@@ -320,9 +310,7 @@ export default Vue.extend({
       });
       return featureCollection(features);
     },
-    displayFooter(): boolean {
-      return !!this.html && this.summary.distilRole != DISTIL_ROLES.Augmented;
-    },
+
     // Creates a GeoJSON feature collection that can be passed directly to a Leaflet layer
     // for rendering.  The collection represents the subset of buckets to be rendered based
     // on the currently applied filters and highlights.
@@ -443,22 +431,6 @@ export default Vue.extend({
         }
       }
       return [];
-    },
-    computeCustomHTML(): HTMLElement | null {
-      // hack to get the custom html buttons showing up
-      // changing this would mean to change how the instantiation of the facets works
-      // right now they are wrapped by other components like
-      // available-target-variables, available-training-variables, etc
-      // those components inject HTML into the facets through their `html` function
-      // we might want to change that in the future though
-      if (this.html) {
-        return _.isFunction(this.html)
-          ? this.html({
-              key: this.summary.key,
-            })
-          : this.html;
-      }
-      return null;
     },
   },
 
@@ -1090,21 +1062,10 @@ export default Vue.extend({
         this.clearSelectionRect();
       }
     },
-    computeCustomHTML() {
-      if (this.displayFooter) {
-        const footerRef = this.$refs["footer"] as HTMLElement;
-        footerRef.innerHTML = "";
-        footerRef.append(this.computeCustomHTML);
-      }
-    },
   },
 
   mounted() {
     this.paint();
-    if (this.displayFooter) {
-      const footerRef = this.$refs["footer"] as HTMLElement;
-      footerRef.append(this.computeCustomHTML);
-    }
   },
 });
 </script>
