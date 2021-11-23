@@ -29,10 +29,19 @@
       @facet-element-updated="updateSelection"
     >
       <div slot="header-label" :class="headerClass">
-        <i :class="getGroupIcon(summary) + ' facet-header-icon'" />
-        <span>{{ summary.label.toUpperCase() }}</span>
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <i :class="getGroupIcon(summary) + ' facet-header-icon'" />
+            {{ summary.label.toUpperCase() }}
+          </div>
+          <button-training-target
+            :variable="summary.key"
+            :datasetName="datasetName"
+            :activeVariables="activeVariables"
+          />
+        </div>
         <div class="d-flex align-items-center my-1">
-          <toggle-explore :variable="summary.key" />
+          <button-explore :variable="summary.key" />
           <color-scale-drop-down
             v-if="geoEnabled && isClustering"
             :variable-summary="summary"
@@ -96,6 +105,7 @@ import {
   Highlight,
   RowSelection,
   VariableSummary,
+  Variable,
 } from "../../store/dataset";
 import {
   getCategoricalChunkSize,
@@ -107,7 +117,8 @@ import {
   facetTypeChangeState,
   generateFacetDiscreteStyle,
 } from "../../util/facets";
-import ToggleExplore from "../ToggleExplore.vue";
+import ButtonExplore from "../ButtonExplore.vue";
+import ButtonTrainingTarget from "../ButtonTrainingTarget.vue";
 import ColorScaleDropDown from "../ColorScaleDropDown.vue";
 import { DISTIL_ROLES } from "../../util/types";
 import { EventList } from "../../util/events";
@@ -118,7 +129,8 @@ export default Vue.extend({
   components: {
     TypeChangeMenu,
     ImagePreview,
-    ToggleExplore,
+    ButtonExplore,
+    ButtonTrainingTarget,
     ColorScaleDropDown,
   },
 
@@ -132,6 +144,10 @@ export default Vue.extend({
   },
 
   props: {
+    activeVariables: {
+      type: Array as () => Variable[],
+      default: () => [] as Variable[],
+    },
     datasetName: { type: String as () => string, default: null },
     enabledTypeChanges: Array as () => string[],
     enableHighlighting: Boolean as () => boolean,
@@ -389,6 +405,10 @@ export default Vue.extend({
 </script>
 
 <style>
+::part(facet-container-header) {
+  height: auto;
+}
+
 .facet-image .facet-terms-container {
   max-height: 200px !important;
   overflow-y: auto;

@@ -18,12 +18,19 @@
 <template>
   <div class="facet-card">
     <div class="group-header">
-      <span class="header-title">
-        {{ headerLabel }}
-      </span>
-      <i class="fa fa-globe"></i>
+      <div class="d-flex align-items-center justify-content-between">
+        <div>
+          {{ headerLabel }}
+          <i class="fa fa-globe"></i>
+        </div>
+        <button-training-target
+          :variable="summary.key"
+          :datasetName="datasetName"
+          :activeVariables="activeVariables"
+        />
+      </div>
       <div class="d-flex align-items-center my-1">
-        <toggle-explore :variable="target" />
+        <button-explore :variable="target" />
         <type-change-menu
           :geocoordinate="true"
           :dataset="dataset"
@@ -91,9 +98,11 @@ import {
   NUMERICAL_SUMMARY,
   RowSelection,
 } from "../../store/dataset";
-import ToggleExplore from "../ToggleExplore.vue";
+import ButtonExplore from "../ButtonExplore.vue";
+import ButtonTrainingTarget from "../ButtonTrainingTarget.vue";
 import TypeChangeMenu from "../TypeChangeMenu.vue";
 import FacetNumerical from "./FacetNumerical.vue";
+import { Variable } from "../../store/dataset";
 import {
   updateHighlight,
   clearHighlight,
@@ -143,7 +152,8 @@ export default Vue.extend({
   name: "geocoordinate-facet",
 
   components: {
-    ToggleExplore,
+    ButtonExplore,
+    ButtonTrainingTarget,
     TypeChangeMenu,
     IconBase,
     IconCropFree,
@@ -151,6 +161,10 @@ export default Vue.extend({
   },
 
   props: {
+    activeVariables: {
+      type: Array as () => Variable[],
+      default: () => [] as Variable[],
+    },
     summary: Object as () => VariableSummary,
     isAvailableFeatures: Boolean as () => boolean,
     isFeaturesToModel: Boolean as () => boolean,
@@ -1096,6 +1110,10 @@ export default Vue.extend({
 </script>
 
 <style>
+::part(facet-container-header) {
+  height: auto;
+}
+
 .facet-card {
   color: var(--color-text-second);
   background: var(--white);

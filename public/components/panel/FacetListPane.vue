@@ -62,6 +62,7 @@
       :disabled-color-scales="disabledColorScales"
       :summaries="activeSummaries"
       :dataset-name="dataset"
+      :active-variables="variables"
       @search="onSearch"
       @type-change="onTypeChange"
     />

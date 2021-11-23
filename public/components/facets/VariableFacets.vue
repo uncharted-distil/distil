@@ -83,6 +83,7 @@
           </template>
           <template v-else-if="isGeoLocated(summary.varType)">
             <geocoordinate-facet
+              :active-variables="activeVariables"
               :summary="summary"
               :enable-highlighting="enableHighlighting"
               :ignore-highlights="ignoreHighlights"
@@ -103,6 +104,7 @@
             <facet-image
               :style="facetColors"
               :summary="summary"
+              :active-variables="activeVariables"
               :highlights="highlights"
               :row-selection="rowSelection"
               :ranking="ranking[summary.key]"
@@ -127,6 +129,7 @@
             <facet-date-time
               :style="facetColors"
               :summary="summary"
+              :active-variables="activeVariables"
               :highlights="highlights"
               :row-selection="rowSelection"
               :importance="ranking[summary.key]"
@@ -136,6 +139,7 @@
               :enable-highlighting="enableHighlighting"
               :ignore-highlights="ignoreHighlights"
               :instance-name="instanceName"
+              :dataset-name="datasetName"
               :include="include"
               :geo-enabled="
                 enableColorScales &&
@@ -151,6 +155,7 @@
           <template v-else-if="summary.type === 'categorical'">
             <facet-categorical
               :style="facetColors"
+              :active-variables="activeVariables"
               :summary="summary"
               :highlights="highlights"
               :row-selection="rowSelection"
@@ -160,6 +165,7 @@
               :enable-highlighting="enableHighlighting"
               :ignore-highlights="ignoreHighlights"
               :instance-name="instanceName"
+              :dataset-name="datasetName"
               :include="include"
               :geo-enabled="
                 enableColorScales &&
@@ -174,6 +180,7 @@
           <template v-else-if="summary.type === 'numerical'">
             <facet-numerical
               :style="facetColors"
+              :active-variables="activeVariables"
               :summary="summary"
               :highlights="highlights"
               :row-selection="rowSelection"
@@ -183,6 +190,7 @@
               :enable-highlighting="enableHighlighting"
               :ignore-highlights="ignoreHighlights"
               :instance-name="instanceName"
+              :dataset-name="datasetName"
               :include="include"
               :geo-enabled="
                 enableColorScales &&
@@ -309,6 +317,10 @@ export default Vue.extend({
       default: Activity.DATA_PREPARATION,
     },
     noMargin: { type: Boolean, default: false },
+    activeVariables: {
+      type: Array as () => Variable[],
+      default: () => [] as Variable[],
+    },
     summaries: { type: Array as () => VariableSummary[], default: [] },
     subtitle: { type: String, default: null },
     rowsPerPage: { type: Number, default: 0 },

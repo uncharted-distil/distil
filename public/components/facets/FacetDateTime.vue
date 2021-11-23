@@ -27,10 +27,19 @@
       @facet-element-updated="updateSelection"
     >
       <div slot="header-label" :class="headerClass">
-        <span>{{ summary.label.toUpperCase() }}</span>
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            {{ summary.label.toUpperCase() }}
+          </div>
+          <button-training-target
+            :variable="summary.key"
+            :datasetName="datasetName"
+            :activeVariables="activeVariables"
+          />
+        </div>
         <importance-bars v-if="enableImportance" :importance="importance" />
         <div class="d-flex align-items-center my-1">
-          <toggle-explore :variable="summary.key" />
+          <button-explore :variable="summary.key" />
           <color-scale-drop-down
             v-if="geoEnabled"
             :variable-summary="summary"
@@ -78,9 +87,15 @@ import "@uncharted.software/facets-plugins";
 
 import TypeChangeMenu from "../TypeChangeMenu.vue";
 import ImportanceBars from "../ImportanceBars.vue";
-import ToggleExplore from "../ToggleExplore.vue";
+import ButtonExplore from "../ButtonExplore.vue";
+import ButtonTrainingTarget from "../ButtonTrainingTarget.vue";
 import ColorScaleDropDown from "../ColorScaleDropDown.vue";
-import { Highlight, RowSelection, VariableSummary } from "../../store/dataset";
+import {
+  Highlight,
+  RowSelection,
+  VariableSummary,
+  Variable,
+} from "../../store/dataset";
 import {
   getSubSelectionValues,
   hasBaseline,
@@ -99,7 +114,8 @@ export default Vue.extend({
   components: {
     TypeChangeMenu,
     ImportanceBars,
-    ToggleExplore,
+    ButtonExplore,
+    ButtonTrainingTarget,
     ColorScaleDropDown,
   },
 
@@ -113,6 +129,11 @@ export default Vue.extend({
   },
 
   props: {
+    datasetName: String as () => string,
+    activeVariables: {
+      type: Array as () => Variable[],
+      default: () => [] as Variable[],
+    },
     summary: Object as () => VariableSummary,
     enabledTypeChanges: Array as () => string[],
     html: [
@@ -334,6 +355,10 @@ export default Vue.extend({
 </script>
 
 <style scoped>
+::part(facet-container-header) {
+  height: auto;
+}
+
 .facet-footer-container {
   min-height: 12px;
   padding: 6px 4px 5px 5px;

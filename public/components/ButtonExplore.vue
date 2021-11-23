@@ -31,7 +31,7 @@ import { getters as routeGetters } from "../store/route/module";
 import { RouteArgs, overlayRouteEntry } from "../util/routes";
 
 export default Vue.extend({
-  name: "ToggleExplore",
+  name: "ButtonExplore",
   props: {
     variable: String as () => string,
   },
