@@ -293,7 +293,7 @@ export default Vue.extend({
           predictionsDataset: dataset,
           colorScaleVariable: "",
         });
-        console.log;
+
         this.$router.push(entry).catch((err) => console.warn(err));
       }
     },

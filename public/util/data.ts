@@ -1036,7 +1036,7 @@ export function getVariableSummariesByState(
   const routeKey = minimumRouteKey();
   const ranked =
     routeGetters.getRouteIsTrainingVariablesRanked(store) || isSorted;
-  const ds = dataset.length ? dataset : routeGetters.getRouteDataset(store);
+  const ds = dataset?.length ? dataset : routeGetters.getRouteDataset(store);
   if (!(Object.keys(summaryDictionary).length > 0 && variables.length > 0)) {
     return [];
   }
@@ -1377,7 +1377,8 @@ function d3mRowWeightExtrema(
 }
 
 export function getImageFields(
-  fields: Dictionary<TableColumn>
+  fields: Dictionary<TableColumn>,
+  dataset: string
 ): { key: string; type: string }[] {
   // find basic image fields
   const imageFields = _.map(fields, (field, key) => {
@@ -1393,6 +1394,7 @@ export function getImageFields(
     .getVariables(store)
     .filter(
       (v) =>
+        v.datasetName === dataset &&
         v.grouping &&
         v.grouping.idCol &&
         v.colType === MULTIBAND_IMAGE_TYPE &&

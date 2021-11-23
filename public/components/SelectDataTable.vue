@@ -298,6 +298,7 @@ export default Vue.extend({
       // this is v-model with b-table (it contains what is on the page in the sorted order)
       visibleRows: [],
       debounceKey: null,
+      datasetHasChanged: false,
     };
   },
 
@@ -367,7 +368,7 @@ export default Vue.extend({
       return this.solution ? this.solution.errorKey : "";
     },
     imageFields(): Field[] {
-      return getImageFields(this.dataFields);
+      return getImageFields(this.dataFields, this.dataset);
     },
 
     timeseriesGroupings(): TimeseriesGrouping[] {
@@ -444,12 +445,20 @@ export default Vue.extend({
   },
 
   watch: {
+    dataset() {
+      // the dataset name can change before the new data has arrived
+      // set a flag to fetch the new images / timeseries upon new visibleRows
+      if (this.dataset) {
+        this.datasetHasChanged = true;
+      }
+    },
     visibleRows(cur: TableRow[], prev: TableRow[]) {
-      if (sameData(prev, cur)) {
+      if ((!this.datasetHasChanged && sameData(prev, cur)) || !this.dataset) {
         return;
       }
       this.debounceImageFetch();
       this.fetchTimeSeries();
+      this.datasetHasChanged = false;
     },
 
     includedActive() {
@@ -464,12 +473,6 @@ export default Vue.extend({
 
     colorScale() {
       this.debounceImageFetch();
-    },
-
-    imageFields(cur: Field[], prev: Field[]) {
-      if (prev.length == 0 && cur.length > 0) {
-        this.debounceImageFetch();
-      }
     },
   },
 
