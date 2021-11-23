@@ -63,6 +63,12 @@ func VerticalConcat(dataStorage apiModel.DataStorage, joinLeft *JoinSpec, joinRi
 		return "", nil, err
 	}
 
+	// move all resources over to a new folder
+	err = combineResources([]string{joinLeft.DatasetPath, joinRight.DatasetPath}, datasetPath)
+	if err != nil {
+		return "", nil, err
+	}
+
 	return datasetPath, data, nil
 }
 
@@ -114,14 +120,57 @@ func reorderDatasetFields(dsToReorder *apiModel.DiskDataset, dsOrder *apiModel.D
 	return pathClone, nil
 }
 
-func combineResources(dsAPath string, dsBPath string, dsCombinedPath string) error {
+func combineResources(dsPaths []string, dsCombinedPath string) error {
+	log.Infof("combining resources found at '%v' for '%s'", dsPaths, dsCombinedPath)
+	dsCombinedSchemaPath := path.Join(dsCombinedPath, compute.D3MDataSchema)
+	dsCombined, err := serialization.ReadMetadata(dsCombinedSchemaPath)
+	if err != nil {
+		return err
+	}
+	parentFolder := path.Join(env.GetResourcePath(), path.Base(dsCombinedPath))
+
+	// move resources from ds to combined resource folder
+	newPaths := map[string]string{}
+	for _, dsPath := range dsPaths {
+		ds, err := serialization.ReadMetadata(path.Join(dsPath, compute.D3MDataSchema))
+		if err != nil {
+			return err
+		}
+
+		newPathsDS, err := mergeResources(ds, parentFolder)
+		if err != nil {
+			return err
+		}
+
+		// combine new paths (all ds should have identical resources)
+		for k, v := range newPathsDS {
+			newPaths[k] = v
+		}
+	}
+
+	// update the parent dataset data resource paths
+	updated := false
+	for _, dr := range dsCombined.DataResources {
+		if newPaths[dr.ResID] != "" {
+			dr.ResPath = newPaths[dr.ResID]
+			updated = true
+		}
+	}
+
+	if updated {
+		err = serialization.WriteMetadata(dsCombinedSchemaPath, dsCombined)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
-func mergeResources(ds *apiModel.DiskDataset, outputParentFolder string) (map[string]string, error) {
-	log.Infof("merging resources for dataset '%s', writing resources to '%s'", ds.Dataset.ID, outputParentFolder)
+func mergeResources(ds *model.Metadata, outputParentFolder string) (map[string]string, error) {
+	log.Infof("merging resources for dataset '%s', writing resources to '%s'", ds.ID, outputParentFolder)
 	newPaths := map[string]string{}
-	for _, dr := range ds.Dataset.Metadata.DataResources {
+	for _, dr := range ds.DataResources {
 		_, newResourcePath, err := copyResource(dr, outputParentFolder)
 		if err != nil {
 			return nil, err
@@ -129,7 +178,7 @@ func mergeResources(ds *apiModel.DiskDataset, outputParentFolder string) (map[st
 		newPaths[dr.ResID] = newResourcePath
 	}
 
-	log.Infof("done merging resources for dataset '%s' to '%s'", ds.Dataset.ID, outputParentFolder)
+	log.Infof("done merging resources for dataset '%s' to '%s'", ds.ID, outputParentFolder)
 
 	return newPaths, nil
 }
