@@ -283,7 +283,7 @@ export const actions = {
       size?: number;
     }
   ) {
-    let filterParams = emptyFilterParamsObject();
+    const filterParams = emptyFilterParamsObject();
     const filterSet = addHighlightToFilterParams(filterParams, args.highlights);
     const mutator = args.isBaseline
       ? mutations.setBaselinePredictionTableData
@@ -309,7 +309,7 @@ export const actions = {
     }
   },
 
-  fetchPredictionTableData(
+  async fetchPredictionTableData(
     context: PredictionContext,
     args: {
       dataset: string;

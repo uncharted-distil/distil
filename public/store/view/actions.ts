@@ -1084,14 +1084,14 @@ export const actions = {
       produceRequestId: produceRequestId,
     });
   },
-  updateBaselinePredictions(context: ViewContext) {
+  async updateBaselinePredictions(context: ViewContext) {
     const produceRequestId = context.getters.getRouteProduceRequestId as string;
     const allData = Number.MAX_SAFE_INTEGER;
     const inferenceDataset = getPredictionsById(
       context.getters.getPredictions,
       produceRequestId
     ).dataset;
-    predictionActions.fetchPredictionTableData(store, {
+    await predictionActions.fetchPredictionTableData(store, {
       dataset: inferenceDataset,
       highlights: [],
       produceRequestId: produceRequestId,

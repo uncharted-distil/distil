@@ -343,7 +343,9 @@ export default Vue.extend({
       return -1;
     },
     fieldSpecs(): GeoField[] {
-      const variables = datasetGetters.getVariables(this.$store);
+      const variables = datasetGetters
+        .getVariables(this.$store)
+        .filter((v) => v.datasetName === this.dataset);
 
       const matches = variables.filter((v) => {
         return (
@@ -492,7 +494,9 @@ export default Vue.extend({
       });
     },
     isMultiBandImage(): boolean {
-      const variables = datasetGetters.getVariables(this.$store);
+      const variables = datasetGetters
+        .getVariables(this.$store)
+        .filter((v) => v.datasetName === this.dataset);
       return variables.some((v) => {
         return v.colType === MULTIBAND_IMAGE_TYPE;
       });
@@ -531,6 +535,7 @@ export default Vue.extend({
     multibandImageGroupColumn(): string {
       const groupColumns = datasetGetters
         .getVariables(this.$store)
+        .filter((v) => v.datasetName === this.dataset)
         .find((v) => v.colType === MULTIBAND_IMAGE_TYPE);
       return groupColumns.key;
     },

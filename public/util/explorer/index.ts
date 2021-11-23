@@ -75,6 +75,11 @@ export enum ExplorerStateNames {
   PREDICTION_VIEW = "prediction",
   LABEL_VIEW = "label",
 }
+export enum ExplorerViewComponent {
+  TABLE = 0,
+  MAP = 1,
+  IMAGE_MOSAIC = 2,
+}
 // getConfigFromName returns a config instance based on supplied enum, throws errors
 export function getConfigFromName(state: ExplorerStateNames): ExplorerConfig {
   switch (state) {

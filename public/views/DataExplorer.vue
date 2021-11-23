@@ -396,6 +396,7 @@ import {
   selectMethods,
   predictionMethods,
   predictionComputes,
+  ExplorerViewComponent,
 } from "../util/explorer";
 import { findAPositiveLabel } from "../util/data";
 import _ from "lodash";
@@ -438,7 +439,7 @@ const DataExplorer = Vue.extend({
 
   data() {
     return {
-      activeView: 0, // TABLE_VIEW
+      activeView: ExplorerViewComponent.TABLE, // TABLE_VIEW
       busyState: "Busy", // contains the info to display to the user when the UI is busy
       config: new SelectViewConfig(), // this config controls what is displayed in the action bar
       dataLoading: false, // this controls the spinners for the data view tabs (table, mosaic, geoplot)
@@ -465,11 +466,19 @@ const DataExplorer = Vue.extend({
     },
 
     async produceRequestId() {
+      this.isBusy = true;
       this.dataLoading = true;
+      this.activeView = ExplorerViewComponent.TABLE;
+      this.busyState = "Fetching Variables";
       await this.state.fetchVariables();
+      this.busyState = "Fetch Summaries";
       await this.state.fetchVariableSummaries();
+      this.busyState = "Fetching Data";
       await this.state.fetchData();
+      await this.state.fetchMapBaseline();
       this.dataLoading = false;
+      this.isBusy = false;
+      this.busyState = "Busy";
     },
 
     async activeVariables(n, o) {
