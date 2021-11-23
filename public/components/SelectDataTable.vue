@@ -298,6 +298,7 @@ export default Vue.extend({
       // this is v-model with b-table (it contains what is on the page in the sorted order)
       visibleRows: [],
       debounceKey: null,
+      datasetHasChanged: false,
     };
   },
 
@@ -444,12 +445,20 @@ export default Vue.extend({
   },
 
   watch: {
+    dataset() {
+      // the dataset name can change before the new data has arrived
+      // set a flag to fetch the new images / timeseries upon new visibleRows
+      if (this.dataset) {
+        this.datasetHasChanged = true;
+      }
+    },
     visibleRows(cur: TableRow[], prev: TableRow[]) {
-      if (sameData(prev, cur) || !this.dataset) {
+      if ((!this.datasetHasChanged && sameData(prev, cur)) || !this.dataset) {
         return;
       }
       this.debounceImageFetch();
       this.fetchTimeSeries();
+      this.datasetHasChanged = false;
     },
 
     includedActive() {
