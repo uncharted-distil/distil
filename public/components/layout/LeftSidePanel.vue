@@ -16,7 +16,9 @@
 -->
 
 <template>
-  <aside class="d-flex flex-column p-2 h-100 left-side-panel-container">
+  <aside
+    class="d-flex flex-column p-2 h-100 left-side-panel-container bg-white"
+  >
     <header class="mb-1">
       <h5>{{ panelTitle }}</h5>
       <!-- <close-button @close="onClose" /> -->
@@ -29,29 +31,18 @@
 
 <script lang="ts">
 import Vue from "vue";
-// import CloseButton from "../layout/CloseButton.vue";
 
 export default Vue.extend({
   name: "LeftSidePanel",
 
-  // components: { CloseButton },
-
   props: {
-    // isOpen: { type: Boolean, default: true },
     panelTitle: { type: String, default: "" },
   },
-
-  // methods: {
-  //   onClose(): void {
-  //     this.$emit("close-panel");
-  //   },
-  // },
 });
 </script>
 
 <style scoped>
 .left-side-panel-container {
-  background-color: var(--bg-color-side-panel);
   border-color: var(--border-color);
   border-style: solid;
   border-width: 0 1px;

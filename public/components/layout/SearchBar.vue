@@ -16,37 +16,18 @@
 -->
 
 <template>
-  <div class="search-bar-container">
+  <div class="search-bar-container d-flex">
     <component :is="styleSheet" v-html="cssStyle" />
-    <header>Search</header>
-    <b-tabs
-      v-if="isSelectView"
-      content-class="pr-0 pl-0 ml-15px"
-      nav-wrapper-class="pl-0"
-      pills
-      vertical
-      end
+    <header v-if="searchTitle.length">{{ searchTitle }}</header>
+    <main ref="lexcontainer" class="lex-container" />
+    <b-button
+      v-if="hasHighlightsOrFilters"
+      class="exit-button d-flex justify-content-center align-items-center m-auto"
+      variant="outline-dark"
+      @click="removeAllHighlightsAndFilters"
     >
-      <b-tab
-        title="☀"
-        :active="isHighlightActive"
-        aria-h="Highlight"
-        @click="isHighlightActive = !isHighlightActive"
-        title-link-class="searchbar-nav btn-outline-secondary btn border-bottom-right-radius-0"
-      >
-        <main ref="lexcontainerHighlight" class="lex-container select" />
-      </b-tab>
-      <b-tab
-        title="≠"
-        :active="!isHighlightActive"
-        aria-label="Exclude"
-        title-link-class="searchbar-nav btn-outline-secondary btn border-top-right-radius-0"
-        @click="isHighlightActive = !isHighlightActive"
-      >
-        <main ref="lexcontainerExclude" class="lex-container select" />
-      </b-tab>
-    </b-tabs>
-    <main v-else ref="lexcontainer" class="lex-container" />
+      <i class="fas fa-times" />
+    </b-button>
   </div>
 </template>
 
@@ -68,6 +49,8 @@ import { updateHighlight, UPDATE_ALL } from "../../util/highlights";
 import "../../../node_modules/@uncharted.software/lex/dist/lex.css";
 import "../../../node_modules/flatpickr/dist/flatpickr.min.css";
 import { EventList } from "../../util/events";
+import { BIconX } from "bootstrap-vue";
+import { overlayRouteEntry } from "../../util/routes";
 /** SearchBar component to display LexBar utility
  *
  * @param {string} [filters] - Accept filter from queryString to fill the LexBar with a query.
@@ -76,13 +59,16 @@ import { EventList } from "../../util/events";
  */
 export default Vue.extend({
   name: "SearchBar",
-
+  components: {
+    BIconX,
+  },
   props: {
-    highlights: { type: String, default: "" },
-    filters: { type: String, default: "" },
+    highlights: { type: String, default: null },
+    filters: { type: String, default: null },
     variables: { type: Array as () => Variable[], default: [] },
     isSelectView: { type: Boolean as () => boolean, default: false },
     handleUpdates: { type: Boolean as () => boolean, default: false },
+    searchTitle: { type: String as () => string, default: "" },
   },
 
   data: () => ({
@@ -91,6 +77,9 @@ export default Vue.extend({
   }),
 
   computed: {
+    hasHighlightsOrFilters(): boolean {
+      return this.highlights !== null || this.filters !== null;
+    },
     styleSheet(): string {
       return "style";
     },
@@ -162,6 +151,13 @@ export default Vue.extend({
     this.renderLex();
   },
   methods: {
+    removeAllHighlightsAndFilters() {
+      const entry = overlayRouteEntry(this.$route, {
+        highlights: "",
+        filters: "",
+      });
+      this.$router.push(entry).catch((err) => console.warn(err));
+    },
     async renderLex(): Promise<void> {
       // Initialize lex instance
       this.lex = new Lex({
@@ -223,6 +219,9 @@ div.lex-assistant-box ul li.selectable.active,
 div.lex-assistant-box ul li.selectable.hoverable:hover {
   background-color: #255dcc;
 }
+div.lex-assistant-box {
+  z-index: 999;
+}
 .ml-15px {
   margin-left: 15px;
 }
@@ -237,6 +236,9 @@ div.lex-assistant-box ul li.selectable.hoverable:hover {
   border-top-left-radius: 0% !important;
   border-bottom-left-radius: 0% !important;
   box-shadow: none !important;
+}
+.lex-container {
+  width: 95vw;
 }
 .lex-container.select div.lex-box {
   min-height: 80px;
@@ -260,8 +262,10 @@ div.lex-assistant-box ul li.selectable.hoverable:hover {
 div.lex-box.focused {
   border-color: #80bdff;
 }
-div.lex-box {
+
+.lex-container div.lex-box {
   min-height: 53px;
+  border: none;
 }
 div.lex-box.active,
 div.lex-box.focused {
@@ -287,5 +291,12 @@ div.lex-box.focused {
 .exclude-filter {
   color: var(--white) !important;
   background-color: #333333 !important;
+}
+.search-bar-container {
+  border: 1px solid var(--border-color);
+}
+.exit-button {
+  width: 36px;
+  height: 36px;
 }
 </style>
