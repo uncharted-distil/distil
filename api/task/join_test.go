@@ -125,7 +125,7 @@ func TestJoin(t *testing.T) {
 		"Join to be reviewed by user", rightOrigin.SearchResult, rightOrigin.Provenance)
 	assert.NoError(t, err)
 	datasetLeftURI := env.ResolvePath(leftJoin.DatasetSource, leftJoin.DatasetPath)
-	_, result, err := join(leftJoin, rightJoin, pipelineDesc, []string{datasetLeftURI}, testSubmitter{}, false)
+	_, result, err := join(leftJoin, rightJoin, "", pipelineDesc, []string{datasetLeftURI}, testSubmitter{}, false)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)

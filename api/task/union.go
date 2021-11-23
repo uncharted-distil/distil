@@ -23,6 +23,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
 
+	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
@@ -47,7 +48,11 @@ func VerticalConcat(dataStorage apiModel.DataStorage, joinLeft *JoinSpec, joinRi
 		return "", nil, err
 	}
 
-	datasetPath, _, err := join(joinLeft, joinRight, pipelineDesc, unionPaths, defaultSubmitter{}, true)
+	// using the path to determine the output folder because the ids match across multiple datasets (predictions, prefeaturized, etc.)
+	leftFolder := path.Base(joinLeft.DatasetPath)
+	rightFolder := path.Base(joinRight.DatasetPath)
+	datasetPath := env.ResolvePath(metadata.Augmented, fmt.Sprintf("%s-union-%s", leftFolder, rightFolder))
+	datasetPath, _, err = join(joinLeft, joinRight, datasetPath, pipelineDesc, unionPaths, defaultSubmitter{}, true)
 	if err != nil {
 		return "", nil, err
 	}
@@ -91,7 +96,8 @@ func reorderFields(dsAPath string, dsBPath string) ([]string, []string, error) {
 }
 
 func reorderDatasetFields(dsToReorder *apiModel.DiskDataset, dsOrder *apiModel.DiskDataset) (string, error) {
-	pathClone := path.Join(env.GetTmpPath(), fmt.Sprintf("%s-reorder", dsToReorder.Dataset.ID))
+	// use the path on disk to build the clone path!
+	pathClone := path.Join(env.GetTmpPath(), fmt.Sprintf("%s-reorder", path.Base(path.Dir(dsToReorder.GetPath()))))
 	dsA, err := dsToReorder.Clone(pathClone, dsToReorder.Dataset.ID, dsToReorder.Dataset.ID)
 	if err != nil {
 		return "", err
@@ -108,7 +114,42 @@ func reorderDatasetFields(dsToReorder *apiModel.DiskDataset, dsOrder *apiModel.D
 	return pathClone, nil
 }
 
+func combineResources(dsAPath string, dsBPath string, dsCombinedPath string) error {
+	return nil
+}
+
+func mergeResources(ds *apiModel.DiskDataset, outputParentFolder string) (map[string]string, error) {
+	log.Infof("merging resources for dataset '%s', writing resources to '%s'", ds.Dataset.ID, outputParentFolder)
+	newPaths := map[string]string{}
+	for _, dr := range ds.Dataset.Metadata.DataResources {
+		_, newResourcePath, err := copyResource(dr, outputParentFolder)
+		if err != nil {
+			return nil, err
+		}
+		newPaths[dr.ResID] = newResourcePath
+	}
+
+	log.Infof("done merging resources for dataset '%s' to '%s'", ds.Dataset.ID, outputParentFolder)
+
+	return newPaths, nil
+}
+
+func copyResource(dr *model.DataResource, outputParentFolder string) (bool, string, error) {
+	if !dr.IsCollection {
+		return false, "", nil
+	}
+
+	outputFolder := path.Join(outputParentFolder, path.Base(dr.ResPath))
+	err := util.Copy(dr.ResPath, outputFolder)
+	if err != nil {
+		return false, "", err
+	}
+
+	return true, outputFolder, nil
+}
+
 func rewriteD3MIndex(datasetPath string) (*apiModel.FilteredData, error) {
+	log.Infof("rewriting d3m index of dataset found at '%s'", datasetPath)
 	// read the raw dataset
 	ds, err := serialization.ReadDataset(path.Join(datasetPath, compute.D3MDataSchema))
 	if err != nil {
@@ -167,6 +208,8 @@ func rewriteD3MIndex(datasetPath string) (*apiModel.FilteredData, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	log.Infof("updated d3m index of dataset found at '%s'", datasetPath)
 
 	return dataParsed, nil
 }
