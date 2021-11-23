@@ -180,7 +180,7 @@ export default Vue.extend({
         searchResultIndex: this.searchResultIndex,
         description: args.description,
         path: this.path,
-        filterByUpdates: this.joinType === JoinTypes.Inner,
+        joinType: this.joinType,
       };
       datasetActions
         .importDataset(this.$store, importDatasetArgs)

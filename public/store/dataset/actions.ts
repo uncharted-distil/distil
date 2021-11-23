@@ -623,7 +623,7 @@ export const actions = {
       nosample?: boolean;
       leftCols?: string[];
       rightCols?: string[];
-      filterByUpdates?: boolean;
+      joinType?: string;
     }
   ): Promise<any> {
     if (!validateArgs(args, ["datasetID", "source"])) {
@@ -640,7 +640,7 @@ export const actions = {
         description: args.description,
         leftCols: args.leftCols,
         rightCols: args.rightCols,
-        filterByUpdates: args.filterByUpdates,
+        joinType: args.joinType,
       };
     } else if (args.originalDataset !== null) {
       postParams = {
@@ -648,7 +648,7 @@ export const actions = {
         joinedDataset: args.joinedDataset,
         leftCols: args.leftCols,
         rightCols: args.rightCols,
-        filterByUpdates: args.filterByUpdates,
+        joinType: args.joinType,
         nosample: args.nosample,
       };
     }
