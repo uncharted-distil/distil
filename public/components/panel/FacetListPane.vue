@@ -18,10 +18,12 @@
 <template>
   <div class="h-100">
     <header v-if="enableFooter">
-      <b-button size="sm" variant="outline-secondary" @click="hideAll">
-        Hide All
+      <b-button size="sm" @click="showAll">
+        <i class="fas fa-eye" /> Show All
       </b-button>
-      <b-button size="sm" @click="showAll"> Show All </b-button>
+      <b-button size="sm" @click="hideAll">
+        <i class="fas fa-eye-slash" /> Hide All
+      </b-button>
       <b-button
         v-if="hasTarget"
         variant="primary"
@@ -49,7 +51,6 @@
       :include="include"
       :enable-color-scales="enableColorScales"
       :facet-count="searchedActiveVariables.length"
-      :html="buttons"
       :instance-name="instanceName"
       :log-activity="problemDefinition"
       :rows-per-page="numRowsPerPage"
@@ -60,6 +61,7 @@
       :disabled-color-scales="disabledColorScales"
       :summaries="activeSummaries"
       :dataset-name="dataset"
+      :active-variables="variables"
       @search="onSearch"
       @type-change="onTypeChange"
     />
@@ -178,37 +180,6 @@ export default Vue.extend({
         ExplorerStateNames.RESULT_VIEW
       );
     },
-    buttons(): (group: Group) => HTMLElement | null {
-      return !this.enableFooter
-        ? null
-        : (group: Group) => {
-            const variableName = group.key;
-            const variable = this.variables.find((v) => v.key === variableName);
-            const buttonList = [] as HTMLElement[];
-            // Display and Hide variables in the Data Explorer.
-            const exploreButton = this.displayButton(variableName);
-            if (!hasRole(variable, DISTIL_ROLES.Augmented)) {
-              if (this.hasTarget) {
-                // Add/Remove a variable as training.
-                buttonList.push(this.trainingButton(variableName));
-              }
-              // Add/Remove a variable as target.
-              buttonList.push(this.targetButton(variableName));
-            }
-
-            // List of model creation buttons to be added.
-            const buttons = buttonList.filter((b) => !!b);
-            const modelButtons = document.createElement("div");
-            modelButtons.className = "btn-group ml-auto";
-            modelButtons.append(...buttons);
-
-            // Container to display the buttons with flex.
-            const container = document.createElement("div");
-            container.className = "d-flex justify-content-between w-100";
-            container.append(exploreButton, modelButtons);
-            return container;
-          };
-    },
     explore(): string[] {
       return routeGetters.getExploreVariables(this.$store);
     },
@@ -264,14 +235,6 @@ export default Vue.extend({
 
     training(): string[] {
       return routeGetters.getDecodedTrainingVariableNames(this.$store);
-    },
-
-    unsupportedTargets(): Set<string> {
-      return new Set(
-        this.variables
-          .filter((v) => isUnsupportedTargetVar(v.key, v.colType))
-          .map((v) => v.key)
-      );
     },
 
     varsPage(): number {
@@ -336,50 +299,6 @@ export default Vue.extend({
       args.explore = this.explore.filter((v) => !map.has(v)).join(",");
       this.updateRoute(args);
     },
-    displayButton(variable: string): HTMLElement {
-      const isInExplore = this.isExplore(variable);
-      const button = document.createElement("button");
-      button.className = "btn btn-sm";
-      button.className += isInExplore
-        ? " btn-outline-secondary"
-        : " btn-secondary";
-      button.textContent = isInExplore ? "Hide" : "Display";
-      button.addEventListener("click", () => this.updateExplore(variable));
-      return button;
-    },
-
-    trainingButton(variable: string): HTMLElement {
-      // To do not allow selection as training if the variable is the target.
-      if (this.isTarget(variable)) return;
-
-      const isTraining = this.isTraining(variable);
-
-      const button = document.createElement("button");
-      button.className = "btn btn-sm";
-      button.className += isTraining ? " btn-outline-primary" : " btn-primary";
-      button.textContent = isTraining ? "Remove Training" : "Select Training";
-      button.addEventListener("click", () => this.updateTraining(variable));
-      return button;
-    },
-
-    targetButton(variable: string): HTMLElement {
-      // Check if the variable is an unsupported to be a target.
-      const isUnsupported = this.unsupportedTargets.has(variable);
-      if (isUnsupported) return;
-
-      const isTarget = this.isTarget(variable);
-
-      // Only display the button if no target has been selected,
-      // or this variable is the target and needs to be unselected.
-      if (!isNil(this.target) && !isTarget) return;
-
-      const button = document.createElement("button");
-      button.className = "btn btn-sm";
-      button.className += isTarget ? " btn-outline-secondary" : " btn-primary";
-      button.textContent = isTarget ? "Remove Target" : "Select Target";
-      button.addEventListener("click", () => this.updateTarget(variable));
-      return button;
-    },
 
     updateRoute(args: RouteArgs) {
       const entry = overlayRouteEntry(this.$route, args);
@@ -398,85 +317,6 @@ export default Vue.extend({
       return this.explore.includes(variable);
     },
 
-    async updateTarget(target: string): Promise<void> {
-      // Is the variable the current target?
-      if (this.isTarget(target)) {
-        // Remove the variable as target
-        this.updateRoute({ target: null, task: null });
-        return;
-      }
-
-      const args = {} as RouteArgs;
-      args.target = target;
-
-      // Filter it out of the training
-      const training = this.training.filter((v) => v !== target);
-
-      // Get Variables Grouping and check if our target is one of them
-      const groupings = datasetGetters.getGroupings(this.$store);
-      const targetGrouping = groupings?.find((g) => g.key === target)?.grouping;
-      if (!!targetGrouping) {
-        if (targetGrouping.subIds.length > 0) {
-          targetGrouping.subIds.forEach((subId) => {
-            if (!training.find((t) => t === subId)) {
-              training.push(subId);
-            }
-          });
-        } else {
-          if (!training.find((t) => t === targetGrouping.idCol)) {
-            training.push(targetGrouping.idCol);
-          }
-        }
-      }
-
-      // Get the var modes
-      const varModesMap = routeGetters.getDecodedVarModes(this.$store);
-      args.varModes = varModesToString(varModesMap);
-
-      // Fetch the task
-      try {
-        const response = await datasetActions.fetchTask(this.$store, {
-          dataset: this.dataset,
-          targetName: target,
-          variableNames: [],
-        });
-        args.task = response.data.task.join(",") ?? "";
-
-        // Update the training variable
-        if (args.task.includes("timeseries")) {
-          training.forEach((variable) => {
-            if (variable !== target) {
-              varModesMap.set(variable, SummaryMode.Timeseries);
-            }
-          });
-        }
-        await datasetActions.fetchModelingMetrics(this.$store, {
-          task: args.task,
-        });
-      } catch (error) {
-        console.log(error);
-      }
-
-      // Make the list of training variables' name a string.
-      args.training = training.join(",");
-
-      appActions.logUserEvent(this.$store, {
-        feature: Feature.SELECT_TARGET,
-        activity: Activity.PROBLEM_DEFINITION,
-        subActivity: SubActivity.PROBLEM_SPECIFICATION,
-        details: { target },
-      });
-      // fetch existing solutions
-      await requestActions.fetchSolutions(this.$store, {
-        dataset: this.dataset,
-        target,
-      });
-      this.updateRoute(args);
-      datasetActions.fetchVariableRankings(this.$store, {
-        dataset: this.dataset,
-        target,
-      });
-    },
     async addTrainingVariables(variables: string[]): Promise<RouteArgs> {
       const args = {} as RouteArgs;
       const training = this.training.concat(variables);
@@ -507,29 +347,6 @@ export default Vue.extend({
         args.varModes = varModesStr;
       }
       return args;
-    },
-    async updateTraining(variable: string): Promise<void> {
-      let args = {} as RouteArgs;
-      if (this.isTraining(variable)) {
-        args.training = this.training.filter((v) => v !== variable).join(",");
-      } else {
-        args = await this.addTrainingVariables([variable]);
-      }
-
-      this.updateRoute(args);
-    },
-
-    updateExplore(variable: string): void {
-      const args = {} as RouteArgs;
-      if (this.isExplore(variable)) {
-        args.explore = this.explore.filter((v) => v !== variable).join(",");
-        if (variable === this.colorScaleVar) {
-          args.colorScaleVariable = "";
-        }
-      } else {
-        args.explore = this.explore.concat([variable]).join(",");
-      }
-      this.updateRoute(args);
     },
   },
 });

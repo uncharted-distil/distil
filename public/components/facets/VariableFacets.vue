@@ -64,7 +64,6 @@
               :summary="summary"
               :highlights="highlights"
               :row-selection="rowSelection"
-              :html="html"
               :enabled-type-changes="enabledTypeChanges"
               :enable-highlighting="[enableHighlighting, enableHighlighting]"
               :ignore-highlights="[ignoreHighlights, ignoreHighlights]"
@@ -83,6 +82,7 @@
           </template>
           <template v-else-if="isGeoLocated(summary.varType)">
             <geocoordinate-facet
+              :active-variables="activeVariables"
               :summary="summary"
               :enable-highlighting="enableHighlighting"
               :ignore-highlights="ignoreHighlights"
@@ -91,7 +91,6 @@
               :log-activity="logActivity"
               :dataset-name="datasetName"
               :include="include"
-              :html="html"
               :expanded="expandGeoAndTimeseriesFacets"
               :type-change-event="typeChangeEvent"
               @histogram-numerical-click="onNumericalClick"
@@ -103,10 +102,10 @@
             <facet-image
               :style="facetColors"
               :summary="summary"
+              :active-variables="activeVariables"
               :highlights="highlights"
               :row-selection="rowSelection"
               :ranking="ranking[summary.key]"
-              :html="html"
               :enabled-type-changes="enabledTypeChanges"
               :enable-highlighting="enableHighlighting"
               :ignore-highlights="ignoreHighlights"
@@ -127,15 +126,16 @@
             <facet-date-time
               :style="facetColors"
               :summary="summary"
+              :active-variables="activeVariables"
               :highlights="highlights"
               :row-selection="rowSelection"
               :importance="ranking[summary.key]"
               :ranking="ranking[summary.key]"
-              :html="html"
               :enabled-type-changes="enabledTypeChanges"
               :enable-highlighting="enableHighlighting"
               :ignore-highlights="ignoreHighlights"
               :instance-name="instanceName"
+              :dataset-name="datasetName"
               :include="include"
               :geo-enabled="
                 enableColorScales &&
@@ -151,15 +151,16 @@
           <template v-else-if="summary.type === 'categorical'">
             <facet-categorical
               :style="facetColors"
+              :active-variables="activeVariables"
               :summary="summary"
               :highlights="highlights"
               :row-selection="rowSelection"
               :importance="ranking[summary.key]"
-              :html="html"
               :enabled-type-changes="enabledTypeChanges"
               :enable-highlighting="enableHighlighting"
               :ignore-highlights="ignoreHighlights"
               :instance-name="instanceName"
+              :dataset-name="datasetName"
               :include="include"
               :geo-enabled="
                 enableColorScales &&
@@ -174,15 +175,16 @@
           <template v-else-if="summary.type === 'numerical'">
             <facet-numerical
               :style="facetColors"
+              :active-variables="activeVariables"
               :summary="summary"
               :highlights="highlights"
               :row-selection="rowSelection"
               :importance="ranking[summary.key]"
-              :html="html"
               :enabled-type-changes="enabledTypeChanges"
               :enable-highlighting="enableHighlighting"
               :ignore-highlights="ignoreHighlights"
               :instance-name="instanceName"
+              :dataset-name="datasetName"
               :include="include"
               :geo-enabled="
                 enableColorScales &&
@@ -298,7 +300,6 @@ export default Vue.extend({
     enableTypeFiltering: Boolean,
     enableColorScales: { type: Boolean as () => boolean, default: false },
     facetCount: { type: Number, default: 0 },
-    html: { type: [String, Object, Function], default: null },
     instanceName: { type: String, default: "variableFacets" },
     isAvailableFeatures: Boolean,
     isFeaturesToModel: Boolean,
@@ -309,6 +310,10 @@ export default Vue.extend({
       default: Activity.DATA_PREPARATION,
     },
     noMargin: { type: Boolean, default: false },
+    activeVariables: {
+      type: Array as () => Variable[],
+      default: () => [] as Variable[],
+    },
     summaries: { type: Array as () => VariableSummary[], default: [] },
     subtitle: { type: String, default: null },
     rowsPerPage: { type: Number, default: 0 },

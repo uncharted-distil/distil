@@ -29,9 +29,19 @@
       @facet-element-updated="updateSelection"
     >
       <div slot="header-label" :class="headerClass">
-        <i :class="getGroupIcon(summary) + ' facet-header-icon'" />
-        <span>{{ summary.label.toUpperCase() }}</span>
-        <div class="facet-header-dropdown d-flex align-items-center">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <i :class="getGroupIcon(summary) + ' facet-header-icon'" />
+            {{ summary.label.toUpperCase() }}
+          </div>
+          <button-training-target
+            :variable="summary.key"
+            :datasetName="datasetName"
+            :activeVariables="activeVariables"
+          />
+        </div>
+        <div class="d-flex align-items-center my-1">
+          <button-explore :variable="summary.key" />
           <color-scale-drop-down
             v-if="geoEnabled && isClustering"
             :variable-summary="summary"
@@ -71,11 +81,6 @@
             </div>
           </div>
         </div>
-        <div
-          v-if="displayFooter"
-          v-child="computeCustomHTML()"
-          class="facet-footer-custom-html"
-        />
       </div>
     </facet-terms>
   </div>
@@ -95,6 +100,7 @@ import {
   Highlight,
   RowSelection,
   VariableSummary,
+  Variable,
 } from "../../store/dataset";
 import {
   getCategoricalChunkSize,
@@ -106,6 +112,8 @@ import {
   facetTypeChangeState,
   generateFacetDiscreteStyle,
 } from "../../util/facets";
+import ButtonExplore from "../ButtonExplore.vue";
+import ButtonTrainingTarget from "../ButtonTrainingTarget.vue";
 import ColorScaleDropDown from "../ColorScaleDropDown.vue";
 import { DISTIL_ROLES } from "../../util/types";
 import { EventList } from "../../util/events";
@@ -116,6 +124,8 @@ export default Vue.extend({
   components: {
     TypeChangeMenu,
     ImagePreview,
+    ButtonExplore,
+    ButtonTrainingTarget,
     ColorScaleDropDown,
   },
 
@@ -129,17 +139,16 @@ export default Vue.extend({
   },
 
   props: {
+    activeVariables: {
+      type: Array as () => Variable[],
+      default: () => [] as Variable[],
+    },
     datasetName: { type: String as () => string, default: null },
     enabledTypeChanges: Array as () => string[],
     enableHighlighting: Boolean as () => boolean,
     expandCollapse: Function as () => Function,
     geoEnabled: { type: Boolean as () => boolean, default: false },
     highlights: Array as () => Highlight[],
-    html: [
-      String as () => string,
-      Object as () => any,
-      Function as () => Function,
-    ],
     include: { type: Boolean as () => boolean, default: true },
     instanceName: String as () => string,
     rowSelection: Object as () => RowSelection,
@@ -260,9 +269,6 @@ export default Vue.extend({
     hasLess(): boolean {
       return this.moreNumToDisplay > 0;
     },
-    displayFooter(): boolean {
-      return !!this.html && this.summary.distilRole != DISTIL_ROLES.Augmented;
-    },
   },
 
   methods: {
@@ -364,28 +370,16 @@ export default Vue.extend({
         );
       }
     },
-    computeCustomHTML(): HTMLElement | null {
-      // hack to get the custom html buttons showing up
-      // changing this would mean to change how the instantiation of the facets works
-      // right now they are wrapped by other components like
-      // available-target-variables, available-training-variables, etc
-      // those components inject HTML into the facets through their `html` function
-      // we might want to change that in the future though
-      if (this.html) {
-        return _.isFunction(this.html)
-          ? this.html({
-              key: this.summary.key,
-            })
-          : this.html;
-      }
-      return null;
-    },
     getGroupIcon,
   },
 });
 </script>
 
 <style>
+::part(facet-container-header) {
+  height: auto;
+}
+
 .facet-image .facet-terms-container {
   max-height: 200px !important;
   overflow-y: auto;
@@ -414,11 +408,6 @@ export default Vue.extend({
 
 .facet-header-icon {
   margin-right: 6px;
-}
-
-.facet-header-dropdown {
-  position: absolute;
-  right: 12px;
 }
 
 .facet-footer-container {
@@ -465,8 +454,6 @@ export default Vue.extend({
 
 .facet-header-container {
   color: rgba(0, 0, 0, 0.54);
-  display: flex;
-  align-items: center;
   overflow-y: scroll !important;
 }
 

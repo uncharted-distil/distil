@@ -26,10 +26,20 @@
       :disabled.prop="!enableHighlighting"
       @facet-element-updated="updateSelection"
     >
-      <div slot="header-label" :class="headerClass" class="d-flex">
-        <span>{{ summary.label.toUpperCase() }}</span>
+      <div slot="header-label" :class="headerClass">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            {{ summary.label.toUpperCase() }}
+          </div>
+          <button-training-target
+            :variable="summary.key"
+            :datasetName="datasetName"
+            :activeVariables="activeVariables"
+          />
+        </div>
         <importance-bars v-if="enableImportance" :importance="importance" />
-        <div class="facet-header-dropdown d-flex align-items-center">
+        <div class="d-flex align-items-center my-1">
+          <button-explore :variable="summary.key" />
           <color-scale-drop-down
             v-if="geoEnabled"
             :variable-summary="summary"
@@ -59,11 +69,6 @@
           auto-hide="true"
           round-caps="true"
         />
-        <div
-          v-if="displayFooter"
-          v-child="computeCustomHTML()"
-          class="facet-footer-custom-html"
-        />
       </div>
     </facet-bars>
   </div>
@@ -77,8 +82,15 @@ import "@uncharted.software/facets-plugins";
 
 import TypeChangeMenu from "../TypeChangeMenu.vue";
 import ImportanceBars from "../ImportanceBars.vue";
+import ButtonExplore from "../ButtonExplore.vue";
+import ButtonTrainingTarget from "../ButtonTrainingTarget.vue";
 import ColorScaleDropDown from "../ColorScaleDropDown.vue";
-import { Highlight, RowSelection, VariableSummary } from "../../store/dataset";
+import {
+  Highlight,
+  RowSelection,
+  VariableSummary,
+  Variable,
+} from "../../store/dataset";
 import {
   getSubSelectionValues,
   hasBaseline,
@@ -97,6 +109,8 @@ export default Vue.extend({
   components: {
     TypeChangeMenu,
     ImportanceBars,
+    ButtonExplore,
+    ButtonTrainingTarget,
     ColorScaleDropDown,
   },
 
@@ -110,13 +124,13 @@ export default Vue.extend({
   },
 
   props: {
+    datasetName: String as () => string,
+    activeVariables: {
+      type: Array as () => Variable[],
+      default: () => [] as Variable[],
+    },
     summary: Object as () => VariableSummary,
     enabledTypeChanges: Array as () => string[],
-    html: [
-      String as () => string,
-      Object as () => any,
-      Function as () => Function,
-    ],
     expandCollapse: Function as () => Function,
     highlights: Array as () => Highlight[],
     enableHighlighting: Boolean as () => boolean,
@@ -233,9 +247,6 @@ export default Vue.extend({
           )
         : "";
     },
-    displayFooter(): boolean {
-      return !!this.html && this.summary.distilRole != DISTIL_ROLES.Augmented;
-    },
   },
 
   methods: {
@@ -310,31 +321,15 @@ export default Vue.extend({
         );
       }
     },
-    computeCustomHTML(): HTMLElement | null {
-      // hack to get the custom html buttons showing up
-      // changing this would mean to change how the instantiation of the facets works
-      // right now they are wrapped by other components like
-      // available-target-variables, available-training-variables, etc
-      // those components inject HTML into the facets through their `html` function
-      // we might want to change that in the future though
-      if (this.html) {
-        return _.isFunction(this.html)
-          ? this.html({
-              key: this.summary.key,
-            })
-          : this.html;
-      }
-      return null;
-    },
   },
 });
 </script>
 
 <style scoped>
-.facet-header-dropdown {
-  position: absolute;
-  right: 12px;
+::part(facet-container-header) {
+  height: auto;
 }
+
 .facet-footer-container {
   min-height: 12px;
   padding: 6px 4px 5px 5px;
@@ -350,8 +345,6 @@ export default Vue.extend({
 
 .facet-header-container {
   color: rgba(0, 0, 0, 0.54);
-  display: flex;
-  align-items: center;
 }
 
 .facet-header-container-no-scroll {

@@ -27,7 +27,7 @@
   </b-button>
   <div
     v-else
-    class="d-flex justify-content-space align-items-center btn-outline-secondary rounded"
+    class="d-flex justify-content-space align-items-center btn-secondary rounded"
   >
     <d-drop-down
       ref="drop-down"
@@ -246,14 +246,16 @@ export default Vue.extend({
 .dropdown,
 .toggle {
   height: 22px;
+  height: 1.375rem;
 }
 .selected-toggle {
   height: 22px;
+  height: 1.375rem;
   color: #424242;
   background-color: #9e9e9e;
 }
 .selected-bar {
-  width: 100px;
+  width: 70px;
   height: 13px;
   display: inline-block;
 }
