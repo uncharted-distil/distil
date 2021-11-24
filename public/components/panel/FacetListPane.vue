@@ -70,8 +70,6 @@
 
 <script lang="ts">
 import Vue from "vue";
-import { isNil } from "lodash";
-
 import VariableFacets from "../../components/facets/VariableFacets.vue";
 import PositiveLabel from "../buttons/PositiveLabel.vue";
 import {
@@ -80,7 +78,6 @@ import {
   Variable,
   VariableSummary,
 } from "../../store/dataset/index";
-import { actions as appActions } from "../../store/app/module";
 import {
   getters as datasetGetters,
   actions as datasetActions,
@@ -92,19 +89,15 @@ import {
 import { getters as routeGetters } from "../../store/route/module";
 
 import { NUM_PER_PAGE, searchVariables } from "../../util/data";
-import { Group } from "../../util/facets";
 import {
   getRouteFacetPage,
   overlayRouteEntry,
   RouteArgs,
   varModesToString,
 } from "../../util/routes";
-import { Feature, Activity, SubActivity } from "../../util/userEvents";
-import { DISTIL_ROLES, isUnsupportedTargetVar } from "../../util/types";
+import { Activity } from "../../util/userEvents";
 import { ExplorerStateNames } from "../../util/explorer";
 import { EventList } from "../../util/events";
-import { requestActions } from "../../store";
-import { hasRole } from "../../util/data";
 
 export default Vue.extend({
   name: "FacetListPane",
@@ -128,11 +121,14 @@ export default Vue.extend({
     enableFooter: { type: Boolean as () => boolean, default: false },
     isTargetPanel: { type: Boolean as () => boolean, default: false },
     dataset: { type: String as () => string, default: "" },
+    instanceName: {
+      type: String as () => string,
+      default: DATA_EXPLORER_VAR_INSTANCE,
+    },
   },
 
   data() {
     return {
-      instanceName: DATA_EXPLORER_VAR_INSTANCE,
       numRowsPerPage: NUM_PER_PAGE,
       search: "",
     };
@@ -215,7 +211,7 @@ export default Vue.extend({
           return [v.key, idx];
         })
       );
-      const pageId = DATA_EXPLORER_VAR_INSTANCE + ROUTE_PAGE_SUFFIX;
+      const pageId = this.instanceName + ROUTE_PAGE_SUFFIX;
       const page = getRouteFacetPage(pageId, this.$route);
       const begin = (page - 1) * this.numRowsPerPage;
       const currentSummaries = this.summaries

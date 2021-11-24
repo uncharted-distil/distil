@@ -56,6 +56,7 @@
             :summaries="summaries"
             :enable-footer="isSelectState"
             :dataset="dataset"
+            :instance-name="activePane"
             @fetch-summaries="fetchSummaries"
             @type-change="fetchSummaries"
           />
@@ -282,6 +283,7 @@
           :summaries="secondarySummaries"
           :enable-footer="isSelectState"
           :dataset="dataset"
+          instance-name="outcome-variables"
           @fetch-summaries="fetchSummaries"
         />
         <prediction-summaries
