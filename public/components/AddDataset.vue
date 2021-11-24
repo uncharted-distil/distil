@@ -220,7 +220,11 @@ export default Vue.extend({
       try {
         const response = await datasetActions.importAvailableDataset(
           this.$store,
-          { datasetID: this.deconflictedName, path }
+          {
+            datasetID: this.deconflictedName,
+            path,
+            description: this.description,
+          }
         );
 
         this.$emit(EventList.UPLOAD.FINISHED_EVENT, null, response);
