@@ -16,327 +16,334 @@
 -->
 
 <template>
-  <div class="view-container">
-    <action-column
-      ref="action-column"
-      :actions="activeActions"
-      :current-action="currentAction"
-      @set-active-pane="onSetActive"
-    />
-    <left-side-panel v-if="currentAction !== ''" :panel-title="currentAction">
-      <add-variable-pane
-        v-if="activePane === 'add'"
-        :enable-label="imageVarExists"
-        @label="switchToLabelState"
+  <div class="w-100 nav-bar-margin d-flex flex-column">
+    <header ref="header" class="bg-white">
+      <search-bar
+        v-show="!isBusy"
+        :variables="allVariables"
+        :filters="filters"
+        :highlights="routeHighlight"
+        handle-updates
       />
-      <export-pane v-else-if="activePane === 'export'" />
-      <template v-else>
-        <template v-if="hasNoVariables">
-          <p v-if="activePane === 'selected'">Select a variable to explore.</p>
-          <p v-else>All the variables of that type are selected.</p>
+    </header>
+    <div class="view-container">
+      <action-column
+        ref="action-column"
+        :actions="activeActions"
+        :current-action="currentAction"
+        @set-active-pane="onSetActive"
+      />
+      <left-side-panel v-if="currentAction !== ''" :panel-title="currentAction">
+        <add-variable-pane
+          v-if="activePane === 'add'"
+          :enable-label="imageVarExists"
+          @label="switchToLabelState"
+        />
+        <export-pane v-else-if="activePane === 'export'" />
+        <template v-else>
+          <template v-if="hasNoVariables">
+            <p v-if="activePane === 'selected'">
+              Select a variable to explore.
+            </p>
+            <p v-else>All the variables of that type are selected.</p>
+          </template>
+          <facet-list-pane
+            v-else
+            :is-target-panel="activePane === 'target' && isSelectState"
+            :variables="activeVariables"
+            :enable-color-scales="geoVarExists"
+            :include="include"
+            :summaries="summaries"
+            :enable-footer="isSelectState"
+            :dataset="dataset"
+            @fetch-summaries="fetchSummaries"
+            @type-change="fetchSummaries"
+          />
         </template>
+      </left-side-panel>
+      <main class="content">
+        <loading-spinner v-show="isBusy" :state="busyState" />
+        <template>
+          <!-- Tabs to switch views -->
+
+          <div v-if="!isBusy" class="d-flex flex-row align-items-center mt-2">
+            <div class="flex-grow-1 mr-2">
+              <b-tabs v-model="activeView" class="tab-container">
+                <b-tab
+                  v-for="(view, index) in activeViews"
+                  :key="index"
+                  :active="view === activeViews[activeView]"
+                  :title="capitalize(view)"
+                  @click="onTabClick(view)"
+                >
+                  <template v-slot:title>
+                    <b-spinner v-if="dataLoading" small />
+                  </template>
+                </b-tab>
+              </b-tabs>
+            </div>
+            <color-scale-selection
+              v-if="isMultiBandImage"
+              class="align-self-center mr-2"
+            />
+            <layer-selection
+              v-if="isMultiBandImage"
+              :has-image-attention="isResultState"
+              class="align-self-center mr-2"
+            />
+            <b-button
+              v-if="include && isSelectState"
+              class="select-data-action-exclude align-self-center"
+              variant="outline-secondary"
+              :disabled="isExcludeDisabled"
+              @click="onExcludeClick"
+            >
+              <i
+                class="fa fa-minus-circle pr-1"
+                :class="{
+                  'exclude-highlight': isFilteringHighlights,
+                  'exclude-selection': isFilteringSelection,
+                }"
+              />
+              Exclude
+            </b-button>
+            <label-header-buttons v-if="isLabelState" class="height-36" />
+            <legend-weight
+              v-if="hasWeight && isResultState"
+              class="ml-5 mr-auto"
+            />
+          </div>
+          <section v-show="!isBusy" class="data-container">
+            <component
+              :is="viewComponent"
+              ref="dataView"
+              :instance-name="instanceName"
+              :included-active="include"
+              :dataset="dataset"
+              :data-fields="fields"
+              :timeseries-info="timeseries"
+              :data-items="items"
+              :item-count="items.length"
+              :baseline-items="baselineItems"
+              :baseline-map="baselineMap"
+              :summaries="summaries"
+              :solution="solution"
+              :residual-extrema="residualExtrema"
+              :enable-selection-tool-event="isLabelState"
+              :variables="allVariables"
+              :label-feature-name="labelName"
+              :label-score-name="labelName"
+              :area-of-interest-items="{
+                inner: drillDownBaseline,
+                outer: drillDownFiltered,
+              }"
+              :get-timeseries="state.getTimeseries"
+              @tile-clicked="onTileClick"
+              @fetch-timeseries="fetchTimeseries"
+              @finished-loading="onMapFinishedLoading"
+            />
+          </section>
+
+          <footer
+            v-if="!isBusy"
+            class="d-flex align-items-end d-flex justify-content-between mt-1 mb-0"
+          >
+            <div v-if="!isGeoView" class="flex-grow-1">
+              <data-size
+                :current-size="numRows"
+                :total="totalNumRows"
+                @submit="onDataSizeSubmit"
+              />
+              <strong class="matching-color">matching</strong> samples of
+              {{ totalNumRows }} to model<template v-if="selectionNumRows > 0">
+                , {{ selectionNumRows }}
+                <strong class="selected-color">selected</strong>
+              </template>
+            </div>
+            <div v-else class="flex-grow-1">
+              <p class="m-0">
+                Selected Area Coverage:
+                <strong class="matching-color">
+                  {{ areaCoverage }}km<sup>2</sup>
+                </strong>
+              </p>
+            </div>
+            <b-button-toolbar v-if="isSelectState">
+              <b-button-group class="ml-2 mt-1">
+                <b-button
+                  :variant="include ? 'primary' : 'secondary'"
+                  @click="setIncludedActive"
+                >
+                  Included
+                </b-button>
+                <b-button
+                  class="exclude-button"
+                  :variant="!include ? 'primary' : 'secondary'"
+                  @click="setExcludedActive"
+                >
+                  Excluded
+                </b-button>
+              </b-button-group>
+            </b-button-toolbar>
+            <!-- RESULT AND PREDICTION VIEW COMPONENTS-->
+            <create-solutions-form
+              v-if="isSelectState"
+              ref="model-creation-form"
+              :aria-disabled="isCreateModelPossible"
+              class="ml-2"
+              @create-model="onModelCreation"
+            />
+            <predictions-data-uploader
+              :fitted-solution-id="fittedSolutionId"
+              :target="targetName"
+              :target-type="targetType"
+              @model-apply="onApplyModel"
+            />
+            <save-modal
+              ref="saveModel"
+              :solution-id="solutionId"
+              :fitted-solution-id="fittedSolutionId"
+              @save="onSaveModel"
+            />
+            <forecast-horizon
+              v-if="isTimeseries"
+              :dataset="dataset"
+              :fitted-solution-id="fittedSolutionId"
+              :target="targetName"
+              :target-type="targetType"
+              @model-apply="onApplyModel"
+            />
+            <template
+              v-if="
+                isResultState && (isSingleSolution || isActiveSolutionSaved)
+              "
+            >
+              <b-button
+                v-if="isTimeseries"
+                variant="success"
+                class="apply-button"
+                @click="$bvModal.show('forecast-horizon-modal')"
+              >
+                Forecast
+              </b-button>
+              <b-button
+                v-else
+                variant="success"
+                class="apply-button"
+                @click="$bvModal.show('predictions-data-upload-modal')"
+              >
+                Apply Model
+              </b-button>
+            </template>
+            <b-button
+              v-else-if="isResultState"
+              :disabled="!currentSolutionCompleted"
+              variant="success"
+              class="save-button"
+              @click="$bvModal.show('save-model-modal')"
+            >
+              <i class="fa fa-floppy-o" />
+              Save Model
+            </b-button>
+            <b-button v-if="isPredictState" v-b-modal.save class="mr-1">
+              Create Dataset
+            </b-button>
+            <b-button v-if="isPredictState" v-b-modal.export variant="primary">
+              Export Predictions
+            </b-button>
+            <create-labeling-form
+              v-if="isLabelState"
+              class="d-flex justify-content-between h-100 align-items-center"
+              :is-loading="isBusy"
+              :low-shot-summary="labelSummary"
+              :is-saving="isBusy"
+            />
+          </footer>
+        </template>
+      </main>
+      <left-side-panel
+        v-if="isOutcomeToggled"
+        panel-title="Outcome Variables"
+        class="overflow-auto"
+      >
+        <div v-if="state.name === 'result'">
+          <error-threshold-slider v-if="showResiduals && !isTimeseries" />
+          <result-facets
+            :single-solution="isSingleSolution"
+            :show-residuals="showResiduals"
+            @fetch-summary-solution="fetchSummarySolution"
+          />
+        </div>
         <facet-list-pane
-          v-else
-          :is-target-panel="activePane === 'target' && isSelectState"
-          :variables="activeVariables"
+          v-else-if="isLabelState"
+          :variables="secondaryVariables"
           :enable-color-scales="geoVarExists"
           :include="include"
-          :summaries="summaries"
+          :summaries="secondarySummaries"
           :enable-footer="isSelectState"
           :dataset="dataset"
           @fetch-summaries="fetchSummaries"
-          @type-change="fetchSummaries"
         />
-      </template>
-    </left-side-panel>
-    <main class="content">
-      <loading-spinner v-show="isBusy" :state="busyState" />
-      <template>
-        <search-bar
-          v-show="!isBusy"
-          :variables="allVariables"
-          :filters="filters"
-          :highlights="routeHighlight"
-          handle-updates
+        <prediction-summaries
+          v-else
+          :is-busy="dataLoading"
+          @fetch-summary-prediction="fetchSummaryPrediction"
         />
-
-        <!-- Tabs to switch views -->
-
-        <div v-if="!isBusy" class="d-flex flex-row align-items-center mt-2">
-          <div class="flex-grow-1 mr-2">
-            <b-tabs v-model="activeView" class="tab-container">
-              <b-tab
-                v-for="(view, index) in activeViews"
-                :key="index"
-                :active="view === activeViews[activeView]"
-                :title="capitalize(view)"
-                @click="onTabClick(view)"
-              >
-                <template v-slot:title>
-                  <b-spinner v-if="dataLoading" small />
-                </template>
-              </b-tab>
-            </b-tabs>
-          </div>
-          <color-scale-selection
-            v-if="isMultiBandImage"
-            class="align-self-center mr-2"
-          />
-          <layer-selection
-            v-if="isMultiBandImage"
-            :has-image-attention="isResultState"
-            class="align-self-center mr-2"
-          />
-          <b-button
-            v-if="include && isSelectState"
-            class="select-data-action-exclude align-self-center"
-            variant="outline-secondary"
-            :disabled="isExcludeDisabled"
-            @click="onExcludeClick"
-          >
-            <i
-              class="fa fa-minus-circle pr-1"
-              :class="{
-                'exclude-highlight': isFilteringHighlights,
-                'exclude-selection': isFilteringSelection,
-              }"
-            />
-            Exclude
-          </b-button>
-          <label-header-buttons v-if="isLabelState" class="height-36" />
-          <legend-weight
-            v-if="hasWeight && isResultState"
-            class="ml-5 mr-auto"
-          />
-        </div>
-        <section v-show="!isBusy" class="data-container">
-          <component
-            :is="viewComponent"
-            ref="dataView"
-            :instance-name="instanceName"
-            :included-active="include"
-            :dataset="dataset"
-            :data-fields="fields"
-            :timeseries-info="timeseries"
-            :data-items="items"
-            :item-count="items.length"
-            :baseline-items="baselineItems"
-            :baseline-map="baselineMap"
-            :summaries="summaries"
-            :solution="solution"
-            :residual-extrema="residualExtrema"
-            :enable-selection-tool-event="isLabelState"
-            :variables="allVariables"
-            :label-feature-name="labelName"
-            :label-score-name="labelName"
-            :area-of-interest-items="{
-              inner: drillDownBaseline,
-              outer: drillDownFiltered,
-            }"
-            :get-timeseries="state.getTimeseries"
-            @tile-clicked="onTileClick"
-            @fetch-timeseries="fetchTimeseries"
-            @finished-loading="onMapFinishedLoading"
-          />
-        </section>
-
-        <footer
-          v-if="!isBusy"
-          class="d-flex align-items-end d-flex justify-content-between mt-1 mb-0"
+      </left-side-panel>
+      <status-sidebar />
+      <status-panel :dataset="dataset" />
+      <b-modal :id="labelModalId" @ok="onLabelSubmit">
+        <template #modal-header>
+          {{ labelModalTitle }}
+        </template>
+        <b-form-group
+          v-if="!hasLabelRole"
+          id="input-group-1"
+          label="Label name:"
+          label-for="label-input-field"
+          description="Enter the name of label."
+          invalid-feedback="Label Name is Required"
         >
-          <div v-if="!isGeoView" class="flex-grow-1">
-            <data-size
-              :current-size="numRows"
-              :total="totalNumRows"
-              @submit="onDataSizeSubmit"
-            />
-            <strong class="matching-color">matching</strong> samples of
-            {{ totalNumRows }} to model<template v-if="selectionNumRows > 0">
-              , {{ selectionNumRows }}
-              <strong class="selected-color">selected</strong>
-            </template>
-          </div>
-          <div v-else class="flex-grow-1">
-            <p class="m-0">
-              Selected Area Coverage:
-              <strong class="matching-color">
-                {{ areaCoverage }}km<sup>2</sup>
-              </strong>
-            </p>
-          </div>
-          <b-button-toolbar v-if="isSelectState">
-            <b-button-group class="ml-2 mt-1">
-              <b-button
-                :variant="include ? 'primary' : 'secondary'"
-                @click="setIncludedActive"
-              >
-                Included
-              </b-button>
-              <b-button
-                class="exclude-button"
-                :variant="!include ? 'primary' : 'secondary'"
-                @click="setExcludedActive"
-              >
-                Excluded
-              </b-button>
-            </b-button-group>
-          </b-button-toolbar>
-          <!-- RESULT AND PREDICTION VIEW COMPONENTS-->
-          <create-solutions-form
-            v-if="isSelectState"
-            ref="model-creation-form"
-            :aria-disabled="isCreateModelPossible"
-            class="ml-2"
-            @create-model="onModelCreation"
+          <b-form-input
+            id="label-input-field"
+            v-model="labelName"
+            type="text"
+            required
+            :placeholder="labelName"
+            :state="labelNameState"
           />
-          <predictions-data-uploader
-            :fitted-solution-id="fittedSolutionId"
-            :target="targetName"
-            :target-type="targetType"
-            @model-apply="onApplyModel"
+        </b-form-group>
+        <b-form-group
+          v-else
+          label="Label name:"
+          label-for="label-select-field"
+          description="Select the label field."
+        >
+          <b-form-select
+            id="label-select-field"
+            v-model="labelName"
+            :options="options"
           />
-          <save-modal
-            ref="saveModel"
-            :solution-id="solutionId"
-            :fitted-solution-id="fittedSolutionId"
-            @save="onSaveModel"
-          />
-          <forecast-horizon
-            v-if="isTimeseries"
-            :dataset="dataset"
-            :fitted-solution-id="fittedSolutionId"
-            :target="targetName"
-            :target-type="targetType"
-            @model-apply="onApplyModel"
-          />
-          <template
-            v-if="isResultState && (isSingleSolution || isActiveSolutionSaved)"
-          >
-            <b-button
-              v-if="isTimeseries"
-              variant="success"
-              class="apply-button"
-              @click="$bvModal.show('forecast-horizon-modal')"
-            >
-              Forecast
-            </b-button>
-            <b-button
-              v-else
-              variant="success"
-              class="apply-button"
-              @click="$bvModal.show('predictions-data-upload-modal')"
-            >
-              Apply Model
-            </b-button>
-          </template>
-          <b-button
-            v-else-if="isResultState"
-            :disabled="!currentSolutionCompleted"
-            variant="success"
-            class="save-button"
-            @click="$bvModal.show('save-model-modal')"
-          >
-            <i class="fa fa-floppy-o" />
-            Save Model
-          </b-button>
-          <b-button v-if="isPredictState" v-b-modal.save class="mr-1">
-            Create Dataset
-          </b-button>
-          <b-button v-if="isPredictState" v-b-modal.export variant="primary">
-            Export Predictions
-          </b-button>
-          <create-labeling-form
-            v-if="isLabelState"
-            class="d-flex justify-content-between h-100 align-items-center"
-            :is-loading="isBusy"
-            :low-shot-summary="labelSummary"
-            :is-saving="isBusy"
-          />
-        </footer>
-      </template>
-    </main>
-    <left-side-panel
-      v-if="isOutcomeToggled"
-      panel-title="Outcome Variables"
-      class="overflow-auto"
-    >
-      <div v-if="state.name === 'result'">
-        <error-threshold-slider v-if="showResiduals && !isTimeseries" />
-        <result-facets
-          :single-solution="isSingleSolution"
-          :show-residuals="showResiduals"
-          @fetch-summary-solution="fetchSummarySolution"
-        />
-      </div>
-      <facet-list-pane
-        v-else-if="isLabelState"
-        :variables="secondaryVariables"
-        :enable-color-scales="geoVarExists"
-        :include="include"
-        :summaries="secondarySummaries"
-        :enable-footer="isSelectState"
-        :dataset="dataset"
-        @fetch-summaries="fetchSummaries"
-      />
-      <prediction-summaries
-        v-else
-        :is-busy="dataLoading"
-        @fetch-summary-prediction="fetchSummaryPrediction"
-      />
-    </left-side-panel>
-    <status-sidebar />
-    <status-panel :dataset="dataset" />
-    <b-modal :id="labelModalId" @ok="onLabelSubmit">
-      <template #modal-header>
-        {{ labelModalTitle }}
-      </template>
-      <b-form-group
-        v-if="!hasLabelRole"
-        id="input-group-1"
-        label="Label name:"
-        label-for="label-input-field"
-        description="Enter the name of label."
-        invalid-feedback="Label Name is Required"
+        </b-form-group>
+      </b-modal>
+      <b-modal
+        :id="unsaveModalId"
+        ok-variant="danger"
+        ok-title="Delete Cloned Dataset"
+        @ok="onConfirmRouteSave(nextRoute)"
+        @cancel="onCancelRouteSave(nextRoute)"
       >
-        <b-form-input
-          id="label-input-field"
-          v-model="labelName"
-          type="text"
-          required
-          :placeholder="labelName"
-          :state="labelNameState"
-        />
-      </b-form-group>
-      <b-form-group
-        v-else
-        label="Label name:"
-        label-for="label-select-field"
-        description="Select the label field."
-      >
-        <b-form-select
-          id="label-select-field"
-          v-model="labelName"
-          :options="options"
-        />
-      </b-form-group>
-    </b-modal>
-    <b-modal
-      :id="unsaveModalId"
-      ok-variant="danger"
-      ok-title="Delete Cloned Dataset"
-      @ok="onConfirmRouteSave(nextRoute)"
-      @cancel="onCancelRouteSave(nextRoute)"
-    >
-      <template #modal-header> Unsaved dataset </template>
-      <template>
-        Current dataset is unsaved, are you sure you want to continue?
-      </template>
-    </b-modal>
-    <save-dataset
-      modal-id="save-dataset-modal"
-      :dataset-name="dataset"
-      :summaries="summaries"
-    />
+        <template #modal-header> Unsaved dataset </template>
+        <template>
+          Current dataset is unsaved, are you sure you want to continue?
+        </template>
+      </b-modal>
+      <save-dataset
+        modal-id="save-dataset-modal"
+        :dataset-name="dataset"
+        :summaries="summaries"
+      />
+    </div>
   </div>
 </template>
 
@@ -454,6 +461,7 @@ const DataExplorer = Vue.extend({
       metaTypes: Object.keys(META_TYPES), // all of the meta types categories
       state: new SelectViewState(), // this state controls data flow,
       nextRoute: null,
+      observer: null,
     };
   },
 
@@ -616,6 +624,7 @@ const DataExplorer = Vue.extend({
     self.changeStatesByName(self.explorerRouteState);
     self.labelName = routeGetters.getRouteLabel(this.$store);
   },
+
   methods: {
     capitalize,
     bindEventHandlers(eventHandlers: Record<string, Function>) {
@@ -649,9 +658,13 @@ export default DataExplorer;
   flex-direction: row;
   flex-wrap: nowrap;
   flex-grow: 1;
-  height: var(--content-full-height);
-  margin-top: var(--navbar-outer-height);
   overflow: hidden;
+  height: calc(var(--content-full-height)-56px);
+}
+
+.nav-bar-margin {
+  margin-top: var(--navbar-outer-height);
+  height: var(--content-full-height);
 }
 
 /* Make some elements of a container unsquishable. */

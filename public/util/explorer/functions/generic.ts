@@ -7,6 +7,7 @@ import ExplorerConfig, {
   getConfigFromName,
   getStateFromName,
 } from "..";
+import { datasetActions } from "../../../store";
 import {
   Highlight,
   RowSelection,
@@ -16,12 +17,24 @@ import {
   Variable,
   VariableSummary,
 } from "../../../store/dataset";
+import { getters as datasetGetters } from "../../../store/dataset/module";
+import { getters as routeGetters } from "../../../store/route/module";
+import store from "../../../store/store";
 import { ActionColumnRef, DataExplorerRef } from "../../componentTypes";
 import {
+  downloadFile,
   hasRole,
   sortVariablesByImportance,
   totalAreaCoverage,
 } from "../../data";
+import { Dictionary } from "../../dict";
+import { EI, EventList } from "../../events";
+import { EXCLUDE_FILTER, Filter, INCLUDE_FILTER } from "../../filters";
+import { clearHighlight } from "../../highlights";
+import { overlayRouteEntry, RouteArgs } from "../../routes";
+import { clearRowSelection, getNumIncludedRows } from "../../row";
+import { spinnerHTML } from "../../spinner";
+import { BaseState } from "../../state/AppStateWrapper";
 import {
   DISTIL_ROLES,
   isGeoLocatedType,
@@ -36,19 +49,6 @@ import {
   IMAGE_VIEW,
   TABLE_VIEW,
 } from "../../view";
-import { getters as routeGetters } from "../../../store/route/module";
-import store from "../../../store/store";
-import { Dictionary } from "../../dict";
-import { clearRowSelection, getNumIncludedRows } from "../../row";
-import { spinnerHTML } from "../../spinner";
-import { EI, EventList } from "../../events";
-import { Filter, INCLUDE_FILTER, EXCLUDE_FILTER } from "../../filters";
-import { BaseState } from "../../state/AppStateWrapper";
-import { overlayRouteEntry, RouteArgs } from "../../routes";
-import { clearHighlight } from "../../highlights";
-import { datasetActions } from "../../../store";
-import { getters as datasetGetters } from "../../../store/dataset/module";
-import { downloadFile } from "../../data";
 
 export const GENERIC_METHODS = {
   /**
