@@ -42,6 +42,18 @@ const (
 	queryCacheAppend = "query-cache"
 )
 
+// query annotation value map
+var valueMap map[string]int
+
+func init() {
+	valueMap = map[string]int{
+		"":          -1,
+		"unlabeled": -1,
+		"negative":  0,
+		"positive":  1,
+	}
+}
+
 // QueryParams helper struct to simplify query task calling.
 type QueryParams struct {
 	Dataset     string
@@ -181,7 +193,6 @@ func extractQueryDataset(targetName string, data [][]string) [][]string {
 	targetIndex, d3mIndex := getColumnIndices(targetName, data)
 
 	// need to reduce to 1 row / d3m index (labels should match across the whole group)
-	valueMap := map[string]int{"unlabeled": -1, "negative": 0, "positive": 1}
 	reducedData := map[string]string{}
 	dataToStore := [][]string{{model.D3MIndexFieldName, queryFieldName}}
 	for i := 1; i < len(data); i++ {
