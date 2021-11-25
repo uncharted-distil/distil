@@ -208,10 +208,10 @@ export default Vue.extend({
           prediction: p,
         };
         if (
-          !meta.rank ||
-          !meta.confidence ||
-          !meta.summary ||
-          !meta.prediction ||
+          (!meta.rank &&
+            !meta.confidence &&
+            !meta.summary &&
+            !meta.prediction) ||
           !meta.summary?.key
         ) {
           return;
