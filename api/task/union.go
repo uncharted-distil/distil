@@ -18,9 +18,12 @@ package task
 import (
 	"fmt"
 	"path"
+	"strings"
 
+	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
 
+	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
@@ -45,14 +48,23 @@ func VerticalConcat(dataStorage apiModel.DataStorage, joinLeft *JoinSpec, joinRi
 		return "", nil, err
 	}
 
-	datasetPath, _, err := join(joinLeft, joinRight, pipelineDesc, unionPaths, defaultSubmitter{}, true)
+	// using the path to determine the output folder because the ids match across multiple datasets (predictions, prefeaturized, etc.)
+	leftFolder := path.Base(joinLeft.DatasetPath)
+	rightFolder := path.Base(joinRight.DatasetPath)
+	datasetPath := env.ResolvePath(metadata.Augmented, fmt.Sprintf("%s-union-%s", leftFolder, rightFolder))
+	datasetPath, _, err = join(joinLeft, joinRight, datasetPath, pipelineDesc, unionPaths, defaultSubmitter{}, true)
 	if err != nil {
 		return "", nil, err
 	}
 
 	// rewrite dataset to have unique d3m index
-	// NOTE: THIS WONT WORK WHEN d3m index is a multi index!
 	data, err := rewriteD3MIndex(datasetPath)
+	if err != nil {
+		return "", nil, err
+	}
+
+	// move all resources over to a new folder
+	err = combineResources([]string{joinLeft.DatasetPath, joinRight.DatasetPath}, datasetPath)
 	if err != nil {
 		return "", nil, err
 	}
@@ -90,7 +102,8 @@ func reorderFields(dsAPath string, dsBPath string) ([]string, []string, error) {
 }
 
 func reorderDatasetFields(dsToReorder *apiModel.DiskDataset, dsOrder *apiModel.DiskDataset) (string, error) {
-	pathClone := path.Join(env.GetTmpPath(), fmt.Sprintf("%s-reorder", dsToReorder.Dataset.ID))
+	// use the path on disk to build the clone path!
+	pathClone := path.Join(env.GetTmpPath(), fmt.Sprintf("%s-reorder", path.Base(path.Dir(dsToReorder.GetPath()))))
 	dsA, err := dsToReorder.Clone(pathClone, dsToReorder.Dataset.ID, dsToReorder.Dataset.ID)
 	if err != nil {
 		return "", err
@@ -107,19 +120,131 @@ func reorderDatasetFields(dsToReorder *apiModel.DiskDataset, dsOrder *apiModel.D
 	return pathClone, nil
 }
 
+func combineResources(dsPaths []string, dsCombinedPath string) error {
+	log.Infof("combining resources found at '%v' for '%s'", dsPaths, dsCombinedPath)
+	dsCombinedSchemaPath := path.Join(dsCombinedPath, compute.D3MDataSchema)
+	dsCombined, err := serialization.ReadMetadata(dsCombinedSchemaPath)
+	if err != nil {
+		return err
+	}
+	parentFolder := path.Join(env.GetResourcePath(), path.Base(dsCombinedPath))
+
+	// move resources from ds to combined resource folder
+	newPaths := map[string]string{}
+	for _, dsPath := range dsPaths {
+		ds, err := serialization.ReadMetadata(path.Join(dsPath, compute.D3MDataSchema))
+		if err != nil {
+			return err
+		}
+
+		newPathsDS, err := mergeResources(ds, parentFolder)
+		if err != nil {
+			return err
+		}
+
+		// combine new paths (all ds should have identical resources)
+		for k, v := range newPathsDS {
+			newPaths[k] = v
+		}
+	}
+
+	// update the parent dataset data resource paths
+	updated := false
+	for _, dr := range dsCombined.DataResources {
+		if newPaths[dr.ResID] != "" {
+			dr.ResPath = newPaths[dr.ResID]
+			updated = true
+		}
+	}
+
+	if updated {
+		err = serialization.WriteMetadata(dsCombinedSchemaPath, dsCombined)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func mergeResources(ds *model.Metadata, outputParentFolder string) (map[string]string, error) {
+	log.Infof("merging resources for dataset '%s', writing resources to '%s'", ds.ID, outputParentFolder)
+	newPaths := map[string]string{}
+	for _, dr := range ds.DataResources {
+		_, newResourcePath, err := copyResource(dr, outputParentFolder)
+		if err != nil {
+			return nil, err
+		}
+		newPaths[dr.ResID] = newResourcePath
+	}
+
+	log.Infof("done merging resources for dataset '%s' to '%s'", ds.ID, outputParentFolder)
+
+	return newPaths, nil
+}
+
+func copyResource(dr *model.DataResource, outputParentFolder string) (bool, string, error) {
+	if !dr.IsCollection {
+		return false, "", nil
+	}
+
+	outputFolder := path.Join(outputParentFolder, path.Base(dr.ResPath))
+	err := util.Copy(dr.ResPath, outputFolder)
+	if err != nil {
+		return false, "", err
+	}
+
+	return true, outputFolder, nil
+}
+
 func rewriteD3MIndex(datasetPath string) (*apiModel.FilteredData, error) {
+	log.Infof("rewriting d3m index of dataset found at '%s'", datasetPath)
 	// read the raw dataset
 	ds, err := serialization.ReadDataset(path.Join(datasetPath, compute.D3MDataSchema))
 	if err != nil {
 		return nil, err
 	}
 
+	// if d3m index is a multi index, need to use the grouping variable to reindex
+	// NOTE: THIS CURRENTLY ASSUMES A SINGLE GROUPING VARIABLE IS USED TO DEFINE A GROUP!
+	indexingVariable := ds.GetVariableMetadata(model.D3MIndexFieldName)
+	if indexingVariable == nil {
+		return nil, errors.Errorf("no d3m index field in dataset")
+	}
+	isMulti := false
+	for _, r := range indexingVariable.Role {
+		if r == model.RoleMultiIndex {
+			isMulti = true
+			break
+		}
+	}
+	indexingVariableIndices := []int{}
+	if isMulti {
+		for _, v := range ds.Metadata.GetMainDataResource().Variables {
+			if v.HasRole(model.VarDistilRoleGrouping) || v.HasRole(model.VarDistilRoleGroupingSupplemental) {
+				indexingVariableIndices = append(indexingVariableIndices, v.Index)
+			}
+		}
+	} else {
+		indexingVariableIndices = append(indexingVariableIndices, indexingVariable.Index)
+	}
+
 	// find the d3m index field
 	d3mIndexIndex := ds.GetVariableIndex(model.D3MIndexFieldName)
 
 	// rewrite the index to make all rows unique (skipping header)
-	for i, r := range ds.Data[1:] {
-		r[d3mIndexIndex] = fmt.Sprintf("%d", i)
+	count := 1
+	reindexedValues := map[string]string{}
+	for _, r := range ds.Data[1:] {
+		keyValue := getKeyValue(r, indexingVariableIndices)
+		if reindexedValues[keyValue] != "" {
+			r[d3mIndexIndex] = reindexedValues[keyValue]
+		} else {
+			indexValue := fmt.Sprintf("%d", count)
+			count++
+			r[d3mIndexIndex] = indexValue
+			reindexedValues[keyValue] = indexValue
+		}
 	}
 
 	// save the updated dataset
@@ -133,5 +258,16 @@ func rewriteD3MIndex(datasetPath string) (*apiModel.FilteredData, error) {
 		return nil, err
 	}
 
+	log.Infof("updated d3m index of dataset found at '%s'", datasetPath)
+
 	return dataParsed, nil
+}
+
+func getKeyValue(row []string, groupingIndices []int) string {
+	keyValues := make([]string, len(row))
+	for i, v := range groupingIndices {
+		keyValues[i] = row[v]
+	}
+
+	return strings.Join(keyValues, "|")
 }

@@ -58,7 +58,7 @@ func JoinDatamart(joinLeft *JoinSpec, joinRight *JoinSpec, rightOrigin *model.Da
 	}
 	datasetLeftURI := env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetPath)
 
-	return join(joinLeft, joinRight, pipelineDesc, []string{datasetLeftURI}, defaultSubmitter{}, false)
+	return join(joinLeft, joinRight, "", pipelineDesc, []string{datasetLeftURI}, defaultSubmitter{}, false)
 }
 
 // JoinDistil will bring misery.
@@ -113,10 +113,10 @@ func JoinDistil(dataStorage apiModel.DataStorage, joinLeft *JoinSpec, joinRight 
 	datasetLeftURI := joinLeft.DatasetPath
 	datasetRightURI := joinRight.DatasetPath
 
-	return join(joinLeft, joinRight, pipelineDesc, []string{datasetLeftURI, datasetRightURI}, defaultSubmitter{}, returnRaw)
+	return join(joinLeft, joinRight, "", pipelineDesc, []string{datasetLeftURI, datasetRightURI}, defaultSubmitter{}, returnRaw)
 }
 
-func join(joinLeft *JoinSpec, joinRight *JoinSpec, pipelineDesc *description.FullySpecifiedPipeline,
+func join(joinLeft *JoinSpec, joinRight *JoinSpec, outputPath string, pipelineDesc *description.FullySpecifiedPipeline,
 	datasetURIs []string, submitter primitiveSubmitter, returnRaw bool) (string, *apiModel.FilteredData, error) {
 
 	// returns a URI pointing to the merged CSV file
@@ -131,7 +131,7 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, pipelineDesc *description.Ful
 	rightName := joinRight.DatasetID
 	datasetName := strings.Join([]string{leftName, rightName}, "-")
 	storageName := model.NormalizeDatasetID(datasetName)
-	mergedVariables, err := createDatasetFromCSV(csvFilename, datasetName, storageName, joinLeft, joinRight)
+	outputPath, mergedVariables, err := createDatasetFromCSV(csvFilename, datasetName, storageName, joinLeft, joinRight, outputPath)
 	if err != nil {
 		return "", nil, errors.Wrap(err, "unable to create dataset from result CSV")
 	}
@@ -142,7 +142,7 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, pipelineDesc *description.Ful
 		return "", nil, err
 	}
 
-	return env.ResolvePath(ingestMetadata.Augmented, datasetName), data, nil
+	return outputPath, data, nil
 }
 
 type defaultSubmitter struct{}
@@ -151,10 +151,11 @@ func (defaultSubmitter) submit(datasetURIs []string, pipelineDesc *description.F
 	return submitPipeline(datasetURIs, pipelineDesc, true)
 }
 
-func createDatasetFromCSV(csvFile string, datasetName string, storageName string, joinLeft *JoinSpec, joinRight *JoinSpec) ([]*model.Variable, error) {
+func createDatasetFromCSV(csvFile string, datasetName string, storageName string,
+	joinLeft *JoinSpec, joinRight *JoinSpec, outputPath string) (string, []*model.Variable, error) {
 	inputData, err := serialization.ResultToInputCSV(csvFile)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
 	metadata := model.NewMetadata(datasetName, datasetName, datasetName, storageName)
@@ -166,7 +167,9 @@ func createDatasetFromCSV(csvFile string, datasetName string, storageName string
 
 	metadata.DataResources = append(referencedResources, dataResource)
 
-	outputPath := env.ResolvePath(ingestMetadata.Augmented, datasetName)
+	if outputPath == "" {
+		outputPath = env.ResolvePath(ingestMetadata.Augmented, datasetName)
+	}
 
 	rawDataset := &serialization.RawDataset{
 		Name:     metadata.Name,
@@ -177,10 +180,10 @@ func createDatasetFromCSV(csvFile string, datasetName string, storageName string
 
 	err = serialization.WriteDataset(outputPath, rawDataset)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
-	return mergedVariables, nil
+	return outputPath, mergedVariables, nil
 }
 
 func createFilteredData(csvFile string, variables []*model.Variable, returnRaw bool, lineCount int) (*apiModel.FilteredData, error) {

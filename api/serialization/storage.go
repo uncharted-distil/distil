@@ -105,6 +105,21 @@ func (d *RawDataset) GetVariableIndex(variableHeaderName string) int {
 	return -1
 }
 
+// GetVariableMetadata returns the variable metadata using the header name.
+func (d *RawDataset) GetVariableMetadata(variableHeaderName string) *model.Variable {
+	if d.Metadata == nil {
+		return nil
+	}
+
+	for _, v := range d.Metadata.GetMainDataResource().Variables {
+		if v.HeaderName == variableHeaderName {
+			return v
+		}
+	}
+
+	return nil
+}
+
 // GetVariableIndices returns the mapping of variable header name to header index.
 // It will error if a field is not found in the header.
 func (d *RawDataset) GetVariableIndices(variableHeaderNames []string) (map[string]int, error) {

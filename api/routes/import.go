@@ -171,6 +171,9 @@ func getImporter(provenance string, params map[string]interface{}, esMetaStorage
 	}
 
 	if params["joinedDataset"] != nil {
+		if params["joinType"] == "Vertical" {
+			return importer.NewUnion(esMetaStorage, config)
+		}
 		return importer.NewJoined(esMetaStorage, config)
 	}
 

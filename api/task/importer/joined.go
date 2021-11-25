@@ -26,7 +26,7 @@ type Joined struct {
 	rightCols             []string
 	sourceLearningDataset string
 	updateDatasetID       string
-	filterByUpdates       bool
+	joinType              string
 	meta                  api.MetadataStorage
 }
 
@@ -55,11 +55,11 @@ func (j *Joined) Initialize(params map[string]interface{}, ingestParams *task.In
 	if params["originalDataset"] == nil {
 		return errors.Errorf("missing 'originalDataset' parameter")
 	}
-	j.filterByUpdates = false
-	if params["filterByUpdates"] != nil {
-		castedBool, ok := params["filterByUpdates"].(bool)
+	j.joinType = ""
+	if params["joinType"] != nil {
+		joinType, ok := params["joinType"].(string)
 		if ok {
-			j.filterByUpdates = castedBool
+			j.joinType = joinType
 		}
 	}
 	j.sourcePath = params["path"].(string)
@@ -176,7 +176,7 @@ func (j *Joined) PrepareImport() (*task.IngestSteps, *task.IngestParams, error) 
 // CleanupImport removes temporary files and structures created during the import.
 func (j *Joined) CleanupImport(ingestResult *task.IngestResult) error {
 	// if there is a source learning dataset, then sync it properly with the newly imported dataset
-	err := syncPrefeaturizedDataset(ingestResult.DatasetID, j.updateDatasetID, j.sourceLearningDataset, j.meta, j.filterByUpdates)
+	err := syncPrefeaturizedDataset(ingestResult.DatasetID, j.updateDatasetID, j.sourceLearningDataset, j.meta, j.joinType == "Inner")
 	if err != nil {
 		return err
 	}

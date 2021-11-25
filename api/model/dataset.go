@@ -257,6 +257,11 @@ func (d *DiskDataset) ReorderFields(fields []*model.Variable) error {
 	return nil
 }
 
+// GetPath returns the schema path of the dataset on disk.
+func (d *DiskDataset) GetPath() string {
+	return d.schemaPath
+}
+
 // UpdatePath updates the path of the disk dataset to point to a new location.
 func (d *DiskDataset) UpdatePath(datasetFolder string) {
 	d.schemaPath = path.Join(datasetFolder, compute.D3MDataSchema)
