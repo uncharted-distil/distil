@@ -16,13 +16,18 @@
 package routes
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"image"
+	"image/draw"
+	"io/ioutil"
 	"net/http"
 	"path"
 	"strconv"
 	"strings"
 
+	"github.com/nfnt/resize"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
@@ -69,66 +74,77 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, dataCtor api.DataStorag
 			handleError(w, err)
 			return
 		}
-
 		res, err := storage.FetchDataset(dataset, false, false, false)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-		sourcePath := env.ResolvePath(res.Source, res.Folder)
-
-		// need to read the dataset doc to determine the path to the data resource
-		metaDisk, err := metadata.LoadMetadataFromOriginalSchema(path.Join(sourcePath, compute.D3MDataSchema), false)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-		for _, dr := range metaDisk.DataResources {
-			if dr.IsCollection && dr.ResType == model.ResTypeImage {
-				sourcePath = model.GetResourcePathFromFolder(sourcePath, dr)
-				break
-			}
-		}
 		options := imagery.Options{Gain: 2.5, Gamma: 2.2, GainL: 1.0, Scale: false} // default options for color correction
-		if paramOption != "" {
-			err := json.Unmarshal([]byte(paramOption), &options)
+
+		var img *image.RGBA
+		if bandCombo == imagery.Segmentation {
+			sourcePath := path.Join(env.GetResourcePath(), res.ID, "media")
+			img, err = getSegmentationImage(imageID, sourcePath, false, 0)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+		} else {
+			sourcePath := env.ResolvePath(res.Source, res.Folder)
+
+			// need to read the dataset doc to determine the path to the data resource
+			metaDisk, err := metadata.LoadMetadataFromOriginalSchema(path.Join(sourcePath, compute.D3MDataSchema), false)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			for _, dr := range metaDisk.DataResources {
+				if dr.IsCollection && dr.ResType == model.ResTypeImage {
+					sourcePath = model.GetResourcePathFromFolder(sourcePath, dr)
+					break
+				}
+			}
+			if paramOption != "" {
+				err := json.Unmarshal([]byte(paramOption), &options)
+				if err != nil {
+					handleError(w, err)
+					return
+				}
+			}
+			if isThumbnail {
+				imageScale = imagery.ImageScale{Width: ThumbnailDimensions, Height: ThumbnailDimensions}
+				// if thumbnail scale should be 0
+				options.Scale = false
+			}
+
+			// need to get the band -> filename from the data
+			bandMapping, err := getBandMapping(res, []string{imageID}, dataStorage)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			var optramMap map[string]imagery.OptramEdges
+			optramPath := ""
+			edge := imagery.OptramEdges{}
+			precision := 0
+			if bandCombo == imagery.OPTRAM {
+				optramPath = strings.Join([]string{env.ResolvePath(res.Source, res.Folder), imagery.OPTRAMJSONFile}, "/")
+				optramMap, precision, err = imagery.ReadOptramFile(optramPath)
+				if err != nil {
+					handleError(w, err)
+					return
+				}
+				geoHash := imagery.ParseGeoHashFromID(imageID, precision)
+				edge = optramMap[geoHash]
+			}
+
+			img, err = imagery.ImageFromCombination(sourcePath, bandMapping[imageID], bandCombo, imageScale, &edge, ramp, options)
 			if err != nil {
 				handleError(w, err)
 				return
 			}
 		}
-		if isThumbnail {
-			imageScale = imagery.ImageScale{Width: ThumbnailDimensions, Height: ThumbnailDimensions}
-			// if thumbnail scale should be 0
-			options.Scale = false
-		}
 
-		// need to get the band -> filename from the data
-		bandMapping, err := getBandMapping(res, []string{imageID}, dataStorage)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-		var optramMap map[string]imagery.OptramEdges
-		optramPath := ""
-		edge := imagery.OptramEdges{}
-		precision := 0
-		if bandCombo == imagery.OPTRAM {
-			optramPath = strings.Join([]string{env.ResolvePath(res.Source, res.Folder), imagery.OPTRAMJSONFile}, "/")
-			optramMap, precision, err = imagery.ReadOptramFile(optramPath)
-			if err != nil {
-				handleError(w, err)
-				return
-			}
-			geoHash := imagery.ParseGeoHashFromID(imageID, precision)
-			edge = optramMap[geoHash]
-		}
-
-		img, err := imagery.ImageFromCombination(sourcePath, bandMapping[imageID], bandCombo, imageScale, &edge, ramp, options)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
 		if options.Scale && config.ShouldScaleImages {
 			img = c_util.UpscaleImage(img, c_util.GetModelType(config.ModelType))
 		}
@@ -143,6 +159,32 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, dataCtor api.DataStorag
 			return
 		}
 	}
+}
+
+func getSegmentationImage(imageID string, sourcePath string, thumbnail bool, dimensions int) (*image.RGBA, error) {
+	data, err := ioutil.ReadFile(path.Join(sourcePath, fmt.Sprintf("%s-segmentation.png", imageID)))
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to read segmentation image")
+	}
+
+	img, _, err := image.Decode(bytes.NewReader(data))
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to decode segmentation image")
+	}
+	dimensionsY := dimensions
+	dimensionsX := dimensions
+	if thumbnail {
+		img = resize.Thumbnail(uint(dimensionsX), uint(dimensionsY), img, resize.Lanczos3)
+	} else {
+		size := img.Bounds().Size()
+		dimensionsY = size.X
+		dimensionsX = size.Y
+	}
+
+	rgbaImg := image.NewRGBA(image.Rect(0, 0, dimensionsX, dimensionsY))
+	draw.Draw(rgbaImg, image.Rect(0, 0, dimensionsX, dimensionsY), img, img.Bounds().Min, draw.Src)
+
+	return rgbaImg, nil
 }
 
 func getBandMapping(ds *api.Dataset, groupKeys []string, dataStorage api.DataStorage) (map[string]map[string]string, error) {

@@ -352,7 +352,7 @@ func (s *Storage) FetchDataset(dataset string, storageName string,
 	filteredVars := []*model.Variable{}
 
 	selectedVars := map[string]bool{}
-	if filterParams != nil {
+	if limitSelectedFields && filterParams != nil {
 		for _, v := range filterParams.Variables {
 			selectedVars[v] = true
 		}
