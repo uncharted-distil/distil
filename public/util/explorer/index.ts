@@ -361,7 +361,7 @@ export const ACTIONS = [
   },
   {
     name: ActionNames.TRAINING_VARIABLE,
-    icon: "fas fa-dumbbell",
+    icon: "fas fa-dumbbell fa-sm",
     paneId: "training",
     variables: function (self: DataExplorerRef) {
       return self.variables.filter((variable) =>

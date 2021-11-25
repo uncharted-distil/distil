@@ -163,6 +163,7 @@ export default Vue.extend({
       this.lex = new Lex({
         language: this.language,
         tokenXIcon: '<i class="fa fa-times" />',
+        placeholder: "Start typing to search...",
       });
 
       this.lex.on("query changed", (
@@ -298,5 +299,9 @@ div.lex-box.focused {
 .exit-button {
   width: 36px;
   height: 36px;
+}
+div.text-muted.lex-placeholder {
+  font-family: '"IBM Plex Sans", sans-serif';
+  font-weight: 400;
 }
 </style>
