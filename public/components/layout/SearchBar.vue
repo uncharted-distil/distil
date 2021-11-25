@@ -18,9 +18,6 @@
 <template>
   <div class="m-0 w-100">
     <component :is="styleSheet" v-html="cssStyle" />
-    <div>
-      <header v-if="searchTitle.length">{{ searchTitle }}</header>
-    </div>
     <div class="d-flex align-items-center flex-row search-bar-container">
       <main ref="lexcontainer" class="lex-container" />
       <b-button
@@ -138,6 +135,11 @@ export default Vue.extend({
           : [this.filters, null, this.variables]
       );
     },
+    placeholder(): string {
+      return `Start typing to search${
+        this.searchTitle.length ? " " + this.searchTitle + "..." : "..."
+      }`;
+    },
   },
 
   watch: {
@@ -167,6 +169,7 @@ export default Vue.extend({
       this.lex = new Lex({
         language: this.language,
         tokenXIcon: '<i class="fa fa-times" />',
+        placeholder: this.placeholder,
       });
 
       this.lex.on("query changed", (
@@ -302,5 +305,9 @@ div.lex-box.focused {
 .exit-button {
   width: 36px;
   height: 36px;
+}
+div.text-muted.lex-placeholder {
+  font-family: '"IBM Plex Sans", sans-serif';
+  font-weight: 400;
 }
 </style>

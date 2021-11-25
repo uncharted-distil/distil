@@ -57,21 +57,32 @@
         <!-- If no appropriate model exist, select a dataset: will start New Model workflow. -->
         <template v-else-if="isActive(DATA_EXPLORER_ROUTE)">
           <b-nav-item
-            :active="explorerSelectState"
-            @click="explorerNav('select')"
+            :active="explorerSelectState && target === null"
+            @click="onSelectTarget()"
           >
-            <i class="fa fa-dot-circle-o nav-icon" /> New Model
+            <i class="fa fa-crosshairs nav-icon" /> Select Target
           </b-nav-item>
           <b-nav-item
+            v-if="target !== null"
+            :active="explorerSelectState && target !== null"
+            class="d-flex"
+            @click="explorerNav('select')"
+          >
+            <i
+              class="fas fa-dumbbell fa-sm nav-icon d-inline-flex align-items-center justify-content-center"
+            />
+            Select Training
+          </b-nav-item>
+          <b-nav-item
+            v-if="haveSolutions"
             :active="explorerResultState"
-            :disabled="!haveSolutions"
             @click="explorerNav('result')"
           >
             <i class="fa fa-check-circle nav-icon" /> Check Models
           </b-nav-item>
           <b-nav-item
+            v-if="havePredictions"
             :active="explorerPredictionState"
-            :disabled="!havePredictions"
             @click="explorerNav('prediction')"
           >
             <i class="fa fa-line-chart nav-icon" /> View Predictions
@@ -105,7 +116,6 @@ import {
   gotoResults,
   gotoSearch,
   gotoSelectData,
-  gotoSelectTarget,
 } from "../util/nav";
 import { appGetters, requestGetters } from "../store";
 import { getters as routeGetters } from "../store/route/module";
@@ -124,6 +134,7 @@ import { restoreView } from "../util/view";
 import Vue from "vue";
 import { ExplorerStateNames } from "../util/explorer";
 import { EventList } from "../util/events";
+import { createRouteEntry } from "../util/routes";
 
 export default Vue.extend({
   name: "NavBar",
@@ -211,6 +222,16 @@ export default Vue.extend({
     explorerNav(state: string) {
       this.$emit(EventList.EXPLORER.NAV_EVENT, state);
     },
+    onSelectTarget() {
+      const routeDataset = routeGetters.getRouteDataset(this.$store);
+      const exploreVariables = routeGetters.getExploreVariables(this.$store);
+      const entry = createRouteEntry(DATA_EXPLORER_ROUTE, {
+        dataset: routeDataset,
+        explore: exploreVariables.join(","),
+      });
+      this.$router.push(entry).catch((err) => console.warn(err));
+      this.explorerNav(ExplorerStateNames.SELECT_VIEW);
+    },
     isActive(view) {
       return view === this.path;
     },
@@ -227,10 +248,6 @@ export default Vue.extend({
 
     onJoinDatasets() {
       gotoJoinDatasets(this.$router);
-    },
-
-    onSelectTarget() {
-      gotoSelectTarget(this.$router);
     },
 
     onSelectData() {
@@ -287,8 +304,12 @@ export default Vue.extend({
 
 /* Horizontal arrow if the menu is visible (not collapsed). */
 .navbar-collapse:not(.show) .nav-item + .nav-item .nav-link::before {
-  content: "\f105"; /* angle-right => https://fontawesome.com/v4.7.0/cheatsheet/ */
+  font-family: "Font Awesome\ 5 Free";
+  content: "\f715"; /* angle-right => https://fontawesome.com/v4.7.0/cheatsheet/ */
   margin-right: 1em;
+  font-weight: 900;
+  transform: rotate(90deg);
+  display: inline-block;
 }
 
 /* Change the arrow to be vertical if the menu is collapsed. */
