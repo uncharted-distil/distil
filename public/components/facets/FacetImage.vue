@@ -167,16 +167,6 @@ export default Vue.extend({
     comp(): string {
       return "style";
     },
-    // facetData(): FacetTermsData {
-    //   let values = [];
-    //   if (hasBaseline(this.summary)) {
-    //     values = this.getFacetValues();
-    //   }
-    //   return {
-    //     label: this.summary.label.toUpperCase(),
-    //     values,
-    //   };
-    // },
     facetEnableTypeChanges(): boolean {
       return facetTypeChangeState(
         this.summary.dataset,
@@ -271,11 +261,17 @@ export default Vue.extend({
     },
   },
   watch: {
-    summary(cur) {
-      if (!this.imgData?.values) {
+    summary(cur: VariableSummary, prev: VariableSummary) {
+      const isEqual =
+        JSON.stringify(cur?.baseline) === JSON.stringify(prev?.baseline);
+      if (!isEqual || !this.imgData?.values) {
         const values = hasBaseline(cur) ? this.getFacetValues() : [];
         this.imgData = { label: cur.label.toUpperCase(), values };
       }
+    },
+    numToDisplay() {
+      const values = hasBaseline(this.summary) ? this.getFacetValues() : [];
+      this.imgData = { label: this.summary.label.toUpperCase(), values };
     },
   },
   methods: {
