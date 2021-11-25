@@ -2,6 +2,7 @@ package importer
 
 import (
 	"fmt"
+	"path"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -87,7 +88,7 @@ func (u *Union) PrepareImport() (*task.IngestSteps, *task.IngestParams, error) {
 	joinedLearningDataset := u.joinedDataset["learningDataset"].(string)
 	if originalLearningDataset != "" && joinedLearningDataset != "" {
 		ingestSteps.SkipFeaturization = true
-		u.sourceLearningDataset = fmt.Sprintf("%s-union-%s", originalLearningDataset, joinedLearningDataset)
+		u.sourceLearningDataset = fmt.Sprintf("%s-union-%s", path.Base(originalLearningDataset), path.Base(joinedLearningDataset))
 		u.updateDatasetID = strings.Join([]string{u.originalDataset["id"].(string), u.joinedDataset["id"].(string)}, "-")
 	} else if originalLearningDataset != "" {
 		return nil, nil, errors.Errorf("both the original and joining datasets need to be prefeaturized")
