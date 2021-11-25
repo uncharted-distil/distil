@@ -20,7 +20,7 @@
     <component :is="comp" v-html="cssStyle" />
     <facet-terms
       :id="id"
-      :data.prop="facetData"
+      :data.prop="imgData"
       action-buttons="0"
       :selection.prop="selection"
       :subselection.prop="subSelection"
@@ -36,8 +36,8 @@
           </div>
           <button-training-target
             :variable="summary.key"
-            :datasetName="datasetName"
-            :activeVariables="activeVariables"
+            :dataset-name="datasetName"
+            :active-variables="activeVariables"
           />
         </div>
         <div class="d-flex align-items-center my-1">
@@ -115,7 +115,6 @@ import {
 import ButtonExplore from "../ButtonExplore.vue";
 import ButtonTrainingTarget from "../ButtonTrainingTarget.vue";
 import ColorScaleDropDown from "../ColorScaleDropDown.vue";
-import { DISTIL_ROLES } from "../../util/types";
 import { EventList } from "../../util/events";
 import { ColorScaleNames } from "../../util/color";
 export default Vue.extend({
@@ -160,6 +159,7 @@ export default Vue.extend({
     return {
       baseNumToDisplay: getCategoricalChunkSize(this.summary.type),
       moreNumToDisplay: 0,
+      imgData: {} as FacetTermsData,
     };
   },
 
@@ -167,16 +167,16 @@ export default Vue.extend({
     comp(): string {
       return "style";
     },
-    facetData(): FacetTermsData {
-      let values = [];
-      if (hasBaseline(this.summary)) {
-        values = this.getFacetValues();
-      }
-      return {
-        label: this.summary.label.toUpperCase(),
-        values,
-      };
-    },
+    // facetData(): FacetTermsData {
+    //   let values = [];
+    //   if (hasBaseline(this.summary)) {
+    //     values = this.getFacetValues();
+    //   }
+    //   return {
+    //     label: this.summary.label.toUpperCase(),
+    //     values,
+    //   };
+    // },
     facetEnableTypeChanges(): boolean {
       return facetTypeChangeState(
         this.summary.dataset,
@@ -270,7 +270,14 @@ export default Vue.extend({
       return this.moreNumToDisplay > 0;
     },
   },
-
+  watch: {
+    summary(cur) {
+      if (!this.imgData?.values) {
+        const values = hasBaseline(cur) ? this.getFacetValues() : [];
+        this.imgData = { label: cur.label.toUpperCase(), values };
+      }
+    },
+  },
   methods: {
     onTypeChange() {
       this.$emit(EventList.VARIABLES.TYPE_CHANGE);
@@ -358,7 +365,7 @@ export default Vue.extend({
         if (facet.selection) {
           const incomingKeys = Object.keys(facet.selection);
           incomingKeys.forEach((ik) =>
-            values.push(this.facetData.values[ik].label)
+            values.push(this.imgData.values[ik].label)
           );
         }
         this.$emit(
