@@ -487,6 +487,31 @@ func union(w http.ResponseWriter, dataStorage api.DataStorage, metaStorage api.M
 		return
 	}
 
+	// if the datasets are prefeaturized, then vertical concat the prefeaturized versions
+	// NOTE: If one dataset is prefeaturized, then both NEED to be prefeaturized!
+	// TODO: UNSURE IF THIS SHOULD BE HERE OR IN THE TASK
+	if joinLeft.ExistingMetadata.LearningDataset != "" {
+		if joinRight.ExistingMetadata.LearningDataset != "" {
+			joinLeft.DatasetPath = joinLeft.ExistingMetadata.LearningDataset
+			joinRight.DatasetPath = joinRight.ExistingMetadata.LearningDataset
+			_, _, err := task.VerticalConcat(dataStorage, joinLeft, joinRight)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable to vertically concat prefeaturized datasets"))
+				return
+			}
+		} else {
+			if err != nil {
+				handleError(w, errors.Wrap(err, "if left dataset is prefeaturized, then vertical concat requires right to be prefeaturized"))
+				return
+			}
+		}
+	} else if joinRight.ExistingMetadata.LearningDataset != "" {
+		if err != nil {
+			handleError(w, errors.Wrap(err, "if right dataset is prefeaturized, then vertical concat requires left to be prefeaturized"))
+			return
+		}
+	}
+
 	// marshal output into JSON
 	bytes, err := json.Marshal(map[string]interface{}{"path": path, "data": transformDataForClient(data, api.EmptyString)})
 	if err != nil {

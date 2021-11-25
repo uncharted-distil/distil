@@ -276,7 +276,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(varCounter, "timestamp", "timestamp", "timestamp", "timestamp", timestampType,
 			model.StringType, "Image timestamp", []string{"attribute"},
-			[]string{model.VarDistilRoleData}, nil, dr.Variables, false))
+			[]string{model.VarDistilRoleData, model.VarDistilRoleGroupingSupplemental}, nil, dr.Variables, false))
 	varCounter++
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(varCounter, "coordinates", "coordinates", "coordinates", "coordinates", model.RealVectorType,
