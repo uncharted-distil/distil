@@ -21,7 +21,7 @@
       class="mb-3"
       :variables="variables"
       :highlights="routeHighlight"
-      :search-title="`Search ${dataset}`"
+      :search-title="dataset"
       @lex-query="updateFilterAndHighlightFromLexQuery"
     />
 
