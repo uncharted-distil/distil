@@ -16,18 +16,22 @@
 -->
 
 <template>
-  <div class="search-bar-container d-flex">
+  <div class="m-0 w-100">
     <component :is="styleSheet" v-html="cssStyle" />
-    <header v-if="searchTitle.length">{{ searchTitle }}</header>
-    <main ref="lexcontainer" class="lex-container" />
-    <b-button
-      v-if="hasHighlightsOrFilters"
-      class="exit-button d-flex justify-content-center align-items-center m-auto"
-      variant="outline-dark"
-      @click="removeAllHighlightsAndFilters"
-    >
-      <i class="fas fa-times" />
-    </b-button>
+    <div>
+      <header v-if="searchTitle.length">{{ searchTitle }}</header>
+    </div>
+    <div class="d-flex align-items-center flex-row search-bar-container">
+      <main ref="lexcontainer" class="lex-container" />
+      <b-button
+        v-if="hasHighlightsOrFilters"
+        class="exit-button d-flex justify-content-center align-items-center m-2"
+        variant="outline-dark"
+        @click="removeAllHighlightsAndFilters"
+      >
+        <i class="fas fa-times" />
+      </b-button>
+    </div>
   </div>
 </template>
 
@@ -238,7 +242,7 @@ div.lex-assistant-box {
   box-shadow: none !important;
 }
 .lex-container {
-  width: 95vw;
+  width: 98%;
 }
 .lex-container.select div.lex-box {
   min-height: 80px;
