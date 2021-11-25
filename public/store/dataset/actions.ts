@@ -592,7 +592,7 @@ export const actions = {
   // Import a Dataset that is available in $D3MOUTPUTDIR/PUBLIC_SUBFOLDER folder
   async importAvailableDataset(
     context: DatasetContext,
-    args: { datasetID: string; path: string }
+    args: { datasetID: string; path: string; description: string }
   ) {
     const response = await actions.importDataset(context, {
       datasetID: args.datasetID,
@@ -602,6 +602,7 @@ export const actions = {
       originalDataset: null,
       joinedDataset: null,
       path: args.path,
+      description: args.description,
     });
 
     // Add the location for potential reimport of the dataset.
