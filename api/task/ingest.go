@@ -54,6 +54,7 @@ type IngestTaskConfig struct {
 	DatabasePort                     int
 	DatabaseBatchSize                int
 	DatabaseLogLevel                 string
+	ImputeEnabled                    bool
 	SummaryOutputPathRelative        string
 	SummaryMachineOutputPathRelative string
 	SummaryEnabled                   bool
@@ -110,6 +111,7 @@ func NewConfig(config env.Config) *IngestTaskConfig {
 		HardFail:                         config.IngestHardFail,
 		IngestOverwrite:                  config.IngestOverwrite,
 		SampleRowLimit:                   config.IngestSampleRowLimit,
+		ImputeEnabled:                    config.ImputeEnabled,
 	}
 }
 

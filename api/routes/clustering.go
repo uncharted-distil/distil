@@ -59,10 +59,12 @@ func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorag
 			handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
 			return
 		}
-		clusterCount := 4
+		clusterCount := config.ClusteringKMeansDefaultCount
 		if params["clusterCount"] != nil {
 			clusterCount = int(params["clusterCount"].(float64))
 		}
+
+		// arbitrary limit to protect against errant input
 		if clusterCount < 3 || clusterCount > 10 {
 			handleError(w, errors.Errorf("cluster count must be between 3 and 10"))
 			return
