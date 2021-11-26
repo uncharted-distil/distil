@@ -230,6 +230,11 @@ export default Vue.extend({
   },
 
   methods: {
+    clearDataAndClose() {
+      this.clearData();
+      appActions.closeStatusPanel(this.$store);
+    },
+
     clearData() {
       if (this.requestData) {
         datasetActions.removePendingRequest(this.$store, this.requestData.id);
@@ -261,9 +266,10 @@ export default Vue.extend({
           this.applyGeocodingChange();
           break;
         case DatasetPendingRequestType.OUTLIER:
-          this.$eventBus.$emit(EventList.VARIABLES.APPLY_OUTLIER_EVENT);
-          this.clearData();
-          this.close();
+          this.$eventBus.$emit(
+            EventList.VARIABLES.APPLY_OUTLIER_EVENT,
+            this.clearDataAndClose
+          );
           break;
         case DatasetPendingRequestType.CLUSTERING:
           this.$eventBus.$emit(EventList.VARIABLES.APPLY_CLUSTER_EVENT);

@@ -242,7 +242,9 @@ export const RESULT_EVENT_HANDLERS = {
    * All it does is apply the outlier to the ds
    * then update the variables / variable summaries
    * **/
-  [EventList.VARIABLES.APPLY_OUTLIER_EVENT]: async function () {
+  [EventList.VARIABLES.APPLY_OUTLIER_EVENT]: async function (
+    callback?: Function
+  ) {
     const self = (this as unknown) as DataExplorerRef;
     const dataset = self.dataset;
     const success = await datasetActions.applyOutliers(store, dataset);
@@ -257,6 +259,9 @@ export const RESULT_EVENT_HANDLERS = {
     // Update the route to know that the outlier has been applied.
     const entry = overlayRouteEntry(self.$route, { outlier: "1" });
     self.$router.push(entry).catch((err) => console.warn(err));
+    if (callback) {
+      callback();
+    }
     return;
   },
 };
