@@ -92,7 +92,7 @@
             v-b-modal.join-accuracy-modal
             variant="primary"
             class="h100"
-            :disabled="disableJoin"
+            :disabled="!joinPairs.length"
           >
             <i class="fa fa-cog" aria-hidden="true" />
           </b-button>
@@ -211,7 +211,10 @@ export default Vue.extend({
     },
     disableAdd(): boolean {
       return (
-        this.isPending || !this.columnsSelected || this.columnTypesDoNotMatch
+        this.isPending ||
+        !this.columnsSelected ||
+        this.columnTypesDoNotMatch ||
+        this.joinType === JoinTypes.Vertical
       );
     },
     joinVariant(): string {
@@ -233,7 +236,10 @@ export default Vue.extend({
       return !!this.previewTableData;
     },
     disableJoin(): boolean {
-      return this.joinPairs.length < 1 && this.joinType !== JoinTypes.Vertical;
+      return (
+        (!this.joinPairs.length && this.joinType !== JoinTypes.Vertical) ||
+        (this.joinPairs.length > 0 && this.joinType === JoinTypes.Vertical)
+      );
     },
     joinedColumn(): string {
       const a = this.datasetAColumn ? this.datasetAColumn.key : "";
