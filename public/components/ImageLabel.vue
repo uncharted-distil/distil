@@ -16,8 +16,9 @@
 -->
 
 <template>
-  <ol class="labels" :class="alignment" v-if="!containsUserAnnotation">
+  <ol class="labels" :class="alignment">
     <li
+      v-if="!containsUserAnnotation"
       v-for="(label, index) in labels"
       :key="index"
       :title="label.title"
