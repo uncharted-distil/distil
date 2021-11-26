@@ -33,27 +33,19 @@ export function verticalJoinSupported(
   if (Object.keys(dataFields).length != Object.keys(other).length) {
     return false;
   }
-  const typeMap = new Map<string, number>();
-  // create a map that holds a type name and number of occurences
+  const keyMap = new Map<string, string>();
+  // create a map that holds the key and type
   for (const key in dataFields) {
     const field = dataFields[key];
-    typeMap.set(field.type, (typeMap.get(field.type) ?? 0) + 1);
+    keyMap.set(key, field.type);
   }
   for (const key in other) {
-    const field = other[key];
-    // if typeMap does not contain the type fail
-    if (!typeMap.has(field.type)) {
+    // if keyMap does not contain key fail
+    if (!keyMap.has(key)) {
       return false;
     }
-    // decrease occurence counter based on other data fields
-    typeMap.set(field.type, typeMap.get(field.type) - 1);
-    // if occurence is 0 remove from map resulting
-    // in a fail if checked for that type again
-    if (typeMap.get(field.type) == 0) {
-      typeMap.delete(field.type);
-    }
   }
-  return typeMap.size == 0;
+  return true;
 }
 
 export function loadJoinedDataset(
