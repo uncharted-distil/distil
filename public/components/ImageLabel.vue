@@ -16,9 +16,8 @@
 -->
 
 <template>
-  <ol class="labels" :class="alignment">
+  <ol class="labels" :class="alignment" v-if="!containsUserAnnotation">
     <li
-      v-if="!containsUserAnnotation"
       v-for="(label, index) in labels"
       :key="index"
       :title="label.title"
@@ -99,11 +98,18 @@ export default Vue.extend({
 
   computed: {
     labels(): Label[] {
+      // check to see if the current view state causes the label to be hidden - the key driver of
+      // this is currently whether or not ROC AUC scoring is used
+      if (!this.showLabel) {
+        return [];
+      }
+
       const labels: Label[] = [];
       let status: string;
       if (!this.item) {
         return [];
       }
+
       for (const key in this.dataFields) {
         status = null;
 
@@ -153,9 +159,21 @@ export default Vue.extend({
       return solution ? `${solution.predictedKey}` : "";
     },
 
+    // indicates whether or not to show the predicted label, or include the ground truth + predicted
+    // label
     showError(): boolean {
       return (
         this.predictedField && !requestGetters.getActivePredictions(this.$store)
+      );
+    },
+
+    // indicates whether or not to show the label
+    showLabel(): boolean {
+      const rocAuc =
+        requestGetters.getActiveSolution(this.$store)?.scores[0].metric ===
+        "ROC_AUC";
+      return (
+        !rocAuc || requestGetters.getActivePredictions(this.$store) != null
       );
     },
 
@@ -220,6 +238,7 @@ export default Vue.extend({
       }
       return imageLabelLengths;
     },
+
     containsUserAnnotation(): boolean {
       if (!this.item) {
         return false;
