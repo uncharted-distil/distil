@@ -17,15 +17,17 @@
 <template>
   <b-button
     v-if="displayTarget"
-    class="toggle btn-sm d-flex align-items-center shadow-none"
-    :variant="this.isTarget ? 'outline-secondary' : 'primary'"
+    class="toggle btn-sm d-flex align-items-center shadow-none z-index-1"
+    :class="shouldAnimate ? 'pulse' : ''"
+    :variant="isTarget ? 'outline-secondary' : 'primary'"
     @click="updateTarget"
   >
     {{ isTarget ? "Remove Target" : "Select Target" }}
   </b-button>
   <b-button
     v-else-if="displayTraining"
-    class="toggle btn-sm d-flex align-items-center shadow-none"
+    class="toggle btn-sm d-flex align-items-center shadow-none z-index-1"
+    :class="shouldAnimate ? 'pulse' : ''"
     :variant="isTraining ? 'outline-primary' : 'primary'"
     @click="updateTraining"
   >
@@ -48,6 +50,7 @@ import { requestActions } from "../store";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { hasRole } from "../util/data";
 import { isUnsupportedTargetVar, DISTIL_ROLES } from "../util/types";
+import { EventList } from "../util/events";
 
 export default Vue.extend({
   name: "ButtonTrainingTarget",
@@ -58,6 +61,11 @@ export default Vue.extend({
       type: Array as () => Variable[],
       default: () => [] as Variable[],
     },
+  },
+  data() {
+    return {
+      shouldAnimate: false,
+    };
   },
   computed: {
     target(): string {
@@ -118,7 +126,23 @@ export default Vue.extend({
       return `Text`;
     },
   },
+  mounted() {
+    this.$eventBus.$on(
+      [EventList.HINTS.SELECT_TARGET, EventList.HINTS.SELECT_TRAINING],
+      this.setAnimate
+    );
+  },
+  beforeDestroy() {
+    this.$eventBus.$off(
+      [EventList.HINTS.SELECT_TARGET, EventList.HINTS.SELECT_TRAINING],
+      this.setAnimate
+    );
+  },
   methods: {
+    setAnimate(val: boolean) {
+      this.shouldAnimate = val;
+    },
+
     async updateTarget(): Promise<void> {
       const target = this.variable;
 

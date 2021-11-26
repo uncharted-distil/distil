@@ -10,11 +10,7 @@ import {
 } from "../../../store";
 import { getters as routeGetters } from "../../../store/route/module";
 import store from "../../../store/store";
-import {
-  Solution,
-  SolutionRequestStatus,
-  SolutionStatus,
-} from "../../../store/requests";
+import { Solution, SolutionStatus } from "../../../store/requests";
 import { ExplorerStateNames } from "..";
 import { Activity, Feature, SubActivity } from "../../userEvents";
 import {

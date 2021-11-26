@@ -187,13 +187,7 @@
               </b-button-group>
             </b-button-toolbar>
             <!-- RESULT AND PREDICTION VIEW COMPONENTS-->
-            <create-solutions-form
-              v-if="isSelectState"
-              ref="model-creation-form"
-              :aria-disabled="isCreateModelPossible"
-              class="ml-2"
-              @create-model="onModelCreation"
-            />
+
             <predictions-data-uploader
               :fitted-solution-id="fittedSolutionId"
               :target="targetName"
@@ -214,44 +208,6 @@
               :target-type="targetType"
               @model-apply="onApplyModel"
             />
-            <template
-              v-if="
-                isResultState && (isSingleSolution || isActiveSolutionSaved)
-              "
-            >
-              <b-button
-                v-if="isTimeseries"
-                variant="success"
-                class="apply-button"
-                @click="$bvModal.show('forecast-horizon-modal')"
-              >
-                Forecast
-              </b-button>
-              <b-button
-                v-else
-                variant="success"
-                class="apply-button"
-                @click="$bvModal.show('predictions-data-upload-modal')"
-              >
-                Apply Model
-              </b-button>
-            </template>
-            <b-button
-              v-else-if="isResultState"
-              :disabled="!currentSolutionCompleted"
-              variant="success"
-              class="save-button"
-              @click="$bvModal.show('save-model-modal')"
-            >
-              <i class="fa fa-floppy-o" />
-              Save Model
-            </b-button>
-            <b-button v-if="isPredictState" v-b-modal.save class="mr-1">
-              Create Dataset
-            </b-button>
-            <b-button v-if="isPredictState" v-b-modal.export variant="primary">
-              Export Predictions
-            </b-button>
             <create-labeling-form
               v-if="isLabelState"
               class="d-flex justify-content-between h-100 align-items-center"
@@ -358,7 +314,6 @@ import ActionColumn from "../components/layout/ActionColumn.vue";
 import AddVariablePane from "../components/panel/AddVariablePane.vue";
 import ExportPane from "../components/panel/ExportPane.vue";
 import CreateLabelingForm from "../components/labelingComponents/CreateLabelingForm.vue";
-import CreateSolutionsForm from "../components/CreateSolutionsForm.vue";
 import DataSize from "../components/buttons/DataSize.vue";
 import ErrorThresholdSlider from "../components/ErrorThresholdSlider.vue";
 import FacetListPane from "../components/panel/FacetListPane.vue";
@@ -420,7 +375,6 @@ const DataExplorer = Vue.extend({
     AddVariablePane,
     ExportPane,
     CreateLabelingForm,
-    CreateSolutionsForm,
     DataSize,
     ErrorThresholdSlider,
     FacetListPane,

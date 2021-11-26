@@ -16,7 +16,7 @@
 -->
 
 <template>
-  <div class="create-solutions-form d-flex justify-content-center mt-2">
+  <div class="create-solutions-form d-flex justify-content-center">
     <error-modal
       title="Model Failed"
       :show="showCreateFailure"
@@ -150,7 +150,14 @@ export default Vue.extend({
       return 100;
     },
   },
-
+  mounted() {
+    this.$eventBus.$on(EventList.MODEL.CREATION_SUCCESS, this.success);
+    this.$eventBus.$on(EventList.MODEL.CREATION_FAILED, this.fail);
+  },
+  destroyed() {
+    this.$eventBus.$off(EventList.MODEL.CREATION_SUCCESS, this.success);
+    this.$eventBus.$off(EventList.MODEL.CREATION_FAILED, this.fail);
+  },
   methods: {
     fail(err: Error) {
       // display error modal
@@ -199,7 +206,7 @@ export default Vue.extend({
       const positiveLabel = routeGetters.getPositiveLabel(this.$store);
       if (positiveLabel) solutionRequestMsg.positiveLabel = positiveLabel;
       if (!this.handleInput) {
-        this.$emit(EventList.MODEL.CREATE_EVENT, solutionRequestMsg);
+        this.$eventBus.$emit(EventList.MODEL.CREATE_EVENT, solutionRequestMsg);
         return;
       }
       requestActions
