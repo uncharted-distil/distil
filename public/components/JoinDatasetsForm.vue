@@ -38,7 +38,7 @@
         @close="showJoinSuccess = !showJoinSuccess"
       />
     </b-modal>
-    <save-modal subject="Dataset" modalId="join-view-save" @save="onSave" />
+    <save-modal subject="Dataset" modal-id="join-view-save" @save="onSave" />
     <error-modal
       :show="showJoinFailure"
       title="Join Failed"
@@ -54,7 +54,7 @@
     </div>
     <div class="d-flex justify-content-between bottom-margin">
       <div class="d-flex form-height">
-        <b-button variant="primary" @click="swapDatasets" class="join-button">
+        <b-button variant="primary" class="join-button" @click="swapDatasets">
           Swap Datasets
         </b-button>
         <b-button-toolbar>
@@ -71,8 +71,8 @@
       <main class="d-flex w-50">
         <badge
           v-for="(pair, index) in joinPairs"
-          class="d-flex justify-content-center align-items-center"
           :key="index"
+          class="d-flex justify-content-center align-items-center"
           :content="`${pair.first}->${pair.second}`"
           :identifier="pair"
           @removed="badgeRemoved"
@@ -89,10 +89,10 @@
             Add Join Relationship
           </b-button>
           <b-button
+            v-b-modal.join-accuracy-modal
             variant="primary"
             class="h100"
             :disabled="disableJoin"
-            v-b-modal.join-accuracy-modal
           >
             <i class="fa fa-cog" aria-hidden="true" />
           </b-button>
@@ -118,7 +118,6 @@
 import _ from "lodash";
 import Vue from "vue";
 // components
-import vueSlider from "vue-slider-component";
 import JoinDatasetsPreview from "../components/JoinDatasetsPreview.vue";
 import ErrorModal from "../components/ErrorModal.vue";
 import JoinAccuracyModal from "../components/JoinAccuracyModal.vue";
@@ -145,7 +144,6 @@ export default Vue.extend({
     ErrorModal,
     Badge,
     SaveModal,
-    vueSlider,
     JoinAccuracyModal,
   },
 
@@ -235,7 +233,7 @@ export default Vue.extend({
       return !!this.previewTableData;
     },
     disableJoin(): boolean {
-      return this.joinPairs.length < 1;
+      return this.joinPairs.length < 1 && this.joinType !== JoinTypes.Vertical;
     },
     joinedColumn(): string {
       const a = this.datasetAColumn ? this.datasetAColumn.key : "";
