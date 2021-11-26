@@ -266,6 +266,7 @@ func (s *Storage) parseData(rows pgx.Rows) ([][]string, error) {
 	output := [][]string{}
 	if rows != nil {
 		// fields not populated until at least one row has been pulled
+		nestedColumnIndex := map[string]int{}
 		for rows.Next() {
 			columnValues, err := rows.Values()
 			if err != nil {
@@ -283,6 +284,7 @@ func (s *Storage) parseData(rows pgx.Rows) ([][]string, error) {
 						// handle nested data as separate columns
 						nested := unnestStringJSON(columnValues[i])
 						for k := range nested {
+							nestedColumnIndex[k] = len(columns)
 							columns = append(columns, fmt.Sprintf("%s_%s", fields[i].Name, k))
 						}
 					}
@@ -300,8 +302,8 @@ func (s *Storage) parseData(rows pgx.Rows) ([][]string, error) {
 				default:
 					// assume a map[string]interface{} (explanations)
 					nested := unnestStringJSON(cv)
-					for _, v := range nested {
-						row[i+nestedAdjustment] = v
+					for k, v := range nested {
+						row[nestedColumnIndex[k]] = v
 						nestedAdjustment = nestedAdjustment + 1
 					}
 
