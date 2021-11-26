@@ -59,7 +59,7 @@ func Clean(schemaFile string, dataset string, params *IngestParams, config *Inge
 	}
 
 	// create & submit the solution request
-	pip, err := description.CreateDataCleaningPipeline("Mary Poppins", "", vars)
+	pip, err := description.CreateDataCleaningPipeline("Mary Poppins", "", vars, config.ImputeEnabled)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to create format pipeline")
 	}
