@@ -208,13 +208,6 @@
               :target-type="targetType"
               @model-apply="onApplyModel"
             />
-            <create-labeling-form
-              v-if="isLabelState"
-              class="d-flex justify-content-between h-100 align-items-center"
-              :is-loading="isBusy"
-              :low-shot-summary="labelSummary"
-              :is-saving="isBusy"
-            />
           </footer>
         </template>
       </main>

@@ -169,6 +169,11 @@
         <i class="fa fa-floppy-o" />
         Save Model
       </b-button>
+      <create-labeling-form
+        v-if="explorerLabelState"
+        class="d-flex justify-content-between h-100 align-items-center"
+        :low-shot-summary="labelSummary"
+      />
     </div>
     <!-- Right side -->
     <b-navbar-nav class="ml-auto">
@@ -188,7 +193,7 @@ import {
   gotoSearch,
   gotoSelectData,
 } from "../util/nav";
-import { appGetters, requestGetters } from "../store";
+import { appGetters, datasetGetters, requestGetters } from "../store";
 import { getters as routeGetters } from "../store/route/module";
 import {
   APPLY_MODEL_ROUTE,
@@ -207,16 +212,29 @@ import Vue from "vue";
 import { ExplorerStateNames } from "../util/explorer";
 import { EventList } from "../util/events";
 import { createRouteEntry } from "../util/routes";
-import { Variable } from "../store/dataset";
-// components
-import CreateSolutionsForm from "../components/CreateSolutionsForm.vue";
+import {
+  Variable,
+  VariableSummary,
+  VariableSummaryResp,
+} from "../store/dataset";
 import { getSolutionById } from "../util/solutions";
 import { Solution, SolutionStatus } from "../store/requests";
+// components
+import CreateSolutionsForm from "../components/CreateSolutionsForm.vue";
+import CreateLabelingForm from "../components/labelingComponents/CreateLabelingForm.vue";
+import {
+  getAllVariablesSummaries,
+  hasRole,
+  LOW_SHOT_RANK_COLUMN_PREFIX,
+  LOW_SHOT_SCORE_COLUMN_PREFIX,
+} from "../util/data";
+import { DISTIL_ROLES } from "../util/types";
 
 export default Vue.extend({
   name: "NavBar",
   components: {
     CreateSolutionsForm,
+    CreateLabelingForm,
   },
   data() {
     return {
@@ -278,6 +296,9 @@ export default Vue.extend({
     explorerPredictionState(): boolean {
       return this.dataExplorerState === ExplorerStateNames.PREDICTION_VIEW;
     },
+    explorerLabelState(): boolean {
+      return this.dataExplorerState === ExplorerStateNames.LABEL_VIEW;
+    },
     trainingVariables(): Variable[] {
       return routeGetters.getTrainingVariables(this.$store) ?? [];
     },
@@ -338,6 +359,35 @@ export default Vue.extend({
           s.solutionId === solutionId &&
           s.progress === SolutionStatus.SOLUTION_COMPLETED
       );
+    },
+    variables(): Variable[] {
+      const labelName = routeGetters.getRouteLabel(this.$store);
+      const labelScoreName = LOW_SHOT_SCORE_COLUMN_PREFIX + labelName;
+      const labelRankName = LOW_SHOT_RANK_COLUMN_PREFIX + labelName;
+      return datasetGetters.getVariables(this.$store).filter((v) => {
+        return (
+          v.key !== labelScoreName &&
+          v.key !== labelRankName &&
+          !hasRole(v, DISTIL_ROLES.SystemData)
+        );
+      });
+    },
+    summaries(): VariableSummary[] {
+      const summaryDictionary = datasetGetters.getVariableSummariesDictionary(
+        this.$store
+      );
+      const dataset = routeGetters.getRouteDataset(this.$store);
+      return getAllVariablesSummaries(
+        this.variables,
+        summaryDictionary,
+        dataset
+      );
+    },
+    labelSummary(): VariableSummary {
+      const label = routeGetters.getRouteLabel(this.$store);
+      return this.summaries.find((s) => {
+        return s.key === label;
+      });
     },
   },
 

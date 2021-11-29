@@ -21,8 +21,8 @@
       <b-button
         :disabled="isLoading || !minimumRequirementsMet"
         size="lg"
-        @click="onEvent(applyEvent)"
         title="must have 1 positive and negative label"
+        @click="onEvent(applyEvent)"
       >
         <template v-if="isLoading">
           <div v-html="spinnerHTML" />
@@ -53,7 +53,7 @@ import { getters as routeGetters } from "../../store/route/module";
 import { EventList } from "../../util/events";
 
 export default Vue.extend({
-  name: "create-labeling-form",
+  name: "CreateLabelingForm",
   props: {
     isLoading: { type: Boolean as () => boolean, default: false },
     lowShotSummary: Object as () => VariableSummary,
