@@ -120,8 +120,9 @@ const fetchVariables = createCacheable(
 const fetchVariableSummaries = async (context, args) => {
   await fetchVariables(context, args);
   const dataset = args.dataset as string;
-  const variables =
-    args.variables ?? (context.getters.getVariables as Variable[]);
+  const variables = (
+    args.variables ?? (context.getters.getVariables as Variable[])
+  ).filter((v) => v.datasetName === dataset);
   const filterParams = context.getters
     .getDecodedSolutionRequestFilterParams as FilterParams;
   const highlights = context.getters.getDecodedHighlights as Highlight[];
@@ -792,7 +793,8 @@ export const actions = {
               hasRole(variable, DISTIL_ROLES.Augmented) &&
               variable.key === "_outlier"
           )
-      );
+      )
+      .filter((v) => v.datasetName === dataset);
     const highlights = routeGetters.getDecodedHighlights(store);
     const dataMode = context.getters.getDataMode;
     const varModes: Map<string, SummaryMode> = routeGetters.getDecodedVarModes(

@@ -48,6 +48,7 @@ import {
   summaryToVariable,
 } from "../summaries";
 import { DISTIL_ROLES } from "../types";
+import _ from "lodash";
 
 export interface BaseState {
   name: ExplorerStateNames;
@@ -155,7 +156,9 @@ export class SelectViewState implements BaseState {
     return;
   }
   getSecondaryVariables(): Variable[] {
-    return routeGetters.getAvailableVariables(store);
+    return routeGetters
+      .getAvailableVariables(store)
+      .filter((v) => v.datasetName === this.dataset());
   }
   getAllVariableSummaries(include?: boolean): VariableSummary[] {
     const varDict = include
@@ -181,7 +184,9 @@ export class SelectViewState implements BaseState {
   }
   // returns select view variables
   getVariables(): Variable[] {
-    return datasetGetters.getVariables(store);
+    return datasetGetters
+      .getVariables(store)
+      .filter((v) => v.datasetName === this.dataset());
   }
   // returns table data based on include
   getData(include: boolean): TableRow[] {
@@ -218,7 +223,9 @@ export class SelectViewState implements BaseState {
       : datasetGetters.getAreaOfInterestExcludeOuterItems(store);
   }
   getLexBarVariables(): Variable[] {
-    return datasetGetters.getAllVariables(store);
+    return datasetGetters
+      .getAllVariables(store)
+      .filter((v) => v.datasetName === this.dataset());
   }
   fetchVariables(): Promise<unknown> {
     return datasetActions.fetchVariables(store, {
@@ -377,17 +384,18 @@ export class ResultViewState implements BaseState {
     return viewActions.updateResultAreaOfInterest(store, filter);
   }
   getVariables(): Variable[] {
-    return requestGetters
-      .getActiveSolutionTrainingVariables(store)
-      .concat(
-        datasetGetters
-          .getVariables(store)
-          .filter(
-            (variable) =>
-              variable.key === "_outlier" &&
-              hasRole(variable, DISTIL_ROLES.Augmented)
-          )
-      );
+    const requestVars = requestGetters.getActiveSolutionTrainingVariables(
+      store
+    );
+    return requestVars.concat(
+      datasetGetters
+        .getVariables(store)
+        .filter(
+          (variable) =>
+            variable.key === "_outlier" &&
+            hasRole(variable, DISTIL_ROLES.Augmented)
+        )
+    );
   }
   getData(): TableRow[] {
     return resultGetters.getIncludedResultTableDataItems(store) ?? [];
@@ -398,7 +406,7 @@ export class ResultViewState implements BaseState {
     );
     const variables = this.getVariables();
     const trainingSummaries = getAllVariablesSummaries(
-      variables,
+      variables.filter((v) => v.datasetName === this.dataset()),
       summaryDictionary
     );
     const target = resultGetters.getTargetSummary(store);
