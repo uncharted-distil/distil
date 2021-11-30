@@ -33,16 +33,12 @@
       class="d-inline-block"
     >
       <b-button-group>
-        <b-button
-          :variant="createVariant"
-          :disabled="disableCreate"
-          @click="create"
-        >
+        <b-button variant="success" :disabled="disableCreate" @click="create">
           Create Models
         </b-button>
         <b-button
           v-b-modal.settings
-          :variant="createVariant"
+          variant="success"
           :disabled="disableCreate"
         >
           <i class="fa fa-cog" aria-hidden="true" />
@@ -142,9 +138,6 @@ export default Vue.extend({
     },
     disableCreate(): boolean {
       return this.isPending || !this.targetSelected || !this.trainingSelected;
-    },
-    createVariant(): string {
-      return !this.disableCreate ? "success" : "outline-success";
     },
     percentComplete(): number {
       return 100;

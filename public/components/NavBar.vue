@@ -212,11 +212,7 @@ import Vue from "vue";
 import { ExplorerStateNames } from "../util/explorer";
 import { EventList } from "../util/events";
 import { createRouteEntry } from "../util/routes";
-import {
-  Variable,
-  VariableSummary,
-  VariableSummaryResp,
-} from "../store/dataset";
+import { Variable, VariableSummary } from "../store/dataset";
 import { getSolutionById } from "../util/solutions";
 import { Solution, SolutionStatus } from "../store/requests";
 // components
@@ -388,6 +384,11 @@ export default Vue.extend({
       return this.summaries.find((s) => {
         return s.key === label;
       });
+    },
+    isCreateModelPossible(): boolean {
+      const training = routeGetters.getTrainingVariables(this.$store);
+      // check that we have some target and training variables.
+      return this.target != null && training?.length > 0;
     },
   },
 
