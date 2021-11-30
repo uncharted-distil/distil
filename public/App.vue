@@ -110,6 +110,7 @@ pulse is used for hints
   transition: opacity 0.3s, transform 0.3s;
   animation: pulse-animation 1s cubic-bezier(0.24, 0, 0.38, 1) infinite;
   z-index: -1;
+  animation-iteration-count: 1;
 }
 .z-index-1 {
   z-index: 1;
