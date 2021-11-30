@@ -125,10 +125,14 @@ export const getters = {
     if (!activeSolution || !activeSolution.features) {
       return [];
     }
-    const variables = <Variable[]>getters.getVariablesMap;
+    const variables = new Map(
+      (getters.getVariables as Variable[])
+        .filter((v) => v.datasetName === activeSolution.dataset)
+        .map((v) => [v.key, v])
+    );
     return activeSolution.features
       .filter((f) => f.featureType === "train")
-      .map((f) => variables[f.featureName])
+      .map((f) => variables.get(f.featureName))
       .filter((v) => !!v);
   },
 
