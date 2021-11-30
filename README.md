@@ -3,6 +3,12 @@
 [![CircleCI](https://circleci.com/gh/uncharted-distil/distil/tree/main.svg?style=svg&&circle-token=ff61c235865dd699cc8b923035a80e6e8d39c63a)](https://circleci.com/gh/unchartedsoftware/distil/tree/main)
 [![Go Report Card](https://goreportcard.com/badge/github.com/uncharted-distil/distil)](https://goreportcard.com/report/github.com/uncharted-distil/distil)
 
+## Related Projects
+
+- [AutoML Server](https://github.com/uncharted-distil/distil-auto-ml) automated machine learning server component that implements the D3M API.
+- [Primitives](https://github.com/uncharted-distil/distil-primitives) set of primitives created for use by Distil as steps in a D3M pipeline and included in the base D3M image.
+- [Primitives Addendum](https://github.com/uncharted-distil/distil-primitives-contrib) set of primitives created for use by Distil as steps in a D3M pipeline and not included in the base D3M image.
+
 ## Dependencies
 
 - [Git](https://git-scm.com) and [Git LFS](https://git-lfs.github.com) Versioning softwares.
