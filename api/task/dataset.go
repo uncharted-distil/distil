@@ -135,7 +135,7 @@ func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage 
 // CreateDatasetFromResult creates a new dataset based on a result set & the input
 // to the model
 func CreateDatasetFromResult(newDatasetName string, predictionDataset string, sourceDataset string, features []string,
-	targetName string, resultURI string, metaStorage api.MetadataStorage, dataStorage api.DataStorage, config env.Config) (string, error) {
+	targetName string, resultURI string, datasetDescription string, metaStorage api.MetadataStorage, dataStorage api.DataStorage, config env.Config) (string, error) {
 	// get the prediction dataset
 	predictionDS, err := metaStorage.FetchDataset(predictionDataset, true, true, true)
 	if err != nil {
@@ -180,6 +180,7 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 	if err != nil {
 		return "", err
 	}
+
 	mainDR := metaDisk.GetMainDataResource()
 
 	varsMeta := map[string]*model.Variable{}
@@ -294,7 +295,10 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 		v.Index = len(newDS.Variables)
 		newDS.Variables = append(newDS.Variables, v)
 	}
-
+	// if the supplied datasetDescription has a value modify the metaDisk description
+	if len(datasetDescription) > 0 {
+		newDS.Description = datasetDescription
+	}
 	// if the prediction data is prefeaturized, then update the target variable with the new values
 	if predictionDS.LearningDataset != "" {
 		targetFolder := env.ResolvePath(newDS.Source, CreateFeaturizedDatasetID(newDatasetName))

@@ -77,7 +77,6 @@
 import Vue from "vue";
 import { SEARCH_ROUTE, SELECT_TARGET_ROUTE } from "../../store/route";
 import { getters as routeGetters } from "../../store/route/module";
-import { datasetGetters } from "../../store";
 import { VariableSummary } from "../../store/dataset";
 import { createRouteEntry } from "../../util/routes";
 import router from "../../router/router";

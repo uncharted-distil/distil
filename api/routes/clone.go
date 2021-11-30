@@ -133,6 +133,10 @@ func CloningResultsHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataSt
 			missingParamErr(w, "datasetName")
 			return
 		}
+		datasetDescription := ""
+		if params["datasetDescription"] != nil {
+			datasetDescription = params["datasetDescription"].(string)
+		}
 		newDatasetName := params["datasetName"].(string)
 		includeDatasetFeatures := false
 		if params["includeDatasetFeatures"] != nil {
@@ -170,7 +174,7 @@ func CloningResultsHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataSt
 		}
 
 		newDatasetID, err := task.CreateDatasetFromResult(newDatasetName, parsedParams.predictionDataset,
-			parsedParams.sourceDataset, parsedParams.features, parsedParams.targetName, pred.ResultURI, metaStorage, dataStorage, config)
+			parsedParams.sourceDataset, parsedParams.features, parsedParams.targetName, pred.ResultURI, datasetDescription, metaStorage, dataStorage, config)
 		if err != nil {
 			handleError(w, err)
 			return
