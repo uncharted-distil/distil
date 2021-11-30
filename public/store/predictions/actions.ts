@@ -571,16 +571,16 @@ export const actions = {
       produceRequestId: string;
       newDatasetName: string;
       includeDatasetFeatures?: boolean;
+      datasetDescription?: string;
     }
   ): Promise<Error> {
     try {
-      const endPoint = "/distil/clone-result/";
-      const params = `${args.produceRequestId}`;
       const response = await axios.post(
         `/distil/clone-result/${encodeURIComponent(args.produceRequestId)}`,
         {
           datasetName: args.newDatasetName,
           includeDatasetFeatures: args.includeDatasetFeatures,
+          datasetDescription: args.datasetDescription,
         }
       );
     } catch (error) {

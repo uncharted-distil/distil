@@ -79,6 +79,16 @@
             :state="datasetModelNameState"
           />
         </b-form-group>
+        <b-form-group
+          label="Dataset Description"
+          label-for="data-description-input"
+        >
+          <b-form-input
+            id="data-description-input"
+            v-model="datasetDescription"
+            placeholder="Enter the dataset's description"
+          />
+        </b-form-group>
         <b-form-group>
           <b-form-checkbox v-model="includeAllFeatures" class="pt-2">
             Include data not used in model
@@ -178,6 +188,7 @@ export default Vue.extend({
     return {
       saveFileName: "",
       newDatasetName: "",
+      datasetDescription: "",
       includeAllFeatures: true,
       selectedFormat: "csv",
       formats: ["csv", "geojson"],
@@ -470,6 +481,9 @@ export default Vue.extend({
         produceRequestId: this.produceRequestId,
         newDatasetName: this.newDatasetName,
         includeDatasetFeatures: this.includeAllFeatures,
+        datasetDescription: this.datasetDescription.length
+          ? this.datasetDescription
+          : null,
       });
       const location = "b-toaster-bottom-right";
       if (err) {
