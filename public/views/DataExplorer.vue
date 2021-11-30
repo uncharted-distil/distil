@@ -49,8 +49,8 @@
           </template>
           <facet-list-pane
             v-else
-            :enable-explore="state.name !== 'result'"
-            :enable-training-target="state.name !== 'result'"
+            :enable-explore="state.name === 'select'"
+            :enable-training-target="state.name === 'select'"
             :is-target-panel="activePane === 'target' && isSelectState"
             :variables="activeVariables"
             :enable-color-scales="geoVarExists"
