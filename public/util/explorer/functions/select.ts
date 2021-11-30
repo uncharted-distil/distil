@@ -60,49 +60,6 @@ export const SELECT_COMPUTES = {
  */
 export const SELECT_METHODS = {
   /**
-   * onModelCreation starts the process for fitting a model
-   */
-  onModelCreation(msg: SolutionRequestMsg): void {
-    const self = (this as unknown) as DataExplorerRef;
-    msg.filters.variables = routeGetters
-      .getRouteTrainingVariables(store)
-      .split(",")
-      .concat(routeGetters.getRouteTargetVariable(store));
-    requestActions
-      .createSolutionRequest(store, msg)
-      .then(async (res: Solution) => {
-        const dataMode = routeGetters.getDataMode(store);
-        const dataModeDefault = dataMode ? dataMode : DataMode.Default;
-        // update route with the result params
-        self.updateRoute({
-          dataset: routeGetters.getRouteDataset(store),
-          target: routeGetters.getRouteTargetVariable(store),
-          solutionId: res.solutionId,
-          task: routeGetters.getRouteTask(store),
-          dataMode: dataModeDefault,
-          varModes: varModesToString(routeGetters.getDecodedVarModes(store)),
-          modelLimit: routeGetters.getModelLimit(store),
-          modelTimeLimit: routeGetters.getModelTimeLimit(store),
-          modelQuality: routeGetters.getModelQuality(store),
-        });
-        const modelCreationRef = (self.$refs[
-          "model-creation-form"
-        ] as unknown) as CreateSolutionsFormRef;
-        // model creation is successful stop spinner
-        modelCreationRef.success();
-        // change data explorer state to RESULT_VIEW
-        await self.changeStatesByName(ExplorerStateNames.RESULT_VIEW);
-      })
-      .catch((err) => {
-        const modelCreationRef = (self.$refs[
-          "model-creation-form"
-        ] as unknown) as CreateSolutionsFormRef;
-        modelCreationRef.fail(err);
-        console.error(err);
-      });
-    return;
-  },
-  /**
    * onExludeClick create a filter from the highlights
    */
   onExcludeClick(): void {
@@ -196,6 +153,42 @@ export const SELECT_EVENT_HANDLERS = {
       });
     }
 
+    return;
+  },
+  /**
+   * onModelCreation starts the process for fitting a model
+   */
+  [EventList.MODEL.CREATE_EVENT]: function (msg: SolutionRequestMsg): void {
+    const self = (this as unknown) as DataExplorerRef;
+    msg.filters.variables = routeGetters
+      .getRouteTrainingVariables(store)
+      .split(",")
+      .concat(routeGetters.getRouteTargetVariable(store));
+    requestActions
+      .createSolutionRequest(store, msg)
+      .then(async (res: Solution) => {
+        const dataMode = routeGetters.getDataMode(store);
+        const dataModeDefault = dataMode ? dataMode : DataMode.Default;
+        // update route with the result params
+        self.updateRoute({
+          dataset: routeGetters.getRouteDataset(store),
+          target: routeGetters.getRouteTargetVariable(store),
+          solutionId: res.solutionId,
+          task: routeGetters.getRouteTask(store),
+          dataMode: dataModeDefault,
+          varModes: varModesToString(routeGetters.getDecodedVarModes(store)),
+          modelLimit: routeGetters.getModelLimit(store),
+          modelTimeLimit: routeGetters.getModelTimeLimit(store),
+          modelQuality: routeGetters.getModelQuality(store),
+        });
+        self.$eventBus.$emit(EventList.MODEL.CREATION_SUCCESS);
+        // change data explorer state to RESULT_VIEW
+        await self.changeStatesByName(ExplorerStateNames.RESULT_VIEW);
+      })
+      .catch((err) => {
+        self.$eventBus.$emit(EventList.MODEL.CREATION_FAILED);
+        console.error(err);
+      });
     return;
   },
   /**

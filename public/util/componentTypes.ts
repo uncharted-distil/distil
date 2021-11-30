@@ -113,6 +113,7 @@ export interface DataExplorerRef {
   };
   $route: Route;
   $router: VueRouter;
+  $eventBus: Vue;
 }
 
 // public/components/layout/ActionColumn.vue

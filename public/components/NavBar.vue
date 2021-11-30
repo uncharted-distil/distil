@@ -87,6 +87,9 @@
           >
             <i class="fa fa-line-chart nav-icon" /> View Predictions
           </b-nav-item>
+          <b-nav-item v-if="explorerLabelState" :active="explorerLabelState">
+            <i class="fa fa-tag nav-icon" /> Label Data
+          </b-nav-item>
         </template>
       </b-navbar-nav>
     </b-collapse>
@@ -98,7 +101,83 @@
     >
       <i class="fa fa-database nav-icon"></i> Join Datasets
     </b-nav-item>-->
+    <div>
+      <!-- Disabled buttons are not emitting mouse over events so we use an outer div -->
+      <!-- select target hint -->
+      <div
+        v-if="explorerSelectState && target === null"
+        @mouseenter="onHoverHint(EventList.HINTS.SELECT_TARGET)"
+        @mouseleave="cancelHint(EventList.CANCEL_HINTS.SELECT_TARGET)"
+      >
+        <b-button variant="primary" disabled> Select Target </b-button>
+      </div>
+      <div
+        v-if="
+          explorerSelectState && target !== null && !trainingVariables.length
+        "
+        @mouseenter="onHoverHint(EventList.HINTS.SELECT_TRAINING)"
+        @mouseleave="cancelHint(EventList.HINTS.SELECT_TRAINING)"
+      >
+        <b-button variant="primary" disabled> Select Training </b-button>
+      </div>
 
+      <create-solutions-form
+        v-if="
+          explorerSelectState && target !== null && trainingVariables.length > 0
+        "
+        :aria-disabled="isCreateModelPossible"
+        class="ml-2"
+      />
+      <!--PREDICTION STATE SECTION-->
+      <b-button v-if="explorerPredictionState" v-b-modal.save class="mr-1">
+        Create Dataset
+      </b-button>
+      <b-button
+        v-if="explorerPredictionState"
+        v-b-modal.export
+        variant="primary"
+      >
+        Export Predictions
+      </b-button>
+      <!--RESULT STATE SECTION-->
+      <template
+        v-if="
+          explorerResultState && (isSingleSolution || isActiveSolutionSaved)
+        "
+      >
+        <b-button
+          v-if="isTimeseries"
+          variant="success"
+          class="apply-button"
+          @click="$bvModal.show('forecast-horizon-modal')"
+        >
+          Forecast
+        </b-button>
+        <b-button
+          v-else
+          variant="success"
+          class="apply-button"
+          @click="$bvModal.show('predictions-data-upload-modal')"
+        >
+          Apply Model
+        </b-button>
+      </template>
+      <b-button
+        v-else-if="explorerResultState"
+        v-b-modal.save-model-modal
+        :disabled="!currentSolutionCompleted"
+        variant="success"
+        class="save-button"
+      >
+        <i class="fa fa-floppy-o" />
+        Save Model
+      </b-button>
+      <create-labeling-form
+        v-if="explorerLabelState"
+        class="d-flex justify-content-between h-100 align-items-center"
+        :low-shot-summary="labelSummary"
+      />
+    </div>
     <!-- Right side -->
     <b-navbar-nav class="ml-auto">
       <b-nav-item :href="helpURL">Help</b-nav-item>
@@ -117,7 +196,7 @@ import {
   gotoSearch,
   gotoSelectData,
 } from "../util/nav";
-import { appGetters, requestGetters } from "../store";
+import { appGetters, datasetGetters, requestGetters } from "../store";
 import { getters as routeGetters } from "../store/route/module";
 import {
   APPLY_MODEL_ROUTE,
@@ -130,15 +209,32 @@ import {
   PREDICTION_ROUTE,
   DATA_EXPLORER_ROUTE,
 } from "../store/route/index";
+import { isFittedSolutionIdSavedAsModel } from "../util/models";
 import { restoreView } from "../util/view";
 import Vue from "vue";
 import { ExplorerStateNames } from "../util/explorer";
 import { EventList } from "../util/events";
 import { createRouteEntry } from "../util/routes";
+import { Variable, VariableSummary } from "../store/dataset";
+import { getSolutionById } from "../util/solutions";
+import { Solution, SolutionStatus } from "../store/requests";
+// components
+import CreateSolutionsForm from "../components/CreateSolutionsForm.vue";
+import CreateLabelingForm from "../components/labelingComponents/CreateLabelingForm.vue";
+import {
+  getAllVariablesSummaries,
+  hasRole,
+  LOW_SHOT_RANK_COLUMN_PREFIX,
+  LOW_SHOT_SCORE_COLUMN_PREFIX,
+} from "../util/data";
+import { DISTIL_ROLES } from "../util/types";
 
 export default Vue.extend({
   name: "NavBar",
-
+  components: {
+    CreateSolutionsForm,
+    CreateLabelingForm,
+  },
   data() {
     return {
       APPLY_MODEL_ROUTE: APPLY_MODEL_ROUTE,
@@ -199,6 +295,12 @@ export default Vue.extend({
     explorerPredictionState(): boolean {
       return this.dataExplorerState === ExplorerStateNames.PREDICTION_VIEW;
     },
+    explorerLabelState(): boolean {
+      return this.dataExplorerState === ExplorerStateNames.LABEL_VIEW;
+    },
+    trainingVariables(): Variable[] {
+      return routeGetters.getTrainingVariables(this.$store) ?? [];
+    },
     hasDataset(): boolean {
       return !!this.dataset;
     },
@@ -213,8 +315,83 @@ export default Vue.extend({
         return p.hasPredictions;
       });
     },
+    isActiveSolutionSaved(): boolean | undefined {
+      return isFittedSolutionIdSavedAsModel(
+        requestGetters.getActiveSolution(this.$store)?.fittedSolutionId
+      );
+    },
+    isSingleSolution(): boolean {
+      return routeGetters.isSingleSolution(this.$store);
+    },
     version(): string {
       return appGetters.getAllSystemVersions(this.$store);
+    },
+    isTimeseries(): boolean {
+      return routeGetters.isTimeseries(this.$store);
+    },
+    currentSolutionCompleted(): boolean {
+      let solutionRequests = requestGetters.getRelevantSolutionRequests(
+        this.$store
+      );
+      let solutions = [] as Solution[];
+      const solutionId = routeGetters.getRouteSolutionId(this.$store);
+      if (this.isSingleSolution) {
+        const solution = getSolutionById(
+          requestGetters.getSolutions(this.$store),
+          solutionId
+        );
+        if (solution) {
+          solutions = [solution];
+          solutionRequests = [
+            solutionRequests.find(
+              (request) => request.requestId === solution.requestId
+            ),
+          ];
+        }
+      } else {
+        // multiple solutions
+        solutions = requestGetters.getRelevantSolutions(this.$store);
+      }
+
+      return solutions.some(
+        (s) =>
+          s.solutionId === solutionId &&
+          s.progress === SolutionStatus.SOLUTION_COMPLETED
+      );
+    },
+    variables(): Variable[] {
+      const labelName = routeGetters.getRouteLabel(this.$store);
+      const labelScoreName = LOW_SHOT_SCORE_COLUMN_PREFIX + labelName;
+      const labelRankName = LOW_SHOT_RANK_COLUMN_PREFIX + labelName;
+      return datasetGetters.getVariables(this.$store).filter((v) => {
+        return (
+          v.key !== labelScoreName &&
+          v.key !== labelRankName &&
+          !hasRole(v, DISTIL_ROLES.SystemData)
+        );
+      });
+    },
+    summaries(): VariableSummary[] {
+      const summaryDictionary = datasetGetters.getVariableSummariesDictionary(
+        this.$store
+      );
+      const dataset = routeGetters.getRouteDataset(this.$store);
+      return getAllVariablesSummaries(
+        this.variables,
+        summaryDictionary,
+        dataset
+      );
+    },
+    labelSummary(): VariableSummary {
+      const label = routeGetters.getRouteLabel(this.$store);
+      return this.summaries.find((s) => {
+        return s.key === label;
+      });
+    },
+    isCreateModelPossible(): boolean {
+      const training = routeGetters.getTrainingVariables(this.$store);
+      // check that we have some target and training variables.
+      return this.target != null && training?.length > 0;
     },
   },
 
@@ -237,6 +414,12 @@ export default Vue.extend({
     },
     isState(state: ExplorerStateNames): boolean {
       return state === this.dataExplorerState;
+    },
+    onHoverHint(hint: EventList.HINTS) {
+      this.$eventBus.$emit(hint, true);
+    },
+    cancelHint(hint: EventList.HINTS) {
+      this.$eventBus.$emit(hint, false);
     },
     // onHome() {
     //   gotoHome(this.$router);

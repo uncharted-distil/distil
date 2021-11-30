@@ -60,6 +60,9 @@ export default Vue.extend({
   components: {
     NavBar,
   },
+  beforeMount() {
+    appActions.fetchConfig(this.$store);
+  },
   methods: {
     async onExplorerNav(state: ExplorerStateNames) {
       const dataExplorer = (this.$refs.view as unknown) as DataExplorerRef;
@@ -80,8 +83,50 @@ export default Vue.extend({
       }
     },
   },
-  beforeMount() {
-    appActions.fetchConfig(this.$store);
-  },
 });
 </script>
+
+<style>
+/*
+  This is global css.
+*/
+/*
+pulse is used for hints
+*/
+.pulse {
+  overflow: visible;
+  position: relative;
+}
+.pulse:before {
+  content: "";
+  display: block;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background-color: inherit;
+  border-radius: inherit;
+  transition: opacity 0.3s, transform 0.3s;
+  animation: pulse-animation 1s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+  z-index: -1;
+  animation-iteration-count: 1;
+}
+.z-index-1 {
+  z-index: 1;
+}
+@keyframes pulse-animation {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+</style>
