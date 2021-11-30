@@ -24,13 +24,14 @@
           <i class="fa fa-globe"></i>
         </div>
         <button-training-target
+          v-if="enableTrainingTarget"
           :variable="summary.key"
           :datasetName="datasetName"
           :activeVariables="activeVariables"
         />
       </div>
       <div class="d-flex align-items-center my-1">
-        <button-explore :variable="target" />
+        <button-explore v-if="enableExplore" :variable="target" />
         <type-change-menu
           :geocoordinate="true"
           :dataset="dataset"
@@ -156,6 +157,9 @@ export default Vue.extend({
   },
 
   props: {
+    datasetName: { type: String as () => string, default: null },
+    enableExplore: Boolean as () => boolean,
+    enableTrainingTarget: Boolean as () => boolean,
     activeVariables: {
       type: Array as () => Variable[],
       default: () => [] as Variable[],
@@ -170,7 +174,6 @@ export default Vue.extend({
       default: Activity.DATA_PREPARATION,
     },
     expanded: { type: Boolean, default: false },
-    datasetName: { type: String as () => string, default: null },
     include: { type: Boolean as () => boolean, default: true },
     typeChangeEvent: { type: String as () => string, default: "" },
   },
