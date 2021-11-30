@@ -35,13 +35,14 @@
             {{ summary.label.toUpperCase() }}
           </div>
           <button-training-target
+            v-if="enableTrainingTarget"
             :variable="summary.key"
             :dataset-name="datasetName"
             :active-variables="activeVariables"
           />
         </div>
         <div class="d-flex align-items-center my-1">
-          <button-explore :variable="summary.key" />
+          <button-explore v-if="enableExplore" :variable="summary.key" />
           <color-scale-drop-down
             v-if="geoEnabled && isClustering"
             :variable-summary="summary"
@@ -138,11 +139,13 @@ export default Vue.extend({
   },
 
   props: {
+    datasetName: { type: String as () => string, default: null },
+    enableExplore: Boolean as () => boolean,
+    enableTrainingTarget: Boolean as () => boolean,
     activeVariables: {
       type: Array as () => Variable[],
       default: () => [] as Variable[],
     },
-    datasetName: { type: String as () => string, default: null },
     enabledTypeChanges: Array as () => string[],
     enableHighlighting: Boolean as () => boolean,
     expandCollapse: Function as () => Function,
@@ -457,7 +460,6 @@ export default Vue.extend({
 
 .facet-header-container {
   color: rgba(0, 0, 0, 0.54);
-  overflow-y: scroll !important;
 }
 
 .facet-header-container-no-scroll {

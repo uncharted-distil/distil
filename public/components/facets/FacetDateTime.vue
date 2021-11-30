@@ -32,6 +32,7 @@
             {{ summary.label.toUpperCase() }}
           </div>
           <button-training-target
+            v-if="enableTrainingTarget"
             :variable="summary.key"
             :datasetName="datasetName"
             :activeVariables="activeVariables"
@@ -39,7 +40,7 @@
         </div>
         <importance-bars v-if="enableImportance" :importance="importance" />
         <div class="d-flex align-items-center my-1">
-          <button-explore :variable="summary.key" />
+          <button-explore v-if="enableExplore" :variable="summary.key" />
           <color-scale-drop-down
             v-if="geoEnabled"
             :variable-summary="summary"
@@ -125,6 +126,8 @@ export default Vue.extend({
 
   props: {
     datasetName: String as () => string,
+    enableExplore: Boolean as () => boolean,
+    enableTrainingTarget: Boolean as () => boolean,
     activeVariables: {
       type: Array as () => Variable[],
       default: () => [] as Variable[],

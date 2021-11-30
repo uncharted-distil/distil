@@ -60,6 +60,8 @@
           </template>
           <template v-else-if="summary.varType === 'timeseries'">
             <facet-timeseries
+              :enable-explore="enableExplore"
+              :enable-training-target="enableTrainingTarget"
               :style="facetColors"
               :summary="summary"
               :highlights="highlights"
@@ -82,6 +84,8 @@
           </template>
           <template v-else-if="isGeoLocated(summary.varType)">
             <geocoordinate-facet
+              :enable-explore="enableExplore"
+              :enable-training-target="enableTrainingTarget"
               :active-variables="activeVariables"
               :summary="summary"
               :enable-highlighting="enableHighlighting"
@@ -100,6 +104,8 @@
           </template>
           <template v-else-if="isImage(summary.varType)">
             <facet-image
+              :enable-explore="enableExplore"
+              :enable-training-target="enableTrainingTarget"
               :style="facetColors"
               :summary="summary"
               :active-variables="activeVariables"
@@ -124,6 +130,8 @@
           </template>
           <template v-else-if="summary.varType === 'dateTime'">
             <facet-date-time
+              :enable-explore="enableExplore"
+              :enable-training-target="enableTrainingTarget"
               :style="facetColors"
               :summary="summary"
               :active-variables="activeVariables"
@@ -150,6 +158,8 @@
           </template>
           <template v-else-if="summary.type === 'categorical'">
             <facet-categorical
+              :enable-explore="enableExplore"
+              :enable-training-target="enableTrainingTarget"
               :style="facetColors"
               :active-variables="activeVariables"
               :summary="summary"
@@ -174,6 +184,8 @@
           </template>
           <template v-else-if="summary.type === 'numerical'">
             <facet-numerical
+              :enable-explore="enableExplore"
+              :enable-training-target="enableTrainingTarget"
               :style="facetColors"
               :active-variables="activeVariables"
               :summary="summary"
@@ -289,6 +301,8 @@ export default Vue.extend({
   },
 
   props: {
+    enableExplore: Boolean,
+    enableTrainingTarget: Boolean,
     disabledColorScales: {
       type: Map,
       default: () => new Map(),

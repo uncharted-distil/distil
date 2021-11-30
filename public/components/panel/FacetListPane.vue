@@ -40,6 +40,8 @@
       />
     </header>
     <variable-facets
+      :enable-explore="enableExplore"
+      :enable-training-target="enableTrainingTarget"
       enable-highlighting
       enable-search
       enable-type-change
@@ -116,6 +118,8 @@ export default Vue.extend({
       type: Array as () => VariableSummary[],
       default: () => [] as VariableSummary[],
     },
+    enableExplore: Boolean,
+    enableTrainingTarget: Boolean,
     enableColorScales: { type: Boolean as () => boolean, default: false },
     include: { type: Boolean as () => boolean, default: true },
     enableFooter: { type: Boolean as () => boolean, default: false },
