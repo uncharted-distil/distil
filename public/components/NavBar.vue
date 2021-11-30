@@ -87,6 +87,9 @@
           >
             <i class="fa fa-line-chart nav-icon" /> View Predictions
           </b-nav-item>
+          <b-nav-item v-if="explorerLabelState" :active="explorerLabelState">
+            <i class="fa fa-tag nav-icon" /> Label Data
+          </b-nav-item>
         </template>
       </b-navbar-nav>
     </b-collapse>
