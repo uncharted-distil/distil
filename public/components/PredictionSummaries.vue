@@ -95,6 +95,13 @@
           </b-form-checkbox>
         </b-form-group>
       </form>
+      <template v-slot:modal-footer>
+        <b-button variant="secondary" @click="onCancel"> cancel </b-button>
+        <b-button variant="primary" @click="createDataset" :disabled="isSaving">
+          <b-spinner v-if="isSaving" small />
+          <span v-else>ok</span>
+        </b-button>
+      </template>
     </b-modal>
 
     <b-button
@@ -106,7 +113,7 @@
       Export Predictions
     </b-button>
 
-    <b-modal id="export" title="Export" @ok="savePredictions">
+    <b-modal id="export" title="Export">
       <form ref="exportPredictionsForm">
         <b-form-group
           label="Export File Name"
@@ -194,6 +201,7 @@ export default Vue.extend({
       formats: ["csv", "geojson"],
       datasetModelNameState: false,
       datasetExportNameState: null,
+      isSaving: false,
     };
   },
 
@@ -279,7 +287,19 @@ export default Vue.extend({
         this.$emit(EventList.SUMMARIES.FETCH_SUMMARY_PREDICTION, requestId);
       }
     },
-
+    onCancel() {
+      this.$bvModal.hide("save");
+      this.resetData();
+    },
+    resetData() {
+      this.saveFileName = "";
+      this.newDatasetName = "";
+      this.datasetDescription = "";
+      this.includeAllFeatures = true;
+      this.datasetModelNameState = false;
+      this.datasetExportNameState = null;
+      this.isSaving = false;
+    },
     onClick(key: string) {
       // Note that the key is of the form <requestId>:predicted and so needs to be parsed.
       const requestId = getIDFromKey(key);
@@ -470,6 +490,7 @@ export default Vue.extend({
     },
 
     async createDataset(bvModalEvt) {
+      this.isSaving = true;
       if (!this.newDatasetName) {
         bvModalEvt.preventDefault();
         this.datasetModelNameState = false;
@@ -486,6 +507,7 @@ export default Vue.extend({
           : null,
       });
       const location = "b-toaster-bottom-right";
+      this.isSaving = false;
       if (err) {
         this.$bvToast.toast(err.message, {
           title: "Error creating dataset ${this.newDatasetName}",
@@ -496,6 +518,8 @@ export default Vue.extend({
         });
         return;
       }
+      // hide and reset modal data
+      this.onCancel();
       this.$bvToast.toast(`Success`, {
         title: `Success creating dataset ${this.newDatasetName}`,
         solid: true,
