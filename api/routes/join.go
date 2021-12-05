@@ -341,7 +341,7 @@ func joinPrefeaturized(dataStorage api.DataStorage, metaStorage api.MetadataStor
 	joinLeft.DatasetPath = metaLeft.LearningDataset
 	existingVarLeft := map[string]bool{}
 	for _, v := range metaLeft.GetMainDataResource().Variables {
-		existingVarLeft[v.HeaderName] = true
+		existingVarLeft[v.Key] = true
 	}
 
 	// join as normal
