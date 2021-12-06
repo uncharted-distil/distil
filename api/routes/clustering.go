@@ -164,6 +164,25 @@ func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorag
 				handleError(w, err)
 				return
 			}
+			clusteredVariable := &model.Variable{}
+			// update the variable grouping
+			for _, v := range ds.Variables {
+				if v.Grouping != nil && v.Grouping.GetIDCol() == variable {
+					clusteredVariable = v
+				}
+			}
+			if clusteredVariable.Grouping != nil {
+				if model.IsTimeSeries(clusteredVariable.Grouping.GetType()) {
+					clusteredVariable.Grouping.(*model.TimeseriesGrouping).ClusterCol = clusterVarName
+				} else if model.IsMultiBandImage(clusteredVariable.Grouping.GetType()) {
+					clusteredVariable.Grouping.(*model.MultiBandImageGrouping).ClusterCol = clusterVarName
+				}
+				err = metaStorage.UpdateVariable(dataset, clusteredVariable.Key, clusteredVariable)
+				if err != nil {
+					handleError(w, err)
+					return
+				}
+			}
 			// update the batches
 			err = dataStorage.UpdateVariableBatch(storageName, clusterVarName, clusteredData)
 			if err != nil {

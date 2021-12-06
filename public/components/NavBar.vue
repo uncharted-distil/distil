@@ -105,7 +105,7 @@
       <!-- Disabled buttons are not emitting mouse over events so we use an outer div -->
       <!-- select target hint -->
       <div
-        v-if="explorerSelectState && target === null"
+        v-if="!isActive(SEARCH_ROUTE) && explorerSelectState && target === null"
         @mouseenter="onHoverHint(EventList.HINTS.SELECT_TARGET)"
         @mouseleave="cancelHint(EventList.CANCEL_HINTS.SELECT_TARGET)"
       >
