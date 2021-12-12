@@ -191,16 +191,17 @@ export const RESULT_EVENT_HANDLERS = {
    * It updates the variable with a cluster column
    * then updates the variable summary with the new cluster datamode
    */
-  [EventList.VARIABLES.APPLY_CLUSTER_EVENT]: function () {
+  [EventList.VARIABLES.APPLY_CLUSTER_EVENT]: async function () {
     const self = (this as unknown) as DataExplorerRef;
     // fetch the var modes map
     const varModesMap = routeGetters.getDecodedVarModes(store);
     const clusterVars = new Set<string>();
+    await self.state.fetchVariables();
     // find any grouped vars that are using this cluster data and update their
     // mode to cluster now that data is available
     datasetGetters
       .getGroupings(store)
-      .filter((v) => isClusterType(v.colType))
+      .filter((v) => isClusterType(v.colType) && v.datasetName === self.dataset)
       .forEach((v) => {
         if (v.grouping.clusterCol) {
           varModesMap.set(v.key, SummaryMode.Cluster);
@@ -211,7 +212,7 @@ export const RESULT_EVENT_HANDLERS = {
     // find any image variables using this cluster data and update their mode
     datasetGetters
       .getVariables(store)
-      .filter((v) => v.colType === IMAGE_TYPE)
+      .filter((v) => v.colType === IMAGE_TYPE && v.datasetName === self.dataset)
       .forEach((v) => {
         varModesMap.set(v.key, SummaryMode.Cluster);
       });
