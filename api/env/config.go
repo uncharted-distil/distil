@@ -97,7 +97,7 @@ type Config struct {
 	ServiceRetryCount            int     `env:"SERVICE_RETRY_COUNT" envDefault:"10"`
 	TrainTestSplit               float64 `env:"TRAIN_TEST_SPLIT" envDefault:"0.9"`
 	TrainTestSplitTimeSeries     float64 `env:"TRAIN_TEST_SPLIT_TIMESERIES" envDefault:"0.9"`
-	UpscaleOnCPU                 bool    `env:"UPSCALE_ON_CPU" envDefault:"false"`
+	UpscaleOnCPU                 bool    `env:"UPSCALE_ON_CPU" envDefault:"true"`
 	VerboseError                 bool    `env:"VERBOSE_ERROR" envDefault:"false"`
 }
 

@@ -101,7 +101,7 @@ export const VARIABLE_SUMMARY_BASE = "summary";
 export const VARIABLE_SUMMARY_CONFIDENCE = "confidence";
 export const VARIABLE_SUMMARY_RANKING = "rank";
 
-export const NUM_PER_PAGE = 10;
+export const NUM_PER_PAGE = 15;
 export const NUM_PER_TARGET_PAGE = 9;
 
 export const DATAMART_PROVENANCE_NYU = "NYU";
