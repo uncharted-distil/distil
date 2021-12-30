@@ -28,17 +28,83 @@ import (
 // Clean will clean bad data for further processing.
 func Clean(schemaFile string, dataset string, params *IngestParams, config *IngestTaskConfig) (string, error) {
 	outputPath := createDatasetPaths(schemaFile, dataset, compute.D3MLearningData)
+	pip, err := createCleaningPipeline(schemaFile, dataset, params, config)
+	if err != nil {
+		return "", err
+	}
 
+	// pipeline execution assumes datasetDoc.json as schema file
+	datasetURI, err := submitPipeline([]string{outputPath.sourceFolder}, pip.steps, true)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to run format pipeline")
+	}
+
+	// output the header
+	outputPathURI, err := processCleaningPipelineOutput(schemaFile, dataset)(datasetURI)
+	if err != nil {
+		return "", err
+	}
+
+	return outputPathURI, nil
+}
+
+func processCleaningPipelineOutput(schemaFile string, dataset string) func(string) (string, error) {
+	return func(datasetURI string) (string, error) {
+		outputPath := createDatasetPaths(schemaFile, dataset, compute.D3MLearningData)
+		// load metadata from original schema
+		meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile, true)
+		if err != nil {
+			return "", errors.Wrap(err, "unable to load original schema file")
+		}
+		mainDR := meta.GetMainDataResource()
+
+		// output the header
+		output := [][]string{}
+		header := make([]string, len(mainDR.Variables))
+		for _, v := range mainDR.Variables {
+			header[v.Index] = v.HeaderName
+		}
+		output = append(output, header)
+
+		// parse primitive response (raw data from the input dataset)
+		// first row of the data is the header
+		// first column of the data is the dataframe index
+		readStorage := serialization.GetStorage(datasetURI)
+		csvData, err := readStorage.ReadData(datasetURI)
+		if err != nil {
+			return "", errors.Wrap(err, "unable to parse clean result")
+		}
+		output = append(output, csvData[1:]...)
+
+		// output the data
+		datasetStorage := serialization.GetStorage(outputPath.outputData)
+		err = datasetStorage.WriteData(outputPath.outputData, output)
+		if err != nil {
+			return "", errors.Wrap(err, "error writing clustered output")
+		}
+		mainDR.ResPath = outputPath.outputData
+
+		// write the new schema to file
+		err = datasetStorage.WriteMetadata(outputPath.outputSchema, meta, true, false)
+		if err != nil {
+			return "", errors.Wrap(err, "unable to store cluster schema")
+		}
+
+		return outputPath.outputSchema, nil
+	}
+}
+
+func createCleaningPipeline(schemaFile string, dataset string, params *IngestParams, config *IngestTaskConfig) (*Pipeline, error) {
 	// load metadata from original schema
 	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile, true)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to load original schema file")
+		return nil, errors.Wrap(err, "unable to load original schema file")
 	}
 	mainDR := meta.GetMainDataResource()
 
 	metaStorage, err := params.MetaCtor()
 	if err != nil {
-		return "", errors.Wrap(err, "unable to initialize metadata storage")
+		return nil, errors.Wrap(err, "unable to initialize metadata storage")
 	}
 
 	vars := []*model.Variable{}
@@ -46,7 +112,7 @@ func Clean(schemaFile string, dataset string, params *IngestParams, config *Inge
 	if exists {
 		vars, err = metaStorage.FetchVariables(meta.ID, false, false, false)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 	} else if params.DefinitiveTypes != nil {
 		for _, v := range mainDR.Variables {
@@ -61,46 +127,12 @@ func Clean(schemaFile string, dataset string, params *IngestParams, config *Inge
 	// create & submit the solution request
 	pip, err := description.CreateDataCleaningPipeline("Mary Poppins", "", vars, config.ImputeEnabled)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to create format pipeline")
+		return nil, errors.Wrap(err, "unable to create format pipeline")
 	}
 
-	// pipeline execution assumes datasetDoc.json as schema file
-	datasetURI, err := submitPipeline([]string{outputPath.sourceFolder}, pip, true)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to run format pipeline")
-	}
-
-	// output the header
-	output := [][]string{}
-	header := make([]string, len(mainDR.Variables))
-	for _, v := range mainDR.Variables {
-		header[v.Index] = v.HeaderName
-	}
-	output = append(output, header)
-
-	// parse primitive response (raw data from the input dataset)
-	// first row of the data is the header
-	// first column of the data is the dataframe index
-	readStorage := serialization.GetStorage(datasetURI)
-	csvData, err := readStorage.ReadData(datasetURI)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to parse clean result")
-	}
-	output = append(output, csvData[1:]...)
-
-	// output the data
-	datasetStorage := serialization.GetStorage(outputPath.outputData)
-	err = datasetStorage.WriteData(outputPath.outputData, output)
-	if err != nil {
-		return "", errors.Wrap(err, "error writing clustered output")
-	}
-	mainDR.ResPath = outputPath.outputData
-
-	// write the new schema to file
-	err = datasetStorage.WriteMetadata(outputPath.outputSchema, meta, true, false)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to store cluster schema")
-	}
-
-	return outputPath.outputSchema, nil
+	return &Pipeline{
+		shouldCache:           true,
+		steps:                 pip,
+		resultParsingCallback: map[string]func(string) (string, error){"first": processCleaningPipelineOutput(schemaFile, dataset)},
+	}, err
 }

@@ -39,6 +39,14 @@ var (
 	client *compute.Client
 )
 
+// Pipeline are submitted to the auto ml server. Once execution of the pipeline
+// completes, the outputs are passed to the parsing callback.
+type Pipeline struct {
+	shouldCache           bool
+	steps                 *description.FullySpecifiedPipeline
+	resultParsingCallback map[string]func(string) (string, error)
+}
+
 // FeatureRequest captures the properties of a request to a primitive.
 type FeatureRequest struct {
 	SourceVariableName  string
@@ -56,6 +64,19 @@ type datasetCopyPath struct {
 	outputData   string
 }
 
+// AddPipeline appends a pipeline to the existing pipeline.
+func (p *Pipeline) AddPipeline(addition *Pipeline) error {
+	err := p.steps.AddPipeline(addition.steps)
+	if err != nil {
+		return err
+	}
+	for k, c := range addition.resultParsingCallback {
+		p.resultParsingCallback[k] = c
+	}
+
+	return nil
+}
+
 // SetClient sets the compute client to use when invoking primitives.
 func SetClient(computeClient *compute.Client) {
 	client = computeClient
@@ -63,6 +84,14 @@ func SetClient(computeClient *compute.Client) {
 
 func submitPipeline(datasets []string, step *description.FullySpecifiedPipeline, shouldCache bool) (string, error) {
 	return sr.SubmitPipeline(client, datasets, nil, nil, step, nil, shouldCache)
+}
+
+func submitSpecifiedPipeline(datasets []string, pipeline *Pipeline) (string, error) {
+	outputURI, err := sr.SubmitPipeline(client, datasets, nil, nil, pipeline.steps, nil, pipeline.shouldCache)
+	if err != nil {
+		return "", err
+	}
+	return pipeline.resultParsingCallback["first"](outputURI)
 }
 
 func getD3MIndexField(dr *model.DataResource) int {
