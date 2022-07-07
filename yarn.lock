@@ -497,30 +497,41 @@
     semver "^7.3.2"
     tsutils "^3.17.1"
 
-"@uncharted.software/css-options@^3.2.0":
-  version "3.2.0"
-  resolved "https://registry.yarnpkg.com/@uncharted.software/css-options/-/css-options-3.2.0.tgz#2b3ea4cdc3fc39dd860e69e2c90076d2c69d3193"
-  integrity sha512-2txsv+5tHS0Fy4jf8HanIkcIPsRuc3vY0Gwv9NzyoK9asUgKLKEOPmjkKohMYm/eQzjJcCayBa9Dh5aV1tJd4A==
+"@uncharted.software/css-options@^3.2.4":
+  version "3.2.5"
+  resolved "https://registry.yarnpkg.com/@uncharted.software/css-options/-/css-options-3.2.5.tgz#eb490ec3a4c226b6c5ad7a807658b76b44398d51"
+  integrity sha512-Qdp0TSmfSosbrjo5z0s9QTOVRYfaFKxEsbaNwpCCC7ac+87diVtUZEBa/S4KEpTcISwxvmo8It5UFNLMt+quwg==
 
-"@uncharted.software/facets-core@^3.1.0":
-  version "3.2.0"
-  resolved "https://registry.yarnpkg.com/@uncharted.software/facets-core/-/facets-core-3.2.0.tgz#42c8a6c0e1c4bdc8d7b6a60c482dd59ff002ca24"
-  integrity sha512-ylP1Prly1tKJr2Z0XA9wVSm3IyVnxe6edGPmOP9eZFoPEAItmg7L2yrX2Zz6542RgXusSZyv75o/fEwh47BEeg==
+"@uncharted.software/facets-core@3.2.4":
+  version "3.2.4"
+  resolved "https://registry.yarnpkg.com/@uncharted.software/facets-core/-/facets-core-3.2.4.tgz#5157fcb019d81f5464a01edb617a8843c4a262ad"
+  integrity sha512-j7TsasVaWeox1oc9zFowjGcridnCNKGpwaiwPIRonjymtraXXGkvi/G1ZWd+raRFKJDCJ5tDQlGe813bUKG8hw==
   dependencies:
     "@fortawesome/free-regular-svg-icons" "^5.10.2"
     "@fortawesome/free-solid-svg-icons" "^5.10.2"
-    "@uncharted.software/css-options" "^3.2.0"
+    "@uncharted.software/css-options" "^3.2.4"
     lit-element "^2.2.1"
     lit-html "^1.1.2"
 
-"@uncharted.software/facets-plugins@^3.1.0":
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/@uncharted.software/facets-plugins/-/facets-plugins-3.1.0.tgz#eed7a8f5f68e7825d24228fae9b71a51517b901a"
-  integrity sha512-lZ8ahgYZIyhhHA3sbD/DfIb5gCP+9dzEn29cTgUKeNP7QGCNH4G88IOvQbWYaIOWj9VNmiOHwfYSlJbY7CeWQw==
+"@uncharted.software/facets-core@^3.2.5":
+  version "3.2.5"
+  resolved "https://registry.yarnpkg.com/@uncharted.software/facets-core/-/facets-core-3.2.5.tgz#192997dc0b616656a963dd694f9a383d59de41ed"
+  integrity sha512-8QM7ke8SgJrY+bkHNNumYsSFcMwGgonLMRve2a7UiiGtawGYKtNLuaQAGzCP1V8mrubBRrAVkxaXoU+06T3w6w==
   dependencies:
     "@fortawesome/free-regular-svg-icons" "^5.10.2"
     "@fortawesome/free-solid-svg-icons" "^5.10.2"
-    "@uncharted.software/facets-core" "^3.1.0"
+    "@uncharted.software/css-options" "^3.2.4"
+    lit-element "^2.2.1"
+    lit-html "^1.1.2"
+
+"@uncharted.software/facets-plugins@^3.2.4":
+  version "3.2.5"
+  resolved "https://registry.yarnpkg.com/@uncharted.software/facets-plugins/-/facets-plugins-3.2.5.tgz#6fde5c04ef9f4563005d760e8996a07d9f1f9a7d"
+  integrity sha512-l7ojt/uZjjGWWWPxiIqn5tNgu3MKr4MTnxj3Xw6b5VJa5iUUJBcNoi/Zay1BcC6rzpWJGKYfm5F2IYJubQjW/Q==
+  dependencies:
+    "@fortawesome/free-regular-svg-icons" "^5.10.2"
+    "@fortawesome/free-solid-svg-icons" "^5.10.2"
+    "@uncharted.software/facets-core" "^3.2.5"
     lit-element "^2.2.1"
     lit-html "^1.1.2"
 
@@ -1285,12 +1296,7 @@ caniuse-api@^3.0.0:
     lodash.memoize "^4.1.2"
     lodash.uniq "^4.5.0"
 
-caniuse-lite@^1.0.0, caniuse-lite@^1.0.30000792, caniuse-lite@^1.0.30000805, caniuse-lite@^1.0.30001164:
-  version "1.0.30001271"
-  resolved "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30001271.tgz"
-  integrity sha512-BBruZFWmt3HFdVPS8kceTBIguKxu4f99n5JNp06OlPD/luoAMIaIK5ieV5YjnBLH3Nysai9sxj9rpJj4ZisXOA==
-
-caniuse-lite@^1.0.30001271:
+caniuse-lite@^1.0.0, caniuse-lite@^1.0.30000792, caniuse-lite@^1.0.30000805, caniuse-lite@^1.0.30001164, caniuse-lite@^1.0.30001271:
   version "1.0.30001271"
   resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001271.tgz#0dda0c9bcae2cf5407cd34cac304186616cc83e8"
   integrity sha512-BBruZFWmt3HFdVPS8kceTBIguKxu4f99n5JNp06OlPD/luoAMIaIK5ieV5YjnBLH3Nysai9sxj9rpJj4ZisXOA==
@@ -4072,10 +4078,10 @@ moment-timezone@^0.5.32:
   dependencies:
     moment ">= 2.9.0"
 
-"moment@>= 2.9.0", moment@^2.29.1:
-  version "2.29.1"
-  resolved "https://registry.yarnpkg.com/moment/-/moment-2.29.1.tgz#b2be769fa31940be9eeea6469c075e35006fa3d3"
-  integrity sha512-kHmoybcPV8Sqy59DwNDY3Jefr64lK/by/da0ViFcuA4DH0vQg5Q6Ze5VimxkfQNSC+Mls/Kx53s7TjP1RhFEDQ==
+"moment@>= 2.9.0", moment@^2.29.4:
+  version "2.29.4"
+  resolved "https://registry.yarnpkg.com/moment/-/moment-2.29.4.tgz#3dbe052889fe7c1b2ed966fcb3a77328964ef108"
+  integrity sha512-5LC9SOxjSc2HF6vO2CyuTDNivEdoz2IvyJJGj6X8DJ0eFyfszE0QiEd+iXmBvUP3WHxSjFH/vIsA0EN00cgr8w==
 
 move-concurrently@^1.0.1:
   version "1.0.1"
