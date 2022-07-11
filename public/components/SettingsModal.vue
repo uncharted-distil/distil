@@ -131,6 +131,18 @@
         </small>
       </p>
     </b-form-group>
+    <b-form-group
+      v-if="multipleTasks"
+      label="Model Task:"
+      label-for="model-task"
+      description="Selects model task."
+    >
+      <b-form-select v-model="selectedTask" name="model-task" size="sm">
+        <b-form-select-option v-for="task in tasks" :key="task" :value="task">
+          {{ task }}
+        </b-form-select-option>
+      </b-form-select>
+    </b-form-group>
   </b-modal>
 </template>
 
@@ -194,6 +206,20 @@ export default Vue.extend({
           text: m.displayName,
         };
       });
+    },
+
+    multipleTasks(): boolean {
+      // hack to only really be true when classification and segmentation is possible
+      return (
+        this.task.includes(TaskTypes.REMOTE_SENSING) && this.tasks.length > 1
+      );
+    },
+
+    tasks(): string[] {
+      // hack to only really be allow for classification and segmentation
+      return this.task
+        .split(",")
+        .filter((t) => t != TaskTypes.REMOTE_SENSING && t != TaskTypes.BINARY);
     },
 
     task(): string {

@@ -56,6 +56,10 @@ type basicSplitter struct {
 	trainTestSplit float64
 }
 
+type copySplitter struct {
+	rowLimits rowLimits
+}
+
 type stratifiedSplitter struct {
 	rowLimits      rowLimits
 	targetCol      int
@@ -198,6 +202,50 @@ func (b *basicSplitter) split(data [][]string) ([][]string, [][]string, error) {
 }
 
 func (b *basicSplitter) sample(data [][]string, maxRows int) [][]string {
+	output := [][]string{}
+	output, _ = shuffleAndWrite(data[1:], -1, maxRows, 0, false, output, nil, float64(1))
+
+	return output
+}
+
+func (c *copySplitter) hash(schemaFile string, params ...interface{}) (uint64, error) {
+	// generate the hash from the params
+	hashStruct := struct {
+		Schema    string
+		Copy      bool
+		RowLimits rowLimits
+		Params    []interface{}
+	}{
+		Schema:    schemaFile,
+		Copy:      true,
+		RowLimits: c.rowLimits,
+		Params:    params,
+	}
+	hash, err := hashstructure.Hash(hashStruct, nil)
+	if err != nil {
+		return 0, errors.Wrap(err, "failed to generate persisted data hash")
+	}
+	return hash, nil
+}
+
+func (c *copySplitter) split(data [][]string) ([][]string, [][]string, error) {
+	log.Infof("splitting data using copy splitter...")
+	// create the output
+	outputTrain := [][]string{}
+	outputTest := [][]string{}
+
+	// handle the header
+	inputData, outputTrain, outputTest := splitTrainTestHeader(data, outputTrain, outputTest, true)
+
+	numTrainingRows := c.rowLimits.trainingRows(len(inputData))
+
+	// sample to meet row limit constraints
+	output := c.sample(inputData, numTrainingRows)
+
+	return append(outputTrain, output...), append(outputTest, output...), nil
+}
+
+func (c *copySplitter) sample(data [][]string, maxRows int) [][]string {
 	output := [][]string{}
 	output, _ = shuffleAndWrite(data[1:], -1, maxRows, 0, false, output, nil, float64(1))
 
@@ -495,6 +543,10 @@ func createSplitter(taskType []string, targetFieldIndex int, groupingFieldIndex 
 					groupingCol:    groupingFieldIndex,
 					trainTestSplit: trainTestSplit,
 				},
+			}
+		} else if task == compute.SegmentationTask {
+			return &copySplitter{
+				rowLimits: limits,
 			}
 		}
 	}

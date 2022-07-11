@@ -18,6 +18,8 @@ package model
 import (
 	"fmt"
 
+	"github.com/pkg/errors"
+
 	"github.com/uncharted-distil/distil-compute/model"
 	log "github.com/unchartedsoftware/plog"
 )
@@ -169,6 +171,39 @@ func GetClusterColFromGrouping(group model.BaseGrouping) (string, bool) {
 	}
 
 	return "", false
+}
+
+// BuildFieldMapping builds a mapping from a source field to a target field.
+func BuildFieldMapping(dsID string, dsStorageName string, sourceFieldName string,
+	targetFieldName string, dataStorage DataStorage) (map[string]string, error) {
+	filter := &FilterParams{Variables: []string{sourceFieldName, targetFieldName}}
+
+	// pull back all rows for a group id
+	data, err := dataStorage.FetchData(dsID, dsStorageName, filter, true, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// cycle through results to build the band mapping
+	targetFieldColumn, ok := data.Columns[targetFieldName]
+	if !ok {
+		return nil, errors.Errorf("'%s' column not found in stored data", targetFieldName)
+	}
+	targetFieldColumnIndex := targetFieldColumn.Index
+	sourceColumn, ok := data.Columns[sourceFieldName]
+	if !ok {
+		return nil, errors.Errorf("'%s' column not found in stored data", sourceFieldName)
+	}
+	sourceColumnIndex := sourceColumn.Index
+
+	mapping := map[string]string{}
+	for _, r := range data.Values {
+		sourceData := fmt.Sprintf("%.0f", r[sourceColumnIndex].Value.(float64))
+		fieldData := r[targetFieldColumnIndex].Value.(string)
+		mapping[sourceData] = fieldData
+	}
+
+	return mapping, nil
 }
 
 // UpdateFilterKey updates the supplied filter key to point to a group-specific column, rather than relying on the group variable

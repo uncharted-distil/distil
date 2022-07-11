@@ -18,6 +18,7 @@ package compute
 import (
 	"context"
 	"fmt"
+	"os"
 	"path"
 	"path/filepath"
 	"strconv"
@@ -33,8 +34,11 @@ import (
 	"github.com/uncharted-distil/distil-compute/pipeline"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
+	"github.com/uncharted-distil/distil-compute/primitive/compute/result"
+	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/serialization"
+	"github.com/uncharted-distil/distil/api/util"
 	"github.com/uncharted-distil/distil/api/util/json"
 	log "github.com/unchartedsoftware/plog"
 	"google.golang.org/grpc/codes"
@@ -563,7 +567,6 @@ func describeSolution(client *compute.Client, initialSearchSolutionID string) (*
 
 func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorage api.SolutionStorage,
 	dataStorage api.DataStorage, searchContext pipelineSearchContext) {
-
 	// update request status
 	err := s.persistRequestStatus(s.requestChannel, solutionStorage, searchContext.searchID, searchContext.dataset, compute.RequestRunningStatus)
 	if err != nil {
@@ -629,6 +632,110 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 	// to be notified that the current process is complete
 	//s.finished <- client.EndSearch(context.Background(), searchID)
 	s.finished <- nil
+}
+
+func dispatchSegmentation(s *SolutionRequest, solutionStorage api.SolutionStorage, metaStorage api.MetadataStorage,
+	dataStorage api.DataStorage, client *compute.Client, datasetInputDir string, step *description.FullySpecifiedPipeline) {
+	// need a request ID
+	uuid, err := uuid.NewV4()
+	if err != nil {
+		s.finished <- errors.Wrapf(err, "unable to generate request id")
+		return
+	}
+
+	// create the backing data
+	err = s.persistRequestStatus(s.requestChannel, solutionStorage, uuid.String(), s.Dataset, compute.RequestRunningStatus)
+	if err != nil {
+		s.finished <- err
+		return
+	}
+
+	// run the pipeline
+	resultURI, err := SubmitPipeline(client, []string{datasetInputDir}, nil, nil, step, nil, true)
+	if err != nil {
+		s.finished <- err
+		return
+	}
+
+	// update status and respond to client as needed
+
+	// read the file and parse the output mask
+	result, err := result.ParseResultCSV(resultURI)
+	if err != nil {
+		s.finished <- err
+		return
+	}
+
+	images, err := BuildSegmentationImage(result)
+	if err != nil {
+		s.finished <- err
+		return
+	}
+
+	// get the grouping key since it makes up part of the filename
+	dataset, err := metaStorage.FetchDataset(s.Dataset, true, true, false)
+	if err != nil {
+		s.finished <- err
+		return
+	}
+
+	var groupingKey *model.Variable
+	for _, v := range dataset.Variables {
+		if v.HasRole(model.VarDistilRoleGrouping) {
+			groupingKey = v
+			break
+		}
+	}
+	if groupingKey == nil {
+		s.finished <- errors.Errorf("no grouping found to use for output filename")
+		return
+	}
+
+	// get the d3m index -> grouping key mapping
+	mapping, err := api.BuildFieldMapping(dataset.ID, dataset.StorageName, model.D3MIndexFieldName, groupingKey.Key, dataStorage)
+	if err != nil {
+		s.finished <- err
+		return
+	}
+
+	imageOutputFolder := path.Join(env.GetResourcePath(), dataset.ID, "media")
+	for d3mIndex, imageBytes := range images {
+		imageFilename := path.Join(imageOutputFolder, fmt.Sprintf("%s-segmentation.png", mapping[d3mIndex]))
+		err = util.WriteFileWithDirs(imageFilename, imageBytes, os.ModePerm)
+		if err != nil {
+			s.finished <- err
+			return
+		}
+	}
+
+	s.finished <- nil
+}
+
+func processSegmentation(s *SolutionRequest, client *compute.Client, solutionStorage api.SolutionStorage, metaStorage api.MetadataStorage, dataStorage api.DataStorage) error {
+	// create the fully specified pipeline
+	envConfig, err := env.LoadConfig()
+	if err != nil {
+		return err
+	}
+
+	// fetch the source dataset
+	dataset, err := metaStorage.FetchDataset(s.Dataset, true, true, false)
+	if err != nil {
+		return nil
+	}
+	s.DatasetMetadata = dataset
+
+	datasetInputDir := env.ResolvePath(dataset.Source, dataset.Folder)
+
+	step, err := description.CreateRemoteSensingSegmentationPipeline("segmentation", "basic image segmentation", s.TargetFeature, envConfig.RemoteSensingNumJobs)
+	if err != nil {
+		return err
+	}
+
+	// dispatch it as if it were a model search
+	go dispatchSegmentation(s, solutionStorage, metaStorage, dataStorage, client, datasetInputDir, step)
+
+	return nil
 }
 
 // PersistAndDispatch persists the solution request and dispatches it.
@@ -706,18 +813,6 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 	s.Filters = updatedFilters
 
-	// get the target
-	datasetInputDir := filteredDatasetPath
-	meta, err := serialization.ReadMetadata(path.Join(datasetInputDir, compute.D3MDataSchema))
-	if err != nil {
-		return err
-	}
-	metaVars := meta.GetMainDataResource().Variables
-	targetVariable, err = findVariable(targetVariable.Key, metaVars)
-	if err != nil {
-		return err
-	}
-
 	if dataset.LearningDataset != "" {
 		s.useParquet = true
 		groupingVariableIndex = -1
@@ -733,6 +828,11 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		return err
 	}
 	s.Task = task.Task
+
+	if HasTaskType(task, compute.SegmentationTask) {
+		return processSegmentation(s, client, solutionStorage, metaStorage, dataStorage)
+	}
+
 	// check if TimestampSplitValue is not 0
 	if s.TimestampSplitValue > 0 {
 		found := false
@@ -749,6 +849,24 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		if !found {
 			return errors.New("Timestamp value supplied but no dateTime type existing on dataset")
 		}
+	}
+
+	// HACK:	SEGMENTATION TASK NEEDS TO ACT ON BASE DATASET!
+	//				CURRENTLY SET TO IGNORE PREFILTERING!!
+	if HasTaskType(task, compute.SegmentationTask) {
+		filteredDatasetPath = env.ResolvePath(dataset.Source, dataset.Folder)
+		s.useParquet = false
+	}
+
+	// get the target
+	meta, err := serialization.ReadMetadata(path.Join(filteredDatasetPath, compute.D3MDataSchema))
+	if err != nil {
+		return err
+	}
+	metaVars := meta.GetMainDataResource().Variables
+	targetVariable, err = findVariable(targetVariable.Key, metaVars)
+	if err != nil {
+		return err
 	}
 
 	// when dealing with categorical data we want to stratify
@@ -779,8 +897,30 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	s.Filters = mapFilterKeys(s.Dataset, s.Filters, dataset.Variables)
 
 	// generate the pre-processing pipeline to enforce feature selection and semantic type changes
+	// HACK: IF SEGMENTATION, THEN SUBMIT THE FULLY SPECIFIED PIPELINE!!!
 	var preprocessing *pipeline.PipelineDescription
-	if !client.SkipPreprocessing {
+	if HasTaskType(task, compute.SegmentationTask) {
+		envConfig, err := env.LoadConfig()
+		if err != nil {
+			return err
+		}
+
+		ps, err := description.CreateRemoteSensingSegmentationPipeline("segmentation", "basic image segmentation", s.TargetFeature, envConfig.RemoteSensingNumJobs)
+		if err != nil {
+			return err
+		}
+		preprocessing = ps.Pipeline
+
+		// remove the segmentation task
+		tasksUpdated := []string{}
+		for _, t := range s.Task {
+			if t != compute.SegmentationTask {
+				tasksUpdated = append(tasksUpdated, t)
+			}
+		}
+		s.Task = tasksUpdated
+
+	} else if !client.SkipPreprocessing {
 		if dataset.LearningDataset == "" {
 			preprocessing, err = s.createPreprocessingPipeline(variables, metaStorage)
 		} else {
@@ -846,7 +986,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		searchID:          requestID,
 		dataset:           dataset.ID,
 		storageName:       dataset.StorageName,
-		sourceDatasetURI:  datasetInputDir,
+		sourceDatasetURI:  filteredDatasetPath,
 		trainDatasetURI:   datasetPathTrain,
 		testDatasetURI:    datasetPathTest,
 		produceDatasetURI: datasetPathTest,

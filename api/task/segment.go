@@ -1,3 +1,18 @@
+//
+//   Copyright © 2021 Uncharted Software Inc.
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+
 package task
 
 import (
@@ -63,7 +78,7 @@ func Segment(ds *api.Dataset, dataStorage api.DataStorage, variableName string) 
 	if groupingKey == nil {
 		return "", errors.Errorf("no grouping found to use for output filename")
 	}
-	mapping, err := getFieldMapping(ds, groupingKey.Key, dataStorage)
+	mapping, err := api.BuildFieldMapping(ds.ID, ds.StorageName, model.D3MIndexFieldName, groupingKey.Key, dataStorage)
 	if err != nil {
 		return "", err
 	}
@@ -103,35 +118,4 @@ func Segment(ds *api.Dataset, dataStorage api.DataStorage, variableName string) 
 	}
 
 	return "", nil
-}
-
-func getFieldMapping(ds *api.Dataset, fieldName string, dataStorage api.DataStorage) (map[string]string, error) {
-	filter := &api.FilterParams{Variables: []string{model.D3MIndexFieldName, fieldName}}
-
-	// pull back all rows for a group id
-	data, err := dataStorage.FetchData(ds.ID, ds.StorageName, filter, true, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	// cycle through results to build the band mapping
-	fieldColumn, ok := data.Columns[fieldName]
-	if !ok {
-		return nil, errors.Errorf("'%s' column not found in stored data", fieldName)
-	}
-	fieldColumnIndex := fieldColumn.Index
-	d3mColumn, ok := data.Columns[model.D3MIndexFieldName]
-	if !ok {
-		return nil, errors.Errorf("'%s' column not found in stored data", model.D3MIndexFieldName)
-	}
-	d3mColumnIndex := d3mColumn.Index
-
-	mapping := map[string]string{}
-	for _, r := range data.Values {
-		d3mIndexData := fmt.Sprintf("%.0f", r[d3mColumnIndex].Value.(float64))
-		fieldData := r[fieldColumnIndex].Value.(string)
-		mapping[d3mIndexData] = fieldData
-	}
-
-	return mapping, nil
 }

@@ -267,6 +267,7 @@ export interface TimeseriesExtrema {
 // task string definitions - should mirror those defined in the MIT/LL d3m problem schema
 export enum TaskTypes {
   CLASSIFICATION = "classification",
+  SEGMENTATION = "segmentation",
   REGRESSION = "regression",
   CLUSTERING = "clustering",
   LINK_PREDICTION = "linkPrediction",

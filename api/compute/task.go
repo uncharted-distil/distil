@@ -88,7 +88,7 @@ func ResolveTask(storage api.DataStorage, datasetStorageName string, targetVaria
 			if model.IsImage(feature.Type) {
 				task = append(task, compute.ImageTask)
 			} else if model.IsMultiBandImage(feature.Type) {
-				task = append(task, compute.RemoteSensingTask)
+				task = append(task, compute.RemoteSensingTask, compute.SegmentationTask)
 			} else if model.IsTimeSeries(feature.Type) {
 				task = append(task, compute.TimeSeriesTask)
 			}
@@ -110,7 +110,7 @@ func ResolveTask(storage api.DataStorage, datasetStorageName string, targetVaria
 				task = append(task, compute.SemiSupervisedTask)
 			}
 			// If there are 3 labels (2 + empty), update this as a binary classification task
-			if len(targetCounts) == 2 {
+			if len(targetCounts) == 3 {
 				task = append(task, compute.BinaryTask)
 			} else {
 				task = append(task, compute.MultiClassTask)
