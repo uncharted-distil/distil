@@ -121,6 +121,7 @@ type QueueResponse struct {
 
 // PipelineOutput represents an output from executing a queued pipeline.
 type PipelineOutput struct {
+	SolutionID       string
 	ResultURI        string
 	FittedSolutionID string
 }
@@ -322,6 +323,7 @@ func runPipelineQueue(queue *Queue) {
 		var errPipeline error
 		var datasetURI string
 		var fittedSolutionID string
+		var solutionID string
 		err = pipelineTask.request.Listen(func(status compute.ExecPipelineStatus) {
 			// check for error
 			if status.Error != nil {
@@ -331,6 +333,7 @@ func runPipelineQueue(queue *Queue) {
 			if status.Progress == compute.RequestCompletedStatus {
 				datasetURI = status.ResultURI
 				fittedSolutionID = status.FittedSolutionID
+				solutionID = status.SolutionID
 			}
 		})
 		if err != nil {
@@ -352,6 +355,7 @@ func runPipelineQueue(queue *Queue) {
 		queueTask.returnResult(&QueueResponse{&PipelineOutput{
 			ResultURI:        datasetURI,
 			FittedSolutionID: fittedSolutionID,
+			SolutionID:       solutionID,
 		}, nil})
 	}
 

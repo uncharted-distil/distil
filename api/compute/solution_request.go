@@ -646,16 +646,6 @@ func dispatchSegmentation(s *SolutionRequest, requestID string, solutionStorage 
 	}
 
 	c := newStatusChannel()
-	// add the solution to the request
-	uuidGen, err := uuid.NewV4()
-	if err != nil {
-		s.finished <- errors.Wrapf(err, "unable to generate solution id")
-		return
-	}
-	solutionID := uuidGen.String()
-	s.addSolution(c)
-	s.persistSolution(c, solutionStorage, requestID, solutionID, "")
-	s.persistSolutionStatus(c, solutionStorage, requestID, solutionID, compute.SolutionPendingStatus)
 
 	// run the pipeline
 	pipelineResult, err := SubmitPipeline(client, []string{datasetInputDir}, nil, nil, step, nil, true)
@@ -663,18 +653,24 @@ func dispatchSegmentation(s *SolutionRequest, requestID string, solutionStorage 
 		s.finished <- err
 		return
 	}
-	s.persistSolutionStatus(c, solutionStorage, requestID, solutionID, compute.SolutionScoringStatus)
+
+	// add the solution to the request
+	// doing this after submission to have the solution id available!
+	s.addSolution(c)
+	s.persistSolution(c, solutionStorage, requestID, pipelineResult.SolutionID, "")
+	s.persistSolutionStatus(c, solutionStorage, requestID, pipelineResult.SolutionID, compute.SolutionPendingStatus)
+	s.persistSolutionStatus(c, solutionStorage, requestID, pipelineResult.SolutionID, compute.SolutionScoringStatus)
 
 	// HACK: MAKE UP A SOLUTION SCORE!!!
-	err = solutionStorage.PersistSolutionScore(solutionID, util.F1Micro, 0.5)
+	err = solutionStorage.PersistSolutionScore(pipelineResult.SolutionID, util.F1Micro, 0.5)
 	if err != nil {
 		s.finished <- err
 		return
 	}
-	s.persistSolutionStatus(c, solutionStorage, requestID, solutionID, compute.SolutionProducingStatus)
+	s.persistSolutionStatus(c, solutionStorage, requestID, pipelineResult.SolutionID, compute.SolutionProducingStatus)
 
 	// update status and respond to client as needed
-	uuidGen, err = uuid.NewV4()
+	uuidGen, err := uuid.NewV4()
 	if err != nil {
 		s.finished <- errors.Wrapf(err, "unable to generate solution id")
 		return
@@ -682,7 +678,7 @@ func dispatchSegmentation(s *SolutionRequest, requestID string, solutionStorage 
 	resultID := uuidGen.String()
 	c <- SolutionStatus{
 		RequestID:  requestID,
-		SolutionID: solutionID,
+		SolutionID: pipelineResult.SolutionID,
 		ResultID:   resultID,
 		Progress:   compute.SolutionCompletedStatus,
 		Timestamp:  time.Now(),
@@ -763,8 +759,8 @@ func dispatchSegmentation(s *SolutionRequest, requestID string, solutionStorage 
 	}
 
 	log.Infof("persisting results in URI '%s'", resultOutputURI)
-	err = s.persistSolutionResults(c, client, solutionStorage, dataStorage, requestID,
-		dataset.ID, dataset.StorageName, solutionID, pipelineResult.FittedSolutionID, produceRequestID, resultID, resultOutputURI)
+	err = s.persistSolutionResults(c, client, solutionStorage, dataStorage, requestID, dataset.ID,
+		dataset.StorageName, pipelineResult.SolutionID, pipelineResult.FittedSolutionID, produceRequestID, resultID, resultOutputURI)
 	if err != nil {
 		s.finished <- errors.Wrapf(err, "unable to persist solution result")
 		return
