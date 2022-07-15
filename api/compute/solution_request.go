@@ -634,33 +634,64 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 	s.finished <- nil
 }
 
-func dispatchSegmentation(s *SolutionRequest, solutionStorage api.SolutionStorage, metaStorage api.MetadataStorage,
+func dispatchSegmentation(s *SolutionRequest, requestID string, solutionStorage api.SolutionStorage, metaStorage api.MetadataStorage,
 	dataStorage api.DataStorage, client *compute.Client, datasetInputDir string, step *description.FullySpecifiedPipeline) {
-	// need a request ID
-	uuid, err := uuid.NewV4()
-	if err != nil {
-		s.finished <- errors.Wrapf(err, "unable to generate request id")
-		return
-	}
+	log.Infof("dispatching segmentation pipeline")
 
 	// create the backing data
-	err = s.persistRequestStatus(s.requestChannel, solutionStorage, uuid.String(), s.Dataset, compute.RequestRunningStatus)
+	err := s.persistRequestStatus(s.requestChannel, solutionStorage, requestID, s.Dataset, compute.RequestRunningStatus)
 	if err != nil {
 		s.finished <- err
 		return
 	}
+
+	c := newStatusChannel()
+	// add the solution to the request
+	uuidGen, err := uuid.NewV4()
+	if err != nil {
+		s.finished <- errors.Wrapf(err, "unable to generate solution id")
+		return
+	}
+	solutionID := uuidGen.String()
+	s.addSolution(c)
+	s.persistSolution(c, solutionStorage, requestID, solutionID, "")
+	s.persistSolutionStatus(c, solutionStorage, requestID, solutionID, compute.SolutionPendingStatus)
 
 	// run the pipeline
-	resultURI, err := SubmitPipeline(client, []string{datasetInputDir}, nil, nil, step, nil, true)
+	pipelineResult, err := SubmitPipeline(client, []string{datasetInputDir}, nil, nil, step, nil, true)
 	if err != nil {
 		s.finished <- err
 		return
 	}
+	s.persistSolutionStatus(c, solutionStorage, requestID, solutionID, compute.SolutionScoringStatus)
+
+	// HACK: MAKE UP A SOLUTION SCORE!!!
+	err = solutionStorage.PersistSolutionScore(solutionID, util.F1Micro, 0.5)
+	if err != nil {
+		s.finished <- err
+		return
+	}
+	s.persistSolutionStatus(c, solutionStorage, requestID, solutionID, compute.SolutionProducingStatus)
 
 	// update status and respond to client as needed
+	uuidGen, err = uuid.NewV4()
+	if err != nil {
+		s.finished <- errors.Wrapf(err, "unable to generate solution id")
+		return
+	}
+	resultID := uuidGen.String()
+	c <- SolutionStatus{
+		RequestID:  requestID,
+		SolutionID: solutionID,
+		ResultID:   resultID,
+		Progress:   compute.SolutionCompletedStatus,
+		Timestamp:  time.Now(),
+	}
+	close(c)
 
 	// read the file and parse the output mask
-	result, err := result.ParseResultCSV(resultURI)
+	log.Infof("processing segmentation pipeline output")
+	result, err := result.ParseResultCSV(pipelineResult.ResultURI)
 	if err != nil {
 		s.finished <- err
 		return
@@ -708,6 +739,45 @@ func dispatchSegmentation(s *SolutionRequest, solutionStorage api.SolutionStorag
 		}
 	}
 
+	// HACK:	INPUT FAKE RESULTS TO THE DB!!!
+	//				FAKE RESULTS SHOULD JUST BE A CONSTANT!
+	uuidGen, err = uuid.NewV4()
+	if err != nil {
+		s.finished <- errors.Wrapf(err, "unable to generate produce request id")
+		return
+	}
+	produceRequestID := uuidGen.String()
+
+	// HACK:	CREATE FAKE RESULTS TO PERSIST AS THE ACTUAL RESULTS SHOULD NOT BE STORED IN THE DB!!!
+	resultOutput := []string{fmt.Sprintf("%s,%s,%s", model.D3MIndexFieldName, s.TargetFeature.HeaderName, "confidence")}
+	for i := 1; i < len(result); i++ {
+		resultOutput = append(resultOutput, fmt.Sprintf("%s,%s,%d", result[i][0].(string), "segmented", 1))
+	}
+	resultOutputURI := fmt.Sprintf("%s-distil-%s",
+		pipelineResult.ResultURI[:len(pipelineResult.ResultURI)-4], pipelineResult.ResultURI[len(pipelineResult.ResultURI)-4:])
+	log.Infof("writing distil formatted segmentation results to '%s'", resultOutputURI)
+	err = util.WriteFileWithDirs(resultOutputURI, []byte(strings.Join(resultOutput, "\n")), os.ModePerm)
+	if err != nil {
+		s.finished <- err
+		return
+	}
+
+	log.Infof("persisting results in URI '%s'", resultOutputURI)
+	err = s.persistSolutionResults(c, client, solutionStorage, dataStorage, requestID,
+		dataset.ID, dataset.StorageName, solutionID, pipelineResult.FittedSolutionID, produceRequestID, resultID, resultOutputURI)
+	if err != nil {
+		s.finished <- errors.Wrapf(err, "unable to persist solution result")
+		return
+	}
+
+	log.Infof("segmentation pipeline processing complete")
+
+	err = s.persistRequestStatus(s.requestChannel, solutionStorage, requestID, dataset.ID, compute.RequestCompletedStatus)
+	if err != nil {
+		s.finished <- err
+		return
+	}
+	close(s.requestChannel)
 	s.finished <- nil
 }
 
@@ -724,6 +794,7 @@ func processSegmentation(s *SolutionRequest, client *compute.Client, solutionSto
 		return nil
 	}
 	s.DatasetMetadata = dataset
+	variablesMap := api.MapVariables(dataset.Variables, func(v *model.Variable) string { return v.Key })
 
 	datasetInputDir := env.ResolvePath(dataset.Source, dataset.Folder)
 
@@ -732,8 +803,53 @@ func processSegmentation(s *SolutionRequest, client *compute.Client, solutionSto
 		return err
 	}
 
+	// need a request ID
+	uuidGen, err := uuid.NewV4()
+	if err != nil {
+		return err
+	}
+	requestID := uuidGen.String()
+
+	// persist the request
+	err = s.persistRequestStatus(s.requestChannel, solutionStorage, requestID, dataset.ID, compute.RequestPendingStatus)
+	if err != nil {
+		return err
+	}
+
+	// store the request features - note that we are storing the original request filters, not the expanded
+	// list that was generated
+	// also note that augmented features should not be included
+	for _, v := range s.Filters.Variables {
+		var typ string
+		// ignore the index field
+		if v == model.D3MIndexFieldName {
+			continue
+		} else if variablesMap[v].HasRole(model.VarDistilRoleAugmented) {
+			continue
+		}
+
+		if v == s.TargetFeature.Key {
+			// store target feature
+			typ = model.FeatureTypeTarget
+		} else {
+			// store training feature
+			typ = model.FeatureTypeTrain
+		}
+		err = solutionStorage.PersistRequestFeature(requestID, v, typ)
+		if err != nil {
+			return err
+		}
+	}
+
+	// store the original request filters
+	// HACK: NO FILTERS SUPPORTED FOR SEGMENTATION!
+	err = solutionStorage.PersistRequestFilters(requestID, s.Filters)
+	if err != nil {
+		return err
+	}
+
 	// dispatch it as if it were a model search
-	go dispatchSegmentation(s, solutionStorage, metaStorage, dataStorage, client, datasetInputDir, step)
+	go dispatchSegmentation(s, requestID, solutionStorage, metaStorage, dataStorage, client, datasetInputDir, step)
 
 	return nil
 }
@@ -851,13 +967,6 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		}
 	}
 
-	// HACK:	SEGMENTATION TASK NEEDS TO ACT ON BASE DATASET!
-	//				CURRENTLY SET TO IGNORE PREFILTERING!!
-	if HasTaskType(task, compute.SegmentationTask) {
-		filteredDatasetPath = env.ResolvePath(dataset.Source, dataset.Folder)
-		s.useParquet = false
-	}
-
 	// get the target
 	meta, err := serialization.ReadMetadata(path.Join(filteredDatasetPath, compute.D3MDataSchema))
 	if err != nil {
@@ -897,30 +1006,8 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	s.Filters = mapFilterKeys(s.Dataset, s.Filters, dataset.Variables)
 
 	// generate the pre-processing pipeline to enforce feature selection and semantic type changes
-	// HACK: IF SEGMENTATION, THEN SUBMIT THE FULLY SPECIFIED PIPELINE!!!
 	var preprocessing *pipeline.PipelineDescription
-	if HasTaskType(task, compute.SegmentationTask) {
-		envConfig, err := env.LoadConfig()
-		if err != nil {
-			return err
-		}
-
-		ps, err := description.CreateRemoteSensingSegmentationPipeline("segmentation", "basic image segmentation", s.TargetFeature, envConfig.RemoteSensingNumJobs)
-		if err != nil {
-			return err
-		}
-		preprocessing = ps.Pipeline
-
-		// remove the segmentation task
-		tasksUpdated := []string{}
-		for _, t := range s.Task {
-			if t != compute.SegmentationTask {
-				tasksUpdated = append(tasksUpdated, t)
-			}
-		}
-		s.Task = tasksUpdated
-
-	} else if !client.SkipPreprocessing {
+	if !client.SkipPreprocessing {
 		if dataset.LearningDataset == "" {
 			preprocessing, err = s.createPreprocessingPipeline(variables, metaStorage)
 		} else {

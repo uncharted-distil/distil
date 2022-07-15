@@ -62,7 +62,11 @@ func SetClient(computeClient *compute.Client) {
 }
 
 func submitPipeline(datasets []string, step *description.FullySpecifiedPipeline, shouldCache bool) (string, error) {
-	return sr.SubmitPipeline(client, datasets, nil, nil, step, nil, shouldCache)
+	result, err := sr.SubmitPipeline(client, datasets, nil, nil, step, nil, shouldCache)
+	if err != nil {
+		return "", err
+	}
+	return result.ResultURI, nil
 }
 
 func getD3MIndexField(dr *model.DataResource) int {

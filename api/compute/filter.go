@@ -85,7 +85,7 @@ func filterData(client *compute.Client, ds *api.Dataset, filterParams *api.Filte
 
 	// output the filtered results as the data in the filtered dataset
 	_, outputDataFile := getPreFilteringOutputDataFile(outputFolder)
-	err = util.CopyFile(filteredData, outputDataFile)
+	err = util.CopyFile(filteredData.ResultURI, outputDataFile)
 	if err != nil {
 		return "", nil, err
 	}

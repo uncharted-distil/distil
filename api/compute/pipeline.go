@@ -115,8 +115,14 @@ type QueueItem struct {
 
 // QueueResponse represents the result from processing a queue item.
 type QueueResponse struct {
-	Output interface{}
+	Output *PipelineOutput
 	Error  error
+}
+
+// PipelineOutput represents an output from executing a queued pipeline.
+type PipelineOutput struct {
+	ResultURI        string
+	FittedSolutionID string
 }
 
 // Queue uses a buffered channel to queue tasks and provides the result via channels.
@@ -234,7 +240,7 @@ func InitializeQueue(config *env.Config) {
 
 // SubmitPipeline executes pipelines using the client and returns the result URI.
 func SubmitPipeline(client *compute.Client, datasets []string, datasetsProduce []string, searchRequest *pipeline.SearchSolutionsRequest,
-	fullySpecifiedStep *description.FullySpecifiedPipeline, allowedValueTypes []string, shouldCache bool) (string, error) {
+	fullySpecifiedStep *description.FullySpecifiedPipeline, allowedValueTypes []string, shouldCache bool) (*PipelineOutput, error) {
 
 	request := compute.NewExecPipelineRequest(datasets, datasetsProduce, fullySpecifiedStep.Pipeline)
 
@@ -254,12 +260,12 @@ func SubmitPipeline(client *compute.Client, datasets []string, datasetsProduce [
 	if cache.readEnabled {
 		if shouldCache {
 			if err != nil {
-				return "", err
+				return nil, err
 			}
 			entry, found := cache.cache.Get(hashedPipelineUniqueKey)
 			if found {
 				log.Infof("returning cached entry for pipeline")
-				return entry.(string), nil
+				return entry.(*PipelineOutput), nil
 			}
 		}
 	} else {
@@ -268,7 +274,7 @@ func SubmitPipeline(client *compute.Client, datasets []string, datasetsProduce [
 	// get equivalency key for enqueuing
 	hashedPipelineEquivKey, err := queueTask.hashEquivalent()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	resultChan := queue.Enqueue(hashedPipelineEquivKey, queueTask)
@@ -276,17 +282,16 @@ func SubmitPipeline(client *compute.Client, datasets []string, datasetsProduce [
 
 	result := <-resultChan
 	if result.Error != nil {
-		return "", result.Error
+		return nil, result.Error
 	}
 
-	datasetURI := result.Output.(string)
-	cache.cache.Set(hashedPipelineUniqueKey, datasetURI, gc.DefaultExpiration)
+	cache.cache.Set(hashedPipelineUniqueKey, result.Output, gc.DefaultExpiration)
 	err = cache.PersistCache()
 	if err != nil {
 		log.Warnf("error persisting cache: %v", err)
 	}
 
-	return datasetURI, nil
+	return result.Output, nil
 }
 
 func runPipelineQueue(queue *Queue) {
@@ -316,6 +321,7 @@ func runPipelineQueue(queue *Queue) {
 		// listen for completion
 		var errPipeline error
 		var datasetURI string
+		var fittedSolutionID string
 		err = pipelineTask.request.Listen(func(status compute.ExecPipelineStatus) {
 			// check for error
 			if status.Error != nil {
@@ -324,6 +330,7 @@ func runPipelineQueue(queue *Queue) {
 
 			if status.Progress == compute.RequestCompletedStatus {
 				datasetURI = status.ResultURI
+				fittedSolutionID = status.FittedSolutionID
 			}
 		})
 		if err != nil {
@@ -342,7 +349,10 @@ func runPipelineQueue(queue *Queue) {
 
 		datasetURI = strings.Replace(datasetURI, "file://", "", -1)
 
-		queueTask.returnResult(&QueueResponse{Output: datasetURI})
+		queueTask.returnResult(&QueueResponse{&PipelineOutput{
+			ResultURI:        datasetURI,
+			FittedSolutionID: fittedSolutionID,
+		}, nil})
 	}
 
 	log.Infof("ending queue processing")
