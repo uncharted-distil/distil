@@ -206,6 +206,7 @@ type PredictParams struct {
 	DatasetConstructor DatasetConstructor
 	OutputPath         string
 	IndexFields        []string
+	Task               *comp.Task
 	Target             *model.Variable
 	MetaStorage        api.MetadataStorage
 	DataStorage        api.DataStorage
@@ -708,7 +709,8 @@ func Predict(params *PredictParams) (string, error) {
 
 	// submit the new dataset for predictions
 	log.Infof("generating predictions using data found at '%s'", params.SchemaPath)
-	predictionResult, err := comp.GeneratePredictions(params.SchemaPath, solution.SolutionID, params.FittedSolutionID, client)
+	predictionResult, err := comp.GeneratePredictions(params.SchemaPath,
+		solution.SolutionID, params.FittedSolutionID, params.Task, params.Target.HeaderName, client)
 	if err != nil {
 		return "", err
 	}

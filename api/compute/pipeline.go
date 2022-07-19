@@ -201,6 +201,9 @@ func (q *Queue) Done() {
 // InitializeCache sets up an empty cache or if a source file provided, reads
 // the cache from the source file.
 func InitializeCache(sourceFile string, readEnabled bool) error {
+	// register the output type for the cache!
+	gob.Register(&PipelineOutput{})
+
 	var c *gc.Cache
 	if util.FileExists(sourceFile) {
 		b, err := ioutil.ReadFile(sourceFile)

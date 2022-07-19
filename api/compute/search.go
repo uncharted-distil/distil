@@ -278,7 +278,7 @@ func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan Solutio
 		if ok {
 			// reformat result to have one row per d3m index since confidences
 			// can produce one row / class
-			resultURI, err = reformatResult(resultURI)
+			resultURI, err = reformatResult(resultURI, s.TargetFeature.HeaderName, &Task{s.Task})
 			if err != nil {
 				return nil, err
 			}

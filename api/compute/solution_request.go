@@ -327,7 +327,7 @@ func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.
 }
 
 // GeneratePredictions produces predictions using the specified.
-func GeneratePredictions(datasetURI string, solutionID string, fittedSolutionID string, client *compute.Client) (*PredictionResult, error) {
+func GeneratePredictions(datasetURI string, solutionID string, fittedSolutionID string, task *Task, targetName string, client *compute.Client) (*PredictionResult, error) {
 	// check if the solution can be explained
 	desc, err := client.GetSolutionDescription(context.Background(), solutionID)
 	if err != nil {
@@ -359,7 +359,7 @@ func GeneratePredictions(datasetURI string, solutionID string, fittedSolutionID 
 		if err != nil {
 			return nil, err
 		}
-		resultURI, err = reformatResult(resultURI)
+		resultURI, err = reformatResult(resultURI, targetName, task)
 		if err != nil {
 			return nil, err
 		}
@@ -745,14 +745,13 @@ func dispatchSegmentation(s *SolutionRequest, requestID string, solutionStorage 
 	produceRequestID := uuidGen.String()
 
 	// HACK:	CREATE FAKE RESULTS TO PERSIST AS THE ACTUAL RESULTS SHOULD NOT BE STORED IN THE DB!!!
-	resultOutput := []string{fmt.Sprintf("%s,%s,%s", model.D3MIndexFieldName, s.TargetFeature.HeaderName, "confidence")}
-	for i := 1; i < len(result); i++ {
-		resultOutput = append(resultOutput, fmt.Sprintf("%s,%s,%d", result[i][0].(string), "segmented", 1))
+	dataReader := serialization.GetStorage(pipelineResult.ResultURI)
+	dataResult, err := dataReader.ReadData(pipelineResult.ResultURI)
+	if err != nil {
+		s.finished <- err
+		return
 	}
-	resultOutputURI := fmt.Sprintf("%s-distil-%s",
-		pipelineResult.ResultURI[:len(pipelineResult.ResultURI)-4], pipelineResult.ResultURI[len(pipelineResult.ResultURI)-4:])
-	log.Infof("writing distil formatted segmentation results to '%s'", resultOutputURI)
-	err = util.WriteFileWithDirs(resultOutputURI, []byte(strings.Join(resultOutput, "\n")), os.ModePerm)
+	resultOutputURI, err := createSegmentationResult(pipelineResult.ResultURI, s.TargetFeature.HeaderName, dataResult)
 	if err != nil {
 		s.finished <- err
 		return
@@ -1135,12 +1134,17 @@ type confidenceValue struct {
 	row        int
 }
 
-func reformatResult(resultURI string) (string, error) {
+func reformatResult(resultURI string, targetName string, task *Task) (string, error) {
 	// read data from original file
 	dataReader := serialization.GetStorage(resultURI)
 	data, err := dataReader.ReadData(resultURI)
 	if err != nil {
 		return "", err
+	}
+
+	// segmentation results need to be reduced to tagging segmented images
+	if HasTaskType(task, compute.SegmentationTask) && isSegmentationOutput(resultURI) {
+		return createSegmentationResult(resultURI, targetName, data)
 	}
 
 	// only need to reformat if confidences are there (column count >= 3)
@@ -1190,4 +1194,31 @@ func reformatResult(resultURI string) (string, error) {
 	log.Infof("'%s' filtered to highest confidence row per d3m index and written to '%s'", resultURI, filteredURI)
 
 	return filteredURI, nil
+}
+
+// isSegmentationOutput checks if a result is from an image segmentation pipeline.
+//		NOTE: returns false if it cannot confirm it is segmentation (ex: exception occurs)!
+func isSegmentationOutput(resultURI string) bool {
+	result, err := result.ParseResultCSV(resultURI)
+	if err != nil {
+		return false
+	}
+
+	// segmentation output has as header "d3mIndex,positive_mask"
+	return len(result[0]) == 2 && result[0][0].(string) == model.D3MIndexFieldName && result[0][1].(string) == "positive_mask"
+}
+
+func createSegmentationResult(resultURI string, targetName string, result [][]string) (string, error) {
+	resultOutput := []string{fmt.Sprintf("%s,%s,%s", model.D3MIndexFieldName, targetName, "confidence")}
+	for i := 1; i < len(result); i++ {
+		resultOutput = append(resultOutput, fmt.Sprintf("%s,%s,%d", result[i][0], "segmented", 1))
+	}
+	resultOutputURI := fmt.Sprintf("%s-distil-%s", resultURI[:len(resultURI)-4], resultURI[len(resultURI)-4:])
+	log.Infof("writing distil formatted segmentation results to '%s'", resultOutputURI)
+	err := util.WriteFileWithDirs(resultOutputURI, []byte(strings.Join(resultOutput, "\n")), os.ModePerm)
+	if err != nil {
+		return "", err
+	}
+
+	return resultOutputURI, nil
 }

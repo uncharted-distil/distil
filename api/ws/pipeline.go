@@ -430,6 +430,7 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 		SolutionID:       sr.SolutionID,
 		FittedSolutionID: request.FittedSolutionID,
 		OutputPath:       path.Join(config.D3MOutputDir, config.AugmentedSubFolder),
+		Task:             requestTask,
 		Target:           targetVar,
 		MetaStorage:      metaStorage,
 		DataStorage:      dataStorage,
@@ -444,6 +445,16 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 	if err != nil {
 		handleErr(conn, msg, errors.Wrap(err, "unable to create raw dataset"))
 		return
+	}
+
+	// if the task is a segmentation task, run it against the base dataset
+	if api.HasTaskType(requestTask, compute.SegmentationTask) {
+		dsPred, err := metaStorage.FetchDataset(datasetName, true, true, true)
+		if err != nil {
+			handleErr(conn, msg, errors.Wrap(err, "unable to resolve prediction dataset"))
+			return
+		}
+		datasetPath = path.Join(env.ResolvePath(dsPred.Source, dsPred.Folder), compute.D3MDataSchema)
 	}
 	predictParams.Dataset = datasetName
 	predictParams.SchemaPath = datasetPath
