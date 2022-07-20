@@ -497,30 +497,41 @@
     semver "^7.3.2"
     tsutils "^3.17.1"
 
-"@uncharted.software/css-options@^3.2.0":
-  version "3.2.0"
-  resolved "https://registry.yarnpkg.com/@uncharted.software/css-options/-/css-options-3.2.0.tgz#2b3ea4cdc3fc39dd860e69e2c90076d2c69d3193"
-  integrity sha512-2txsv+5tHS0Fy4jf8HanIkcIPsRuc3vY0Gwv9NzyoK9asUgKLKEOPmjkKohMYm/eQzjJcCayBa9Dh5aV1tJd4A==
+"@uncharted.software/css-options@^3.2.4":
+  version "3.2.5"
+  resolved "https://registry.yarnpkg.com/@uncharted.software/css-options/-/css-options-3.2.5.tgz#eb490ec3a4c226b6c5ad7a807658b76b44398d51"
+  integrity sha512-Qdp0TSmfSosbrjo5z0s9QTOVRYfaFKxEsbaNwpCCC7ac+87diVtUZEBa/S4KEpTcISwxvmo8It5UFNLMt+quwg==
 
-"@uncharted.software/facets-core@^3.1.0":
-  version "3.2.0"
-  resolved "https://registry.yarnpkg.com/@uncharted.software/facets-core/-/facets-core-3.2.0.tgz#42c8a6c0e1c4bdc8d7b6a60c482dd59ff002ca24"
-  integrity sha512-ylP1Prly1tKJr2Z0XA9wVSm3IyVnxe6edGPmOP9eZFoPEAItmg7L2yrX2Zz6542RgXusSZyv75o/fEwh47BEeg==
+"@uncharted.software/facets-core@3.2.4":
+  version "3.2.4"
+  resolved "https://registry.yarnpkg.com/@uncharted.software/facets-core/-/facets-core-3.2.4.tgz#5157fcb019d81f5464a01edb617a8843c4a262ad"
+  integrity sha512-j7TsasVaWeox1oc9zFowjGcridnCNKGpwaiwPIRonjymtraXXGkvi/G1ZWd+raRFKJDCJ5tDQlGe813bUKG8hw==
   dependencies:
     "@fortawesome/free-regular-svg-icons" "^5.10.2"
     "@fortawesome/free-solid-svg-icons" "^5.10.2"
-    "@uncharted.software/css-options" "^3.2.0"
+    "@uncharted.software/css-options" "^3.2.4"
     lit-element "^2.2.1"
     lit-html "^1.1.2"
 
-"@uncharted.software/facets-plugins@^3.1.0":
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/@uncharted.software/facets-plugins/-/facets-plugins-3.1.0.tgz#eed7a8f5f68e7825d24228fae9b71a51517b901a"
-  integrity sha512-lZ8ahgYZIyhhHA3sbD/DfIb5gCP+9dzEn29cTgUKeNP7QGCNH4G88IOvQbWYaIOWj9VNmiOHwfYSlJbY7CeWQw==
+"@uncharted.software/facets-core@^3.2.5":
+  version "3.2.5"
+  resolved "https://registry.yarnpkg.com/@uncharted.software/facets-core/-/facets-core-3.2.5.tgz#192997dc0b616656a963dd694f9a383d59de41ed"
+  integrity sha512-8QM7ke8SgJrY+bkHNNumYsSFcMwGgonLMRve2a7UiiGtawGYKtNLuaQAGzCP1V8mrubBRrAVkxaXoU+06T3w6w==
   dependencies:
     "@fortawesome/free-regular-svg-icons" "^5.10.2"
     "@fortawesome/free-solid-svg-icons" "^5.10.2"
-    "@uncharted.software/facets-core" "^3.1.0"
+    "@uncharted.software/css-options" "^3.2.4"
+    lit-element "^2.2.1"
+    lit-html "^1.1.2"
+
+"@uncharted.software/facets-plugins@^3.2.4":
+  version "3.2.5"
+  resolved "https://registry.yarnpkg.com/@uncharted.software/facets-plugins/-/facets-plugins-3.2.5.tgz#6fde5c04ef9f4563005d760e8996a07d9f1f9a7d"
+  integrity sha512-l7ojt/uZjjGWWWPxiIqn5tNgu3MKr4MTnxj3Xw6b5VJa5iUUJBcNoi/Zay1BcC6rzpWJGKYfm5F2IYJubQjW/Q==
+  dependencies:
+    "@fortawesome/free-regular-svg-icons" "^5.10.2"
+    "@fortawesome/free-solid-svg-icons" "^5.10.2"
+    "@uncharted.software/facets-core" "^3.2.5"
     lit-element "^2.2.1"
     lit-html "^1.1.2"
 
@@ -1138,9 +1149,9 @@ browserslist@^4.0.0:
     node-releases "^1.1.67"
 
 buffer-from@^1.0.0:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/buffer-from/-/buffer-from-1.1.1.tgz#32713bc028f75c02fdb710d7c7bcec1f2c6070ef"
-  integrity sha512-MQcXEUbCKtEo7bhqEs6560Hyd4XaovZlO/k9V3hjVUF/zwW7KBVdSK4gIt/bzwS9MbR5qob+F5jusZsb0YQK2A==
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/buffer-from/-/buffer-from-1.1.2.tgz#2b146a6fd72e80b4f55d255f35ed59a3a9a41bd5"
+  integrity sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==
 
 buffer-xor@^1.0.3:
   version "1.0.3"
@@ -1285,12 +1296,7 @@ caniuse-api@^3.0.0:
     lodash.memoize "^4.1.2"
     lodash.uniq "^4.5.0"
 
-caniuse-lite@^1.0.0, caniuse-lite@^1.0.30000792, caniuse-lite@^1.0.30000805, caniuse-lite@^1.0.30001164:
-  version "1.0.30001271"
-  resolved "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30001271.tgz"
-  integrity sha512-BBruZFWmt3HFdVPS8kceTBIguKxu4f99n5JNp06OlPD/luoAMIaIK5ieV5YjnBLH3Nysai9sxj9rpJj4ZisXOA==
-
-caniuse-lite@^1.0.30001271:
+caniuse-lite@^1.0.0, caniuse-lite@^1.0.30000792, caniuse-lite@^1.0.30000805, caniuse-lite@^1.0.30001164, caniuse-lite@^1.0.30001271:
   version "1.0.30001271"
   resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001271.tgz#0dda0c9bcae2cf5407cd34cac304186616cc83e8"
   integrity sha512-BBruZFWmt3HFdVPS8kceTBIguKxu4f99n5JNp06OlPD/luoAMIaIK5ieV5YjnBLH3Nysai9sxj9rpJj4ZisXOA==
@@ -5865,9 +5871,9 @@ source-map-resolve@^0.5.0:
     urix "^0.1.0"
 
 source-map-support@~0.5.12:
-  version "0.5.19"
-  resolved "https://registry.yarnpkg.com/source-map-support/-/source-map-support-0.5.19.tgz#a98b62f86dcaf4f67399648c085291ab9e8fed61"
-  integrity sha512-Wonm7zOCIJzBGQdB+thsPar0kYuCIzYvxZwlBa87yi/Mdjv7Tip2cyVbLj5o0cFPN4EVkuTwb3GDDyUx2DGnGw==
+  version "0.5.21"
+  resolved "https://registry.yarnpkg.com/source-map-support/-/source-map-support-0.5.21.tgz#04fe7c7f9e1ed2d662233c28cb2b35b9f63f6e4f"
+  integrity sha512-uBHU3L3czsIyYXKX88fdrGovxdSCoTGDRZ6SYXtSRxLZUzHg5P/66Ht6uoUlHu9EZod+inXhKo3qQgwXUT/y1w==
   dependencies:
     buffer-from "^1.0.0"
     source-map "^0.6.0"
@@ -6169,9 +6175,9 @@ terser-webpack-plugin@^1.4.3:
     worker-farm "^1.7.0"
 
 terser@^4.1.2:
-  version "4.8.0"
-  resolved "https://registry.yarnpkg.com/terser/-/terser-4.8.0.tgz#63056343d7c70bb29f3af665865a46fe03a0df17"
-  integrity sha512-EAPipTNeWsb/3wLPeup1tVPaXfIaU68xMnVdPafIL1TV05OhASArYyIfFvnvJCNrR2NIOvDVNNTFRa+Re2MWyw==
+  version "4.8.1"
+  resolved "https://registry.yarnpkg.com/terser/-/terser-4.8.1.tgz#a00e5634562de2239fd404c649051bf6fc21144f"
+  integrity sha512-4GnLC0x667eJG0ewJTa6z/yXrbLGv80D9Ru6HIpCQmO+Q4PfEtBFi0ObSckqwL6VyQv/7ENJieXHo2ANmdQwgw==
   dependencies:
     commander "^2.20.0"
     source-map "~0.6.1"
