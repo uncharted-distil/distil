@@ -709,8 +709,8 @@ func Predict(params *PredictParams) (string, error) {
 
 	// submit the new dataset for predictions
 	log.Infof("generating predictions using data found at '%s'", params.SchemaPath)
-	predictionResult, err := comp.GeneratePredictions(params.SchemaPath,
-		solution.SolutionID, params.FittedSolutionID, params.Task, params.Target.HeaderName, client)
+	predictionResult, err := comp.GeneratePredictions(params.Dataset, params.SchemaPath,
+		solution.SolutionID, params.FittedSolutionID, params.Task, params.Target.HeaderName, params.MetaStorage, params.DataStorage, client)
 	if err != nil {
 		return "", err
 	}

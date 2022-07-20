@@ -327,7 +327,8 @@ func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.
 }
 
 // GeneratePredictions produces predictions using the specified.
-func GeneratePredictions(datasetURI string, solutionID string, fittedSolutionID string, task *Task, targetName string, client *compute.Client) (*PredictionResult, error) {
+func GeneratePredictions(datasetID string, datasetURI string, solutionID string, fittedSolutionID string, task *Task,
+	targetName string, metaStorage api.MetadataStorage, dataStorage api.DataStorage, client *compute.Client) (*PredictionResult, error) {
 	// check if the solution can be explained
 	desc, err := client.GetSolutionDescription(context.Background(), solutionID)
 	if err != nil {
@@ -359,7 +360,14 @@ func GeneratePredictions(datasetURI string, solutionID string, fittedSolutionID 
 		if err != nil {
 			return nil, err
 		}
-		resultURI, err = reformatResult(resultURI, targetName, task)
+
+		// segmentation results need to be reduced to tagging segmented images
+		if HasTaskType(task, compute.SegmentationTask) && isSegmentationOutput(resultURI) {
+			resultURI, err = createSegmentationResult(datasetID, resultURI, targetName, metaStorage, dataStorage)
+		} else {
+			resultURI, err = reformatResult(resultURI, targetName)
+		}
+
 		if err != nil {
 			return nil, err
 		}
@@ -685,54 +693,12 @@ func dispatchSegmentation(s *SolutionRequest, requestID string, solutionStorage 
 	}
 	close(c)
 
-	// read the file and parse the output mask
-	log.Infof("processing segmentation pipeline output")
-	result, err := result.ParseResultCSV(pipelineResult.ResultURI)
-	if err != nil {
-		s.finished <- err
-		return
-	}
-
-	images, err := BuildSegmentationImage(result)
-	if err != nil {
-		s.finished <- err
-		return
-	}
-
 	// get the grouping key since it makes up part of the filename
+	log.Infof("processing segmentation pipeline output")
 	dataset, err := metaStorage.FetchDataset(s.Dataset, true, true, false)
 	if err != nil {
 		s.finished <- err
 		return
-	}
-
-	var groupingKey *model.Variable
-	for _, v := range dataset.Variables {
-		if v.HasRole(model.VarDistilRoleGrouping) {
-			groupingKey = v
-			break
-		}
-	}
-	if groupingKey == nil {
-		s.finished <- errors.Errorf("no grouping found to use for output filename")
-		return
-	}
-
-	// get the d3m index -> grouping key mapping
-	mapping, err := api.BuildFieldMapping(dataset.ID, dataset.StorageName, model.D3MIndexFieldName, groupingKey.Key, dataStorage)
-	if err != nil {
-		s.finished <- err
-		return
-	}
-
-	imageOutputFolder := path.Join(env.GetResourcePath(), dataset.ID, "media")
-	for d3mIndex, imageBytes := range images {
-		imageFilename := path.Join(imageOutputFolder, fmt.Sprintf("%s-segmentation.png", mapping[d3mIndex]))
-		err = util.WriteFileWithDirs(imageFilename, imageBytes, os.ModePerm)
-		if err != nil {
-			s.finished <- err
-			return
-		}
 	}
 
 	// HACK:	INPUT FAKE RESULTS TO THE DB!!!
@@ -745,13 +711,7 @@ func dispatchSegmentation(s *SolutionRequest, requestID string, solutionStorage 
 	produceRequestID := uuidGen.String()
 
 	// HACK:	CREATE FAKE RESULTS TO PERSIST AS THE ACTUAL RESULTS SHOULD NOT BE STORED IN THE DB!!!
-	dataReader := serialization.GetStorage(pipelineResult.ResultURI)
-	dataResult, err := dataReader.ReadData(pipelineResult.ResultURI)
-	if err != nil {
-		s.finished <- err
-		return
-	}
-	resultOutputURI, err := createSegmentationResult(pipelineResult.ResultURI, s.TargetFeature.HeaderName, dataResult)
+	resultOutputURI, err := createSegmentationResult(s.Dataset, pipelineResult.ResultURI, s.TargetFeature.HeaderName, metaStorage, dataStorage)
 	if err != nil {
 		s.finished <- err
 		return
@@ -1134,17 +1094,12 @@ type confidenceValue struct {
 	row        int
 }
 
-func reformatResult(resultURI string, targetName string, task *Task) (string, error) {
+func reformatResult(resultURI string, targetName string) (string, error) {
 	// read data from original file
 	dataReader := serialization.GetStorage(resultURI)
 	data, err := dataReader.ReadData(resultURI)
 	if err != nil {
 		return "", err
-	}
-
-	// segmentation results need to be reduced to tagging segmented images
-	if HasTaskType(task, compute.SegmentationTask) && isSegmentationOutput(resultURI) {
-		return createSegmentationResult(resultURI, targetName, data)
 	}
 
 	// only need to reformat if confidences are there (column count >= 3)
@@ -1208,14 +1163,58 @@ func isSegmentationOutput(resultURI string) bool {
 	return len(result[0]) == 2 && result[0][0].(string) == model.D3MIndexFieldName && result[0][1].(string) == "positive_mask"
 }
 
-func createSegmentationResult(resultURI string, targetName string, result [][]string) (string, error) {
+func createSegmentationResult(datasetID string, resultURI string,
+	targetName string, metaStorage api.MetadataStorage, dataStorage api.DataStorage) (string, error) {
+	log.Infof("processing segmentation pipeline output")
+	result, err := result.ParseResultCSV(resultURI)
+	if err != nil {
+		return "", err
+	}
+
+	images, err := BuildSegmentationImage(result)
+	if err != nil {
+		return "", err
+	}
+
+	// get the grouping key since it makes up part of the filename
+	dataset, err := metaStorage.FetchDataset(datasetID, true, true, false)
+	if err != nil {
+		return "", err
+	}
+
+	var groupingKey *model.Variable
+	for _, v := range dataset.Variables {
+		if v.HasRole(model.VarDistilRoleGrouping) {
+			groupingKey = v
+			break
+		}
+	}
+	if groupingKey == nil {
+		return "", errors.Errorf("no grouping found to use for output filename")
+	}
+
+	// get the d3m index -> grouping key mapping
+	mapping, err := api.BuildFieldMapping(dataset.ID, dataset.StorageName, model.D3MIndexFieldName, groupingKey.Key, dataStorage)
+	if err != nil {
+		return "", err
+	}
+
+	imageOutputFolder := path.Join(env.GetResourcePath(), dataset.ID, "media")
+	for d3mIndex, imageBytes := range images {
+		imageFilename := path.Join(imageOutputFolder, fmt.Sprintf("%s-segmentation.png", mapping[d3mIndex]))
+		err = util.WriteFileWithDirs(imageFilename, imageBytes, os.ModePerm)
+		if err != nil {
+			return "", err
+		}
+	}
+
 	resultOutput := []string{fmt.Sprintf("%s,%s,%s", model.D3MIndexFieldName, targetName, "confidence")}
 	for i := 1; i < len(result); i++ {
 		resultOutput = append(resultOutput, fmt.Sprintf("%s,%s,%d", result[i][0], "segmented", 1))
 	}
-	resultOutputURI := fmt.Sprintf("%s-distil-%s", resultURI[:len(resultURI)-4], resultURI[len(resultURI)-4:])
+	resultOutputURI := fmt.Sprintf("%s-distil%s", resultURI[:len(resultURI)-4], resultURI[len(resultURI)-4:])
 	log.Infof("writing distil formatted segmentation results to '%s'", resultOutputURI)
-	err := util.WriteFileWithDirs(resultOutputURI, []byte(strings.Join(resultOutput, "\n")), os.ModePerm)
+	err = util.WriteFileWithDirs(resultOutputURI, []byte(strings.Join(resultOutput, "\n")), os.ModePerm)
 	if err != nil {
 		return "", err
 	}
