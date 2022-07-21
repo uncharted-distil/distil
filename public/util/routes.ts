@@ -59,6 +59,7 @@ export interface RouteArgs {
   resultTrainingVarsSearch?: string;
   trainingVarsSearch?: string;
   task?: string;
+  selectedTask?: string;
   dataMode?: string;
   varModes?: string;
   varRanked?: string;

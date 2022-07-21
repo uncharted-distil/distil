@@ -134,6 +134,7 @@ export const getters = {
   getGeoZoom: read(moduleGetters.getGeoZoom),
   getGroupingType: read(moduleGetters.getGroupingType),
   getRouteTask: read(moduleGetters.getRouteTask),
+  getRouteSelectedTask: read(moduleGetters.getRouteSelectedTask),
   getColorScale: read(moduleGetters.getColorScale),
   getColorScaleVariable: read(moduleGetters.getColorScaleVariable),
   getImageLayerScale: read(moduleGetters.getImageLayerScale),

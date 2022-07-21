@@ -173,6 +173,8 @@ export default Vue.extend({
       // flag as pending
       this.pending = true;
       // dispatch action that triggers request send to server
+      const selectedTask = routeGetters.getRouteSelectedTask(this.$store);
+      const taskToRun = selectedTask ? selectedTask.split(",") : null;
       const routeSplit = routeGetters.getRouteTrainTestSplit(this.$store);
       const defaultSplit = appGetters.getTrainTestSplit(this.$store);
       const timestampSplit = routeGetters.getRouteTimestampSplit(this.$store);
@@ -193,6 +195,7 @@ export default Vue.extend({
         quality: routeGetters.getModelQuality(this.$store),
         trainTestSplit: !!routeSplit ? routeSplit : defaultSplit,
         timestampSplitValue: timestampSplit,
+        task: taskToRun,
       } as SolutionRequestMsg;
 
       // Add optional values to the request
@@ -208,13 +211,16 @@ export default Vue.extend({
           this.pending = false;
           const dataMode = routeGetters.getDataMode(this.$store);
           const dataModeDefault = dataMode ? dataMode : DataMode.Default;
+          const taskUsed = selectedTask
+            ? selectedTask
+            : routeGetters.getRouteTask(this.$store);
 
           // transition to result screen
           const entry = createRouteEntry(RESULTS_ROUTE, {
             dataset: routeGetters.getRouteDataset(this.$store),
             target: routeGetters.getRouteTargetVariable(this.$store),
             solutionId: res.solutionId,
-            task: routeGetters.getRouteTask(this.$store),
+            task: taskUsed,
             dataMode: dataModeDefault,
             varModes: varModesToString(
               routeGetters.getDecodedVarModes(this.$store)

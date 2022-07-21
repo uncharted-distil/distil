@@ -894,11 +894,17 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	if err != nil {
 		return err
 	}
-	task, err := ResolveTask(dataStorage, dataset.StorageName, s.TargetFeature, trainingVariables)
-	if err != nil {
-		return err
+
+	var task *Task
+	if len(s.Task) > 0 {
+		task = &Task{s.Task}
+	} else {
+		task, err = ResolveTask(dataStorage, dataset.StorageName, s.TargetFeature, trainingVariables)
+		if err != nil {
+			return err
+		}
+		s.Task = task.Task
 	}
-	s.Task = task.Task
 
 	if HasTaskType(task, compute.SegmentationTask) {
 		return processSegmentation(s, client, solutionStorage, metaStorage, dataStorage)

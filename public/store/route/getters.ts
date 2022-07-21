@@ -604,6 +604,14 @@ export const getters = {
     return task;
   },
 
+  getRouteSelectedTask(state: Route, getters: any): string {
+    const selectedTask = state.query.selectedTask as string;
+    if (!selectedTask) {
+      return null;
+    }
+    return selectedTask;
+  },
+
   getDataMode(state: Route, getters: any): DataMode {
     const mode = state.query.dataMode as string;
     if (!mode) {

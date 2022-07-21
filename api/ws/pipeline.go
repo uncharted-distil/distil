@@ -158,12 +158,13 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 
 	// load defaults
 	config, _ := env.LoadConfig()
-	if len(request.Task) == 0 {
-		request.Task = api.DefaultTaskType(request.TargetFeature.Type, request.ProblemType)
-		log.Infof("Defaulting task type to `%s`", request.Task)
+	metricTasks := request.Task
+	if len(metricTasks) == 0 {
+		metricTasks = api.DefaultTaskType(request.TargetFeature.Type, request.ProblemType)
+		log.Infof("Defaulting metric task type to `%s`", metricTasks)
 	}
 	if len(request.Metrics) == 0 {
-		request.Metrics = api.DefaultMetrics(request.Task)
+		request.Metrics = api.DefaultMetrics(metricTasks)
 		log.Infof("Defaulting metrics to `%s`", strings.Join(request.Metrics, ","))
 	}
 	if request.MaxTime == 0 {

@@ -183,6 +183,7 @@ export default Vue.extend({
       // fill this from the API later, first posting back the target's type
       // then getting a list of allowed scoring methods with keys, description
       selectedMetric: null,
+      selectedTask: null,
       trainingCount: 1,
       timestampSplitValue: new Date(),
       splitByTime: false,
@@ -224,6 +225,25 @@ export default Vue.extend({
 
     task(): string {
       return routeGetters.getRouteTask(this.$store) ?? "";
+    },
+
+    rebuildTask(): string {
+      // hack to submit only either classification or segmentation when dealing with remote sensing
+      if (this.multipleTasks) {
+        // if no task selected, then return null
+        if (this.selectedTask) {
+          return (
+            TaskTypes.REMOTE_SENSING +
+            "," +
+            TaskTypes.BINARY +
+            "," +
+            this.selectedTask
+          );
+        }
+        return null;
+      }
+
+      return this.task;
     },
 
     totalDataCount(): number {
@@ -336,6 +356,7 @@ export default Vue.extend({
         modelTimeLimit: this.timeLimit,
         modelQuality: this.speedQuality,
         metrics: this.selectedMetric,
+        selectedTask: this.rebuildTask,
         trainTestSplit: this.trainingRatio,
         timestampSplit:
           this.hasTimeRange && this.splitByTime

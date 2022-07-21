@@ -74,6 +74,7 @@ export interface SolutionRequestMsg {
   target: string;
   timestampSplitValue?: number;
   trainTestSplit: number;
+  task?: string[];
 }
 
 // Solution status message used in web socket context
@@ -596,6 +597,7 @@ export const actions = {
         filters: request.filters,
         trainTestSplit: request.trainTestSplit,
         timestampSplitValue: request.timestampSplitValue,
+        task: request.task,
       });
     });
   },
