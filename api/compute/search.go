@@ -39,6 +39,7 @@ type searchResult struct {
 type pipelineSearchContext struct {
 	searchID          string
 	dataset           string
+	task              []string
 	storageName       string
 	sourceDatasetURI  string
 	trainDatasetURI   string

@@ -138,7 +138,7 @@ type SolutionStorageCtor func() (SolutionStorage, error)
 // solution storage.
 type SolutionStorage interface {
 	PersistPrediction(requestID string, dataset string, target string, fittedSolutionID string, progress string, createdTime time.Time) error
-	PersistRequest(requestID string, dataset string, progress string, createdTime time.Time) error
+	PersistRequest(requestID string, dataset string, task []string, progress string, createdTime time.Time) error
 	PersistRequestFeature(requestID string, featureName string, featureType string) error
 	PersistRequestFilters(requestID string, filters *FilterParams) error
 	PersistSolution(requestID string, solutionID string, explainedSolutionID string, createdTime time.Time) error

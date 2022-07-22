@@ -74,7 +74,7 @@ func NewSolutionStorage(clientCtor postgres.ClientCtor, metadataCtor api.Metadat
 		}
 
 		if !latestSchema {
-			err = pg.InitializeConfig()
+			err = pg.UpdateSchema()
 			if err != nil {
 				return nil, err
 			}

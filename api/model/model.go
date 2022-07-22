@@ -52,6 +52,7 @@ type ExportedModel struct {
 type Request struct {
 	RequestID       string        `json:"requestId"`
 	Dataset         string        `json:"dataset"`
+	Task            []string      `json:"task"`
 	Progress        string        `json:"progress"`
 	CreatedTime     time.Time     `json:"timestamp"`
 	LastUpdatedTime time.Time     `json:"lastUpdatedTime"`

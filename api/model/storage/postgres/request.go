@@ -28,10 +28,10 @@ import (
 )
 
 // PersistRequest persists a request to Postgres.
-func (s *Storage) PersistRequest(requestID string, dataset string, progress string, createdTime time.Time) error {
-	sql := fmt.Sprintf("INSERT INTO %s (request_id, dataset, progress, created_time, last_updated_time) VALUES ($1, $2, $3, $4, $4);", postgres.RequestTableName)
+func (s *Storage) PersistRequest(requestID string, dataset string, task []string, progress string, createdTime time.Time) error {
+	sql := fmt.Sprintf("INSERT INTO %s (request_id, dataset, task, progress, created_time, last_updated_time) VALUES ($1, $2, $3, $4, $4, $5);", postgres.RequestTableName)
 
-	_, err := s.client.Exec(sql, requestID, dataset, progress, createdTime)
+	_, err := s.client.Exec(sql, requestID, dataset, strings.Join(task, ","), progress, createdTime)
 
 	return errors.Wrapf(err, "failed to persist request to PostGres")
 }
@@ -93,7 +93,7 @@ func (s *Storage) PersistRequestFilters(requestID string, filters *api.FilterPar
 
 // FetchRequest pulls request information from Postgres.
 func (s *Storage) FetchRequest(requestID string) (*api.Request, error) {
-	sql := fmt.Sprintf("SELECT request_id, dataset, progress, created_time, last_updated_time FROM %s WHERE request_id = $1 ORDER BY created_time desc LIMIT 1;", postgres.RequestTableName)
+	sql := fmt.Sprintf("SELECT request_id, dataset, task, progress, created_time, last_updated_time FROM %s WHERE request_id = $1 ORDER BY created_time desc LIMIT 1;", postgres.RequestTableName)
 
 	rows, err := s.client.Query(sql, requestID)
 	if err != nil {
@@ -114,7 +114,7 @@ func (s *Storage) FetchRequest(requestID string) (*api.Request, error) {
 // FetchRequestByResultUUID pulls request information from Postgres using
 // a result UUID.
 func (s *Storage) FetchRequestByResultUUID(resultUUID string) (*api.Request, error) {
-	sql := fmt.Sprintf("SELECT req.request_id, req.dataset, req.progress, req.created_time, req.last_updated_time "+
+	sql := fmt.Sprintf("SELECT req.request_id, req.dataset, req.task, req.progress, req.created_time, req.last_updated_time "+
 		"FROM %s as req INNER JOIN %s as sol ON req.request_id = sol.request_id INNER JOIN %s as sol_res ON sol.solution_id = sol_res.solution_id "+
 		"WHERE sol_res.result_uuid = $1;", postgres.RequestTableName, postgres.SolutionTableName, postgres.SolutionResultTableName)
 
@@ -139,7 +139,7 @@ func (s *Storage) FetchRequestByResultUUID(resultUUID string) (*api.Request, err
 // FetchRequestBySolutionID pulls request information from Postgres using
 // a solution ID.
 func (s *Storage) FetchRequestBySolutionID(solutionID string) (*api.Request, error) {
-	sql := fmt.Sprintf("SELECT req.request_id, req.dataset, req.progress, req.created_time, req.last_updated_time "+
+	sql := fmt.Sprintf("SELECT req.request_id, req.dataset, req.task, req.progress, req.created_time, req.last_updated_time "+
 		"FROM %s as req INNER JOIN %s as sol ON req.request_id = sol.request_id "+
 		"WHERE sol.solution_id = $1;", postgres.RequestTableName, postgres.SolutionTableName)
 
@@ -164,7 +164,7 @@ func (s *Storage) FetchRequestBySolutionID(solutionID string) (*api.Request, err
 // FetchRequestByFittedSolutionID pulls request information from Postgres using
 // a fitted solution ID.
 func (s *Storage) FetchRequestByFittedSolutionID(fittedSolutionID string) (*api.Request, error) {
-	sql := fmt.Sprintf("SELECT req.request_id, req.dataset, req.progress, req.created_time, req.last_updated_time "+
+	sql := fmt.Sprintf("SELECT req.request_id, req.dataset, req.task, req.progress, req.created_time, req.last_updated_time "+
 		"FROM %s as req INNER JOIN %s as sol ON req.request_id = sol.request_id INNER JOIN %s sr on sr.solution_id = sol.solution_id "+
 		"WHERE sr.fitted_solution_id = $1;", postgres.RequestTableName, postgres.SolutionTableName, postgres.SolutionResultTableName)
 
@@ -189,11 +189,12 @@ func (s *Storage) FetchRequestByFittedSolutionID(fittedSolutionID string) (*api.
 func (s *Storage) loadRequest(rows pgx.Rows) (*api.Request, error) {
 	var requestID string
 	var dataset string
+	var task string
 	var progress string
 	var createdTime time.Time
 	var lastUpdatedTime time.Time
 
-	err := rows.Scan(&requestID, &dataset, &progress, &createdTime, &lastUpdatedTime)
+	err := rows.Scan(&requestID, &dataset, &task, &progress, &createdTime, &lastUpdatedTime)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to parse request from Postgres")
 	}
@@ -211,6 +212,7 @@ func (s *Storage) loadRequest(rows pgx.Rows) (*api.Request, error) {
 	return &api.Request{
 		RequestID:       requestID,
 		Dataset:         dataset,
+		Task:            strings.Split(task, ","),
 		Progress:        progress,
 		CreatedTime:     createdTime,
 		LastUpdatedTime: lastUpdatedTime,
@@ -350,7 +352,7 @@ func (s *Storage) FetchRequestFilters(requestID string, features []*api.Feature)
 // FetchRequestByDatasetTarget pulls requests associated with a given dataset and target from postgres.
 func (s *Storage) FetchRequestByDatasetTarget(dataset string, target string) ([]*api.Request, error) {
 	// get the solution ids
-	sql := fmt.Sprintf("SELECT DISTINCT ON(request.request_id) request.request_id, request.dataset, request.progress, request.created_time, request.last_updated_time "+
+	sql := fmt.Sprintf("SELECT DISTINCT ON(request.request_id) request.request_id, request.dataset, request.task, request.progress, request.created_time, request.last_updated_time "+
 		"FROM %s request INNER JOIN %s rf ON request.request_id = rf.request_id "+
 		"INNER JOIN %s solution ON request.request_id = solution.request_id",
 		postgres.RequestTableName, postgres.RequestFeatureTableName, postgres.SolutionTableName)

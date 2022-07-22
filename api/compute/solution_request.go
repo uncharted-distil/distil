@@ -495,10 +495,11 @@ func (s *SolutionRequest) persistSolutionStatus(statusChan chan SolutionStatus, 
 	}
 }
 
-func (s *SolutionRequest) persistRequestError(statusChan chan SolutionStatus, solutionStorage api.SolutionStorage, searchID string, dataset string, err error) {
+func (s *SolutionRequest) persistRequestError(statusChan chan SolutionStatus,
+	solutionStorage api.SolutionStorage, searchID string, dataset string, task []string, err error) {
 	// persist the updated state
 	// NOTE: ignoring error
-	_ = solutionStorage.PersistRequest(searchID, dataset, compute.RequestErroredStatus, time.Now())
+	_ = solutionStorage.PersistRequest(searchID, dataset, task, compute.RequestErroredStatus, time.Now())
 
 	// notify of error
 	statusChan <- SolutionStatus{
@@ -509,12 +510,13 @@ func (s *SolutionRequest) persistRequestError(statusChan chan SolutionStatus, so
 	}
 }
 
-func (s *SolutionRequest) persistRequestStatus(statusChan chan SolutionStatus, solutionStorage api.SolutionStorage, searchID string, dataset string, status string) error {
+func (s *SolutionRequest) persistRequestStatus(statusChan chan SolutionStatus,
+	solutionStorage api.SolutionStorage, searchID string, dataset string, task []string, status string) error {
 	// persist the updated state
-	err := solutionStorage.PersistRequest(searchID, dataset, status, time.Now())
+	err := solutionStorage.PersistRequest(searchID, dataset, task, status, time.Now())
 	if err != nil {
 		// notify of error
-		s.persistRequestError(statusChan, solutionStorage, searchID, dataset, err)
+		s.persistRequestError(statusChan, solutionStorage, searchID, dataset, task, err)
 		return err
 	}
 
@@ -576,7 +578,7 @@ func describeSolution(client *compute.Client, initialSearchSolutionID string) (*
 func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorage api.SolutionStorage,
 	dataStorage api.DataStorage, searchContext pipelineSearchContext) {
 	// update request status
-	err := s.persistRequestStatus(s.requestChannel, solutionStorage, searchContext.searchID, searchContext.dataset, compute.RequestRunningStatus)
+	err := s.persistRequestStatus(s.requestChannel, solutionStorage, searchContext.searchID, searchContext.dataset, searchContext.task, compute.RequestRunningStatus)
 	if err != nil {
 		s.finished <- err
 		return
@@ -626,9 +628,9 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 
 	// update request status
 	if err != nil {
-		s.persistRequestError(s.requestChannel, solutionStorage, searchContext.searchID, searchContext.dataset, err)
+		s.persistRequestError(s.requestChannel, solutionStorage, searchContext.searchID, searchContext.dataset, searchContext.task, err)
 	} else {
-		if err = s.persistRequestStatus(s.requestChannel, solutionStorage, searchContext.searchID, searchContext.dataset, compute.RequestCompletedStatus); err != nil {
+		if err = s.persistRequestStatus(s.requestChannel, solutionStorage, searchContext.searchID, searchContext.dataset, searchContext.task, compute.RequestCompletedStatus); err != nil {
 			log.Errorf("failed to persist status %s for search %s", compute.RequestCompletedStatus, searchContext.searchID)
 		}
 	}
@@ -647,7 +649,7 @@ func dispatchSegmentation(s *SolutionRequest, requestID string, solutionStorage 
 	log.Infof("dispatching segmentation pipeline")
 
 	// create the backing data
-	err := s.persistRequestStatus(s.requestChannel, solutionStorage, requestID, s.Dataset, compute.RequestRunningStatus)
+	err := s.persistRequestStatus(s.requestChannel, solutionStorage, requestID, s.Dataset, s.Task, compute.RequestRunningStatus)
 	if err != nil {
 		s.finished <- err
 		return
@@ -727,7 +729,7 @@ func dispatchSegmentation(s *SolutionRequest, requestID string, solutionStorage 
 
 	log.Infof("segmentation pipeline processing complete")
 
-	err = s.persistRequestStatus(s.requestChannel, solutionStorage, requestID, dataset.ID, compute.RequestCompletedStatus)
+	err = s.persistRequestStatus(s.requestChannel, solutionStorage, requestID, dataset.ID, s.Task, compute.RequestCompletedStatus)
 	if err != nil {
 		s.finished <- err
 		return
@@ -766,7 +768,7 @@ func processSegmentation(s *SolutionRequest, client *compute.Client, solutionSto
 	requestID := uuidGen.String()
 
 	// persist the request
-	err = s.persistRequestStatus(s.requestChannel, solutionStorage, requestID, dataset.ID, compute.RequestPendingStatus)
+	err = s.persistRequestStatus(s.requestChannel, solutionStorage, requestID, dataset.ID, s.Task, compute.RequestPendingStatus)
 	if err != nil {
 		return err
 	}
@@ -993,7 +995,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// persist the request
-	err = s.persistRequestStatus(s.requestChannel, solutionStorage, requestID, dataset.ID, compute.RequestPendingStatus)
+	err = s.persistRequestStatus(s.requestChannel, solutionStorage, requestID, dataset.ID, s.Task, compute.RequestPendingStatus)
 	if err != nil {
 		return err
 	}
@@ -1033,6 +1035,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	searchContext := pipelineSearchContext{
 		searchID:          requestID,
 		dataset:           dataset.ID,
+		task:              s.Task,
 		storageName:       dataset.StorageName,
 		sourceDatasetURI:  filteredDatasetPath,
 		trainDatasetURI:   datasetPathTrain,

@@ -243,6 +243,7 @@ func NewDatabase(config *Config, batch bool) (*Database, error) {
 // IsLatestSchema returns true if the solution metadata schema matches the latest.
 func (d *Database) IsLatestSchema() (bool, error) {
 	// check for the presence of the config table
+	log.Infof("verifying that postgres is using the latest schema")
 	configExists, err := d.tableExists(configTableName)
 	if err != nil {
 		return false, err
@@ -250,6 +251,7 @@ func (d *Database) IsLatestSchema() (bool, error) {
 
 	// if the config table isnt there, then it isnt the latest
 	if !configExists {
+		log.Infof("postgres not using latest schema as the config table does not exist")
 		return false, nil
 	}
 
@@ -259,7 +261,29 @@ func (d *Database) IsLatestSchema() (bool, error) {
 		return false, err
 	}
 
+	log.Infof("postgres schema version %s and the latest version is %s", config[distilSchemaKey], version)
 	return config[distilSchemaKey] == version, nil
+}
+
+// UpdateSchema updates the metadata schema and stores the version to the database.
+func (d *Database) UpdateSchema() error {
+	// recreate metadata tables
+	err := d.CreateSolutionMetadataTables()
+	if err != nil {
+		return err
+	}
+
+	// write the version to the config table
+	configToStore := map[string]string{distilSchemaKey: version}
+	for k, v := range configToStore {
+		sql := fmt.Sprintf("INSERT INTO %s (key, value) VALUES ($1, $2);", configTableName)
+		_, err = d.Client.Exec(sql, k, v)
+		if err != nil {
+			return errors.Wrapf(err, "unable to store postgres config")
+		}
+	}
+
+	return nil
 }
 
 func (d *Database) loadConfig() (map[string]string, error) {
@@ -306,11 +330,6 @@ func (d *Database) tableExists(name string) (bool, error) {
 	}
 
 	return exists, nil
-}
-
-// InitializeConfig sets up the config table with the current config values.
-func (d *Database) InitializeConfig() error {
-	return nil
 }
 
 // CreateSolutionMetadataTables creates an empty table for the solution results.
