@@ -413,11 +413,25 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 		return
 	}
 
-	// resolve the task so we know what type of data we should be expecting
-	requestTask, err := api.ResolveTask(dataStorage, meta.StorageName, targetVar, variables)
+	// get the exported model
+	exportedModel, err := modelStorage.FetchModelByID(request.FittedSolutionID)
 	if err != nil {
 		handleErr(conn, msg, err)
 		return
+	}
+
+	// if the task wasnt saved, determine it via the target and features
+	var modelTask *api.Task
+	if len(exportedModel.Task) > 0 {
+		modelTask = &api.Task{
+			Task: exportedModel.Task,
+		}
+	} else {
+		modelTask, err = api.ResolveTask(dataStorage, meta.StorageName, targetVar, variables)
+		if err != nil {
+			handleErr(conn, msg, err)
+			return
+		}
 	}
 
 	// config objects required for ingest
@@ -431,25 +445,25 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 		SolutionID:       sr.SolutionID,
 		FittedSolutionID: request.FittedSolutionID,
 		OutputPath:       path.Join(config.D3MOutputDir, config.AugmentedSubFolder),
-		Task:             requestTask,
+		Task:             modelTask,
 		Target:           targetVar,
 		MetaStorage:      metaStorage,
 		DataStorage:      dataStorage,
 		SolutionStorage:  solutionStorage,
-		ModelStorage:     modelStorage,
+		ExportedModel:    exportedModel,
 		Config:           &config,
 		IngestConfig:     ingestConfig,
 		SourceDatasetID:  meta.ID,
 	}
 
-	datasetName, datasetPath, err := getPredictionDataset(requestTask, request, predictParams)
+	datasetName, datasetPath, err := getPredictionDataset(modelTask, request, predictParams)
 	if err != nil {
 		handleErr(conn, msg, errors.Wrap(err, "unable to create raw dataset"))
 		return
 	}
 
 	// if the task is a segmentation task, run it against the base dataset
-	if api.HasTaskType(requestTask, compute.SegmentationTask) {
+	if api.HasTaskType(modelTask, compute.SegmentationTask) {
 		dsPred, err := metaStorage.FetchDataset(datasetName, true, true, true)
 		if err != nil {
 			handleErr(conn, msg, errors.Wrap(err, "unable to resolve prediction dataset"))
