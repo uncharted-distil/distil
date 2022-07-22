@@ -80,9 +80,18 @@ const (
 	// WordStemTableName is the name of the table for the word stems.
 	WordStemTableName = "word_stem"
 
+	configTableName = "config"
+	version         = "0.1"
+
+	configTableCreationSQL = `CREATE TABLE %s (
+			key text,
+			value text
+		);`
+
 	requestTableCreationSQL = `CREATE TABLE %s (
 			request_id			text,
 			dataset				varchar(200),
+			task					text,
 			progress			varchar(40),
 			created_time		timestamp,
 			last_updated_time	timestamp
@@ -165,6 +174,8 @@ const (
 	resultTableSuffix   = "_result"
 	variableTableSuffix = "_variable"
 	explainTableSuffix  = "_explain"
+
+	distilSchemaKey = "distil-schema-version"
 )
 
 var (
@@ -229,6 +240,79 @@ func NewDatabase(config *Config, batch bool) (*Database, error) {
 	return database, nil
 }
 
+// IsLatestSchema returns true if the solution metadata schema matches the latest.
+func (d *Database) IsLatestSchema() (bool, error) {
+	// check for the presence of the config table
+	configExists, err := d.tableExists(configTableName)
+	if err != nil {
+		return false, err
+	}
+
+	// if the config table isnt there, then it isnt the latest
+	if !configExists {
+		return false, nil
+	}
+
+	// check the version stored in the config table against the latest version
+	config, err := d.loadConfig()
+	if err != nil {
+		return false, err
+	}
+
+	return config[distilSchemaKey] == version, nil
+}
+
+func (d *Database) loadConfig() (map[string]string, error) {
+	log.Infof("reading postgres config")
+	sql := fmt.Sprintf("SELECT key, value FROM %s;", configTableName)
+
+	rows, err := d.Client.Query(sql)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to query postgres config")
+	}
+	defer rows.Close()
+
+	configData := map[string]string{}
+	for rows.Next() {
+		var key string
+		var value string
+
+		err = rows.Scan(&key, &value)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to parse postgres config")
+		}
+		configData[key] = value
+	}
+
+	log.Infof("postgres config: %v", configData)
+
+	return configData, nil
+}
+
+func (d *Database) tableExists(name string) (bool, error) {
+	sql := "SELECT EXISTS (	SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1);"
+
+	rows, err := d.Client.Query(sql, name)
+	if err != nil {
+		return false, errors.Wrapf(err, "unable to verify if a table exists")
+	}
+	defer rows.Close()
+
+	rows.Next()
+	var exists bool
+	err = rows.Scan(&exists)
+	if err != nil {
+		return false, errors.Wrap(err, "unable to parse table existance result")
+	}
+
+	return exists, nil
+}
+
+// InitializeConfig sets up the config table with the current config values.
+func (d *Database) InitializeConfig() error {
+	return nil
+}
+
 // CreateSolutionMetadataTables creates an empty table for the solution results.
 func (d *Database) CreateSolutionMetadataTables() error {
 	// Create the solution tables.
@@ -236,6 +320,12 @@ func (d *Database) CreateSolutionMetadataTables() error {
 
 	_ = d.DropTable(PredictionTableName)
 	_, err := d.Client.Exec(fmt.Sprintf(predictionTableCreationSQL, PredictionTableName))
+	if err != nil {
+		return errors.Wrap(err, "failed to drop table")
+	}
+
+	_ = d.DropTable(configTableName)
+	_, err = d.Client.Exec(fmt.Sprintf(configTableCreationSQL, configTableName))
 	if err != nil {
 		return errors.Wrap(err, "failed to drop table")
 	}

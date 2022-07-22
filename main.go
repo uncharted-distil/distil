@@ -166,7 +166,11 @@ func main() {
 	pgDataStorageCtor := pg.NewDataStorage(postgresClientCtor, postgresBatchClientCtor, esMetadataStorageCtor)
 
 	// instantiate the postgres solution storage constructor.
-	pgSolutionStorageCtor := pg.NewSolutionStorage(postgresClientCtor, esMetadataStorageCtor)
+	pgSolutionStorageCtor, err := pg.NewSolutionStorage(postgresClientCtor, esMetadataStorageCtor, config.PostgresUpdate)
+	if err != nil {
+		log.Errorf("%+v", err)
+		os.Exit(1)
+	}
 
 	// Instantiate the solution compute client
 	solutionClient, err := task.NewDefaultClient(config, userAgent, discoveryLogger)

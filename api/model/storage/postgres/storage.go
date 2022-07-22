@@ -22,6 +22,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/model"
 	log "github.com/unchartedsoftware/plog"
 
+	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/postgres"
 )
@@ -46,10 +47,48 @@ func NewDataStorage(clientCtor postgres.ClientCtor, batchClientCtor postgres.Cli
 }
 
 // NewSolutionStorage returns a constructor for a solution storage.
-func NewSolutionStorage(clientCtor postgres.ClientCtor, metadataCtor api.MetadataStorageCtor) api.SolutionStorageCtor {
-	return func() (api.SolutionStorage, error) {
-		return newStorage(clientCtor, nil, metadataCtor)
+func NewSolutionStorage(clientCtor postgres.ClientCtor, metadataCtor api.MetadataStorageCtor, updateStorage bool) (api.SolutionStorageCtor, error) {
+	if updateStorage {
+		config, err := env.LoadConfig()
+		if err != nil {
+			return nil, err
+		}
+
+		// Connect to the database.
+		postgresConfig := &postgres.Config{
+			Password:         config.PostgresPassword,
+			User:             config.PostgresUser,
+			Database:         config.PostgresDatabase,
+			Host:             config.PostgresHost,
+			Port:             config.PostgresPort,
+			PostgresLogLevel: "error",
+		}
+		pg, err := postgres.NewDatabase(postgresConfig, false)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to initialize a new database")
+		}
+
+		latestSchema, err := pg.IsLatestSchema()
+		if err != nil {
+			return nil, err
+		}
+
+		if !latestSchema {
+			err = pg.InitializeConfig()
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
+	return func() (api.SolutionStorage, error) {
+		storage, err := newStorage(clientCtor, nil, metadataCtor)
+
+		if err != nil {
+			return nil, err
+		}
+
+		return storage, nil
+	}, nil
 }
 
 func newStorage(clientCtor postgres.ClientCtor, batchClientCtor postgres.ClientCtor, metadataCtor api.MetadataStorageCtor) (*Storage, error) {

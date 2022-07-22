@@ -76,6 +76,7 @@ type Config struct {
 	PostgresPassword           string  `env:"PG_PASSWORD" envDefault:""`
 	PostgresPort               int     `env:"PG_PORT" envDefault:"5432"`
 	PostgresRandomSeed         float64 `env:"PG_RANDOM_SEED" envDefault:"0.2"`
+	PostgresUpdate             bool    `env:"PG_UPDATE" envDefault:"false"`
 	PostgresUser               string  `env:"PG_USER" envDefault:"distil"`
 	PublicSubFolder            string  `env:"PUBLIC_SUBFOLDER" envDefault:"public"`
 	RankingOutputPath          string  `env:"RANKING_OUTPUT_PATH" envDefault:"importance.json"`
