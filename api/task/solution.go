@@ -88,6 +88,7 @@ func SaveFittedSolution(fittedSolutionID string, modelName string, modelDescript
 		FittedSolutionID: fittedSolutionID,
 		DatasetID:        request.Dataset,
 		DatasetName:      dataset.Name,
+		Task:             request.Task,
 		Variables:        vars,
 		VariableDetails:  varDetails,
 		Target:           target,

@@ -29,7 +29,7 @@ import (
 
 // PersistRequest persists a request to Postgres.
 func (s *Storage) PersistRequest(requestID string, dataset string, task []string, progress string, createdTime time.Time) error {
-	sql := fmt.Sprintf("INSERT INTO %s (request_id, dataset, task, progress, created_time, last_updated_time) VALUES ($1, $2, $3, $4, $4, $5);", postgres.RequestTableName)
+	sql := fmt.Sprintf("INSERT INTO %s (request_id, dataset, task, progress, created_time, last_updated_time) VALUES ($1, $2, $3, $4, $5, $5);", postgres.RequestTableName)
 
 	_, err := s.client.Exec(sql, requestID, dataset, strings.Join(task, ","), progress, createdTime)
 

@@ -122,6 +122,10 @@ func (s *Storage) parseModels(res *elastic.SearchResult, includeDeleted bool) ([
 		if !ok {
 			return nil, errors.New("failed to parse the dataset id")
 		}
+
+		// get the task
+		tasks, _ := json.StringArray(src, "task")
+
 		// extract the target
 		targetInfo, ok := json.Get(src, "target")
 		if !ok {
@@ -153,6 +157,7 @@ func (s *Storage) parseModels(res *elastic.SearchResult, includeDeleted bool) ([
 			FittedSolutionID: fittedSolutionID,
 			DatasetID:        datasetID,
 			DatasetName:      name,
+			Task:             tasks,
 			Target:           target,
 			Variables:        variables,
 			VariableDetails:  variableDetails,

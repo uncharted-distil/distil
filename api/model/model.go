@@ -42,6 +42,7 @@ type ExportedModel struct {
 	FittedSolutionID string              `json:"fittedSolutionId"`
 	DatasetID        string              `json:"datasetId"`
 	DatasetName      string              `json:"datasetName"`
+	Task             []string            `json:"task"`
 	Target           *SolutionVariable   `json:"target"`
 	Variables        []string            `json:"variables"`
 	VariableDetails  []*SolutionVariable `json:"variableDetails"`
