@@ -658,7 +658,7 @@ func dispatchSegmentation(s *SolutionRequest, requestID string, solutionStorage 
 	c := newStatusChannel()
 
 	// run the pipeline
-	pipelineResult, err := SubmitPipeline(client, []string{datasetInputDir}, nil, nil, step, nil, true)
+	pipelineResult, err := SubmitPipeline(client, []string{datasetInputDir}, nil, nil, step, nil, false)
 	if err != nil {
 		s.finished <- err
 		return
