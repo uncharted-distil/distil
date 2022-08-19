@@ -46,7 +46,7 @@ func BuildSegmentationImage(rawSegmentation [][]interface{}) (map[string][]byte,
 			rawFloats[i] = nestedFloats
 		}
 
-		filter := imagery.ConfidenceMatrixToImage(rawFloats, imagery.MagmaColorScale, uint8(100))
+		filter := imagery.ConfidenceMatrixToImage(rawFloats, imagery.MagmaColorScale, uint8(255))
 		imageBytes, err := imagery.ImageToPNG(filter)
 		if err != nil {
 			return nil, err

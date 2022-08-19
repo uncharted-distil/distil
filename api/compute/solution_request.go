@@ -755,7 +755,8 @@ func processSegmentation(s *SolutionRequest, client *compute.Client, solutionSto
 
 	datasetInputDir := env.ResolvePath(dataset.Source, dataset.Folder)
 
-	step, err := description.CreateRemoteSensingSegmentationPipeline("segmentation", "basic image segmentation", s.TargetFeature, envConfig.RemoteSensingNumJobs)
+	step, err := description.CreateRemoteSensingSegmentationPipeline("segmentation", "basic image segmentation", s.TargetFeature,
+		envConfig.RemoteSensingNumJobs, envConfig.RemoteSensingGPUBatchSize)
 	if err != nil {
 		return err
 	}

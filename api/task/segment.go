@@ -49,7 +49,8 @@ func Segment(ds *api.Dataset, dataStorage api.DataStorage, variableName string) 
 		}
 	}
 
-	step, err := description.CreateRemoteSensingSegmentationPipeline("segmentation", "basic image segmentation", variable, envConfig.RemoteSensingNumJobs)
+	step, err := description.CreateRemoteSensingSegmentationPipeline("segmentation", "basic image segmentation", variable,
+		envConfig.RemoteSensingNumJobs, envConfig.RemoteSensingGPUBatchSize)
 	if err != nil {
 		return "", err
 	}
@@ -103,7 +104,7 @@ func Segment(ds *api.Dataset, dataStorage api.DataStorage, variableName string) 
 			rawFloats[i] = nestedFloats
 		}
 
-		filter := imagery.ConfidenceMatrixToImage(rawFloats, imagery.MagmaColorScale, uint8(100))
+		filter := imagery.ConfidenceMatrixToImage(rawFloats, imagery.MagmaColorScale, uint8(255))
 		imageBytes, err := imagery.ImageToPNG(filter)
 		if err != nil {
 			return "", err

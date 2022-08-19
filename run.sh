@@ -35,6 +35,9 @@ export TILE_REQUEST_URL=https://server.arcgisonline.com/ArcGIS/rest/services/Wor
 export INGEST_SAMPLE_ROW_LIMIT=200000
 # export MAX_TRAINING_ROWS=500
 # export MAX_TEST_ROWS=500
+export PG_UPDATE=true
+export SEGMENTATION_ENABLED=true
+export REMOTE_SENSING_GPU_BATCH_SIZE=4
 
 ulimit -n 4096
 
