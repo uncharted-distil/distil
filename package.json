@@ -40,7 +40,7 @@
     "lodash": "^4.17.21",
     "lumo": "^0.20.17",
     "moment": "^2.29.1",
-    "moment-timezone": "^0.5.32",
+    "moment-timezone": "^0.5.35",
     "multimap": "^1.0.2",
     "preact": "8.5.3",
     "sigma": "^1.2.1",
