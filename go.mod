@@ -43,7 +43,7 @@ require (
 	github.com/xitongsys/parquet-go-source v0.0.0-20190524061010-2b72cbee77d5
 	github.com/zenazn/goji v0.9.0
 	goji.io/v3 v3.0.0
-	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
+	golang.org/x/net v0.7.0
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/grpc v1.27.0
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
